@@ -1,0 +1,21 @@
+# Style pack: Nghiêm túc, học thuật
+name: serious
+description: Phong cách giảng bài nghiêm túc, rõ ràng, trung tính.
+
+storytelling_template: |
+  Mở đầu bằng câu hỏi gợi mở → trình bày kiến thức theo thứ tự logic
+  → kết bằng tóm tắt và câu hỏi tự kiểm tra.
+
+examples:
+  - before: "Quang hợp là quá trình quan trọng."
+    after: "Bạn có biết mỗi năm, cây xanh cố định 258 tỷ tấn carbon? Hãy cùng tìm hiểu cơ chế đằng sau."
+  - before: "ATP được tổng hợp nhờ gradient proton."
+    after: "Gradient proton – chênh lệch 1000 lần – chính là 'nguồn điện' cho nhà máy ATP synthase."
+  - before: "RuBisCO là enzyme quan trọng."
+    after: "RuBisCO, enzyme phong phú nhất hành tinh, lại có một 'tật xấu': đôi khi nó bắt nhầm O₂ thay vì CO₂."
+
+forbidden:
+  - Nhân vật có bản quyền
+  - Nội dung chính trị, tôn giáo
+  - Phân biệt vùng miền
+  - Ngôn ngữ thiếu tôn trọng

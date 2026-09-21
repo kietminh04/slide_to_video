@@ -1,0 +1,45 @@
+# Style pack: Drama tổng tài – hai nhân vật đối thoại
+name: drama_tongtai
+description: |
+  Hai nhân vật: Minh (tổng tài lạnh lùng, thực ra nắm vững kiến thức)
+  và An (tưởng không biết gì nhưng hỏi đúng trọng tâm).
+  Mô-típ: người tưởng không biết gì hoá ra nắm vững khái niệm, lộ dần qua đối thoại.
+
+storytelling_template: |
+  An hỏi câu hỏi ngây thơ → Minh trả lời ngắn gọn, hơi bí ẩn
+  → An phản bác hoặc hỏi sâu hơn → Minh giải thích chi tiết,
+  lộ ra hiểu biết sâu → An ngạc nhiên, rút ra bài học.
+
+characters:
+  - name: Minh
+    speaker_id: M1
+    personality: Lạnh lùng, ít nói, nhưng mỗi câu đều đúng trọng tâm.
+  - name: An
+    speaker_id: F1
+    personality: Tò mò, hay hỏi, tưởng đơn giản nhưng câu hỏi sâu.
+
+examples:
+  - before: "Quang hợp cần hai hệ quang hoá vì một hệ không đủ thế năng."
+    after: |
+      An: "Sao cần hai hệ quang hoá? Một cái không đủ à?"
+      Minh: "Không đủ. Muốn vừa tách nước, vừa khử NADP⁺, cần 1.14 volt. Một hệ cho nhiều nhất 0.7."
+      An: "Ồ, nên mới phải mắc nối tiếp!"
+  - before: "ATP synthase hoạt động nhờ gradient proton."
+    after: |
+      An: "ATP synthase hoạt động kiểu gì?"
+      Minh: "Như turbine thuỷ điện. Proton chảy qua, quay cánh quạt phân tử, ghép ADP thành ATP."
+      An: "Chờ đã... gradient proton chênh lệch bao nhiêu?"
+      Minh: "Khoảng 1000 lần."
+  - before: "RuBisCO đôi khi phản ứng nhầm với O₂."
+    after: |
+      An: "RuBisCO là enzyme tốt nhất thế giới mà?"
+      Minh: "Phong phú nhất, không phải tốt nhất. Cứ 3 lần bắt CO₂ thì lại bắt nhầm O₂ một lần."
+      An: "Vậy cây sống sao nổi?"
+      Minh: "Cây C4 tiến hoá cách cô đặc CO₂. Ngô, mía – hiệu suất cao hơn 40%."
+
+forbidden:
+  - Nhân vật có bản quyền
+  - Nội dung chính trị, tôn giáo
+  - Phân biệt vùng miền
+  - Tình cảm lãng mạn (giữ trong khuôn giáo dục)
+  - Ngôn ngữ thiếu tôn trọng

@@ -1,0 +1,83 @@
+{
+    "meta": {
+        "doc_id": "sample_photosynthesis",
+        "duration_s": 300,
+        "style": "serious",
+        "weights": {"ch1": 0.1, "ch2": 0.6, "ch3": 0.3}
+    },
+    "scenes": [
+        {
+            "id": "s_ch1",
+            "chapter": "ch1",
+            "depth": "bridge",
+            "t_start": 0.0,
+            "t_end": 30.0,
+            "beats": [
+                {
+                    "type": "bridge",
+                    "display_text": "Quang hợp là quá trình chuyển đổi năng lượng ánh sáng thành năng lượng hoá học, nền tảng cho mọi sự sống trên Trái Đất. Hãy cùng tìm hiểu cơ chế bên trong."
+                }
+            ]
+        },
+        {
+            "id": "s_ch2",
+            "chapter": "ch2",
+            "depth": "deep",
+            "t_start": 30.0,
+            "t_end": 210.0,
+            "beats": [
+                {
+                    "type": "claim",
+                    "display_text": "Nhiều người nghĩ pha sáng chỉ cần một hệ quang hoá. Thực tế, cần hai hệ – PSII và PSI – mắc nối tiếp vì một hệ đơn lẻ không tạo đủ chênh lệch thế năng.",
+                    "source_ids": ["c_0201"]
+                },
+                {
+                    "type": "claim",
+                    "display_text": "PSII tách electron từ nước qua quang phân ly: 2H₂O → 4H⁺ + 4e⁻ + O₂. Chính phản ứng này tạo ra oxy mà chúng ta hít thở mỗi ngày.",
+                    "source_ids": ["c_0201", "c_0202"]
+                },
+                {
+                    "type": "claim",
+                    "display_text": "Gradient proton qua màng thylakoid chênh lệch khoảng 1000 lần, thúc đẩy ATP synthase theo cơ chế hoá thẩm thấu – phát hiện đoạt giải Nobel 1978 của Peter Mitchell.",
+                    "source_ids": ["c_0202"]
+                },
+                {
+                    "type": "example",
+                    "display_text": "Hãy hình dung một con đập thuỷ điện: nước chênh lệch độ cao tạo áp lực quay turbine. Gradient proton hoạt động tương tự – H⁺ 'chảy' qua ATP synthase như nước qua turbine, quay cánh quạt phân tử để ghép ADP thành ATP."
+                },
+                {
+                    "type": "claim",
+                    "display_text": "Hiệu suất chuyển đổi năng lượng của pha sáng đạt 34-38%, cao hơn pin mặt trời silicon thương mại chỉ đạt 15-22%. Tuy nhiên hiệu suất tổng quang hợp chỉ 3-6% vì các bước sau kém hiệu quả.",
+                    "source_ids": ["c_0202"]
+                },
+                {
+                    "type": "question",
+                    "display_text": "Thử nghĩ xem: nếu chỉ có một hệ quang hoá, quá trình nào sẽ không xảy ra – phân ly nước hay khử NADP⁺?"
+                }
+            ]
+        },
+        {
+            "id": "s_ch3",
+            "chapter": "ch3",
+            "depth": "core",
+            "t_start": 210.0,
+            "t_end": 300.0,
+            "beats": [
+                {
+                    "type": "claim",
+                    "display_text": "Chu trình Calvin gồm 3 giai đoạn: cố định carbon bằng RuBisCO, khử 3-PGA thành G3P nhờ ATP và NADPH, và tái tạo RuBP. Mỗi 3 vòng chu trình tạo ra 1 phân tử G3P thực lãi.",
+                    "source_ids": ["c_0301"]
+                },
+                {
+                    "type": "example",
+                    "display_text": "RuBisCO chiếm khoảng 50% tổng protein trong lá – enzyme phong phú nhất hành tinh, nhưng lại rất chậm, chỉ xử lý khoảng 3 phân tử CO₂ mỗi giây."
+                },
+                {
+                    "type": "claim",
+                    "display_text": "Vì sao điều này quan trọng? Quang hô hấp – khi RuBisCO phản ứng nhầm với O₂ – gây mất đến 25-30% carbon đã cố định. Thực vật C4 như ngô và mía tiến hoá cơ chế cô đặc CO₂ để giảm lãng phí này.",
+                    "source_ids": ["c_0301"]
+                }
+            ]
+        }
+    ]
+}

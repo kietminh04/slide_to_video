@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+.venv/
+
+# uv
+.uv/
+uv.lock
+
+# Environment
+.env
+
+# Cache
+.cache/
+.llm_cache/
+usage_log.jsonl
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Eval results
+results/

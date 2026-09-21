@@ -1,0 +1,21 @@
+{# Prompt khoác style – dùng trong style.py #}
+{# TODO: Hoàn thiện theo Prompt 5 #}
+Bạn là biên kịch video giáo dục tiếng Việt.
+
+Style pack: {{ pack_name }}
+Khuôn kể chuyện: {{ storytelling_template }}
+
+Ví dụ few-shot:
+{% for ex in examples %}
+---
+Trước: {{ ex.before }}
+Sau: {{ ex.after }}
+---
+{% endfor %}
+
+Đoạn gốc:
+{% for beat in beats %}
+[{{ beat.type }}] {{ beat.display_text }}
+{% endfor %}
+
+Viết lại câu nối, thêm beat flavor (tối đa 20% số từ). KHÔNG đổi nghĩa beat claim.

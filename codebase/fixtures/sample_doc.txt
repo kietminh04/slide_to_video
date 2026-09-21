@@ -1,0 +1,35 @@
+## Chương 1: Tổng quan về quang hợp
+
+Quang hợp là quá trình sinh học quan trọng nhất trên Trái Đất, cho phép thực vật, tảo và một số vi khuẩn chuyển đổi năng lượng ánh sáng thành năng lượng hoá học. Phương trình tổng quát: 6CO₂ + 6H₂O + ánh sáng → C₆H₁₂O₆ + 6O₂.
+
+Mỗi năm, quang hợp cố định khoảng 258 tỷ tấn carbon từ CO₂ trong khí quyển, tạo ra khoảng 130 tỷ tấn chất khô. Quá trình này cung cấp gần như toàn bộ oxy trong khí quyển (21%) và là nguồn năng lượng cơ bản cho mọi chuỗi thức ăn.
+
+Quang hợp diễn ra chủ yếu ở lá cây, trong bào quan gọi là lục lạp (chloroplast). Mỗi tế bào thịt lá chứa khoảng 20-100 lục lạp. Lục lạp có cấu trúc màng kép, bên trong chứa hệ thống thylakoid xếp chồng thành grana và chất nền stroma.
+
+Hiểu lầm phổ biến: nhiều người nghĩ cây chỉ quang hợp ban ngày và hô hấp ban đêm. Thực tế, cây hô hấp liên tục 24/7; ban ngày tốc độ quang hợp vượt hô hấp nên tổng thể cây vẫn hấp thu CO₂ và thải O₂.
+
+## Chương 2: Pha sáng – chuyển đổi năng lượng ánh sáng
+
+Pha sáng diễn ra ở màng thylakoid và gồm hai hệ quang hoá: PSI (P700) và PSII (P680). Khi photon ánh sáng kích thích PSII, electron được tách ra từ phân tử nước (quang phân ly nước): 2H₂O → 4H⁺ + 4e⁻ + O₂. Đây là nguồn gốc của oxy mà chúng ta thở.
+
+Chuỗi truyền electron từ PSII qua plastoquinone, phức hệ cytochrome b6f, plastocyanin đến PSI tạo gradient proton qua màng thylakoid. Gradient này (khoảng 1000 lần chênh lệch H⁺ giữa lumen và stroma) thúc đẩy ATP synthase tổng hợp ATP – cơ chế hoá thẩm thấu (chemiosmosis) do Peter Mitchell đề xuất năm 1961, đoạt giải Nobel 1978.
+
+PSI tiếp nhận electron và dùng năng lượng photon để khử NADP⁺ thành NADPH qua ferredoxin và enzyme NADP⁺ reductase. Sản phẩm cuối của pha sáng: ATP, NADPH và O₂.
+
+Vì sao cần hai hệ quang hoá? Một hệ đơn lẻ không tạo đủ thế năng để vừa phân ly nước (+0.82V) vừa khử NADP⁺ (−0.32V). Hai hệ mắc nối tiếp (mô hình Z) cung cấp tổng chênh lệch thế khoảng 1.14V, đủ để thực hiện cả hai phản ứng.
+
+Hiệu suất chuyển đổi năng lượng của pha sáng đạt khoảng 34-38% – cao hơn nhiều so với pin mặt trời silicon thương mại (15-22%). Tuy nhiên, hiệu suất tổng thể của quang hợp chỉ đạt 3-6% vì các bước sau kém hiệu quả hơn.
+
+## Chương 3: Pha tối – chu trình Calvin
+
+Pha tối (chính xác hơn: các phản ứng không phụ thuộc trực tiếp ánh sáng) diễn ra ở stroma lục lạp. Melvin Calvin giải mã chu trình này năm 1950-1953 bằng kỹ thuật đồng vị phóng xạ ¹⁴C, đoạt giải Nobel Hoá học 1961.
+
+Chu trình Calvin gồm 3 giai đoạn chính:
+
+1. Cố định carbon: enzyme RuBisCO xúc tác phản ứng gắn CO₂ vào ribulose-1,5-bisphosphate (RuBP, 5C) tạo 2 phân tử 3-phosphoglycerate (3-PGA, 3C). RuBisCO là enzyme phong phú nhất trên Trái Đất, chiếm khoảng 50% tổng protein trong lá.
+
+2. Khử: 3-PGA được khử thành glyceraldehyde-3-phosphate (G3P) nhờ ATP và NADPH từ pha sáng. Cứ 3 vòng chu trình (3 CO₂ cố định), tạo ra 1 phân tử G3P thực tế "lãi" (6 G3P tạo ra, 5 G3P quay lại tái tạo RuBP).
+
+3. Tái tạo: 5 phân tử G3P (15C) được chuyển hoá lại thành 3 phân tử RuBP (15C), tiêu tốn 3 ATP. Tổng cộng mỗi vòng dùng: 3 ATP cho cố định, 6 NADPH và 6 ATP cho khử, 3 ATP cho tái tạo = 9 ATP + 6 NADPH cho 3 CO₂.
+
+Vấn đề quang hô hấp: RuBisCO cũng có thể xúc tác phản ứng với O₂ thay vì CO₂ (oxygenase), gây mất carbon. Ở 25°C, cứ 3 phản ứng carboxylase thì có 1 phản ứng oxygenase. Thực vật C4 (ngô, mía) và CAM (xương rồng) đã tiến hoá cơ chế cô đặc CO₂ quanh RuBisCO để giảm quang hô hấp. Thực vật C4 đạt hiệu suất quang hợp cao hơn C3 khoảng 40% trong điều kiện nóng và ánh sáng mạnh.
