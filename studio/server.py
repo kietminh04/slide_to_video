@@ -134,6 +134,7 @@ class StudioHandler(BaseHTTPRequestHandler):
                 self.send_header("Content-Type", "application/vnd.openxmlformats-officedocument.wordprocessingml.document")
                 self.send_header("Content-Disposition", f'attachment; filename="{doc_name}"')
                 self.send_header("Content-Length", str(len(docx_bytes)))
+                self.send_header("Access-Control-Allow-Origin", "*")
                 self.end_headers()
                 self.wfile.write(docx_bytes)
                 return

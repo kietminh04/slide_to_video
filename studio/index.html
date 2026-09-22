@@ -946,6 +946,12 @@
 </head>
 <body>
 
+  <!-- WARNING BANNER IF OPENED VIA FILE:// PROTOCOL -->
+  <div id="file-protocol-warning" style="display: none; background: linear-gradient(90deg, #f59e0b, #d97706); color: #000; font-size: 13px; font-weight: 700; padding: 10px 20px; text-align: center; position: sticky; top: 0; z-index: 1000; box-shadow: 0 4px 14px rgba(0,0,0,0.4);">
+    ⚠️ Bạn đang mở giao diện bằng <code>file:///</code> (trình duyệt sẽ chặn kết nối tới server). Hãy mở qua địa chỉ chuẩn: 
+    <a href="http://127.0.0.1:8765" style="color: #000; text-decoration: underline; font-weight: 800; margin-left: 6px; background: rgba(255,255,255,0.5); padding: 3px 10px; border-radius: 4px;">👉 Mở http://127.0.0.1:8765</a>
+  </div>
+
   <!-- GLOBAL HEADER -->
   <header>
     <div class="brand-group" id="btn-brand-home">
@@ -963,8 +969,8 @@
     </div>
 
     <div class="header-actions">
-      <div class="stat-pill" style="display: none;" id="pill-zero-leak">
-        <span>🔒</span> Zero Key Leakage
+      <div class="stat-pill" id="server-status-pill" style="cursor: pointer;" title="Trạng thái máy chủ Studio Python 127.0.0.1:8765">
+        <span id="server-dot" style="color: #10b981;">●</span> <span id="server-text">Server: 8765</span>
       </div>
       <button class="btn-primary" id="btn-create-project-top">
         <span>➕</span> Tạo Dự Án Mới
@@ -1574,6 +1580,11 @@
       if (overlay) overlay.style.display = 'none';
     }
 
+    // CẤU HÌNH API BASE ĐỘNG (HỖ TRỢ CẢ KHI MỞ TRỰC TIẾP FILE:// HOẶC HTTP://127.0.0.1:8765)
+    const API_BASE = (window.location.protocol === 'http:' || window.location.protocol === 'https:')
+      ? ''
+      : 'http://127.0.0.1:8765';
+
     // FILE TO BASE64 HELPER
     function fileToBase64(file) {
       return new Promise((resolve, reject) => {
@@ -1591,7 +1602,7 @@
         const b64 = await fileToBase64(file);
         updateLoading("Đang Phân Tích & Lập Kế Hoạch Sư Phạm...", "Pedagogical Planner đang phân bổ ngân sách từ 140 WPM theo chuẩn MOOC...");
 
-        const res = await fetch('/api/generate', {
+        const res = await fetch(`${API_BASE}/api/generate`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -1616,7 +1627,14 @@
       } catch (err) {
         hideLoading();
         console.error(err);
-        alert("Lỗi khi sinh kịch bản từ tệp: " + err.message);
+        const isFile = window.location.protocol === 'file:';
+        let msg = `Lỗi khi sinh kịch bản: ${err.message}`;
+        if (err.message.includes('Failed to fetch') || isFile) {
+          msg = `⚠️ Không thể kết nối tới máy chủ Studio Python (127.0.0.1:8765)!\n\n` +
+                `👉 Nguyên nhân: Bạn đang mở giao diện bằng tệp cục bộ (file:///) nên trình duyệt đã chặn kết nối API.\n\n` +
+                `💡 Cách xử lý: Hãy mở tab mới trên trình duyệt và gõ địa chỉ: http://127.0.0.1:8765`;
+        }
+        alert(msg);
         throw err;
       }
     }
@@ -1999,7 +2017,7 @@
       const filename = `Kich_Ban_${activeProject.id}.docx`;
 
       try {
-        const res = await fetch('/api/export/docx', {
+        const res = await fetch(`${API_BASE}/api/export/docx`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ scenes: currentScenes, doc_id: currentProjectId, filename: filename })
@@ -2071,6 +2089,35 @@
       const v = e.target.value;
       document.getElementById('val-wpm').textContent = `${v} từ/phút`;
     });
+
+    // HEALTH CHECK LOCAL STUDIO SERVER
+    async function checkServerHealth() {
+      const dot = document.getElementById('server-dot');
+      const text = document.getElementById('server-text');
+      try {
+        const res = await fetch(`${API_BASE}/api/status`, { cache: 'no-store' });
+        if (res.ok) {
+          if (dot) dot.style.color = '#10b981';
+          if (text) text.textContent = 'Server: 8765 (Online)';
+          return true;
+        }
+      } catch (e) {}
+      if (dot) dot.style.color = '#f43f5e';
+      if (text) text.textContent = 'Server: Offline';
+      return false;
+    }
+
+    if (window.location.protocol === 'file:') {
+      const banner = document.getElementById('file-protocol-warning');
+      if (banner) banner.style.display = 'block';
+    }
+
+    document.getElementById('server-status-pill').addEventListener('click', () => {
+      window.open('http://127.0.0.1:8765', '_blank');
+    });
+
+    checkServerHealth();
+    setInterval(checkServerHealth, 5000);
 
     // INITIALIZE CVAT PROJECTS DASHBOARD
     renderProjectsGrid();
