@@ -44,7 +44,8 @@ class StudioHandler(BaseHTTPRequestHandler):
         self.end_headers()
 
     def do_GET(self):
-        url_path = self.path.split("?")[0]
+        import urllib.parse
+        url_path = urllib.parse.unquote(self.path.split("?")[0])
 
         if url_path in ("/", "/index.html"):
             index_path = ROOT_DIR / "studio" / "index.html"
@@ -66,7 +67,7 @@ class StudioHandler(BaseHTTPRequestHandler):
             })
             return
 
-        # Phục vụ file tĩnh (output_test.docx, v.v.)
+        # Phục vụ file tĩnh (output_test.docx, output_clustering, v.v.)
         static_file = (ROOT_DIR / url_path.lstrip("/")).resolve()
         if static_file.exists() and static_file.is_file() and str(static_file).startswith(str(ROOT_DIR)):
             mime_type, _ = mimetypes.guess_type(str(static_file))
@@ -81,7 +82,8 @@ class StudioHandler(BaseHTTPRequestHandler):
         self.send_error(404, "Not Found")
 
     def do_POST(self):
-        url_path = self.path.split("?")[0]
+        import urllib.parse
+        url_path = urllib.parse.unquote(self.path.split("?")[0])
         content_length = int(self.headers.get("Content-Length", 0))
         body = self.rfile.read(content_length).decode("utf-8") if content_length > 0 else "{}"
 
@@ -89,6 +91,7 @@ class StudioHandler(BaseHTTPRequestHandler):
             try:
                 data = json.loads(body)
                 raw_scenes = data.get("scenes", [])
+                doc_name = data.get("filename", "bai_giang_script.docx")
 
                 scenes = []
                 for s in raw_scenes:
@@ -115,7 +118,7 @@ class StudioHandler(BaseHTTPRequestHandler):
 
                 script = Script(
                     meta=ScriptMeta(
-                        doc_id="cnn_intro",
+                        doc_id=data.get("doc_id", "lecture_script"),
                         duration_s=int(raw_scenes[-1]["t_end"]) if raw_scenes else 300,
                         style="academic",
                         weights={}
@@ -129,7 +132,7 @@ class StudioHandler(BaseHTTPRequestHandler):
                 docx_bytes = out_docx.read_bytes()
                 self.send_response(200)
                 self.send_header("Content-Type", "application/vnd.openxmlformats-officedocument.wordprocessingml.document")
-                self.send_header("Content-Disposition", 'attachment; filename="cnn_intro_script.docx"')
+                self.send_header("Content-Disposition", f'attachment; filename="{doc_name}"')
                 self.send_header("Content-Length", str(len(docx_bytes)))
                 self.end_headers()
                 self.wfile.write(docx_bytes)
