@@ -10,7 +10,7 @@ import json
 import mimetypes
 import os
 import sys
-from http.server import BaseHTTPRequestHandler, HTTPServer
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
 # Đảm bảo UTF-8 và đưa workspace root vào sys.path
@@ -25,7 +25,11 @@ from codebase.clsg.schemas import Beat, Scene, Script, ScriptMeta, Visual
 
 
 class StudioHandler(BaseHTTPRequestHandler):
-    """Xử lý HTTP requests cho CLSG Studio."""
+    """Xử lý HTTP requests cho CLSG Studio đa luồng."""
+
+    def log_message(self, format, *args):
+        # Log gọn gàng
+        sys.stdout.write(f"[{self.log_date_time_string()}] {format % args}\n")
 
     def _send_json(self, data: dict, status: int = 200):
         body = json.dumps(data, ensure_ascii=False).encode("utf-8")
@@ -33,14 +37,19 @@ class StudioHandler(BaseHTTPRequestHandler):
         self.send_header("Content-Type", "application/json; charset=utf-8")
         self.send_header("Content-Length", str(len(body)))
         self.send_header("Access-Control-Allow-Origin", "*")
+        self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+        self.send_header("Access-Control-Allow-Headers", "*")
+        self.send_header("Access-Control-Allow-Private-Network", "true")
         self.end_headers()
         self.wfile.write(body)
 
     def do_OPTIONS(self):
-        self.send_response(200)
+        self.send_response(204)
         self.send_header("Access-Control-Allow-Origin", "*")
         self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-        self.send_header("Access-Control-Allow-Headers", "Content-Type, Authorization")
+        self.send_header("Access-Control-Allow-Headers", "*")
+        self.send_header("Access-Control-Allow-Private-Network", "true")
+        self.send_header("Access-Control-Max-Age", "86400")
         self.end_headers()
 
     def do_GET(self):
@@ -53,6 +62,8 @@ class StudioHandler(BaseHTTPRequestHandler):
             self.send_response(200)
             self.send_header("Content-Type", "text/html; charset=utf-8")
             self.send_header("Content-Length", str(len(content)))
+            self.send_header("Access-Control-Allow-Origin", "*")
+            self.send_header("Access-Control-Allow-Private-Network", "true")
             self.end_headers()
             self.wfile.write(content)
             return
@@ -190,13 +201,19 @@ class StudioHandler(BaseHTTPRequestHandler):
 
 
 def run_studio_server(port: int = 8765):
-    server = HTTPServer(("127.0.0.1", port), StudioHandler)
+    server = ThreadingHTTPServer(("0.0.0.0", port), StudioHandler)
+    server.daemon_threads = True
     print("=" * 60)
-    print(f"🚀 CLSG Multi-Agent Studio Server đang chạy tại:")
+    print(f"🚀 CLSG Multi-Agent Studio Server (Multi-threaded) đang chạy tại:")
     print(f"👉 http://127.0.0.1:{port}")
     print("=" * 60)
     print("Nhấn Ctrl+C để dừng server.")
-    server.serve_forever()
+    try:
+        server.serve_forever()
+    except KeyboardInterrupt:
+        pass
+    finally:
+        server.server_close()
 
 
 if __name__ == "__main__":
