@@ -994,6 +994,345 @@
       word-break: break-word;
     }
 
+
+    /* CORNER BUTTONS: X (GÓC TRÊN PHẢI) VÀ EDIT ✎ (GÓC DƯỚI PHẢI) */
+    .node-corner-x {
+      position: absolute;
+      top: 6px;
+      right: 6px;
+      width: 22px;
+      height: 22px;
+      border-radius: 4px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: var(--text-dim);
+      font-size: 11px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      z-index: 5;
+    }
+
+    .node-corner-x:hover {
+      background: rgba(244, 63, 94, 0.25);
+      border-color: var(--rose);
+      color: var(--rose);
+      transform: scale(1.1);
+    }
+
+    .node-corner-edit {
+      position: absolute;
+      bottom: 6px;
+      right: 6px;
+      width: 22px;
+      height: 22px;
+      border-radius: 4px;
+      background: rgba(245, 158, 11, 0.14);
+      border: 1px solid rgba(245, 158, 11, 0.4);
+      color: var(--amber);
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      z-index: 5;
+    }
+
+    .node-corner-edit:hover {
+      background: var(--amber);
+      color: #080c14;
+      border-color: var(--amber);
+      transform: scale(1.15);
+      box-shadow: 0 0 10px rgba(245, 158, 11, 0.4);
+    }
+
+    /* TRẠNG THÁI BỊ LOẠI TRỪ (EXCLUDED) KHI BẤM X */
+    .tree-branch-card.is-excluded,
+    .tree-subbranch-card.is-excluded,
+    .tree-root-card.is-excluded {
+      opacity: 0.38 !important;
+      filter: grayscale(0.85);
+      border-style: dashed !important;
+      border-color: rgba(244, 63, 94, 0.5) !important;
+      background: rgba(28, 16, 22, 0.7) !important;
+      box-shadow: none !important;
+    }
+
+    .tree-branch-card.is-excluded .branch-card-title,
+    .tree-subbranch-card.is-excluded .subbranch-title {
+      text-decoration: line-through;
+      color: var(--text-dim);
+    }
+
+    .tree-branch-card.is-excluded .node-corner-x,
+    .tree-subbranch-card.is-excluded .node-corner-x {
+      background: rgba(244, 63, 94, 0.4);
+      border-color: var(--rose);
+      color: #fff;
+    }
+
+    /* HIGHLIGHT ĐANG TINH CHỈNH */
+    .tree-branch-card.is-being-edited,
+    .tree-subbranch-card.is-being-edited {
+      border-color: var(--amber) !important;
+      box-shadow: 0 0 20px rgba(245, 158, 11, 0.35) !important;
+    }
+
+    /* BADGE THỜI LƯỢNG CÓ THỂ BẤM CHỈNH */
+    .node-duration-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      background: rgba(56, 189, 248, 0.1);
+      border: 1px solid rgba(56, 189, 248, 0.25);
+      color: var(--cyan);
+      font-size: 10px;
+      font-weight: 700;
+      font-family: 'JetBrains Mono', monospace;
+      padding: 1px 6px;
+      border-radius: 3px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .node-duration-badge:hover {
+      background: var(--cyan);
+      color: #080c14;
+      border-color: var(--cyan);
+    }
+
+    /* RIGHT PANE: DRAWER TINH CHỈNH THAM SỐ POP-OUT */
+    .node-tuning-drawer {
+      background: var(--bg-card);
+      border: 1px solid var(--border-accent);
+      border-radius: var(--radius-sm);
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5), 0 0 16px var(--primary-glow);
+      animation: slideDownTuning 0.25s ease-out;
+      margin-bottom: 6px;
+    }
+
+    @keyframes slideDownTuning {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .drawer-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      padding-bottom: 8px;
+    }
+
+    .drawer-badge-title {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--amber);
+    }
+
+    .btn-drawer-close {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 14px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      transition: all 0.15s;
+    }
+
+    .btn-drawer-close:hover {
+      background: rgba(255, 255, 255, 0.1);
+      color: #fff;
+    }
+
+    .drawer-body {
+      display: flex;
+      flex-direction: column;
+      gap: 9px;
+    }
+
+    .tuning-field {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .tuning-label {
+      font-size: 11px;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    /* KỊCH BẢN TAB: CLEAN PEDAGOGICAL SCRIPT DOCUMENT VIEW */
+    .script-document-container {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      background: rgba(8, 12, 20, 0.6);
+      overflow: hidden;
+    }
+
+    .script-doc-toolbar {
+      padding: 12px 24px;
+      border-bottom: 1px solid var(--border-subtle);
+      background: rgba(15, 23, 42, 0.85);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      backdrop-filter: blur(10px);
+      flex-shrink: 0;
+    }
+
+    .script-doc-summary {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .script-doc-filename {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    .script-doc-meta {
+      font-size: 12px;
+      color: var(--cyan);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .script-action-btn {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: var(--text-main);
+      padding: 6px 14px;
+      border-radius: var(--radius-sm);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+
+    .script-action-btn:hover {
+      background: var(--cyan);
+      color: #080c14;
+      border-color: var(--cyan);
+    }
+
+    .script-paper-view {
+      flex: 1;
+      overflow-y: auto;
+      padding: 28px 40px;
+      max-width: 960px;
+      margin: 0 auto;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .script-chapter-section {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-left: 4px solid var(--primary);
+      border-radius: var(--radius-md);
+      padding: 20px 24px;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .script-chapter-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      padding-bottom: 8px;
+    }
+
+    .script-chapter-title-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .script-chapter-code {
+      font-size: 12px;
+      font-weight: 800;
+      color: var(--cyan);
+      letter-spacing: 0.5px;
+    }
+
+    .script-chapter-name {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    .script-chapter-timing {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      color: var(--emerald);
+      font-weight: 600;
+    }
+
+    .script-visual-directive {
+      background: rgba(56, 189, 248, 0.06);
+      border: 1px solid rgba(56, 189, 248, 0.2);
+      border-radius: 6px;
+      padding: 8px 12px;
+      font-size: 11.5px;
+      color: var(--cyan);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .script-narration-body {
+      font-size: 13.5px;
+      line-height: 1.7;
+      color: #e2e8f0;
+      text-align: justify;
+    }
+
+    .script-subsections-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-top: 4px;
+      padding-top: 10px;
+      border-top: 1px dashed rgba(255, 255, 255, 0.08);
+    }
+
+    .script-subsec-item {
+      font-size: 11.5px;
+      color: var(--text-muted);
+      line-height: 1.45;
+    }
+
+    .script-subsec-code {
+      color: var(--primary);
+      font-weight: 700;
+      margin-right: 4px;
+    }
+
     /* 2. KỊCH BẢN GIẢNG DẠY (SCRIPT) */
     .pane-timeline {
       display: flex;
@@ -1590,10 +1929,10 @@
         <!-- TOP NAVIGATION BAR -->
         <div class="center-nav-bar">
           <button class="center-nav-btn active" id="btn-tab-mindmap">
-            <span>🧠</span> Sơ Đồ Tư Duy
+            <span>🗺️</span> Sơ Đồ
           </button>
           <button class="center-nav-btn" id="btn-tab-script">
-            <span>📜</span> Kịch Bản Giảng Dạy
+            <span>📜</span> Kịch Bản
           </button>
           <button class="center-nav-btn" id="btn-tab-video">
             <span>🎬</span> Video Bài Giảng
@@ -1618,16 +1957,26 @@
           </div>
         </div>
 
-        <!-- TAB 2: KỊCH BẢN GIẢNG DẠY (CHƯA CẦN VOICE) -->
+        <!-- TAB 2: KỊCH BẢN (HIỂN THỊ KỊCH BẢN HOÀN CHỈNH ĐÃ BIÊN TẬP TỪ SƠ ĐỒ) -->
         <div class="center-tab-pane" id="tab-content-script">
-          <div class="pane-timeline">
-            <div class="timeline-header-row">
-              <div>Thời gian & Cảnh</div>
-              <div>Lời Giảng Sư Phạm (Narration Track)</div>
-              <div>Chỉ Dẫn Thị Giác (Visual Track)</div>
+          <div class="script-document-container">
+            <!-- THANH THAO TÁC & THÔNG TIN KỊCH BẢN -->
+            <div class="script-doc-toolbar">
+              <div class="script-doc-summary">
+                <span class="badge-pro" style="background: rgba(16, 185, 129, 0.2); border-color: var(--emerald); color: var(--emerald);">BẢN CHÍNH THỨC</span>
+                <span class="script-doc-filename" id="doc-active-title">DSS09 - Phân Cụm Dữ Liệu</span>
+                <span class="script-doc-meta" id="doc-summary-meta">⏱️ Tổng thời lượng: 5 phút 00s • 5/5 chương</span>
+              </div>
+              <div class="script-doc-btn-group">
+                <button class="script-action-btn" id="btn-copy-full-script" title="Sao chép toàn bộ văn bản kịch bản">
+                  <span>📋</span> Sao Chép Kịch Bản
+                </button>
+              </div>
             </div>
-            <div id="timeline-container" style="display: flex; flex-direction: column; gap: 16px;">
-              <!-- Scenes injected via JS -->
+
+            <!-- TỜ VĂN BẢN KỊCH BẢN HOÀN CHỈNH (CLEAN DOCUMENT VIEW) -->
+            <div class="script-paper-view" id="script-paper-view">
+              <!-- Rendered via JS -->
             </div>
           </div>
         </div>
@@ -1660,35 +2009,66 @@
         </div>
       </main>
 
-      <!-- PANE 3: BẢNG TINH CHỈNH THAM SỐ + Ô CHAT AI SƯ PHẠM (LLM CHAT BOX) -->
-      <aside class="pane-tuning">
-        <div class="pane-header">
-          <span>⚙️ Tinh Chỉnh Tham Số</span>
-          <span style="color: var(--cyan); font-size: 11px;">● Trực quan</span>
-        </div>
-
-        <!-- THỜI LƯỢNG -->
-        <div class="tuning-card">
-          <div class="tuning-label-row">
-            <span>Thời lượng bài giảng:</span>
-            <strong style="color: var(--cyan);" id="val-duration">5 phút 00s (300s)</strong>
+      <!-- PANE 3: BẢNG TINH CHỈNH THAM SỐ (POP-OUT KHI ẤN NÚT EDIT ✎ TRÊN SƠ ĐỒ) + KHUNG CHAT AI SƯ PHẠM -->
+      <aside class="pane-tuning" id="pane-tuning">
+        <!-- DRAWER TINH CHỈNH THAM SỐ CHO TỪNG NHÁNH (MẶC ĐỊNH ẨN, TỰ BẬT RA KHI NHẤN ✎ Ở TỪNG NODE TRÊN SƠ ĐỒ) -->
+        <div class="node-tuning-drawer" id="node-tuning-drawer" style="display: none;">
+          <div class="drawer-header">
+            <div class="drawer-badge-title">
+              <span>✎</span>
+              <span id="tuning-target-title">CHƯƠNG 1</span>
+            </div>
+            <button class="btn-drawer-close" id="btn-close-tuning" title="Đóng bảng tinh chỉnh (quay lại khung chat)">✕</button>
           </div>
-          <input type="range" class="slider" id="slider-duration" min="60" max="1800" step="30" value="300" style="width: 100%;">
-        </div>
 
-        <!-- TỐC ĐỘ ĐỌC -->
-        <div class="tuning-card">
-          <div class="tuning-label-row">
-            <span>Tốc độ đọc (WPM):</span>
-            <strong style="color: var(--cyan);" id="val-wpm">140 từ/phút</strong>
+          <div class="drawer-body">
+            <!-- TIÊU ĐỀ PHÂN ĐOẠN -->
+            <div class="tuning-field">
+              <label class="tuning-label">Tiêu đề phân đoạn:</label>
+              <input type="text" class="form-input" id="tuning-node-title" placeholder="Tiêu đề chương / phần..." style="font-size: 12px; padding: 6px 10px;">
+            </div>
+
+            <!-- THỜI LƯỢNG CHO PHÂN ĐOẠN NÀY -->
+            <div class="tuning-field">
+              <div class="tuning-label-row" style="display: flex; justify-content: space-between; align-items: center; font-size: 11px; margin-bottom: 2px;">
+                <label class="tuning-label">Thời lượng nhánh này:</label>
+                <strong style="color: var(--cyan); font-family: 'JetBrains Mono', monospace;" id="val-node-duration">60s (1p00s)</strong>
+              </div>
+              <input type="range" class="slider" id="slider-node-duration" min="15" max="300" step="5" value="60" style="width: 100%;">
+            </div>
+
+            <!-- TỐC ĐỘ ĐỌC (WPM) -->
+            <div class="tuning-field">
+              <div class="tuning-label-row" style="display: flex; justify-content: space-between; align-items: center; font-size: 11px; margin-bottom: 2px;">
+                <label class="tuning-label">Tốc độ đọc giọng AI:</label>
+                <strong style="color: var(--cyan); font-family: 'JetBrains Mono', monospace;" id="val-node-wpm">140 WPM</strong>
+              </div>
+              <input type="range" class="slider" id="slider-node-wpm" min="110" max="180" step="5" value="140" style="width: 100%;">
+            </div>
+
+            <!-- CHỈ DẪN THỊ GIÁC / HÌNH THỨC -->
+            <div class="tuning-field">
+              <label class="tuning-label">Chỉ dẫn thị giác & sư phạm:</label>
+              <select class="form-select" id="select-node-visual" style="font-size: 11.5px; padding: 6px 8px; width: 100%; background: #0b1120; border: 1px solid var(--border-accent); border-radius: 4px; color: var(--text-main);">
+                <option value="split_screen">So sánh song song (Split Screen)</option>
+                <option value="process_visualization">Mô phỏng động quá trình (Process Animation)</option>
+                <option value="highlight_box">Khoanh vùng điểm nhấn (Highlight Box)</option>
+                <option value="animated_diagram">Lưới sơ đồ tô-pô thích nghi (Animated Diagram)</option>
+                <option value="concept_map">Bản đồ khái niệm & Case Study (Concept Map)</option>
+              </select>
+            </div>
+
+            <!-- NÚT LƯU & ÁP DỤNG -->
+            <div style="display: flex; gap: 8px; margin-top: 4px;">
+              <button class="btn-primary" id="btn-save-node-tuning" style="flex: 1; justify-content: center; padding: 7px; font-size: 12px;">
+                <span>✓</span> Lưu Tham Số
+              </button>
+              <button class="btn-export" id="btn-cancel-node-tuning" style="padding: 7px 12px; font-size: 12px;">
+                Đóng
+              </button>
+            </div>
           </div>
-          <input type="range" class="slider" id="slider-wpm" min="110" max="180" step="5" value="140" style="width: 100%;">
         </div>
-
-        <!-- NÚT CẬP NHẬT THAM SỐ -->
-        <button class="btn-primary" id="btn-re-generate" style="width: 100%; justify-content: center; padding: 9px; font-size: 12.5px;">
-          <span>⚡</span> Cập Nhật Tham Số
-        </button>
 
         <!-- KHUNG CHAT AI SƯ PHẠM (LLM CHAT BOX THAY THẾ ƯỚC TÍNH SƯ PHẠM) -->
         <div class="ai-chat-section">
@@ -2055,10 +2435,75 @@
       } else if (tabName === 'script') {
         document.getElementById('btn-tab-script')?.classList.add('active');
         document.getElementById('tab-content-script')?.classList.add('active');
+        renderScriptDocument(); // Tự động cập nhật kịch bản hoàn chỉnh
       } else if (tabName === 'video') {
         document.getElementById('btn-tab-video')?.classList.add('active');
         document.getElementById('tab-content-video')?.classList.add('active');
       }
+    }
+
+    function initNodeTuningDrawerEvents() {
+      // Slider thời lượng
+      document.getElementById('slider-node-duration')?.addEventListener('input', (e) => {
+        const val = parseInt(e.target.value);
+        const m = Math.floor(val / 60);
+        const s = val % 60;
+        const label = document.getElementById('val-node-duration');
+        if (label) label.textContent = `${val}s (${m > 0 ? m + 'p' : ''}${s < 10 ? '0' : ''}${s}s)`;
+      });
+
+      // Slider tốc độ đọc WPM
+      document.getElementById('slider-node-wpm')?.addEventListener('input', (e) => {
+        const val = parseInt(e.target.value);
+        const label = document.getElementById('val-node-wpm');
+        if (label) label.textContent = `${val} WPM`;
+      });
+
+      // Đóng bảng tinh chỉnh (quay lại chat)
+      document.getElementById('btn-close-tuning')?.addEventListener('click', closeNodeTuning);
+      document.getElementById('btn-cancel-node-tuning')?.addEventListener('click', closeNodeTuning);
+
+      // Lưu tham số phân đoạn
+      document.getElementById('btn-save-node-tuning')?.addEventListener('click', () => {
+        if (!currentTuningTarget) return;
+        const newDur = parseInt(document.getElementById('slider-node-duration').value) || 60;
+        const newWpm = parseInt(document.getElementById('slider-node-wpm').value) || 140;
+        const newTitle = document.getElementById('tuning-node-title').value.trim() || currentTuningTarget.nodeTitle;
+        const newVisual = document.getElementById('select-node-visual').value;
+
+        saveNodeParameters(currentTuningTarget.nodeKey, newDur, newWpm, newTitle, newVisual);
+
+        closeNodeTuning();
+        renderMindmap();
+        renderScriptDocument();
+
+        // Gửi tin nhắn thông báo trong Trợ Lý AI
+        const chatContainer = document.getElementById('ai-chat-messages');
+        if (chatContainer) {
+          const aiDiv = document.createElement('div');
+          aiDiv.className = 'chat-msg msg-ai';
+          aiDiv.innerHTML = `
+            <div class="msg-avatar">🤖</div>
+            <div class="msg-bubble">
+              Đã cập nhật nhánh <strong>${newTitle}</strong>: thời lượng <strong>${newDur}s</strong>, tốc độ đọc <strong>${newWpm} WPM</strong>, chỉ dẫn thị giác <strong>[${newVisual}]</strong>!
+            </div>
+          `;
+          chatContainer.appendChild(aiDiv);
+          chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+      });
+
+      // Nút sao chép kịch bản hoàn chỉnh
+      document.getElementById('btn-copy-full-script')?.addEventListener('click', () => {
+        const paper = document.getElementById('script-paper-view');
+        if (!paper) return;
+        const text = paper.innerText;
+        navigator.clipboard.writeText(text).then(() => {
+          showToast('Đã sao chép kịch bản hoàn chỉnh vào Clipboard!');
+        }).catch(() => {
+          showToast('Đã sao chép kịch bản!');
+        });
+      });
     }
 
     document.getElementById('btn-tab-mindmap')?.addEventListener('click', () => switchCenterTab('mindmap'));
@@ -2583,15 +3028,106 @@
     }
 
     // =========================================================================
-    // RENDER SƠ ĐỒ TƯ DUY: MỌC TỪ TRÊN XUỐNG, ĐA GỐC ĐỘC LẬP TỪNG TỆP
-    // CÂY PHÂN CẤP SÂU 3 TẦNG: BẤM TRỰC TIẾP ĐỂ NỞ RA / THU VÀO (KHÔNG BẬT TAB KỊCH BẢN)
+    // QUẢN LÝ LOẠI TRỪ (EXCLUSIONS) VÀ TINH CHỈNH THAM SỐ TỪNG NHÁNH
+    // =========================================================================
+    const excludedNodes = new Set();
+    const nodeCustomParams = {}; // Lưu trữ duration, wpm, title, visual cho từng node
+
+    function isNodeExcluded(nodeKey, parentKeys = []) {
+      if (excludedNodes.has(nodeKey)) return true;
+      for (const pKey of parentKeys) {
+        if (excludedNodes.has(pKey)) return true;
+      }
+      return false;
+    }
+
+    function toggleNodeExclusion(nodeKey) {
+      if (excludedNodes.has(nodeKey)) {
+        excludedNodes.delete(nodeKey);
+      } else {
+        excludedNodes.add(nodeKey);
+      }
+      renderMindmap();
+      renderScriptDocument();
+    }
+
+    function saveNodeParameters(nodeKey, duration, wpm, title, visualType) {
+      nodeCustomParams[nodeKey] = { duration, wpm, title, visualType };
+    }
+
+    function getNodeParam(nodeKey, paramName, defaultValue) {
+      if (nodeCustomParams[nodeKey] && nodeCustomParams[nodeKey][paramName] !== undefined) {
+        return nodeCustomParams[nodeKey][paramName];
+      }
+      return defaultValue;
+    }
+
+    // =========================================================================
+    // DRAWER TINH CHỈNH THAM SỐ CHO TỪNG NHÁNH (POP-OUT KHI ẤN NÚT EDIT ✎)
+    // =========================================================================
+    let currentTuningTarget = null;
+
+    function openNodeTuning(nodeKey, nodeTitle, duration, wpm, visualType, cardEl) {
+      currentTuningTarget = { nodeKey, nodeTitle, duration, wpm, visualType };
+
+      // Highlight card đang được chỉnh sửa
+      document.querySelectorAll('.is-being-edited').forEach(el => el.classList.remove('is-being-edited'));
+      if (cardEl) cardEl.classList.add('is-being-edited');
+
+      const drawer = document.getElementById('node-tuning-drawer');
+      if (!drawer) return;
+
+      const titleDisplay = document.getElementById('tuning-target-title');
+      if (titleDisplay) {
+        titleDisplay.textContent = nodeTitle.length > 28 ? nodeTitle.substring(0, 26) + '...' : nodeTitle;
+      }
+
+      const inputTitle = document.getElementById('tuning-node-title');
+      if (inputTitle) inputTitle.value = nodeTitle;
+
+      const durSlider = document.getElementById('slider-node-duration');
+      const durVal = document.getElementById('val-node-duration');
+      if (durSlider && durVal) {
+        durSlider.value = duration || 60;
+        const m = Math.floor(durSlider.value / 60);
+        const s = durSlider.value % 60;
+        durVal.textContent = `${durSlider.value}s (${m > 0 ? m + 'p' : ''}${s < 10 ? '0' : ''}${s}s)`;
+      }
+
+      const wpmSlider = document.getElementById('slider-node-wpm');
+      const wpmVal = document.getElementById('val-node-wpm');
+      if (wpmSlider && wpmVal) {
+        wpmSlider.value = wpm || 140;
+        wpmVal.textContent = `${wpmSlider.value} WPM`;
+      }
+
+      const selectVisual = document.getElementById('select-node-visual');
+      if (selectVisual && visualType) {
+        selectVisual.value = visualType;
+      }
+
+      drawer.style.display = 'flex';
+      // Cuộn lên đầu pane tuning để người dùng thấy ngay
+      drawer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    function closeNodeTuning() {
+      const drawer = document.getElementById('node-tuning-drawer');
+      if (drawer) drawer.style.display = 'none';
+      document.querySelectorAll('.is-being-edited').forEach(el => el.classList.remove('is-being-edited'));
+      currentTuningTarget = null;
+    }
+
+    // =========================================================================
+    // RENDER SƠ ĐỒ (MỌC TỪ TRÊN XUỐNG, ĐA GỐC ĐỘC LẬP TỪNG TỆP)
+    // MỖI CARD CÓ NÚT X (GÓC TRÊN PHẢI) VÀ EDIT ✎ (GÓC DƯỚI PHẢI) THEO BẢN VẼ
     // =========================================================================
     function renderMindmap() {
       const world = document.getElementById('mindmap-world');
       if (!world) return;
       world.innerHTML = '';
 
-      // Danh sách các tệp nguồn: mỗi tệp tạo thành 1 CÂY GỐC RIÊNG BIỆT (không gộp lung tung)
+      // Danh sách các tệp nguồn: mỗi tệp tạo thành 1 CÂY GỐC RIÊNG BIỆT
       const sources = (activeProject.sources && activeProject.sources.length > 0)
         ? activeProject.sources
         : [{ name: activeProject.title + '.pdf', pages: 35, size: '1.2 MB' }];
@@ -2599,18 +3135,26 @@
       const hierarchyChapters = getProjectHierarchy(activeProject, currentScenes);
 
       sources.forEach((src, srcIdx) => {
+        const rootKey = `src-${srcIdx}`;
+        const isRootExcluded = isNodeExcluded(rootKey);
+
         const treeContainer = document.createElement('div');
         treeContainer.className = 'tree-root-container';
         treeContainer.id = `tree-root-${srcIdx}`;
-        // Định vị vị trí ban đầu của từng gốc (cách nhau theo chiều ngang, tránh đè lên nhau)
         treeContainer.style.left = `${60 + srcIdx * 1550}px`;
         treeContainer.style.top = `40px`;
 
-        // 1. Thẻ GỐC TRÊN CÙNG (Có thể kéo thả di chuyển vị trí gốc tùy ý)
+        // 1. Thẻ GỐC TRÊN CÙNG (Có góc trên X và góc dưới ✎ theo bản vẽ phác thảo)
         const rootCard = document.createElement('div');
-        rootCard.className = 'tree-root-card';
+        rootCard.className = `tree-root-card ${isRootExcluded ? 'is-excluded' : ''}`;
         rootCard.title = 'Giữ và kéo để di chuyển gốc học liệu này';
         rootCard.innerHTML = `
+          <button class="node-corner-x" id="btn-x-${rootKey}" title="${isRootExcluded ? 'Khôi phục toàn bộ tệp học liệu này' : 'Loại bỏ toàn bộ tệp này khỏi kịch bản'}">
+            ${isRootExcluded ? '↺' : '✕'}
+          </button>
+          <button class="node-corner-edit" id="btn-edit-${rootKey}" title="Tinh chỉnh thông số tệp học liệu">
+            ✎
+          </button>
           <div class="tree-root-drag-badge">⋮⋮ Kéo di chuyển gốc</div>
           <div style="font-size: 26px; margin-bottom: 2px;">📄</div>
           <div class="tree-root-title" title="${src.name}">${src.name}</div>
@@ -2620,6 +3164,18 @@
           </div>
         `;
 
+        // Event nút X trên root card
+        rootCard.querySelector(`#btn-x-${rootKey}`)?.addEventListener('click', (e) => {
+          e.stopPropagation();
+          toggleNodeExclusion(rootKey);
+        });
+
+        // Event nút Edit ✎ trên root card
+        rootCard.querySelector(`#btn-edit-${rootKey}`)?.addEventListener('click', (e) => {
+          e.stopPropagation();
+          openNodeTuning(rootKey, src.name, 300, 140, 'concept_map', rootCard);
+        });
+
         // Cơ chế kéo di chuyển gốc cây độc lập (Free Draggable Root)
         let isDraggingRoot = false;
         let rootStartX = 0;
@@ -2628,6 +3184,7 @@
         let initialTop = 0;
 
         rootCard.addEventListener('mousedown', (e) => {
+          if (e.target.closest('.node-corner-x') || e.target.closest('.node-corner-edit')) return;
           e.stopPropagation();
           isDraggingRoot = true;
           rootStartX = e.clientX;
@@ -2658,7 +3215,6 @@
         // 3. Đường ngang chia nhánh (Horizontal Connector Bus)
         const bus = document.createElement('div');
         bus.className = 'tree-branches-bus';
-        // Chiều rộng bus tương ứng với số phân cảnh
         bus.style.width = `${Math.max(280, (hierarchyChapters.length - 1) * 297)}px`;
         treeContainer.appendChild(bus);
 
@@ -2667,6 +3223,19 @@
         branchesRow.className = 'tree-branches-row';
 
         hierarchyChapters.forEach((chData, chIdx) => {
+          const chKey = `ch-${chIdx}`;
+          const isChExcluded = isNodeExcluded(chKey, [rootKey]);
+
+          // Lấy tham số tùy biến (nếu đã được tinh chỉnh qua nút ✎)
+          const customTitle = getNodeParam(chKey, 'title', chData.title);
+          const customDur = getNodeParam(chKey, 'duration', chData.duration_s || 60);
+          const customWpm = getNodeParam(chKey, 'wpm', 140);
+          const customVisual = getNodeParam(chKey, 'visualType', chData.visual_type || 'split_screen');
+
+          chData.duration_s = customDur;
+          chData.title = customTitle;
+          chData.visual_type = customVisual;
+
           const col = document.createElement('div');
           col.className = 'tree-branch-col';
 
@@ -2675,24 +3244,55 @@
           dropLine.className = 'tree-drop-line';
           col.appendChild(dropLine);
 
-          // Card Level 1: CHƯƠNG (Bấm vào để nở ra / thu vào Level 2 Phần a, b, c)
+          // Card Level 1: CHƯƠNG (Có góc trên X và góc dưới ✎)
           const branchCard = document.createElement('div');
-          branchCard.className = 'tree-branch-card';
+          branchCard.className = `tree-branch-card ${isChExcluded ? 'is-excluded' : ''}`;
           branchCard.id = `branch-node-${srcIdx}-${chIdx}`;
           branchCard.title = 'Bấm vào để nở ra / thu vào các phần con của chương này';
 
           let isLevel2Expanded = true; // Mặc định mở Level 2 (Phần a, b, c)
 
           branchCard.innerHTML = `
-            <div class="branch-card-header">
+            <button class="node-corner-x" id="btn-x-${chKey}" title="${isChExcluded ? 'Khôi phục chương này vào kịch bản' : 'Loại bỏ chương này khỏi kịch bản (các phần nhỏ bên trong cũng bỏ theo)'}">
+              ${isChExcluded ? '↺' : '✕'}
+            </button>
+            <button class="node-corner-edit" id="btn-edit-${chKey}" title="Nhấn để tinh chỉnh thời lượng & tham số cho chương này">
+              ✎
+            </button>
+
+            <div class="branch-card-header" style="padding-right: 28px;">
               <span class="depth-tag depth-${chData.depth || 'core'}">${chData.chapter}</span>
               <span class="node-toggle-badge" id="badge-ch-${srcIdx}-${chIdx}">
                 ${isLevel2Expanded ? '▼' : '▶'} ${chData.sections.length} Phần
               </span>
             </div>
-            <div class="branch-card-title">${chData.title}</div>
-            <div style="font-size: 10px; color: var(--amber);">👁️ [${chData.visual_type || 'split_screen'}]</div>
+            <div class="branch-card-title">${customTitle}</div>
+            
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 4px; padding-right: 26px;">
+              <div style="font-size: 10px; color: var(--amber);">👁️ [${customVisual}]</div>
+              <div class="node-duration-badge" id="dur-tag-${chKey}" title="Bấm vào để chỉnh số phút/giây">
+                ⏱️ ${customDur}s
+              </div>
+            </div>
           `;
+
+          // Event Nút X góc trên phải: Loại bỏ hoặc Khôi phục chương
+          branchCard.querySelector(`#btn-x-${chKey}`)?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            toggleNodeExclusion(chKey);
+          });
+
+          // Event Nút Edit ✎ góc dưới phải: Bật thanh tinh chỉnh tham số bên phải
+          branchCard.querySelector(`#btn-edit-${chKey}`)?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            openNodeTuning(chKey, customTitle, customDur, customWpm, customVisual, branchCard);
+          });
+
+          // Click duration badge cũng mở bảng tinh chỉnh
+          branchCard.querySelector(`#dur-tag-${chKey}`)?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            openNodeTuning(chKey, customTitle, customDur, customWpm, customVisual, branchCard);
+          });
 
           // Container Level 2: PHÂN MỤC (Phần a, b, c)
           const level2Container = document.createElement('div');
@@ -2708,7 +3308,7 @@
 
           // Level 1 Card Click: Nở ra / Thu vào Level 2 (KHÔNG BẬT SANG SCRIPT)
           branchCard.addEventListener('click', (e) => {
-            // Không chuyển sang kịch bản! Chỉ toggle nở ra thu vào
+            if (e.target.closest('.node-corner-x') || e.target.closest('.node-corner-edit') || e.target.closest('.node-duration-badge')) return;
             isLevel2Expanded = !isLevel2Expanded;
             const badge = branchCard.querySelector(`#badge-ch-${srcIdx}-${chIdx}`);
             if (isLevel2Expanded) {
@@ -2722,31 +3322,55 @@
 
           // Duyệt qua từng Phần (Level 2: Phần a, b, c)
           chData.sections.forEach((sec, secIdx) => {
+            const secKey = `sec-${chIdx}-${secIdx}`;
+            const isSecExcluded = isNodeExcluded(secKey, [chKey, rootKey]);
+
             const subCard = document.createElement('div');
-            subCard.className = 'tree-subbranch-card';
+            subCard.className = `tree-subbranch-card ${isSecExcluded ? 'is-excluded' : ''}`;
             subCard.title = 'Bấm vào để nở ra / thu vào các chi tiết con (a1, a2, a3...)';
 
-            // Mặc định: Chương 1 - Phần a mở sẵn a1, a2, a3 để user thấy cây 3 tầng ngay; các phần khác thu gọn
             let isLevel3Expanded = (chIdx === 0 && secIdx === 0);
 
             subCard.innerHTML = `
-              <div class="subbranch-header">
+              <button class="node-corner-x" id="btn-x-${secKey}" title="${isSecExcluded ? 'Khôi phục phần này vào kịch bản' : 'Loại bỏ phần này khỏi kịch bản'}">
+                ${isSecExcluded ? '↺' : '✕'}
+              </button>
+              <button class="node-corner-edit" id="btn-edit-${secKey}" title="Tinh chỉnh phần này">
+                ✎
+              </button>
+
+              <div class="subbranch-header" style="padding-right: 28px;">
                 <span class="subbranch-code">${sec.code}</span>
                 <span class="node-toggle-badge" id="badge-sec-${srcIdx}-${chIdx}-${secIdx}">
                   ${isLevel3Expanded ? '▼' : '▶'} ${sec.items.length} mục
                 </span>
               </div>
-              <div class="subbranch-title">${sec.title}</div>
+              <div class="subbranch-title" style="padding-right: 22px;">${sec.title}</div>
             `;
+
+            // Event Nút X góc trên phải của Section
+            subCard.querySelector(`#btn-x-${secKey}`)?.addEventListener('click', (e) => {
+              e.stopPropagation();
+              toggleNodeExclusion(secKey);
+            });
+
+            // Event Nút Edit ✎ góc dưới phải của Section
+            subCard.querySelector(`#btn-edit-${secKey}`)?.addEventListener('click', (e) => {
+              e.stopPropagation();
+              openNodeTuning(secKey, `${sec.code}: ${sec.title}`, Math.round(customDur / 3), customWpm, customVisual, subCard);
+            });
 
             // Container Level 3: TIỂU TIẾT (a1, a2, a3)
             const level3Container = document.createElement('div');
             level3Container.className = 'tree-level3-container';
             if (!isLevel3Expanded) level3Container.classList.add('collapsed');
 
-            sec.items.forEach(item => {
+            sec.items.forEach((item, itemIdx) => {
+              const itemKey = `item-${chIdx}-${secIdx}-${itemIdx}`;
+              const isItemExcluded = isNodeExcluded(itemKey, [secKey, chKey, rootKey]);
+
               const leafNode = document.createElement('div');
-              leafNode.className = 'tree-leaf-node';
+              leafNode.className = `tree-leaf-node ${isItemExcluded ? 'is-excluded' : ''}`;
               leafNode.innerHTML = `
                 <span class="leaf-code">${item.code}</span>
                 <span class="leaf-text">${item.text}</span>
@@ -2756,7 +3380,8 @@
 
             // Level 2 Card Click: Nở ra / Thu vào Level 3
             subCard.addEventListener('click', (e) => {
-              e.stopPropagation(); // Không kích hoạt click của Level 1
+              if (e.target.closest('.node-corner-x') || e.target.closest('.node-corner-edit')) return;
+              e.stopPropagation();
               isLevel3Expanded = !isLevel3Expanded;
               const secBadge = subCard.querySelector(`#badge-sec-${srcIdx}-${chIdx}-${secIdx}`);
               if (isLevel3Expanded) {
@@ -2790,6 +3415,106 @@
       if (teleText && currentScenes.length > 0) {
         teleText.textContent = currentScenes[0].narration;
       }
+    }
+
+    // =========================================================================
+    // RENDER KỊCH BẢN HOÀN CHỈNH (CLEAN PEDAGOGICAL SCRIPT DOCUMENT VIEW)
+    // TỰ ĐỘNG BỎ QUA CÁC NHÁNH ĐÃ BẤM X, TỰ TÍNH LẠI MỐC THỜI GIAN
+    // =========================================================================
+    function renderScriptDocument() {
+      const paper = document.getElementById('script-paper-view');
+      if (!paper) return;
+      paper.innerHTML = '';
+
+      const hierarchyChapters = getProjectHierarchy(activeProject, currentScenes);
+
+      // Lọc ra các chương KHÔNG BỊ LOẠI TRỪ
+      const activeChapters = hierarchyChapters.filter((ch, chIdx) => !isNodeExcluded(`ch-${chIdx}`, [`src-0`]));
+
+      // Tính toán mốc thời gian tuần tự dựa trên thời lượng từng chương
+      let currentTime = 0;
+      let totalWords = 0;
+
+      activeChapters.forEach(ch => {
+        ch.computedStart = currentTime;
+        const dur = ch.duration_s || 60;
+        ch.computedEnd = currentTime + dur;
+        currentTime += dur;
+      });
+
+      // Cập nhật thanh tiêu đề và thông số tổng
+      const metaEl = document.getElementById('doc-summary-meta');
+      const titleEl = document.getElementById('doc-active-title');
+      if (titleEl) titleEl.textContent = activeProject.title;
+      if (metaEl) {
+        const totalM = Math.floor(currentTime / 60);
+        const totalS = currentTime % 60;
+        metaEl.textContent = `⏱️ Tổng thời lượng: ${totalM} phút ${totalS < 10 ? '0' : ''}${totalS}s (${currentTime}s) • ${activeChapters.length}/${hierarchyChapters.length} chương`;
+      }
+
+      if (activeChapters.length === 0) {
+        paper.innerHTML = `
+          <div style="text-align: center; padding: 60px 20px; color: var(--text-dim); background: rgba(15, 23, 42, 0.5); border-radius: var(--radius-md); border: 1px dashed rgba(244, 63, 94, 0.4);">
+            <div style="font-size: 40px; margin-bottom: 12px;">⚠️</div>
+            <div style="font-size: 15px; font-weight: 700; color: #f87171; margin-bottom: 6px;">Toàn bộ các chương đã bị loại bỏ khỏi kịch bản!</div>
+            <div style="font-size: 12px; color: var(--text-muted);">Hãy bấm lại nút ✕ trên sơ đồ để khôi phục các chương cần thiết cho bài giảng của bạn.</div>
+          </div>
+        `;
+        return;
+      }
+
+      activeChapters.forEach((ch, activeIdx) => {
+        const originalChIdx = hierarchyChapters.indexOf(ch);
+        const chKey = `ch-${originalChIdx}`;
+        const secList = (ch.sections || []).filter((s, sIdx) => !isNodeExcluded(`sec-${originalChIdx}-${sIdx}`, [chKey, `src-0`]));
+
+        // Lấy lời giảng phù hợp từ scenes
+        const sceneMatch = currentScenes[originalChIdx] || {};
+        const narrationText = sceneMatch.narration || `Tiếp tục bài giảng, chúng ta cùng nghiên cứu trọng tâm kiến thức của ${ch.title}.`;
+        const words = narrationText.trim().split(/\s+/).length;
+        totalWords += words;
+
+        const startStr = formatTime(ch.computedStart);
+        const endStr = formatTime(ch.computedEnd);
+
+        // Danh sách các phân mục chi tiết được giữ lại
+        const subSecHtml = secList.map(sec => {
+          const secKey = `sec-${originalChIdx}-${sec.code}`;
+          const activeItems = (sec.items || []).filter((it, itIdx) => !isNodeExcluded(`item-${originalChIdx}-${sec.code}-${itIdx}`, [secKey, chKey, `src-0`]));
+          const itemsList = activeItems.map(it => `<div class="script-subsec-item">• <strong style="color: var(--cyan);">${it.code}:</strong> ${it.text}</div>`).join('');
+          return `
+            <div style="margin-top: 8px;">
+              <div style="font-size: 12px; font-weight: 700; color: var(--text-main); margin-bottom: 3px;">
+                <span class="script-subsec-code">${sec.code}:</span> ${sec.title}
+              </div>
+              <div style="padding-left: 12px; display: flex; flex-direction: column; gap: 3px;">${itemsList}</div>
+            </div>
+          `;
+        }).join('');
+
+        const sectionEl = document.createElement('div');
+        sectionEl.className = 'script-chapter-section';
+        sectionEl.innerHTML = `
+          <div class="script-chapter-header">
+            <div class="script-chapter-title-group">
+              <span class="depth-tag depth-${ch.depth || 'core'}">${ch.chapter}</span>
+              <span class="script-chapter-name">${ch.title}</span>
+            </div>
+            <div class="script-chapter-timing">[${startStr} - ${endStr}] (${(ch.duration_s || 60)}s)</div>
+          </div>
+
+          <div class="script-visual-directive">
+            <span>👁️</span> <strong>[${ch.visual_type || 'split_screen'}]</strong>
+            <span>Chỉ dẫn thị giác: ${(sceneMatch.visual_purpose || ch.title)}</span>
+          </div>
+
+          <div class="script-narration-body">${narrationText}</div>
+
+          ${subSecHtml ? `<div class="script-subsections-list"><div style="font-size: 11px; font-weight: 700; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px;">Cấu trúc phân tích chi tiết đã chọn:</div>${subSecHtml}</div>` : ''}
+        `;
+
+        paper.appendChild(sectionEl);
+      });
     }
 
     // =========================================================================
@@ -2864,10 +3589,11 @@
       renderSourcesList();
       renderMindmap();
       initMindmapPanZoom();
-      renderTimeline();
+      initNodeTuningDrawerEvents();
+      renderScriptDocument();
       updateTuningPanel();
 
-      // Mặc định tự động mở Sơ Đồ Tư Duy (Mindmap) ở giữa theo đúng yêu cầu
+      // Mặc định tự động mở Sơ Đồ ở giữa theo đúng yêu cầu
       switchCenterTab('mindmap');
 
       showToast(`Đã mở dự án: ${activeProject.title}`);
@@ -3256,7 +3982,7 @@
     });
 
     // RE-GENERATE BUTTON HANDLER
-    document.getElementById('btn-re-generate').addEventListener('click', async () => {
+    document.getElementById('btn-re-generate')?.addEventListener('click', async () => {
       const dur = parseInt(document.getElementById('slider-duration').value) || 300;
       const wpm = parseInt(document.getElementById('slider-wpm').value) || 140;
 
