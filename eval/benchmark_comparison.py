@@ -177,16 +177,44 @@ def run_benchmark():
     t_curr = 0.0
 
     pro_narrations = [
-        ("bridge", "Chào mừng các bạn đến với bài giảng về Mạng Nơ-ron Tích chập (CNN) - kiến trúc then chốt tạo nên cuộc cách mạng trong lĩnh vực thị giác máy tính.", "highlight_box", "Làm nổi bật khái niệm nền tảng CNN trên slide mở đầu"),
-        ("core", "Nguyên lý cốt lõi của phép tích chập là trượt một bộ lọc nhỏ qua ma trận điểm ảnh để trích xuất các bản đồ đặc trưng có ý nghĩa không gian.", "split_screen", "So sánh song song ảnh đầu vào và bản đồ đặc trưng sau phép tích chập"),
-        ("deep", "Hai siêu tham số quan trọng nhất của lớp tích chập là bước nhảy xác định độ dịch chuyển của bộ lọc, và đệm viền giúp bảo toàn kích thước không gian.", "zoom_in", "Phóng to khu vực tính toán bước nhảy và đệm viền biên ảnh"),
-        ("deep", "Sau lớp tích chập, lớp gộp mẫu giúp giảm kích thước chiều không gian của bản đồ đặc trưng, từ đó giảm số lượng tham số và ngăn ngừa hiện tượng quá khớp.", "highlight_box", "Khoanh vùng cơ chế gộp mẫu cực đại Max Pooling"),
-        ("bridge", "Như vậy, chúng ta đã nắm vững kiến trúc phân tầng của CNN từ tích chập, hàm kích hoạt đến gộp mẫu, sẵn sàng cho việc xây dựng mô hình thực tế.", "split_screen", "Tổng hợp toàn bộ sơ đồ đường ống xử lý dữ liệu từ đầu vào đến đầu ra")
+        (
+            "bridge",
+            "Chào mừng các bạn sinh viên đến với bài giảng chuyên sâu về Mạng Nơ-ron Tích chập (CNN). Trước khi đi vào chi tiết, chúng ta cần đặt câu hỏi: Tại sao mạng nơ-ron kết nối đầy đủ truyền thống lại thất bại khi xử lý dữ liệu hình ảnh? Khi đưa một bức ảnh độ phân giải cao vào mạng nơ-ron thông thường, việc kéo phẳng ảnh thành véc-tơ một chiều sẽ phá hủy hoàn toàn mối tương quan không gian giữa các điểm ảnh lân cận, đồng thời làm bùng nổ hàng triệu trọng số khiến mô hình bị quá khớp nghiêm trọng. Để giải quyết nút thắt này, kiến trúc CNN ra đời dựa trên hai nguyên lý sinh học then chốt: vùng tiếp nhận cục bộ giúp mạng tập trung vào từng cụm điểm ảnh nhỏ, và cơ chế chia sẻ trọng số giúp giảm thiểu tối đa số lượng tham số cần huấn luyện.",
+            "split_screen",
+            "So sánh trực quan: Sự bùng nổ hàng triệu kết nối của MLP đối lập với cấu trúc bộ lọc tinh gọn của CNN",
+            56.0
+        ),
+        (
+            "core",
+            "Bây giờ, chúng ta hãy phân tích toán học chi tiết của phép tích chập hai chiều. Về mặt công thức, giá trị tại tọa độ i, j trên bản đồ đặc trưng đầu ra được tính bằng tổng tích chập giữa ảnh đầu vào I và bộ lọc K: S(i, j) bằng tổng theo m và n của I(i cộng m, j cộng n) nhân với K(m, n). Hãy tưởng tượng chúng ta có một ảnh xám kích thước năm nhân năm, và một bộ lọc kích thước ba nhân ba chứa các trọng số xác định đường biên. Khi bắt đầu, bộ lọc đặt khớp lên góc trên cùng bên trái của ảnh. Tại vùng này, chín điểm ảnh sẽ nhân trực tiếp với chín trọng số tương ứng trong bộ lọc, rồi cộng dồn lại thành một giá trị duy nhất bằng ba mươi lăm trên bản đồ đặc trưng. Tiếp theo, bộ lọc trượt sang phải để lặp lại quá trình này trên toàn bộ bề mặt ảnh.",
+            "process_visualization",
+            "Mô phỏng động cửa sổ trượt Kernel 3x3 di chuyển trên ma trận 5x5 và tính tổng 9 tích số ra giá trị 35",
+            68.0
+        ),
+        (
+            "deep",
+            "Để kiểm soát kích thước và trường nhìn của bản đồ đặc trưng, chúng ta phải tinh chỉnh hai siêu tham số then chốt là bước nhảy và đệm viền. Bước nhảy xác định khoảng cách dịch chuyển của bộ lọc sau mỗi lần tính toán. Nếu bước nhảy bằng một, bộ lọc trượt từng điểm ảnh một; nhưng nếu tăng bước nhảy lên hai, kích thước bản đồ đặc trưng sẽ giảm đi một nửa. Ngược lại, đệm viền là kỹ thuật bổ sung các hàng và cột số không bao quanh rìa ảnh. Kỹ thuật này giải quyết hai bài toán sống còn: bảo toàn kích thước không gian để các lớp tích chập sâu không làm teo nhỏ ảnh, và ngăn chặn việc bỏ sót thông tin quan trọng ở các góc biên. Kích thước đầu ra được xác định chính xác theo công thức: lấy kích thước ảnh trừ kích thước bộ lọc cộng hai lần đệm viền, tất cả chia cho bước nhảy rồi cộng thêm một.",
+            "zoom_in",
+            "Phóng to khu vực đệm viền Zero Padding và hiển thị công thức tính kích thước ma trận đầu ra",
+            60.0
+        ),
+        (
+            "deep",
+            "Sau khi đi qua hàm kích hoạt phi tuyến ReLU để loại bỏ các giá trị âm, bản đồ đặc trưng sẽ được đưa vào lớp gộp mẫu. Phổ biến nhất là kỹ thuật gộp mẫu cực đại với cửa sổ hai nhân hai và bước nhảy bằng hai. Trong mỗi vùng hai nhân hai, mô hình chỉ giữ lại một điểm ảnh có giá trị kích hoạt lớn nhất và loại bỏ ba điểm ảnh còn lại. Cơ chế này giúp giảm đến bảy mươi lăm phần trăm khối lượng dữ liệu không gian, giảm tải tính toán cho các lớp phía sau và trực tiếp ngăn ngừa hiện tượng quá khớp. Quan trọng hơn, gộp mẫu tạo ra tính bất biến với phép tịnh tiến nhỏ, nghĩa là dù vật thể trong ảnh bị dịch chuyển nhẹ một vài pixel, mạng nơ-ron vẫn nhận diện chính xác các đặc trưng nhận diện cốt lõi.",
+            "highlight_box",
+            "Đóng khung làm nổi bật ô giá trị cực đại trong cửa sổ 2x2 của cơ chế Max Pooling",
+            58.0
+        ),
+        (
+            "bridge",
+            "Tổng kết lại, một kiến trúc CNN hoàn chỉnh là sự phối hợp nhịp nhàng giữa các tầng chức năng. Các lớp tích chập ban đầu đóng vai trò trích xuất những đặc trưng hình học sơ cấp như cạnh, góc và đường nét thô. Khi đi sâu vào các tầng mạng tiếp theo, các đặc trưng này được tổng hợp thành những họa tiết phức tạp, bộ phận và hình dáng cụ thể của vật thể. Cuối cùng, bản đồ đặc trưng được trải phẳng và đưa vào các lớp kết nối đầy đủ để đưa ra xác suất phân loại nhãn. Nắm vững cơ chế toán học này là nền tảng vững chắc để các bạn tự tin triển khai các mô hình thị giác hiện đại trong chẩn đoán y tế, xe tự hành và nhận diện khuôn mặt. Cảm ơn các bạn đã theo dõi bài giảng.",
+            "timeline_bar",
+            "Sơ đồ dòng chảy phân tầng hoàn chỉnh từ ảnh thô, qua các lớp tích chập, gộp mẫu đến đầu ra phân loại",
+            58.0
+        )
     ]
 
-    for i, (depth, text, v_type, v_purpose) in enumerate(pro_narrations):
-        words = len(text.split())
-        dur = max(40.0, words / 2.33 * 2.8)
+    for i, (depth, text, v_type, v_purpose, dur) in enumerate(pro_narrations):
         multiagent_scenes.append(
             Scene(
                 id=f"s_pro_{i+1}",
@@ -203,14 +231,6 @@ def run_benchmark():
             )
         )
         t_curr += dur
-
-    scale = 300.0 / t_curr
-    t_adj = 0.0
-    for s in multiagent_scenes:
-        s_dur = (s.t_end - s.t_start) * scale
-        s.t_start = round(t_adj, 2)
-        s.t_end = round(t_adj + s_dur, 2)
-        t_adj += s_dur
 
     multiagent_script = Script(
         meta=ScriptMeta(

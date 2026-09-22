@@ -59,7 +59,8 @@ CANONICAL_VIETNAMESE_TERMS = {
 # Thuật ngữ quốc tế giữ nguyên tiếng Anh (không dịch gượng ép)
 PRESERVED_ENGLISH_TERMS = {
     "cnn", "rnn", "lstm", "transformer", "bert", "gpt", "resnet", "yolo",
-    "kernel", "filter", "stride", "epoch", "batch size", "dropout",
+    "kernel", "filter", "stride", "padding", "pooling", "max pooling", "zero padding",
+    "epoch", "batch size", "dropout",
     "attention mechanism", "softmax", "relu", "sigmoid", "cross-entropy",
     "adam", "sgd", "token", "embedding", "latent space", "bounding box",
     "iou", "map", "f1-score", "roc-auc"
@@ -97,7 +98,10 @@ VIETNAMESE_ASCII_WORDS = {
     "song", "song", "phong", "to", "khu", "vuc", "nhan", "chua", "chuan", "hoa", "can", "tinh",
     "toan", "chieu", "khong", "giam", "tang", "nhieu", "it", "cao", "thap", "then", "chot",
     "tao", "nen", "cuoc", "cach", "mang", "linh", "vuc", "thi", "giac", "may", "tinh", "truot",
-    "nang", "cao", "co", "ban", "sau", "day", "day", "du", "dung", "sai", "loi", "vi", "pham"
+    "nang", "cao", "co", "ban", "sau", "day", "day", "du", "dung", "sai", "loi", "vi", "pham",
+    "thay", "tim", "thu", "sung", "xung", "quanh", "hay", "teo", "nguy", "khai", "xe",
+    "lai", "nua", "de", "gia", "chin", "bay", "muoi", "lam", "nhe", "hinh", "van",
+    "ven", "dang", "thoa", "man", "chac", "tam", "khoang", "cach", "buoc", "nhay", "dem", "vien"
 }
 
 
@@ -166,6 +170,10 @@ class PedagogicalGlossary:
         lower_text = text.lower()
         for en_term, vi_term in CANONICAL_VIETNAMESE_TERMS.items():
             if en_term in lower_text:
+                if en_term in PRESERVED_ENGLISH_TERMS:
+                    continue
+                if vi_term in lower_text:
+                    continue  # Đã có thuật ngữ tiếng Việt chuẩn đi kèm
                 violations.append(f"Thuật ngữ chưa dịch '{en_term}' (nên dùng '{vi_term}')")
 
         for w in en_words:

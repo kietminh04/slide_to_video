@@ -108,7 +108,7 @@ class CriticAgent:
             2
         )
 
-        passed = overall_score >= 85.0 and avg_dev <= 0.15 and len(audit_res["violations"]) == 0
+        passed = overall_score >= 85.0 and avg_dev <= 0.15 and audit_res["passed"]
 
         return CriticScorecard(
             pacing_score=round(pacing_score, 2),
