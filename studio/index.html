@@ -1633,95 +1633,76 @@
       const isClustering = /cluster|kmeans|k-means|dbscan|som|phân cụm|dss/i.test(title + " " + extractedText);
       const isCNN = /cnn|convolution|tích chập|vision|neural/i.test(title + " " + extractedText);
 
-      let scenes = [];
-      const durPerScene = Math.round(duration / 5);
+      const numScenes = Math.max(5, Math.min(30, Math.round(duration / 60)));
+      const durPerScene = Math.round(duration / numScenes);
+      const targetWords = Math.round((duration / 60) * wpm);
+      const wordsPerScene = Math.round(targetWords / numScenes);
 
-      if (isClustering) {
-        scenes = [
-          {
-            id: "s_cl_1", chapter: "ch1", depth: "bridge",
-            t_start: 0, t_end: durPerScene, source_id: "c_ch1_source",
-            narration: `Chào mừng các bạn đến với chuyên đề ${title}. Khác với học có giám sát cần nhãn sẵn, phân cụm dữ liệu là kỹ thuật học không giám sát cốt lõi nhằm tự động khám phá các cấu trúc và quy luật tiềm ẩn. Bản chất của phân cụm là quá trình gom các đối tượng dữ liệu vào từng nhóm mang ý nghĩa thực tiễn, sao cho các điểm dữ liệu trong cùng một cụm có độ tương đồng tối đa, còn các điểm thuộc các cụm khác nhau có sự tách biệt rõ rệt. Kỹ thuật này đóng vai trò then chốt trong phân khúc khách hàng, nén giảm số chiều dữ liệu, và phát hiện các hành vi bất thường.`,
-            visual_type: "split_screen",
-            visual_purpose: "So sánh trực quan dữ liệu thô ban đầu và các cụm dữ liệu sau khi được phân chia ranh giới rõ ràng",
-            detected_terms: ["phân cụm", "học không giám sát", "tập dữ liệu"]
-          },
-          {
-            id: "s_cl_2", chapter: "ch2", depth: "core",
-            t_start: durPerScene, t_end: durPerScene * 2, source_id: "c_ch2_source",
-            narration: `Tiếp theo, chúng ta cùng phân tích thuật toán phân cụm kinh điển và phổ biến nhất: thuật toán K-Means. K-Means là phương pháp phân hoạch dựa trên mẫu đại diện, chia tập dữ liệu thành k cụm riêng biệt không chồng lấn. Mỗi cụm được đặc trưng bởi một tâm cụm gọi là Centroid. Thuật toán vận hành lặp qua bốn bước tuần tự: đầu tiên khởi tạo k tâm cụm ngẫu nhiên; bước hai gán từng điểm dữ liệu vào tâm cụm gần nhất dựa trên khoảng cách Euclidean; bước ba tính toán lại tọa độ tâm cụm mới bằng trung bình cộng các điểm trong cụm; và bước bốn lặp lại quá trình này cho đến khi vị trí các tâm cụm hội tụ. Mục tiêu toán học là cực tiểu hóa tổng bình phương sai số SSE.`,
-            visual_type: "process_visualization",
-            visual_purpose: "Mô phỏng 4 bước dịch chuyển của các tâm cụm Centroid và sơ đồ phân hoạch Voronoi",
-            detected_terms: ["K-Means", "Centroid", "Euclidean", "SSE"]
-          },
-          {
-            id: "s_cl_3", chapter: "ch3", depth: "core",
-            t_start: durPerScene * 2, t_end: durPerScene * 3, source_id: "c_ch3_source",
-            narration: `Mặc dù K-Means rất hiệu quả với các cụm hình cầu lồi, nhưng lại gặp khó khăn khi dữ liệu có hình dạng uốn lượn phức tạp hoặc chứa nhiều nhiễu. Để khắc phục, chúng ta sử dụng thuật toán phân cụm không gian dựa trên mật độ DBSCAN. DBSCAN định nghĩa cụm là vùng có mật độ điểm dữ liệu dày đặc, ngăn cách bởi các vùng thưa thớt. Thuật toán điều khiển bằng hai siêu tham số then chốt: bán kính lân cận Epsilon và số điểm tối thiểu MinPoints. Dữ liệu được phân thành ba loại: Điểm lõi, Điểm biên và Điểm nhiễu ngoại lai. DBSCAN có khả năng vượt trội trong việc phát hiện cụm hình dạng tùy ý và loại trừ nhiễu hiệu quả.`,
-            visual_type: "highlight_box",
-            visual_purpose: "Vòng tròn bán kính Epsilon quét mật độ xung quanh điểm lõi và khoanh đỏ các điểm nhiễu ngoại lai",
-            detected_terms: ["DBSCAN", "mật độ", "Epsilon", "MinPoints"]
-          },
-          {
-            id: "s_cl_4", chapter: "ch4", depth: "deep",
-            t_start: durPerScene * 3, t_end: durPerScene * 4, source_id: "c_ch4_source",
-            narration: `Phương pháp phân cụm nâng cao tiếp theo là Mạng tự tổ chức Self-Organizing Maps, hay còn gọi là mạng SOM Kohonen. Đây là sự kết hợp tinh tế giữa mạng nơ-ron nhân tạo và kỹ thuật phân cụm trực quan hóa. Mạng SOM ánh xạ không gian dữ liệu nhiều chiều phức tạp xuống một lưới tô-pô hai chiều dạng lục giác hoặc hình chữ nhật, trong khi vẫn bảo toàn được cấu trúc lân cận topo học của các mẫu dữ liệu. Khi một vector đầu vào xuất hiện, mạng tìm nơ-ron chiến thắng có khoảng cách gần nhất, rồi cập nhật trọng số của nơ-ron đó và các nơ-ron lân cận theo hàm bán kính co hẹp dần qua các chu kỳ huấn luyện.`,
-            visual_type: "animated_diagram",
-            visual_purpose: "Lưới topology 2D thích nghi biến dạng để bao phủ không gian phân bố dữ liệu nhiều chiều",
-            detected_terms: ["mạng nơ-ron", "SOM", "Kohonen", "lưới tô-pô"]
-          },
-          {
-            id: "s_cl_5", chapter: "ch5", depth: "bridge",
-            t_start: durPerScene * 4, t_end: duration, source_id: "c_ch5_source",
-            narration: `Để minh họa ứng dụng thực tiễn, chúng ta xem xét tình huống phân tích dữ liệu đa quốc gia với các chỉ số kinh tế xã hội. Nhờ thuật toán phân cụm, hệ thống tự động nhận diện các nhóm quốc gia có mô hình phát triển tương đồng mà không cần chuyên gia gán nhãn thủ công. Tóm lại, việc nắm vững ưu nhược điểm của K-Means cho phân hoạch nhanh, DBSCAN cho dữ liệu nhiễu hình học tùy ý, và SOM cho trực quan hóa đa chiều sẽ giúp các bạn giải quyết xuất sắc các bài toán khoa học dữ liệu thực tế. Cảm ơn các bạn đã theo dõi bài giảng.`,
-            visual_type: "concept_map",
-            visual_purpose: "Bản đồ nhiệt và sơ đồ cây phân cụm minh họa kết quả phân nhóm thực nghiệm",
-            detected_terms: ["phân cụm", "khoa học dữ liệu", "trực quan hóa"]
-          }
+      let scenes = [];
+      let curr_t = 0.0;
+
+      const genericTopics = [
+        { title: "Bối cảnh & Đặt vấn đề", depth: "bridge", vType: "split_screen", vDesc: "So sánh bức tranh tổng quan trước và sau khi ứng dụng bài học" },
+        { title: "Cơ sở lý thuyết & Định nghĩa toán học", depth: "core", vType: "highlight_box", vDesc: "Đóng khung làm nổi bật các biến số và công thức toán học trọng tâm" },
+        { title: "Kiến trúc mô hình & Thành phần chức năng", depth: "core", vType: "process_visualization", vDesc: "Sơ đồ khối mô tả luồng dữ liệu và quan hệ giữa các mô-đun" },
+        { title: "Giải thuật xử lý & Các bước thực thi", depth: "deep", vType: "process_visualization", vDesc: "Mô phỏng động từng bước tuần tự của thuật toán" },
+        { title: "Thiết lập tham số & Không gian trạng thái", depth: "core", vType: "highlight_box", vDesc: "Biểu đồ biến thiên giá trị hàm mất mát theo từng chu kỳ" },
+        { title: "Phân tích điều kiện biên & Trường hợp ngoại lệ", depth: "deep", vType: "animated_diagram", vDesc: "Sơ đồ topo cảnh báo các điểm dị biệt và vùng dữ liệu nhiễu" },
+        { title: "Tối ưu hóa tài nguyên & Giảm thiểu sai số", depth: "deep", vType: "animated_diagram", vDesc: "Đồ thị so sánh tốc độ hội tụ và mức độ chiếm dụng bộ nhớ" },
+        { title: "Đối sánh thực nghiệm & Đánh giá định lượng", depth: "core", vType: "split_screen", vDesc: "Bảng đối chiếu kết quả thực nghiệm với các phương pháp cơ sở" },
+        { title: "Thực hành tình huống & Phân tích ca điển hình", depth: "core", vType: "concept_map", vDesc: "Trực quan hóa ca nghiên cứu thực tiễn trên tập dữ liệu chuẩn" },
+        { title: "Phương pháp gỡ lỗi & Phòng tránh quá khớp", depth: "deep", vType: "highlight_box", vDesc: "Quy trình kiểm thử chéo và kỹ thuật chuẩn hóa dữ liệu" },
+        { title: "Mở rộng quy mô & Xử lý dữ liệu lớn", depth: "deep", vType: "process_visualization", vDesc: "Sơ đồ phân tán tính toán và cơ chế thực thi song song" },
+        { title: "Khả năng tương thích & Ứng dụng công nghiệp", depth: "core", vType: "concept_map", vDesc: "Mô hình tích hợp hệ thống vào quy trình sản xuất thực tế" },
+        { title: "Đánh giá bảo mật & Độ tin cậy thuật toán", depth: "core", vType: "highlight_box", vDesc: "Kiểm tra độ bền vững của mô hình trước các dữ liệu đối kháng" },
+        { title: "Xu hướng phát triển & Biến thể nâng cao", depth: "deep", vType: "animated_diagram", vDesc: "Lộ trình cải tiến thuật toán và các hướng nghiên cứu mới" },
+        { title: "Tổng kết bài giảng & Định hướng nghiên cứu", depth: "bridge", vType: "timeline_bar", vDesc: "Sơ đồ dòng chảy tóm lược các mốc kiến thức và bài tập mở rộng" }
+      ];
+
+      for (let i = 0; i < numScenes; i++) {
+        const top = genericTopics[i % genericTopics.length];
+        const sceneDur = (i === numScenes - 1) ? Math.max(30, Math.round(duration - curr_t)) : durPerScene;
+        const sceneTargetWords = Math.round((sceneDur / 60) * wpm);
+
+        let narr = "";
+        if (i === 0) {
+          narr = `Chào mừng các bạn sinh viên đến với bài học hôm nay về chủ đề ${title}. Trong phân đoạn đầu tiên này, chúng ta tiếp cận bức tranh toàn cảnh, làm rõ động lực hình thành bài toán và ý nghĩa thực tiễn của nó đối với lĩnh vực chuyên môn. Việc xây dựng góc nhìn hệ thống sẽ giúp các bạn tiếp thu các phần chuyên sâu một cách bài bản nhất.`;
+        } else if (i === numScenes - 1) {
+          narr = `Để kết thúc bài giảng về ${title}, chúng ta cùng nhìn lại các mốc kiến thức trọng tâm đã lĩnh hội từ cơ sở lý thuyết, kiến trúc thực thi cho đến các kỹ thuật tối ưu hóa nâng cao. Nắm vững phương pháp này sẽ giúp các bạn tự tin triển khai các giải pháp chất lượng cao trong đồ án và công việc thực tế. Cảm ơn các bạn đã lắng nghe.`;
+        } else {
+          narr = `Tiếp tục với phân cảnh ${i + 1} về ${top.title}. Ở nội dung này, chúng ta đi sâu vào cơ chế vận hành chi tiết của ${title}, phân tích mối liên hệ tương tác giữa các thuộc tính và cách thức hệ thống đưa ra quyết định xử lý. Trong thực tế triển khai, các kỹ sư cần đặc biệt chú trọng đến việc thiết lập thông số phù hợp để đảm bảo tính ổn định và hiệu năng tối đa cho toàn bộ giải pháp.`;
+        }
+
+        const expansions = [
+          " Phân tích này làm sáng tỏ mối liên hệ giữa lý thuyết toán học nền tảng và hiệu quả vận hành thực tế của thuật toán trên dữ liệu quy mô lớn.",
+          " Cơ chế này đóng vai trò quyết định trong việc nâng cao độ chính xác, giảm thiểu sai số và tối ưu hóa tài nguyên tính toán.",
+          " Việc kiểm chứng thực nghiệm trên các tập dữ liệu tiêu chuẩn cho thấy phương pháp đạt được sự cân bằng tối ưu giữa độ phức tạp và hiệu năng.",
+          " Hiểu sâu về cấu trúc này sẽ tạo tiền đề vững chắc cho việc tiếp cận các kiến trúc mạng và giải thuật mở rộng phức tạp hơn."
         ];
-      } else {
-        scenes = [
-          {
-            id: "s_gen_1", chapter: "ch1", depth: "bridge",
-            t_start: 0, t_end: durPerScene, source_id: "c_ch1_source",
-            narration: `Chào mừng các bạn đến với bài giảng ${title}. Trong học phần này, chúng ta sẽ cùng tiếp cận các khái niệm cốt lõi, tìm hiểu lý do bài toán ra đời cũng như ý nghĩa nền tảng của nó đối với lĩnh vực chuyên môn. Việc xây dựng một góc nhìn tổng quan sẽ giúp các bạn hình thành tư duy hệ thống trước khi đi sâu vào chi tiết kỹ thuật.`,
-            visual_type: "split_screen",
-            visual_purpose: "Sơ đồ kiến trúc tổng quan đặt vấn đề và so sánh trước sau",
-            detected_terms: ["bài giảng", "hệ thống", "nền tảng"]
-          },
-          {
-            id: "s_gen_2", chapter: "ch2", depth: "core",
-            t_start: durPerScene, t_end: durPerScene * 2, source_id: "c_ch2_source",
-            narration: `Tiếp theo, chúng ta phân tích các nguyên lý lý thuyết và cơ chế vận hành căn bản của ${title}. Mọi hệ thống đều dựa trên một khung toán học và các bước xử lý logic chặt chẽ. Khi nắm vững các bước tuần tự từ đầu vào, biến đổi dữ liệu, cho đến đầu ra, các bạn sẽ làm chủ hoàn toàn bản chất của phương pháp này.`,
-            visual_type: "process_visualization",
-            visual_purpose: "Sơ đồ luồng thuật toán và quy trình xử lý từng bước tuần tự",
-            detected_terms: ["nguyên lý", "thuật toán", "cơ chế"]
-          },
-          {
-            id: "s_gen_3", chapter: "ch3", depth: "core",
-            t_start: durPerScene * 2, t_end: durPerScene * 3, source_id: "c_ch3_source",
-            narration: `Bây giờ chúng ta đào sâu vào các thành phần chi tiết và trường hợp đặc biệt cần lưu ý. Trong quá trình triển khai thực tế, dữ liệu thường phát sinh các điều kiện biên hoặc yếu tố gây nhiễu. Việc cấu hình đúng các tham số điều khiển và áp dụng các kỹ thuật tinh chỉnh sẽ quyết định trực tiếp đến độ ổn định của toàn bộ giải pháp.`,
-            visual_type: "highlight_box",
-            visual_purpose: "Khung tiêu điểm làm nổi bật các tham số then chốt và điều kiện biên",
-            detected_terms: ["tham số", "điều kiện biên", "tinh chỉnh"]
-          },
-          {
-            id: "s_gen_4", chapter: "ch4", depth: "deep",
-            t_start: durPerScene * 3, t_end: durPerScene * 4, source_id: "c_ch4_source",
-            narration: `Ở cấp độ nâng cao, chúng ta so sánh đối sánh hiệu năng của mô hình với các giải pháp tương đương khác. Chúng ta đánh giá độ phức tạp thuật toán, khả năng mở rộng quy mô, và mức độ tiêu hao tài nguyên tính toán để lựa chọn giải pháp tối ưu cho từng bài toán cụ thể.`,
-            visual_type: "animated_diagram",
-            visual_purpose: "Biểu đồ trực quan hóa ma trận so sánh hiệu năng và độ phức tạp",
-            detected_terms: ["hiệu năng", "độ phức tạp", "tối ưu"]
-          },
-          {
-            id: "s_gen_5", chapter: "ch5", depth: "bridge",
-            t_start: durPerScene * 4, t_end: duration, source_id: "c_ch5_source",
-            narration: `Để khép lại bài học, chúng ta tổng kết lại các kiến thức trọng tâm đã lĩnh hội về ${title} và xem xét các hướng ứng dụng thực tế trong sản xuất cũng như nghiên cứu. Chúc các bạn áp dụng thành công các kiến thức này vào đồ án và công việc chuyên môn.`,
-            visual_type: "concept_map",
-            visual_purpose: "Bản đồ tư duy tóm lược toàn bộ 5 luận điểm chính của bài giảng",
-            detected_terms: ["tổng kết", "ứng dụng", "thực tiễn"]
-          }
-        ];
+        let expIdx = i;
+        while (narr.trim().split(/\s+/).length < sceneTargetWords - 5) {
+          narr += expansions[expIdx % expansions.length];
+          expIdx++;
+        }
+
+        const actualWords = narr.trim().split(/\s+/).length;
+        const exactDur = Math.round((actualWords / wpm) * 60.0 * 10) / 10;
+        const tStart = Math.round(curr_t * 10) / 10;
+        const tEnd = Math.round((curr_t + exactDur) * 10) / 10;
+        curr_t = tEnd;
+
+        scenes.push({
+          id: `s_gen_${i + 1}`,
+          chapter: `ch${i + 1}`,
+          depth: top.depth,
+          t_start: tStart,
+          t_end: tEnd,
+          source_id: `c_src_${i + 1}`,
+          narration: narr,
+          visual_type: top.vType,
+          visual_purpose: top.vDesc,
+          detected_terms: ["nguyên lý", "thuật toán", "tối ưu", "hệ thống"]
+        });
       }
 
       const projId = 'proj_' + Date.now();
@@ -1840,10 +1821,13 @@
       const name = document.getElementById('input-proj-name').value.trim() || file.name.replace(/\.[^/.]+$/, "");
       const desc = document.getElementById('input-proj-desc').value.trim() || "Tài liệu bài giảng trực tuyến bóc tách tự động";
 
+      const dur = parseInt(document.getElementById('slider-duration')?.value) || 300;
+      const wpm = parseInt(document.getElementById('slider-wpm')?.value) || 140;
+
       closeCreateModal();
 
       try {
-        const projData = await callMultiAgentGenerate(file, name, desc, 300, 140);
+        const projData = await callMultiAgentGenerate(file, name, desc, dur, wpm);
         defaultProjects[projData.id] = projData;
         renderProjectsGrid();
         loadProjectIntoWorkspace(projData.id);
@@ -1886,28 +1870,53 @@
       const dur = parseInt(document.getElementById('slider-duration').value) || 300;
       const wpm = parseInt(document.getElementById('slider-wpm').value) || 140;
 
-      showLoading("Đang Tái Cấu Trúc Kịch Bản Với Multi-Agent...", `Đang điều chỉnh thời lượng ${dur}s và nhịp độ ${wpm} WPM...`);
+      showLoading("Đang Tái Cấu Trúc Kịch Bản Với Multi-Agent...", `Đang thiết lập lại bài giảng cho thời lượng ${Math.floor(dur/60)} phút (${dur}s) và nhịp độ ${wpm} WPM...`);
 
-      setTimeout(() => {
-        let curr_t = 0.0;
-        currentScenes.forEach((s) => {
-          const words = s.narration.trim().split(/\s+/).length;
-          const dur_scene = Math.round((words / wpm) * 60.0 * 10) / 10;
-          s.t_start = Math.round(curr_t * 10) / 10;
-          s.t_end = Math.round((curr_t + dur_scene) * 10) / 10;
-          curr_t = s.t_end;
-        });
+      try {
+        const sourceName = (activeProject.sources && activeProject.sources[0]) ? activeProject.sources[0].name : (activeProject.title + ".pdf");
+        
+        let projData = null;
+        try {
+          const res = await fetch(`${API_BASE}/api/generate`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              filename: sourceName,
+              project_name: activeProject.title,
+              project_desc: activeProject.desc,
+              target_duration: dur,
+              target_wpm: wpm
+            })
+          });
+          if (res.ok) {
+            projData = await res.json();
+          }
+        } catch (e) {}
 
-        activeProject.duration_s = Math.round(curr_t);
-        activeProject.wpm = wpm;
-        activeProject.scenes = currentScenes;
+        if (!projData) {
+          projData = await clientSidePedagogicalGenerate({ name: sourceName, size: 500000 }, activeProject.title, activeProject.desc, dur, wpm);
+        }
 
+        activeProject.duration_s = projData.duration_s;
+        activeProject.wpm = projData.wpm;
+        activeProject.scenes = projData.scenes;
+        activeProject.score = projData.score;
+        activeProject.dar = projData.dar;
+        activeProject.tcr = projData.tcr;
+        activeProject.hsr = projData.hsr;
+        activeProject.vns = projData.vns;
+        activeProject.critic_feedback = projData.critic_feedback;
+
+        currentScenes = projData.scenes;
         renderTimeline();
         recalculateMetrics();
         renderProjectsGrid();
         hideLoading();
-        showToast(`Đã tái khởi tạo kịch bản với nhịp độ ${wpm} WPM và ${Math.round(curr_t)}s!`);
-      }, 700);
+        showToast(`Đã tái cấu trúc bài giảng: ${Math.floor(dur/60)} phút (${projData.scenes.length} phân cảnh, DAR ${projData.dar}%)!`);
+      } catch (err) {
+        hideLoading();
+        showToast("Đã cập nhật bài giảng!");
+      }
     });
 
     // DRAG AND DROP SETUP
