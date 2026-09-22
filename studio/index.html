@@ -636,7 +636,11 @@
       display: flex;
     }
 
-    /* 1. SƠ ĐỒ TƯ DUY (MINDMAP) - PAN & ZOOM, TOP-DOWN, ĐA GỐC ĐỘC LẬP TỪNG TỆP */
+    /* =========================================================================
+       SƠ ĐỒ PHÂN NHÁNH QUYẾT ĐỊNH (DECISION-TREE / MINDMAP BBOX ENGINE)
+       CÁC NHÁNH CON TÁCH THÀNH CÁC Ô ĐỘC LẬP TRÊN TOẠ ĐỘ OXY, TỰ ĐỘNG DỊCH CHUYỂN
+       TRÁNH VA CHẠM (COLLISION-FREE DYNAMIC BOUNDING BOX) VÀ NỐI BẰNG ĐƯỜNG CONG SVG
+       ========================================================================= */
     .mindmap-viewport {
       flex: 1;
       width: 100%;
@@ -660,11 +664,28 @@
       top: 0;
       left: 0;
       transform-origin: 0 0;
-      min-width: 3200px;
-      min-height: 2000px;
+      min-width: 4200px;
+      min-height: 2600px;
     }
 
-    /* FLOATING CONTROLS (ZOOM & EXPAND) */
+    .mindmap-svg-canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .mindmap-nodes-container {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 2;
+    }
+
+    /* FLOATING CONTROLS (ZOOM & RESET) */
     .mindmap-floating-controls {
       position: absolute;
       top: 14px;
@@ -710,35 +731,66 @@
       padding: 0 4px;
     }
 
-    /* TREE ROOT CONTAINER (MỖI TỆP LÀ 1 CÂY GỐC ĐỘC LẬP MỌC TỪ TRÊN XUỐNG) */
-    .tree-root-container {
+    /* DECISION TREE NODE CARDS */
+    .decision-node {
       position: absolute;
+      box-sizing: border-box;
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      padding: 8px 10px;
+      cursor: pointer;
+      user-select: none;
+      transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s, opacity 0.25s;
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
       display: flex;
       flex-direction: column;
-      align-items: center;
-      cursor: default;
+      justify-content: space-between;
     }
 
-    .tree-root-card {
-      background: linear-gradient(135deg, rgba(30, 41, 59, 0.95), rgba(15, 23, 42, 0.98));
+    .decision-node:hover {
+      background: var(--bg-card-hover);
+      border-color: var(--cyan);
+      transform: translateY(-2px);
+      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.6), 0 0 16px rgba(56, 189, 248, 0.25);
+    }
+
+    /* LEVEL 0: GỐC HỌC LIỆU */
+    .decision-node.node-level-0 {
       border: 2px solid var(--cyan);
-      border-radius: var(--radius-md);
-      padding: 16px 22px;
-      text-align: center;
+      background: linear-gradient(135deg, rgba(30, 41, 59, 0.95), rgba(15, 23, 42, 0.98));
       box-shadow: 0 12px 30px rgba(0, 0, 0, 0.6), 0 0 25px var(--cyan-glow);
-      min-width: 280px;
-      max-width: 360px;
-      position: relative;
-      cursor: grab;
-      transition: transform 0.2s, box-shadow 0.2s;
+      border-radius: var(--radius-md);
+      z-index: 5;
     }
 
-    .tree-root-card:active {
-      cursor: grabbing;
-      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.8), 0 0 35px var(--cyan);
+    /* LEVEL 1: CHƯƠNG */
+    .decision-node.node-level-1 {
+      border-top: 3px solid var(--cyan);
+      background: rgba(15, 23, 42, 0.94);
+      border-radius: var(--radius-sm);
     }
 
-    .tree-root-drag-badge {
+    /* LEVEL 2: PHÂN MỤC (Phần a, b, c) */
+    .decision-node.node-level-2 {
+      border-left: 3px solid var(--primary);
+      background: rgba(15, 23, 42, 0.96);
+      border-radius: 6px;
+    }
+
+    /* LEVEL 3: TIỂU TIẾT (a1, a2, a3) */
+    .decision-node.node-level-3 {
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(255, 255, 255, 0.035);
+      border-radius: 5px;
+    }
+
+    .decision-node.node-level-3:hover {
+      background: rgba(56, 189, 248, 0.08);
+      border-color: rgba(56, 189, 248, 0.35);
+    }
+
+    .node-drag-badge {
       position: absolute;
       top: -10px;
       left: 50%;
@@ -755,245 +807,25 @@
       white-space: nowrap;
     }
 
-    .tree-root-title {
-      font-size: 14.5px;
-      font-weight: 800;
-      color: var(--text-main);
-      margin: 4px 0 2px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .tree-root-meta {
-      font-size: 11px;
-      color: var(--cyan);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-    }
-
-    /* VERTICAL STEM & HORIZONTAL CONNECTOR */
-    .tree-stem-vertical {
-      width: 2px;
-      height: 26px;
-      background: linear-gradient(180deg, var(--cyan), var(--primary));
-      margin: 0 auto;
-    }
-
-    .tree-branches-bus {
-      height: 2px;
-      background: rgba(56, 189, 248, 0.4);
-      position: relative;
-      box-shadow: 0 0 10px rgba(56, 189, 248, 0.3);
-    }
-
-    /* BRANCHES ROW (MỌC TỪ TRÊN XUỐNG DƯỚI) */
-    .tree-branches-row {
-      display: flex;
-      gap: 22px;
-      justify-content: center;
-      align-items: flex-start;
-      position: relative;
-      margin-top: -2px;
-    }
-
-    .tree-branch-col {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      width: 275px;
-      position: relative;
-    }
-
-    .tree-drop-line {
-      width: 2px;
-      height: 20px;
-      background: rgba(56, 189, 248, 0.4);
-      margin: 0 auto;
-    }
-
-    /* LEVEL 1: CHƯƠNG (BẤM ĐỂ NỞ RA / THU VÀO PHẦN a, b, c) */
-    .tree-branch-card {
-      width: 100%;
-      background: var(--bg-card);
-      border: 1px solid var(--border-subtle);
-      border-top: 3px solid var(--cyan);
-      border-radius: var(--radius-sm);
-      padding: 12px 14px;
-      transition: all 0.25s ease;
-      cursor: pointer;
-      position: relative;
-      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
-      user-select: none;
-    }
-
-    .tree-branch-card:hover {
-      background: var(--bg-card-hover);
-      border-color: var(--cyan);
-      border-top-color: var(--cyan);
-      transform: translateY(-2px);
-      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.5), 0 0 16px rgba(56, 189, 248, 0.22);
-    }
-
-    .branch-card-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 6px;
-    }
-
-    .branch-card-title {
-      font-size: 12px;
-      font-weight: 700;
-      color: var(--text-main);
-      line-height: 1.4;
-      margin-bottom: 6px;
-    }
-
     .node-toggle-badge {
       background: rgba(99, 102, 241, 0.2);
       border: 1px solid rgba(99, 102, 241, 0.45);
       color: var(--cyan);
-      font-size: 10px;
+      font-size: 9.5px;
       font-weight: 700;
-      padding: 2px 7px;
+      padding: 1px 5px;
       border-radius: 4px;
       display: inline-flex;
       align-items: center;
-      gap: 4px;
+      gap: 3px;
       transition: all 0.2s;
     }
 
-    .tree-branch-card:hover .node-toggle-badge,
-    .tree-subbranch-card:hover .node-toggle-badge {
+    .decision-node:hover .node-toggle-badge {
       background: rgba(56, 189, 248, 0.25);
       border-color: var(--cyan);
       color: #fff;
     }
-
-    /* LEVEL 2: PHÂN MỤC (PHẦN a, b, c) */
-    .tree-level2-container {
-      width: 100%;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-
-    .tree-level2-container.collapsed {
-      display: none;
-    }
-
-    .tree-level2-stem {
-      width: 2px;
-      height: 14px;
-      background: linear-gradient(180deg, var(--cyan), var(--primary));
-      margin: 0 auto;
-    }
-
-    .tree-level2-list {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      width: 100%;
-    }
-
-    .tree-subbranch-card {
-      width: 100%;
-      background: rgba(15, 23, 42, 0.94);
-      border: 1px solid rgba(99, 102, 241, 0.35);
-      border-left: 3px solid var(--primary);
-      border-radius: 6px;
-      padding: 10px 12px;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-      user-select: none;
-    }
-
-    .tree-subbranch-card:hover {
-      background: rgba(30, 41, 59, 0.98);
-      border-color: var(--cyan);
-      border-left-color: var(--cyan);
-      transform: translateX(2px);
-      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.45), 0 0 12px rgba(56, 189, 248, 0.18);
-    }
-
-    .subbranch-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 4px;
-    }
-
-    .subbranch-code {
-      font-size: 11px;
-      font-weight: 800;
-      color: var(--cyan);
-      text-transform: uppercase;
-      letter-spacing: 0.3px;
-    }
-
-    .subbranch-title {
-      font-size: 11.5px;
-      font-weight: 600;
-      color: var(--text-main);
-      line-height: 1.35;
-    }
-
-    /* LEVEL 3: TIỂU TIẾT (a1, a2, a3) */
-    .tree-level3-container {
-      margin-top: 8px;
-      padding-left: 10px;
-      border-left: 2px dashed rgba(56, 189, 248, 0.35);
-      display: flex;
-      flex-direction: column;
-      gap: 5px;
-    }
-
-    .tree-level3-container.collapsed {
-      display: none;
-    }
-
-    .tree-leaf-node {
-      background: rgba(255, 255, 255, 0.035);
-      border: 1px solid rgba(255, 255, 255, 0.07);
-      border-radius: 4px;
-      padding: 5px 8px;
-      font-size: 10.5px;
-      color: var(--text-muted);
-      line-height: 1.35;
-      display: flex;
-      align-items: flex-start;
-      gap: 6px;
-      transition: all 0.15s ease;
-    }
-
-    .tree-leaf-node:hover {
-      background: rgba(56, 189, 248, 0.08);
-      border-color: rgba(56, 189, 248, 0.35);
-      color: var(--text-main);
-    }
-
-    .leaf-code {
-      font-family: 'JetBrains Mono', monospace;
-      font-weight: 700;
-      font-size: 10px;
-      color: var(--cyan);
-      background: rgba(56, 189, 248, 0.14);
-      border: 1px solid rgba(56, 189, 248, 0.28);
-      border-radius: 3px;
-      padding: 0 4px;
-      flex-shrink: 0;
-      line-height: 1.4;
-    }
-
-    .leaf-text {
-      flex: 1;
-      word-break: break-word;
-    }
-
 
     /* CORNER BUTTONS: X (GÓC TRÊN PHẢI) VÀ EDIT ✎ (GÓC DƯỚI PHẢI) */
     .node-corner-x {
@@ -1051,6 +883,7 @@
     }
 
     /* TRẠNG THÁI BỊ LOẠI TRỪ (EXCLUDED) KHI BẤM X */
+    .decision-node.is-excluded,
     .tree-branch-card.is-excluded,
     .tree-subbranch-card.is-excluded,
     .tree-root-card.is-excluded {
@@ -1062,12 +895,16 @@
       box-shadow: none !important;
     }
 
+    .decision-node.is-excluded .branch-card-title,
+    .decision-node.is-excluded .subbranch-title,
+    .decision-node.is-excluded [style*="font-weight: 600"],
     .tree-branch-card.is-excluded .branch-card-title,
     .tree-subbranch-card.is-excluded .subbranch-title {
       text-decoration: line-through;
-      color: var(--text-dim);
+      color: var(--text-dim) !important;
     }
 
+    .decision-node.is-excluded .node-corner-x,
     .tree-branch-card.is-excluded .node-corner-x,
     .tree-subbranch-card.is-excluded .node-corner-x {
       background: rgba(244, 63, 94, 0.4);
@@ -1076,6 +913,7 @@
     }
 
     /* HIGHLIGHT ĐANG TINH CHỈNH */
+    .decision-node.is-being-edited,
     .tree-branch-card.is-being-edited,
     .tree-subbranch-card.is-being-edited {
       border-color: var(--amber) !important;
@@ -2547,9 +2385,35 @@
       }
     }
 
+    function centerMindmapView(fitZoom = false) {
+      const viewport = document.getElementById('mindmap-viewport');
+      const allCardEls = Array.from(document.querySelectorAll('.decision-node'));
+      if (viewport && allCardEls.length > 0) {
+        const minX = Math.min(...allCardEls.map(el => parseInt(el.style.left) || 0));
+        const maxX = Math.max(...allCardEls.map(el => (parseInt(el.style.left) || 0) + el.offsetWidth));
+        const treeCenterX = (minX + maxX) / 2;
+        const treeWidth = maxX - minX;
+        const vpWidth = viewport.clientWidth || 900;
+        if (fitZoom && treeWidth > 0 && vpWidth > 0) {
+          zoomScale = Math.min(0.85, Math.max(0.45, (vpWidth - 80) / treeWidth));
+        } else {
+          zoomScale = 0.85;
+        }
+        panX = (vpWidth / 2) - treeCenterX * zoomScale;
+        panY = 40;
+      } else {
+        panX = 60;
+        panY = 40;
+        zoomScale = 0.85;
+      }
+      applyMindmapTransform();
+    }
+
     function initMindmapPanZoom() {
       const viewport = document.getElementById('mindmap-viewport');
       if (!viewport) return;
+      if (window._mindmapPanZoomInited) return;
+      window._mindmapPanZoomInited = true;
 
       // 1. Phóng to / Thu nhỏ bằng con lăn chuột (Mouse Wheel)
       viewport.addEventListener('wheel', (e) => {
@@ -2573,10 +2437,7 @@
       viewport.addEventListener('mousedown', (e) => {
         // Nếu click vào nút điều khiển hoặc các node trong cây sơ đồ thì không pan bàn vẽ
         if (e.target.closest('.mindmap-floating-controls') || 
-            e.target.closest('.tree-root-card') || 
-            e.target.closest('.tree-branch-card') || 
-            e.target.closest('.tree-subbranch-card') || 
-            e.target.closest('.tree-leaf-node')) {
+            e.target.closest('.decision-node')) {
           return;
         }
         isPanning = true;
@@ -2609,10 +2470,7 @@
         applyMindmapTransform();
       });
       document.getElementById('btn-zoom-reset')?.addEventListener('click', () => {
-        panX = 40;
-        panY = 30;
-        zoomScale = 0.85;
-        applyMindmapTransform();
+        centerMindmapView(true);
       });
 
       // Global expand/collapse buttons removed as requested - users expand/collapse directly on each node
@@ -3119,294 +2977,263 @@
     }
 
     // =========================================================================
-    // RENDER SƠ ĐỒ (MỌC TỪ TRÊN XUỐNG, ĐA GỐC ĐỘC LẬP TỪNG TỆP)
-    // MỖI CARD CÓ NÚT X (GÓC TRÊN PHẢI) VÀ EDIT ✎ (GÓC DƯỚI PHẢI) THEO BẢN VẼ
+    // THUẬT TOÁN PHÂN NHÁNH CÂY QUYẾT ĐỊNH (DECISION-TREE / MINDMAP BBOX ENGINE)
+    // TÍNH TOÁN BẬT NỞ MỞ RỘNG ĐỘ DÀI TỪ min_x ĐẾN max_x, ĐẨY CÁC NHÁNH LÂN CẬN
+    // VÀ NỐI BẰNG ĐƯỜNG CONG SVG CUBIC BÉZIER TỰ NHIÊN
+    // =========================================================================
+    const treeExpansionState = {};
+
+    function isNodeExpanded(nodeKey, defaultVal = false) {
+      if (treeExpansionState[nodeKey] !== undefined) {
+        return treeExpansionState[nodeKey];
+      }
+      return defaultVal;
+    }
+
+    function setNodeExpanded(nodeKey, val) {
+      treeExpansionState[nodeKey] = val;
+    }
+
+    function buildDecisionTree(proj, scenes) {
+      const sources = (proj.sources && proj.sources.length > 0)
+        ? proj.sources
+        : [{ name: proj.title + '.pdf', pages: 35, size: '1.2 MB' }];
+
+      const hierarchyChapters = getProjectHierarchy(proj, scenes);
+
+      const roots = sources.map((src, srcIdx) => {
+        const rootKey = `src-${srcIdx}`;
+        const rootNode = {
+          key: rootKey,
+          level: 0,
+          width: 250,
+          height: 85,
+          isExpanded: isNodeExpanded(rootKey, true),
+          data: {
+            title: src.name,
+            pages: src.pages || 10,
+            chapterCount: hierarchyChapters.length
+          },
+          children: []
+        };
+
+        rootNode.children = hierarchyChapters.map((chData, chIdx) => {
+          const chKey = `ch-${chIdx}`;
+          const customTitle = getNodeParam(chKey, 'title', chData.title);
+          const customDur = getNodeParam(chKey, 'duration', chData.duration_s || 60);
+          const customWpm = getNodeParam(chKey, 'wpm', 140);
+          const customVisual = getNodeParam(chKey, 'visualType', chData.visual_type || 'split_screen');
+          chData.duration_s = customDur;
+          chData.title = customTitle;
+          chData.visual_type = customVisual;
+
+          const chNode = {
+            key: chKey,
+            parentKey: rootKey,
+            level: 1,
+            width: 220,
+            height: 92,
+            isExpanded: isNodeExpanded(chKey, chIdx === 0), // Chương 1 mặc định mở
+            data: {
+              chapter: chData.chapter,
+              title: customTitle,
+              duration: customDur,
+              wpm: customWpm,
+              visualType: customVisual,
+              depth: chData.depth || 'core'
+            },
+            children: []
+          };
+
+          chNode.children = (chData.sections || []).map((sec, secIdx) => {
+            const secKey = `sec-${chIdx}-${secIdx}`;
+            const secNode = {
+              key: secKey,
+              parentKey: chKey,
+              level: 2,
+              width: 190,
+              height: 75,
+              isExpanded: isNodeExpanded(secKey, chIdx === 0 && secIdx === 0), // Phần a Chương 1 mặc định mở
+              data: {
+                code: sec.code,
+                title: sec.title,
+                chIdx: chIdx,
+                secIdx: secIdx
+              },
+              children: []
+            };
+
+            secNode.children = (sec.items || []).map((item, itemIdx) => {
+              const itemKey = `item-${chIdx}-${secIdx}-${itemIdx}`;
+              return {
+                key: itemKey,
+                parentKey: secKey,
+                level: 3,
+                width: 170,
+                height: 60,
+                isExpanded: false,
+                data: {
+                  code: item.code,
+                  text: item.text
+                },
+                children: []
+              };
+            });
+
+            return secNode;
+          });
+
+          return chNode;
+        });
+
+        return rootNode;
+      });
+
+      return roots;
+    }
+
+    function layoutDecisionTree(roots) {
+      const gapX_base = 40;
+      const deltaY = 160;
+      let runningRootLeft = 100;
+
+      roots.forEach(root => {
+        computeSubtreeWidthRecursive(root, gapX_base);
+      });
+
+      roots.forEach(root => {
+        positionNodeRecursive(root, runningRootLeft, 50, 0, gapX_base, deltaY);
+        runningRootLeft += root.subtreeWidth + 120;
+      });
+    }
+
+    function computeSubtreeWidthRecursive(node, gapX) {
+      if (!node.isExpanded || !node.children || node.children.length === 0) {
+        node.subtreeWidth = node.width;
+        return node.subtreeWidth;
+      }
+
+      let totalChildW = 0;
+      for (let i = 0; i < node.children.length; i++) {
+        const childW = computeSubtreeWidthRecursive(node.children[i], gapX * 0.85);
+        totalChildW += childW;
+        if (i > 0) totalChildW += gapX;
+      }
+
+      node.subtreeWidth = Math.max(node.width, totalChildW);
+      return node.subtreeWidth;
+    }
+
+    function positionNodeRecursive(node, leftBoundX, currentY, level, gapX, deltaY) {
+      const centerX = leftBoundX + node.subtreeWidth / 2;
+      node.x = centerX - node.width / 2;
+      node.y = currentY;
+
+      if (!node.isExpanded || !node.children || node.children.length === 0) {
+        return;
+      }
+
+      const childBaseY = currentY + deltaY;
+      const totalChildrenW = node.children.reduce((sum, c, i) => sum + c.subtreeWidth + (i > 0 ? gapX : 0), 0);
+      let runningChildLeft = leftBoundX + (node.subtreeWidth - totalChildrenW) / 2;
+
+      node.children.forEach((child, idx) => {
+        // Sai số nhẹ tự nhiên trên trục Y và X theo đúng gợi ý của người dùng và Image 2
+        let staggerY = 0;
+        if (node.children.length > 1) {
+          if (node.children.length === 3) {
+            staggerY = (idx === 0 ? -12 : (idx === 1 ? 18 : -2));
+          } else {
+            staggerY = (idx % 2 === 0 ? -8 : 14);
+          }
+        }
+        const jitterX = (node.children.length > 1) ? (idx % 2 === 0 ? -4 : 6) : 0;
+
+        positionNodeRecursive(child, runningChildLeft + jitterX, childBaseY + staggerY, level + 1, gapX * 0.85, deltaY);
+        runningChildLeft += child.subtreeWidth + gapX;
+      });
+    }
+
+    // =========================================================================
+    // RENDER SƠ ĐỒ QUYẾT ĐỊNH VỚI DÂY NỐI CONG CUBIC BÉZIER VÀ THẺ ĐỘC LẬP
     // =========================================================================
     function renderMindmap() {
       const world = document.getElementById('mindmap-world');
       if (!world) return;
       world.innerHTML = '';
 
-      // Danh sách các tệp nguồn: mỗi tệp tạo thành 1 CÂY GỐC RIÊNG BIỆT
-      const sources = (activeProject.sources && activeProject.sources.length > 0)
-        ? activeProject.sources
-        : [{ name: activeProject.title + '.pdf', pages: 35, size: '1.2 MB' }];
+      const roots = buildDecisionTree(activeProject, currentScenes);
+      layoutDecisionTree(roots);
 
-      const hierarchyChapters = getProjectHierarchy(activeProject, currentScenes);
+      // Thu thập toàn bộ các node hiển thị
+      const allNodes = [];
+      function collectVisible(n) {
+        allNodes.push(n);
+        if (n.isExpanded && n.children) {
+          n.children.forEach(collectVisible);
+        }
+      }
+      roots.forEach(collectVisible);
 
-      sources.forEach((src, srcIdx) => {
-        const rootKey = `src-${srcIdx}`;
-        const isRootExcluded = isNodeExcluded(rootKey);
+      const minX = Math.min(...allNodes.map(n => n.x));
+      const maxX = Math.max(...allNodes.map(n => n.x + n.width));
+      const minY = Math.min(...allNodes.map(n => n.y));
+      const maxY = Math.max(...allNodes.map(n => n.y + n.height));
 
-        const treeContainer = document.createElement('div');
-        treeContainer.className = 'tree-root-container';
-        treeContainer.id = `tree-root-${srcIdx}`;
-        treeContainer.style.left = `${60 + srcIdx * 1550}px`;
-        treeContainer.style.top = `40px`;
+      const worldWidth = Math.max(3800, maxX + 600);
+      const worldHeight = Math.max(2600, maxY + 600);
+      world.style.minWidth = worldWidth + 'px';
+      world.style.minHeight = worldHeight + 'px';
 
-        // 1. Thẻ GỐC TRÊN CÙNG (Có góc trên X và góc dưới ✎ theo bản vẽ phác thảo)
-        const rootCard = document.createElement('div');
-        rootCard.className = `tree-root-card ${isRootExcluded ? 'is-excluded' : ''}`;
-        rootCard.title = 'Giữ và kéo để di chuyển gốc học liệu này';
-        rootCard.innerHTML = `
-          <button class="node-corner-x" id="btn-x-${rootKey}" title="${isRootExcluded ? 'Khôi phục toàn bộ tệp học liệu này' : 'Loại bỏ toàn bộ tệp này khỏi kịch bản'}">
-            ${isRootExcluded ? '↺' : '✕'}
-          </button>
-          <button class="node-corner-edit" id="btn-edit-${rootKey}" title="Tinh chỉnh thông số tệp học liệu">
-            ✎
-          </button>
-          <div class="tree-root-drag-badge">⋮⋮ Kéo di chuyển gốc</div>
-          <div style="font-size: 26px; margin-bottom: 2px;">📄</div>
-          <div class="tree-root-title" title="${src.name}">${src.name}</div>
-          <div class="tree-root-meta">
-            <span>${src.pages || 10} slide / trang</span> • 
-            <span>${hierarchyChapters.length} chương</span>
-          </div>
-        `;
+      // 1. Tạo SVG Canvas vẽ các đường cong nối nhánh (Cubic Bézier)
+      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svg.setAttribute('class', 'mindmap-svg-canvas');
+      svg.style.width = worldWidth + 'px';
+      svg.style.height = worldHeight + 'px';
 
-        // Event nút X trên root card
-        rootCard.querySelector(`#btn-x-${rootKey}`)?.addEventListener('click', (e) => {
-          e.stopPropagation();
-          toggleNodeExclusion(rootKey);
-        });
+      allNodes.forEach(node => {
+        if (node.isExpanded && node.children && node.children.length > 0) {
+          const pX = node.x + node.width / 2;
+          const pY = node.y + node.height;
 
-        // Event nút Edit ✎ trên root card
-        rootCard.querySelector(`#btn-edit-${rootKey}`)?.addEventListener('click', (e) => {
-          e.stopPropagation();
-          openNodeTuning(rootKey, src.name, 300, 140, 'concept_map', rootCard);
-        });
+          node.children.forEach(child => {
+            const cX = child.x + child.width / 2;
+            const cY = child.y;
+            const midY = (pY + cY) / 2;
 
-        // Cơ chế kéo di chuyển gốc cây độc lập (Free Draggable Root)
-        let isDraggingRoot = false;
-        let rootStartX = 0;
-        let rootStartY = 0;
-        let initialLeft = 0;
-        let initialTop = 0;
+            const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            const d = `M ${pX} ${pY} C ${pX} ${midY}, ${cX} ${midY}, ${cX} ${cY}`;
+            path.setAttribute('d', d);
 
-        rootCard.addEventListener('mousedown', (e) => {
-          if (e.target.closest('.node-corner-x') || e.target.closest('.node-corner-edit')) return;
-          e.stopPropagation();
-          isDraggingRoot = true;
-          rootStartX = e.clientX;
-          rootStartY = e.clientY;
-          initialLeft = parseInt(treeContainer.style.left) || 0;
-          initialTop = parseInt(treeContainer.style.top) || 0;
-        });
-
-        window.addEventListener('mousemove', (e) => {
-          if (!isDraggingRoot) return;
-          const dx = (e.clientX - rootStartX) / zoomScale;
-          const dy = (e.clientY - rootStartY) / zoomScale;
-          treeContainer.style.left = `${initialLeft + dx}px`;
-          treeContainer.style.top = `${initialTop + dy}px`;
-        });
-
-        window.addEventListener('mouseup', () => {
-          if (isDraggingRoot) isDraggingRoot = false;
-        });
-
-        treeContainer.appendChild(rootCard);
-
-        // 2. Thân cây nối thẳng đứng từ trên xuống (Vertical Stem)
-        const stem = document.createElement('div');
-        stem.className = 'tree-stem-vertical';
-        treeContainer.appendChild(stem);
-
-        // 3. Đường ngang chia nhánh (Horizontal Connector Bus)
-        const bus = document.createElement('div');
-        bus.className = 'tree-branches-bus';
-        bus.style.width = `${Math.max(280, (hierarchyChapters.length - 1) * 297)}px`;
-        treeContainer.appendChild(bus);
-
-        // 4. Hàng các phân nhánh mọc thẳng đứng TỪ TRÊN XUỐNG DƯỚI (Top-to-Bottom)
-        const branchesRow = document.createElement('div');
-        branchesRow.className = 'tree-branches-row';
-
-        hierarchyChapters.forEach((chData, chIdx) => {
-          const chKey = `ch-${chIdx}`;
-          const isChExcluded = isNodeExcluded(chKey, [rootKey]);
-
-          // Lấy tham số tùy biến (nếu đã được tinh chỉnh qua nút ✎)
-          const customTitle = getNodeParam(chKey, 'title', chData.title);
-          const customDur = getNodeParam(chKey, 'duration', chData.duration_s || 60);
-          const customWpm = getNodeParam(chKey, 'wpm', 140);
-          const customVisual = getNodeParam(chKey, 'visualType', chData.visual_type || 'split_screen');
-
-          chData.duration_s = customDur;
-          chData.title = customTitle;
-          chData.visual_type = customVisual;
-
-          const col = document.createElement('div');
-          col.className = 'tree-branch-col';
-
-          // Dây nối dọc từ bus xuống card Chương
-          const dropLine = document.createElement('div');
-          dropLine.className = 'tree-drop-line';
-          col.appendChild(dropLine);
-
-          // Card Level 1: CHƯƠNG (Có góc trên X và góc dưới ✎)
-          const branchCard = document.createElement('div');
-          branchCard.className = `tree-branch-card ${isChExcluded ? 'is-excluded' : ''}`;
-          branchCard.id = `branch-node-${srcIdx}-${chIdx}`;
-          branchCard.title = 'Bấm vào để nở ra / thu vào các phần con của chương này';
-
-          let isLevel2Expanded = true; // Mặc định mở Level 2 (Phần a, b, c)
-
-          branchCard.innerHTML = `
-            <button class="node-corner-x" id="btn-x-${chKey}" title="${isChExcluded ? 'Khôi phục chương này vào kịch bản' : 'Loại bỏ chương này khỏi kịch bản (các phần nhỏ bên trong cũng bỏ theo)'}">
-              ${isChExcluded ? '↺' : '✕'}
-            </button>
-            <button class="node-corner-edit" id="btn-edit-${chKey}" title="Nhấn để tinh chỉnh thời lượng & tham số cho chương này">
-              ✎
-            </button>
-
-            <div class="branch-card-header" style="padding-right: 28px;">
-              <span class="depth-tag depth-${chData.depth || 'core'}">${chData.chapter}</span>
-              <span class="node-toggle-badge" id="badge-ch-${srcIdx}-${chIdx}">
-                ${isLevel2Expanded ? '▼' : '▶'} ${chData.sections.length} Phần
-              </span>
-            </div>
-            <div class="branch-card-title">${customTitle}</div>
-            
-            <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 4px; padding-right: 26px;">
-              <div style="font-size: 10px; color: var(--amber);">👁️ [${customVisual}]</div>
-              <div class="node-duration-badge" id="dur-tag-${chKey}" title="Bấm vào để chỉnh số phút/giây">
-                ⏱️ ${customDur}s
-              </div>
-            </div>
-          `;
-
-          // Event Nút X góc trên phải: Loại bỏ hoặc Khôi phục chương
-          branchCard.querySelector(`#btn-x-${chKey}`)?.addEventListener('click', (e) => {
-            e.stopPropagation();
-            toggleNodeExclusion(chKey);
-          });
-
-          // Event Nút Edit ✎ góc dưới phải: Bật thanh tinh chỉnh tham số bên phải
-          branchCard.querySelector(`#btn-edit-${chKey}`)?.addEventListener('click', (e) => {
-            e.stopPropagation();
-            openNodeTuning(chKey, customTitle, customDur, customWpm, customVisual, branchCard);
-          });
-
-          // Click duration badge cũng mở bảng tinh chỉnh
-          branchCard.querySelector(`#dur-tag-${chKey}`)?.addEventListener('click', (e) => {
-            e.stopPropagation();
-            openNodeTuning(chKey, customTitle, customDur, customWpm, customVisual, branchCard);
-          });
-
-          // Container Level 2: PHÂN MỤC (Phần a, b, c)
-          const level2Container = document.createElement('div');
-          level2Container.className = 'tree-level2-container';
-          if (!isLevel2Expanded) level2Container.classList.add('collapsed');
-
-          const level2Stem = document.createElement('div');
-          level2Stem.className = 'tree-level2-stem';
-          level2Container.appendChild(level2Stem);
-
-          const level2List = document.createElement('div');
-          level2List.className = 'tree-level2-list';
-
-          // Level 1 Card Click: Nở ra / Thu vào Level 2 (KHÔNG BẬT SANG SCRIPT)
-          branchCard.addEventListener('click', (e) => {
-            if (e.target.closest('.node-corner-x') || e.target.closest('.node-corner-edit') || e.target.closest('.node-duration-badge')) return;
-            isLevel2Expanded = !isLevel2Expanded;
-            const badge = branchCard.querySelector(`#badge-ch-${srcIdx}-${chIdx}`);
-            if (isLevel2Expanded) {
-              level2Container.classList.remove('collapsed');
-              if (badge) badge.innerHTML = `▼ ${chData.sections.length} Phần`;
+            const isChildEx = isNodeExcluded(child.key, [node.key, child.parentKey]);
+            if (isChildEx) {
+              path.setAttribute('stroke', 'rgba(244, 63, 94, 0.35)');
+              path.setAttribute('stroke-width', '1.8');
+              path.setAttribute('stroke-dasharray', '5,5');
+              path.setAttribute('fill', 'none');
             } else {
-              level2Container.classList.add('collapsed');
-              if (badge) badge.innerHTML = `▶ ${chData.sections.length} Phần`;
+              path.setAttribute('stroke', 'rgba(56, 189, 248, 0.45)');
+              path.setAttribute('stroke-width', '2.5');
+              path.setAttribute('fill', 'none');
+              path.setAttribute('stroke-linecap', 'round');
             }
+            svg.appendChild(path);
           });
-
-          // Duyệt qua từng Phần (Level 2: Phần a, b, c)
-          chData.sections.forEach((sec, secIdx) => {
-            const secKey = `sec-${chIdx}-${secIdx}`;
-            const isSecExcluded = isNodeExcluded(secKey, [chKey, rootKey]);
-
-            const subCard = document.createElement('div');
-            subCard.className = `tree-subbranch-card ${isSecExcluded ? 'is-excluded' : ''}`;
-            subCard.title = 'Bấm vào để nở ra / thu vào các chi tiết con (a1, a2, a3...)';
-
-            let isLevel3Expanded = (chIdx === 0 && secIdx === 0);
-
-            subCard.innerHTML = `
-              <button class="node-corner-x" id="btn-x-${secKey}" title="${isSecExcluded ? 'Khôi phục phần này vào kịch bản' : 'Loại bỏ phần này khỏi kịch bản'}">
-                ${isSecExcluded ? '↺' : '✕'}
-              </button>
-              <button class="node-corner-edit" id="btn-edit-${secKey}" title="Tinh chỉnh phần này">
-                ✎
-              </button>
-
-              <div class="subbranch-header" style="padding-right: 28px;">
-                <span class="subbranch-code">${sec.code}</span>
-                <span class="node-toggle-badge" id="badge-sec-${srcIdx}-${chIdx}-${secIdx}">
-                  ${isLevel3Expanded ? '▼' : '▶'} ${sec.items.length} mục
-                </span>
-              </div>
-              <div class="subbranch-title" style="padding-right: 22px;">${sec.title}</div>
-            `;
-
-            // Event Nút X góc trên phải của Section
-            subCard.querySelector(`#btn-x-${secKey}`)?.addEventListener('click', (e) => {
-              e.stopPropagation();
-              toggleNodeExclusion(secKey);
-            });
-
-            // Event Nút Edit ✎ góc dưới phải của Section
-            subCard.querySelector(`#btn-edit-${secKey}`)?.addEventListener('click', (e) => {
-              e.stopPropagation();
-              openNodeTuning(secKey, `${sec.code}: ${sec.title}`, Math.round(customDur / 3), customWpm, customVisual, subCard);
-            });
-
-            // Container Level 3: TIỂU TIẾT (a1, a2, a3)
-            const level3Container = document.createElement('div');
-            level3Container.className = 'tree-level3-container';
-            if (!isLevel3Expanded) level3Container.classList.add('collapsed');
-
-            sec.items.forEach((item, itemIdx) => {
-              const itemKey = `item-${chIdx}-${secIdx}-${itemIdx}`;
-              const isItemExcluded = isNodeExcluded(itemKey, [secKey, chKey, rootKey]);
-
-              const leafNode = document.createElement('div');
-              leafNode.className = `tree-leaf-node ${isItemExcluded ? 'is-excluded' : ''}`;
-              leafNode.innerHTML = `
-                <span class="leaf-code">${item.code}</span>
-                <span class="leaf-text">${item.text}</span>
-              `;
-              level3Container.appendChild(leafNode);
-            });
-
-            // Level 2 Card Click: Nở ra / Thu vào Level 3
-            subCard.addEventListener('click', (e) => {
-              if (e.target.closest('.node-corner-x') || e.target.closest('.node-corner-edit')) return;
-              e.stopPropagation();
-              isLevel3Expanded = !isLevel3Expanded;
-              const secBadge = subCard.querySelector(`#badge-sec-${srcIdx}-${chIdx}-${secIdx}`);
-              if (isLevel3Expanded) {
-                level3Container.classList.remove('collapsed');
-                if (secBadge) secBadge.innerHTML = `▼ ${sec.items.length} mục`;
-              } else {
-                level3Container.classList.add('collapsed');
-                if (secBadge) secBadge.innerHTML = `▶ ${sec.items.length} mục`;
-              }
-            });
-
-            subCard.appendChild(level3Container);
-            level2List.appendChild(subCard);
-          });
-
-          level2Container.appendChild(level2List);
-
-          col.appendChild(branchCard);
-          col.appendChild(level2Container);
-          branchesRow.appendChild(col);
-        });
-
-        treeContainer.appendChild(branchesRow);
-        world.appendChild(treeContainer);
+        }
       });
+
+      world.appendChild(svg);
+
+      // 2. Tạo Container chứa các thẻ nhánh độc lập
+      const nodesContainer = document.createElement('div');
+      nodesContainer.setAttribute('class', 'mindmap-nodes-container');
+
+      allNodes.forEach(node => {
+        const card = createDecisionNodeElement(node);
+        nodesContainer.appendChild(card);
+      });
+
+      world.appendChild(nodesContainer);
 
       // Cập nhật video preview title
       const videoTitle = document.getElementById('video-mock-title');
@@ -3415,6 +3242,146 @@
       if (teleText && currentScenes.length > 0) {
         teleText.textContent = currentScenes[0].narration;
       }
+    }
+
+    function createDecisionNodeElement(node) {
+      const card = document.createElement('div');
+      const isExcluded = isNodeExcluded(node.key, node.parentKey ? [node.parentKey] : []);
+      const isBeingEdited = currentTuningTarget && currentTuningTarget.nodeKey === node.key;
+
+      card.className = `decision-node node-level-${node.level} ${isExcluded ? 'is-excluded' : ''} ${isBeingEdited ? 'is-being-edited' : ''}`;
+      card.id = `node-${node.key}`;
+      card.style.left = `${node.x}px`;
+      card.style.top = `${node.y}px`;
+      card.style.width = `${node.width}px`;
+      card.style.minHeight = `${node.height}px`;
+
+      // Nút X góc trên phải
+      const btnX = document.createElement('button');
+      btnX.className = 'node-corner-x';
+      btnX.title = isExcluded ? 'Khôi phục nhánh này vào kịch bản' : 'Loại bỏ nhánh này khỏi kịch bản (ấn nhánh to thì nhánh nhỏ cũng bỏ theo)';
+      btnX.innerHTML = isExcluded ? '↺' : '✕';
+      btnX.addEventListener('click', (e) => {
+        e.stopPropagation();
+        toggleNodeExclusion(node.key);
+      });
+
+      // Nút Edit ✎ góc dưới phải (cây bút chéo xiên trái)
+      const btnEdit = document.createElement('button');
+      btnEdit.className = 'node-corner-edit';
+      btnEdit.title = 'Tinh chỉnh thời lượng & tham số cho nhánh này';
+      btnEdit.innerHTML = '✎';
+      btnEdit.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const tTitle = node.data.title || node.data.text || node.key;
+        const tDur = node.data.duration || (node.level === 1 ? 60 : 30);
+        const tWpm = node.data.wpm || 140;
+        const tVis = node.data.visualType || 'split_screen';
+        openNodeTuning(node.key, tTitle, tDur, tWpm, tVis, card);
+      });
+
+      card.appendChild(btnX);
+      card.appendChild(btnEdit);
+
+      // Nội dung theo từng cấp độ
+      if (node.level === 0) {
+        card.innerHTML += `
+          <div class="node-drag-badge">⋮⋮ Kéo di chuyển gốc</div>
+          <div style="font-size: 22px; text-align: center; margin-bottom: 2px;">📄</div>
+          <div class="node-title-text" style="font-size: 13.5px; font-weight: 800; color: var(--text-main); text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding: 0 20px;">
+            ${node.data.title}
+          </div>
+          <div style="font-size: 11px; color: var(--cyan); text-align: center; margin-top: 3px;">
+            ${node.data.pages} trang • ${node.data.chapterCount} chương
+          </div>
+        `;
+
+        // Kéo di chuyển gốc
+        let isDragging = false;
+        let startClientX = 0;
+        let startClientY = 0;
+        let origX = 0;
+        let origY = 0;
+
+        card.addEventListener('mousedown', (e) => {
+          if (e.target.closest('.node-corner-x') || e.target.closest('.node-corner-edit')) return;
+          e.stopPropagation();
+          isDragging = true;
+          startClientX = e.clientX;
+          startClientY = e.clientY;
+          origX = node.x;
+          origY = node.y;
+        });
+
+        window.addEventListener('mousemove', (e) => {
+          if (!isDragging) return;
+          const dx = (e.clientX - startClientX) / zoomScale;
+          const dy = (e.clientY - startClientY) / zoomScale;
+          node.x = origX + dx;
+          node.y = origY + dy;
+          card.style.left = `${node.x}px`;
+          card.style.top = `${node.y}px`;
+        });
+
+        window.addEventListener('mouseup', () => {
+          if (isDragging) isDragging = false;
+        });
+      } else if (node.level === 1) {
+        const hasChildren = node.children && node.children.length > 0;
+        const expandLabel = hasChildren ? (node.isExpanded ? `▼ ${node.children.length}` : `▶ ${node.children.length}`) : '';
+
+        card.innerHTML += `
+          <div style="display: flex; justify-content: space-between; align-items: center; padding-right: 22px; margin-bottom: 3px;">
+            <span class="depth-tag depth-${node.data.depth || 'core'}">${node.data.chapter}</span>
+            ${hasChildren ? `<span class="node-toggle-badge">${expandLabel}</span>` : ''}
+          </div>
+          <div class="node-title-text" style="font-size: 11.5px; font-weight: 700; color: var(--text-main); line-height: 1.35; max-height: 34px; overflow: hidden; margin-bottom: 4px;">
+            ${node.data.title}
+          </div>
+          <div style="display: flex; align-items: center; justify-content: space-between; padding-right: 24px;">
+            <span style="font-size: 9.5px; color: var(--amber);">👁️ [${node.data.visualType || 'split'}]</span>
+            <span class="node-duration-badge" id="dur-tag-${node.key}" title="Bấm để chỉnh thời lượng">⏱️ ${node.data.duration}s</span>
+          </div>
+        `;
+
+        card.querySelector(`#dur-tag-${node.key}`)?.addEventListener('click', (e) => {
+          e.stopPropagation();
+          openNodeTuning(node.key, node.data.title, node.data.duration, node.data.wpm, node.data.visualType, card);
+        });
+      } else if (node.level === 2) {
+        const hasChildren = node.children && node.children.length > 0;
+        const expandLabel = hasChildren ? (node.isExpanded ? `▼ ${node.children.length}` : `▶ ${node.children.length}`) : '';
+
+        card.innerHTML += `
+          <div style="display: flex; justify-content: space-between; align-items: center; padding-right: 22px; margin-bottom: 2px;">
+            <span class="subbranch-code">${node.data.code}</span>
+            ${hasChildren ? `<span class="node-toggle-badge">${expandLabel}</span>` : ''}
+          </div>
+          <div class="node-title-text" style="font-size: 11px; font-weight: 600; color: var(--text-main); line-height: 1.3; max-height: 32px; overflow: hidden; padding-right: 20px;">
+            ${node.data.title}
+          </div>
+        `;
+      } else if (node.level === 3) {
+        card.innerHTML += `
+          <div style="display: flex; align-items: flex-start; gap: 5px; padding-right: 20px;">
+            <span class="leaf-code">${node.data.code}</span>
+            <span class="node-leaf-text" style="font-size: 10px; color: var(--text-muted); line-height: 1.3; max-height: 40px; overflow: hidden;">
+              ${node.data.text}
+            </span>
+          </div>
+        `;
+      }
+
+      // Click vào thân card để bật / thu gọn nhánh con
+      card.addEventListener('click', (e) => {
+        if (e.target.closest('.node-corner-x') || e.target.closest('.node-corner-edit') || e.target.closest('.node-duration-badge')) return;
+        if (node.children && node.children.length > 0) {
+          setNodeExpanded(node.key, !node.isExpanded);
+          renderMindmap();
+        }
+      });
+
+      return card;
     }
 
     // =========================================================================
@@ -3595,6 +3562,7 @@
 
       // Mặc định tự động mở Sơ Đồ ở giữa theo đúng yêu cầu
       switchCenterTab('mindmap');
+      setTimeout(() => centerMindmapView(true), 80);
 
       showToast(`Đã mở dự án: ${activeProject.title}`);
     }
