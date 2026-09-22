@@ -27,3 +27,8 @@ Thumbs.db
 
 # Eval results
 results/
+
+# Studio uploads & exports
+studio/uploads/
+*.docx
+

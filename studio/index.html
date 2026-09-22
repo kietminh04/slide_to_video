@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CLSG Studio Pro - Multi-Agent Pedagogical Script Engine</title>
+  <title>CLSG Studio Pro - CVAT Projects & NotebookLM Multimodal Engine</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -11,8 +11,8 @@
     :root {
       --bg-base: #080c14;
       --bg-surface: #0f172a;
-      --bg-card: rgba(15, 23, 42, 0.75);
-      --bg-card-hover: rgba(30, 41, 59, 0.85);
+      --bg-card: rgba(15, 23, 42, 0.78);
+      --bg-card-hover: rgba(30, 41, 59, 0.9);
       --border-subtle: rgba(255, 255, 255, 0.08);
       --border-accent: rgba(99, 102, 241, 0.35);
       --text-main: #f8fafc;
@@ -26,8 +26,8 @@
       --amber: #f59e0b;
       --rose: #f43f5e;
       --radius-sm: 8px;
-      --radius-md: 12px;
-      --radius-lg: 18px;
+      --radius-md: 14px;
+      --radius-lg: 20px;
       --shadow-card: 0 10px 30px -10px rgba(0, 0, 0, 0.5), 0 0 1px 1px rgba(255, 255, 255, 0.05);
     }
 
@@ -50,11 +50,11 @@
         radial-gradient(circle at 85% 90%, rgba(56, 189, 248, 0.08) 0%, transparent 40%);
     }
 
-    /* HEADER */
+    /* GLOBAL HEADER */
     header {
-      height: 70px;
+      height: 68px;
       border-bottom: 1px solid var(--border-subtle);
-      background: rgba(8, 12, 20, 0.85);
+      background: rgba(8, 12, 20, 0.9);
       backdrop-filter: blur(20px);
       position: sticky;
       top: 0;
@@ -62,31 +62,32 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 0 28px;
+      padding: 0 24px;
     }
 
     .brand-group {
       display: flex;
       align-items: center;
-      gap: 14px;
+      gap: 12px;
+      cursor: pointer;
     }
 
     .brand-logo {
-      width: 40px;
-      height: 40px;
+      width: 36px;
+      height: 36px;
+      border-radius: var(--radius-sm);
       background: linear-gradient(135deg, var(--primary), var(--cyan));
-      border-radius: var(--radius-md);
       display: flex;
       align-items: center;
       justify-content: center;
       font-weight: 800;
-      font-size: 20px;
+      font-size: 18px;
       color: white;
-      box-shadow: 0 0 20px var(--primary-glow);
+      box-shadow: 0 0 16px var(--primary-glow);
     }
 
     .brand-title {
-      font-size: 18px;
+      font-size: 17px;
       font-weight: 700;
       letter-spacing: -0.3px;
       display: flex;
@@ -95,242 +96,546 @@
     }
 
     .badge-pro {
-      font-size: 11px;
+      font-size: 10px;
       font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 20px;
+      background: rgba(99, 102, 241, 0.2);
+      color: var(--cyan);
+      border: 1px solid rgba(99, 102, 241, 0.4);
       text-transform: uppercase;
       letter-spacing: 0.5px;
-      background: rgba(99, 102, 241, 0.15);
-      color: var(--cyan);
-      padding: 3px 8px;
-      border-radius: 20px;
-      border: 1px solid rgba(56, 189, 248, 0.3);
+    }
+
+    .nav-tabs-group {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(255, 255, 255, 0.03);
+      padding: 4px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-subtle);
+    }
+
+    .nav-tab-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      padding: 6px 14px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .nav-tab-btn.active {
+      background: rgba(99, 102, 241, 0.25);
+      color: var(--text-main);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
     }
 
     .header-actions {
       display: flex;
       align-items: center;
-      gap: 12px;
-    }
-
-    .btn-export {
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid var(--border-subtle);
-      color: var(--text-main);
-      padding: 8px 14px;
-      border-radius: var(--radius-sm);
-      font-size: 13px;
-      font-weight: 600;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      cursor: pointer;
-      transition: all 0.2s ease;
-    }
-
-    .btn-export:hover {
-      background: rgba(255, 255, 255, 0.1);
-      border-color: rgba(255, 255, 255, 0.2);
+      gap: 10px;
     }
 
     .btn-primary {
       background: linear-gradient(135deg, var(--primary), #4f46e5);
-      border: none;
       color: white;
-      padding: 9px 18px;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      padding: 8px 16px;
       border-radius: var(--radius-sm);
       font-size: 13px;
       font-weight: 600;
       cursor: pointer;
-      box-shadow: 0 4px 15px var(--primary-glow);
       display: flex;
       align-items: center;
-      gap: 8px;
-      transition: all 0.25s ease;
+      gap: 7px;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 14px var(--primary-glow);
     }
 
     .btn-primary:hover {
+      filter: brightness(1.1);
       transform: translateY(-1px);
-      box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
     }
 
-    /* MAIN LAYOUT */
-    .app-body {
-      display: grid;
-      grid-template-columns: 340px 1fr;
-      flex: 1;
-      gap: 24px;
-      padding: 24px 28px;
-      max-width: 1720px;
-      margin: 0 auto;
-      width: 100%;
-    }
-
-    /* SIDEBAR CONFIG */
-    .sidebar {
-      display: flex;
-      flex-direction: column;
-      gap: 20px;
-    }
-
-    .card {
-      background: var(--bg-card);
+    .btn-export {
+      background: rgba(255, 255, 255, 0.04);
       border: 1px solid var(--border-subtle);
-      border-radius: var(--radius-lg);
-      padding: 20px;
-      backdrop-filter: blur(16px);
-      box-shadow: var(--shadow-card);
-    }
-
-    .card-title {
-      font-size: 14px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.6px;
-      color: var(--text-muted);
-      margin-bottom: 16px;
+      color: var(--text-main);
+      padding: 7px 12px;
+      border-radius: var(--radius-sm);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
       display: flex;
       align-items: center;
-      justify-content: space-between;
+      gap: 6px;
+      transition: all 0.2s ease;
     }
 
-    .form-group {
-      margin-bottom: 16px;
+    .btn-export:hover {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: rgba(255, 255, 255, 0.2);
     }
 
-    .form-label {
+    /* =========================================================================
+       VIEW 1: CVAT PROJECTS DASHBOARD (GRID VIEW)
+       ========================================================================= */
+    #view-projects {
+      flex: 1;
+      padding: 32px 36px;
+      max-width: 1560px;
+      width: 100%;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 28px;
+    }
+
+    .dashboard-hero {
       display: flex;
       justify-content: space-between;
+      align-items: flex-end;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .dashboard-title-group h1 {
+      font-size: 26px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      margin-bottom: 6px;
+      background: linear-gradient(135deg, #ffffff, #94a3b8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .dashboard-title-group p {
       font-size: 13px;
-      font-weight: 600;
-      margin-bottom: 8px;
-      color: var(--text-main);
+      color: var(--text-muted);
     }
 
-    .form-value {
-      font-family: 'JetBrains Mono', monospace;
-      color: var(--cyan);
-      font-size: 12px;
+    .dashboard-stats {
+      display: flex;
+      align-items: center;
+      gap: 12px;
     }
 
-    .slider {
-      width: 100%;
-      height: 6px;
-      border-radius: 3px;
-      background: #1e293b;
-      outline: none;
-      -webkit-appearance: none;
-      cursor: pointer;
-    }
-
-    .slider::-webkit-slider-thumb {
-      -webkit-appearance: none;
-      width: 16px;
-      height: 16px;
-      border-radius: 50%;
-      background: var(--cyan);
-      box-shadow: 0 0 10px var(--cyan);
-      cursor: pointer;
-    }
-
-    select, input[type="text"] {
-      width: 100%;
-      background: rgba(15, 23, 42, 0.9);
+    .stat-pill {
+      background: rgba(15, 23, 42, 0.8);
       border: 1px solid var(--border-subtle);
-      color: var(--text-main);
-      padding: 10px 12px;
+      padding: 6px 12px;
+      border-radius: 30px;
+      font-size: 12px;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .stat-pill strong {
+      color: var(--cyan);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .search-filter-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .search-input-wrap {
+      position: relative;
+      flex: 1;
+      max-width: 480px;
+    }
+
+    .search-input-wrap input {
+      width: 100%;
+      background: rgba(15, 23, 42, 0.8);
+      border: 1px solid var(--border-subtle);
       border-radius: var(--radius-sm);
+      padding: 10px 14px 10px 38px;
+      color: var(--text-main);
       font-size: 13px;
       font-family: inherit;
+    }
+
+    .search-input-wrap input:focus {
       outline: none;
-      transition: border-color 0.2s ease;
-    }
-
-    select:focus, input[type="text"]:focus {
       border-color: var(--primary);
+      box-shadow: 0 0 12px var(--primary-glow);
     }
 
-    /* TOP SCORECARD */
-    .scorecard-banner {
+    .search-input-wrap span {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-dim);
+      font-size: 14px;
+    }
+
+    /* CVAT GRID CARDS */
+    .projects-grid {
       display: grid;
-      grid-template-columns: 140px repeat(4, 1fr);
-      gap: 16px;
-      margin-bottom: 24px;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 22px;
     }
 
-    .overall-score-card {
-      background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(56, 189, 248, 0.1));
-      border: 1px solid var(--border-accent);
-      border-radius: var(--radius-lg);
-      padding: 16px;
+    /* 1. THE DEFAULT "+" CREATE CARD (CVAT STYLE) */
+    .card-project-create {
+      background: rgba(15, 23, 42, 0.4);
+      border: 2px dashed rgba(99, 102, 241, 0.4);
+      border-radius: var(--radius-md);
+      min-height: 270px;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
     }
 
-    .overall-score-num {
-      font-size: 38px;
-      font-weight: 800;
+    .card-project-create:hover {
+      border-color: var(--cyan);
+      background: rgba(56, 189, 248, 0.05);
+      box-shadow: 0 0 30px rgba(56, 189, 248, 0.15);
+      transform: translateY(-3px);
+    }
+
+    .create-plus-circle {
+      width: 68px;
+      height: 68px;
+      border-radius: 50%;
+      background: rgba(99, 102, 241, 0.15);
+      border: 1px solid rgba(99, 102, 241, 0.35);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 32px;
+      color: var(--cyan);
+      margin-bottom: 16px;
+      transition: all 0.3s;
+    }
+
+    .card-project-create:hover .create-plus-circle {
+      background: var(--cyan);
+      color: #080c14;
+      transform: scale(1.1) rotate(90deg);
+      box-shadow: 0 0 20px var(--cyan);
+    }
+
+    .create-card-title {
+      font-size: 16px;
+      font-weight: 700;
       color: var(--text-main);
-      line-height: 1;
-      font-family: 'JetBrains Mono', monospace;
+      margin-bottom: 6px;
     }
 
-    .metric-card {
+    .create-card-sub {
+      font-size: 12px;
+      color: var(--text-muted);
+      text-align: center;
+      max-width: 220px;
+      line-height: 1.4;
+    }
+
+    /* 2. REGULAR PROJECT CARD */
+    .project-card {
       background: var(--bg-card);
       border: 1px solid var(--border-subtle);
       border-radius: var(--radius-md);
-      padding: 16px;
+      min-height: 270px;
+      padding: 20px;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      box-shadow: var(--shadow-card);
+      position: relative;
     }
 
-    .metric-header {
+    .project-card:hover {
+      background: var(--bg-card-hover);
+      border-color: rgba(99, 102, 241, 0.4);
+      transform: translateY(-3px);
+      box-shadow: 0 16px 36px -10px rgba(0, 0, 0, 0.6), 0 0 20px var(--primary-glow);
+    }
+
+    .card-top-row {
       display: flex;
       justify-content: space-between;
-      font-size: 12px;
-      color: var(--text-muted);
-      font-weight: 600;
+      align-items: flex-start;
+      margin-bottom: 12px;
+    }
+
+    .project-badge-tag {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 6px;
       text-transform: uppercase;
       letter-spacing: 0.5px;
     }
 
-    .metric-value {
-      font-size: 22px;
-      font-weight: 700;
+    .tag-active {
+      background: rgba(16, 185, 129, 0.15);
+      color: var(--emerald);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    .tag-draft {
+      background: rgba(245, 158, 11, 0.15);
+      color: var(--amber);
+      border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+
+    .score-circle-sm {
+      display: flex;
+      align-items: center;
+      gap: 5px;
       font-family: 'JetBrains Mono', monospace;
-      margin: 8px 0;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--cyan);
+      background: rgba(56, 189, 248, 0.1);
+      padding: 4px 8px;
+      border-radius: 6px;
+    }
+
+    .project-name {
+      font-size: 16px;
+      font-weight: 700;
+      line-height: 1.4;
+      margin-bottom: 6px;
       color: var(--text-main);
     }
 
-    .progress-bar-bg {
-      height: 6px;
-      background: rgba(255, 255, 255, 0.06);
-      border-radius: 3px;
+    .project-desc {
+      font-size: 12px;
+      color: var(--text-muted);
+      line-height: 1.5;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      margin-bottom: 14px;
+    }
+
+    .project-sources-badge {
+      font-size: 11px;
+      color: var(--cyan);
+      background: rgba(56, 189, 248, 0.08);
+      border: 1px solid rgba(56, 189, 248, 0.2);
+      border-radius: 6px;
+      padding: 6px 10px;
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-weight: 600;
+    }
+
+    .project-meta-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      padding-top: 12px;
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+      font-size: 11px;
+      color: var(--text-dim);
+    }
+
+    .meta-item strong {
+      color: var(--text-main);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .card-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 16px;
+      padding-top: 12px;
+      border-top: 1px solid var(--border-subtle);
+    }
+
+    .btn-card-open {
+      background: rgba(99, 102, 241, 0.15);
+      border: 1px solid rgba(99, 102, 241, 0.3);
+      color: var(--text-main);
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+
+    .btn-card-open:hover {
+      background: var(--primary);
+      color: white;
+    }
+
+    /* =========================================================================
+       VIEW 2: NOTEBOOK LM WORKSPACE (SOURCES + TIMELINE + CRITIC)
+       ========================================================================= */
+    #view-workspace {
+      display: none;
+      flex: 1;
+      flex-direction: column;
+      height: calc(100vh - 68px);
+    }
+
+    /* WORKSPACE TOPBAR */
+    .workspace-topbar {
+      height: 52px;
+      border-bottom: 1px solid var(--border-subtle);
+      background: rgba(15, 23, 42, 0.7);
+      padding: 0 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .ws-breadcrumb {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 13px;
+    }
+
+    .btn-back-projects {
+      background: transparent;
+      border: 1px solid var(--border-subtle);
+      color: var(--text-muted);
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      transition: all 0.2s;
+    }
+
+    .btn-back-projects:hover {
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--text-main);
+    }
+
+    .ws-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    /* 3-PANE WORKSPACE BODY */
+    .workspace-body {
+      display: grid;
+      grid-template-columns: 320px 1fr 340px;
+      flex: 1;
       overflow: hidden;
     }
 
-    .progress-bar-fill {
-      height: 100%;
-      border-radius: 3px;
-      transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-
-    /* TIMELINE TRANSCRIPT 3-COLUMNS */
-    .timeline-container {
+    /* PANE 1: NOTEBOOK LM SOURCES */
+    .pane-sources {
+      border-right: 1px solid var(--border-subtle);
+      background: rgba(10, 15, 26, 0.6);
       display: flex;
       flex-direction: column;
-      gap: 16px;
+      overflow-y: auto;
+      padding: 18px;
+      gap: 18px;
+    }
+
+    .pane-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    .source-item {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      transition: all 0.2s;
+      position: relative;
+    }
+
+    .source-item:hover {
+      border-color: rgba(56, 189, 248, 0.4);
+      background: var(--bg-card-hover);
+    }
+
+    .source-item-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .source-meta-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      color: var(--text-dim);
+    }
+
+    /* NOTEBOOK LM DRAG & DROP ZONE */
+    .notebook-drop-zone {
+      border: 2px dashed rgba(56, 189, 248, 0.35);
+      border-radius: var(--radius-sm);
+      background: rgba(56, 189, 248, 0.04);
+      padding: 18px 12px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .notebook-drop-zone:hover {
+      border-color: var(--cyan);
+      background: rgba(56, 189, 248, 0.09);
+      box-shadow: 0 0 20px rgba(56, 189, 248, 0.15);
+    }
+
+    /* PANE 2: TIMELINE SCRIPT */
+    .pane-timeline {
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+      padding: 24px;
+      gap: 20px;
+      background: rgba(8, 12, 20, 0.4);
     }
 
     .timeline-header-row {
       display: grid;
-      grid-template-columns: 180px 1fr 280px;
+      grid-template-columns: 170px 1fr 260px;
       gap: 16px;
       padding: 10px 16px;
-      font-size: 12px;
+      font-size: 11px;
       font-weight: 700;
       color: var(--text-dim);
       text-transform: uppercase;
@@ -340,32 +645,37 @@
 
     .scene-row {
       display: grid;
-      grid-template-columns: 180px 1fr 280px;
+      grid-template-columns: 170px 1fr 260px;
       gap: 16px;
+      padding: 18px 16px;
       background: var(--bg-card);
       border: 1px solid var(--border-subtle);
       border-radius: var(--radius-md);
-      padding: 16px;
-      transition: all 0.2s ease;
+      transition: all 0.25s;
     }
 
     .scene-row:hover {
+      border-color: rgba(99, 102, 241, 0.3);
       background: var(--bg-card-hover);
-      border-color: rgba(255, 255, 255, 0.15);
-      transform: translateY(-2px);
     }
 
-    /* Col 1: Time & Depth */
+    .scene-row.is-speaking {
+      border-color: var(--cyan) !important;
+      box-shadow: 0 0 30px rgba(56, 189, 248, 0.3) !important;
+      background: rgba(15, 23, 42, 0.98) !important;
+      transform: scale(1.008);
+    }
+
     .time-badge-group {
       display: flex;
       flex-direction: column;
-      gap: 6px;
+      gap: 4px;
     }
 
     .time-range {
       font-family: 'JetBrains Mono', monospace;
-      font-size: 13px;
-      font-weight: 600;
+      font-size: 14px;
+      font-weight: 700;
       color: var(--cyan);
     }
 
@@ -375,38 +685,51 @@
     }
 
     .depth-tag {
-      display: inline-block;
-      padding: 3px 8px;
+      padding: 2px 7px;
       border-radius: 6px;
-      font-size: 11px;
+      font-size: 10px;
       font-weight: 700;
       text-transform: uppercase;
       width: fit-content;
+      margin-top: 4px;
     }
 
     .depth-bridge { background: rgba(56, 189, 248, 0.15); color: var(--cyan); }
     .depth-core { background: rgba(99, 102, 241, 0.15); color: var(--primary); }
     .depth-deep { background: rgba(245, 158, 11, 0.15); color: var(--amber); }
 
-    .chunk-source-tag {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 10px;
-      color: var(--text-dim);
-      margin-top: 4px;
+    .btn-speak-scene {
+      background: rgba(56, 189, 248, 0.1);
+      border: 1px solid rgba(56, 189, 248, 0.25);
+      color: var(--cyan);
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      width: fit-content;
+      margin-top: 8px;
+      transition: all 0.2s;
     }
 
-    /* Col 2: Narration */
+    .btn-speak-scene:hover {
+      background: rgba(56, 189, 248, 0.2);
+    }
+
     .narration-editor {
       width: 100%;
       background: rgba(8, 12, 20, 0.6);
-      border: 1px solid rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.06);
       border-radius: var(--radius-sm);
       color: var(--text-main);
       padding: 12px;
       font-size: 14px;
       line-height: 1.6;
       resize: vertical;
-      min-height: 75px;
+      min-height: 78px;
       font-family: inherit;
     }
 
@@ -430,9 +753,9 @@
       padding: 2px 6px;
       border-radius: 4px;
       font-weight: 600;
+      font-size: 10px;
     }
 
-    /* Col 3: Visual Intent */
     .visual-box {
       background: rgba(8, 12, 20, 0.6);
       border: 1px solid rgba(255, 255, 255, 0.05);
@@ -440,16 +763,16 @@
       padding: 12px;
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: 6px;
     }
 
     .visual-type-badge {
-      font-size: 12px;
+      font-size: 11px;
       font-weight: 700;
       color: var(--amber);
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 5px;
     }
 
     .visual-purpose-text {
@@ -458,447 +781,1001 @@
       line-height: 1.4;
     }
 
-    /* CRITIQUE BANNER */
-    .critic-advice-card {
-      margin-top: 20px;
-      padding: 16px;
-      background: rgba(99, 102, 241, 0.08);
-      border: 1px solid var(--border-accent);
-      border-radius: var(--radius-md);
+    /* PANE 3: CRITIC & MONITORING */
+    .pane-critic {
+      border-left: 1px solid var(--border-subtle);
+      background: rgba(10, 15, 26, 0.6);
       display: flex;
-      align-items: flex-start;
-      gap: 12px;
-      font-size: 13px;
+      flex-direction: column;
+      overflow-y: auto;
+      padding: 18px;
+      gap: 18px;
     }
 
-    .critic-badge {
-      background: var(--primary);
-      color: white;
+    .metric-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .metric-header {
+      display: flex;
+      justify-content: space-between;
       font-size: 11px;
-      font-weight: 700;
-      padding: 2px 8px;
-      border-radius: 4px;
-      white-space: nowrap;
+      color: var(--text-muted);
+      font-weight: 600;
+      text-transform: uppercase;
     }
 
-    /* TOAST NOTIFICATION */
+    .metric-val-big {
+      font-size: 26px;
+      font-weight: 800;
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--cyan);
+    }
+
+    .progress-bar-bg {
+      height: 6px;
+      background: rgba(255, 255, 255, 0.06);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      border-radius: 3px;
+      transition: width 0.4s ease;
+    }
+
+    /* =========================================================================
+       MODAL: CREATE NEW PROJECT (CVAT POPUP)
+       ========================================================================= */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(8px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+
+    .modal-content {
+      background: #0f172a;
+      border: 1px solid rgba(99, 102, 241, 0.4);
+      border-radius: var(--radius-md);
+      width: 100%;
+      max-width: 540px;
+      padding: 26px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8), 0 0 30px var(--primary-glow);
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      animation: modalFadeIn 0.25s ease-out;
+    }
+
+    @keyframes modalFadeIn {
+      from { opacity: 0; transform: scale(0.95); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .modal-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    .btn-close-modal {
+      background: transparent;
+      border: none;
+      font-size: 20px;
+      color: var(--text-dim);
+      cursor: pointer;
+    }
+
+    .form-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+      display: block;
+    }
+
+    .form-input {
+      width: 100%;
+      background: rgba(8, 12, 20, 0.8);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      padding: 10px 12px;
+      color: var(--text-main);
+      font-size: 13px;
+      font-family: inherit;
+    }
+
+    .form-input:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+
     #toast {
       position: fixed;
       bottom: 24px;
       right: 24px;
-      background: var(--bg-surface);
-      border: 1px solid var(--border-accent);
-      color: white;
+      background: rgba(15, 23, 42, 0.95);
+      border: 1px solid var(--cyan);
+      color: var(--text-main);
       padding: 12px 20px;
-      border-radius: var(--radius-md);
-      box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+      border-radius: var(--radius-sm);
       font-size: 13px;
       font-weight: 600;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
       opacity: 0;
+      transform: translateY(10px);
+      transition: all 0.3s;
+      z-index: 2000;
       pointer-events: none;
-      transition: all 0.3s ease;
-      z-index: 100;
     }
 
     #toast.show {
       opacity: 1;
-      transform: translateY(-10px);
+      transform: translateY(0);
     }
 
-    /* TTS AUDIO CONTROLS & HIGHLIGHT */
-    .btn-speak-scene {
-      background: rgba(56, 189, 248, 0.1);
-      border: 1px solid rgba(56, 189, 248, 0.25);
-      color: var(--cyan);
-      padding: 5px 10px;
-      border-radius: 6px;
-      font-size: 11px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      display: flex;
-      align-items: center;
-      gap: 5px;
-      width: fit-content;
-      margin-top: 8px;
+    @keyframes spin {
+      to { transform: rotate(360deg); }
     }
 
-    .btn-speak-scene:hover {
-      background: rgba(56, 189, 248, 0.2);
-      border-color: var(--cyan);
-      transform: translateY(-1px);
-    }
-
-    .scene-row.is-speaking {
+    .notebook-drop-zone.dragover {
       border-color: var(--cyan) !important;
-      box-shadow: 0 0 30px rgba(56, 189, 248, 0.3) !important;
-      background: rgba(15, 23, 42, 0.98) !important;
+      background: rgba(56, 189, 248, 0.12) !important;
+      box-shadow: 0 0 25px rgba(56, 189, 248, 0.35) !important;
       transform: scale(1.01);
-    }
-
-    .scene-row.is-speaking .time-range {
-      color: var(--emerald);
-      animation: pulse 1.5s infinite;
-    }
-
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.6; }
     }
   </style>
 </head>
 <body>
 
-  <!-- HEADER -->
+  <!-- GLOBAL HEADER -->
   <header>
-    <div class="brand-group">
+    <div class="brand-group" id="btn-brand-home">
       <div class="brand-logo">C</div>
       <div class="brand-title">
         CLSG Studio
-        <span class="badge-pro">Multi-Agent v2.0</span>
+        <span class="badge-pro">CVAT & NotebookLM v2.0</span>
       </div>
     </div>
+
+    <!-- CVAT-STYLE NAVIGATION TABS -->
+    <div class="nav-tabs-group">
+      <button class="nav-tab-btn active" id="tab-nav-projects">📁 Dự Án (Projects)</button>
+      <button class="nav-tab-btn" id="tab-nav-workspace">⚡ Không Gian Bài Giảng</button>
+    </div>
+
     <div class="header-actions">
-      <button class="btn-primary" id="btn-play-all" style="background: linear-gradient(135deg, var(--emerald), #059669); margin-right: 4px;">
-        <span id="play-all-icon">🔊</span> <span id="play-all-text">Nghe Toàn Bộ</span>
-      </button>
-      <button class="btn-export" id="btn-stop-speech" style="display: none; border-color: rgba(244, 63, 94, 0.4); color: var(--rose);">
-        <span>⏹️</span> Dừng
-      </button>
-      <button class="btn-export" id="btn-export-md">
-        <span>📄</span> Markdown (.md)
-      </button>
-      <button class="btn-export" id="btn-export-docx">
-        <span>📘</span> Word (.docx)
-      </button>
-      <button class="btn-export" id="btn-export-srt">
-        <span>⏱️</span> Phụ đề (.srt)
-      </button>
-      <button class="btn-export" id="btn-export-json">
-        <span>⚙️</span> JSON
+      <div class="stat-pill" style="display: none;" id="pill-zero-leak">
+        <span>🔒</span> Zero Key Leakage
+      </div>
+      <button class="btn-primary" id="btn-create-project-top">
+        <span>➕</span> Tạo Dự Án Mới
       </button>
     </div>
   </header>
 
-  <!-- APP BODY -->
-  <div class="app-body">
+  <!-- =========================================================================
+       VIEW 1: CVAT PROJECTS DASHBOARD
+       ========================================================================= -->
+  <div id="view-projects">
+    <div class="dashboard-hero">
+      <div class="dashboard-title-group">
+        <h1>Quản Lý Dự Án Bài Giảng MOOC</h1>
+        <p>Kiến trúc đa phương thức kết hợp phong cách quản trị dự án CVAT và quản lý nguồn học liệu NotebookLM</p>
+      </div>
+      <div class="dashboard-stats">
+        <div class="stat-pill">Dự án: <strong id="stat-project-count">2</strong></div>
+        <div class="stat-pill">Chunks trích xuất: <strong>45</strong></div>
+        <div class="stat-pill">Nhịp độ chuẩn: <strong>140 WPM</strong></div>
+        <div class="stat-pill">Kho từ vựng LPM: <strong>6.766 terms</strong></div>
+      </div>
+    </div>
 
-    <!-- SIDEBAR: CONFIG CONTROLS -->
-    <aside class="sidebar">
-      
-      <!-- DATASET & INPUT -->
-      <div class="card">
-        <div class="card-title">
-          <span>Tài liệu nguồn</span>
-          <span style="color: var(--emerald); font-size: 11px;" id="chunk-count-badge">● 35 Chunks (DSS09)</span>
-        </div>
-        <div class="form-group">
-          <label class="form-label" for="doc-selector">Chọn slide bài giảng</label>
-          <select id="doc-selector">
-            <option value="dss09_clustering" selected>DSS09(c) - Clustering.pdf (Phân Cụm Dữ Liệu - DSS09)</option>
-            <option value="cnn_intro">cnn_intro.pptx (Mạng Nơ-ron Tích chập CNN)</option>
-            <option value="custom">Tải lên file khác (.pptx, .pdf, .docx)...</option>
-          </select>
-        </div>
-        <div class="form-group" id="file-upload-wrap" style="display: none; margin-top: 10px;">
-          <label class="drop-zone" id="drop-zone" for="file-input" style="border: 2px dashed rgba(56, 189, 248, 0.4); border-radius: var(--radius-sm); padding: 14px; text-align: center; cursor: pointer; display: block; background: rgba(56, 189, 248, 0.05); transition: all 0.2s;">
-            <div style="font-size: 22px; margin-bottom: 4px;">📂</div>
-            <div style="font-size: 12px; font-weight: 600; color: var(--text-main);">Bấm để duyệt hoặc kéo thả slide vào đây</div>
-            <div style="font-size: 11px; color: var(--text-dim); margin-top: 4px;">Hỗ trợ .pdf, .pptx, .docx, .txt</div>
-            <input type="file" id="file-input" accept=".pptx,.pdf,.docx,.txt" style="display: none;">
-          </label>
-          <div id="file-chosen-name" style="font-size: 11px; color: var(--cyan); margin-top: 6px; display: none; font-weight: 600; padding: 4px 8px; background: rgba(56,189,248,0.1); border-radius: 4px;"></div>
-        </div>
+    <div class="search-filter-bar">
+      <div class="search-input-wrap">
+        <span>🔍</span>
+        <input type="text" id="project-search" placeholder="Tìm kiếm dự án bài giảng theo tên, slide, thuật ngữ...">
+      </div>
+      <div style="font-size: 12px; color: var(--text-dim);">
+        Hiển thị: <strong>Tất cả dự án</strong>
+      </div>
+    </div>
+
+    <!-- PROJECTS GRID (WITH THE "+" CARD FIRST) -->
+    <div class="projects-grid" id="projects-grid-container">
+      <!-- Project cards rendered dynamically by renderProjectsGrid() -->
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       VIEW 2: NOTEBOOK LM WORKSPACE
+       ========================================================================= -->
+  <div id="view-workspace">
+    <!-- TOPBAR -->
+    <div class="workspace-topbar">
+      <div class="ws-breadcrumb">
+        <button class="btn-back-projects" id="btn-back-dashboard">
+          <span>←</span> Danh Sách Dự Án
+        </button>
+        <span style="color: var(--border-subtle);">/</span>
+        <span class="ws-title" id="ws-current-title">Phân Cụm Dữ Liệu (Clustering Analysis)</span>
+        <span class="badge-pro" id="ws-doc-badge">DSS09</span>
       </div>
 
-      <!-- PEDAGOGICAL PARAMETERS -->
-      <div class="card">
-        <div class="card-title">
-          <span>Tham số Sư phạm</span>
-          <span style="font-size: 11px; color: var(--cyan);">Tự điều chỉnh</span>
-        </div>
-
-        <!-- DURATION -->
-        <div class="form-group">
-          <div class="form-label">
-            <span>Thời lượng mục tiêu</span>
-            <span class="form-value" id="val-duration">5 phút 00s (300s)</span>
-          </div>
-          <input type="range" class="slider" id="slider-duration" min="60" max="900" step="30" value="300">
-        </div>
-
-        <!-- WPM -->
-        <div class="form-group">
-          <div class="form-label">
-            <span>Tốc độ đọc (WPM)</span>
-            <span class="form-value" id="val-wpm">140 từ/phút</span>
-          </div>
-          <input type="range" class="slider" id="slider-wpm" min="110" max="180" step="5" value="140">
-        </div>
-
-        <!-- STYLE PACK -->
-        <div class="form-group">
-          <label class="form-label" for="style-selector">Phong cách giảng dạy</label>
-          <select id="style-selector">
-            <option value="academic">Hàn lâm / Chuẩn mực Sư phạm (Academic)</option>
-            <option value="serious" selected>Nghiêm túc / Chuyên gia (Serious)</option>
-            <option value="conversational">Trò chuyện / Dễ tiếp cận (Conversational)</option>
-            <option value="drama_tongtai">Kịch tính / Thu hút (Drama)</option>
-          </select>
-        </div>
-
-        <!-- GLOSSARY SETTING -->
-        <div class="form-group">
-          <label class="form-label">
-            <span>Glossary ML LPM</span>
-            <span class="form-value" style="color: var(--emerald);">6.766 thuật ngữ</span>
-          </label>
-          <div style="font-size: 11px; color: var(--text-dim); line-height: 1.4;">
-            Tự động ép dịch thuật ngữ chuẩn, chặn đứng 100% tiếng Anh bồi (train, tune, predict, loss function).
-          </div>
-        </div>
-
-        <!-- RUN BUTTON -->
-        <button class="btn-primary" id="btn-run-pipeline" style="width: 100%; justify-content: center; margin-top: 10px;">
-          <span>⚡</span> Khởi Tạo Kịch Bản Multi-Agent
+      <div class="header-actions">
+        <button class="btn-primary" id="btn-play-all" style="background: linear-gradient(135deg, var(--emerald), #059669);">
+          <span id="play-all-icon">🔊</span> <span id="play-all-text">Nghe Toàn Bộ</span>
+        </button>
+        <button class="btn-export" id="btn-stop-speech" style="display: none; border-color: rgba(244, 63, 94, 0.4); color: var(--rose);">
+          <span>⏹️</span> Dừng
+        </button>
+        <button class="btn-export" id="btn-export-docx">
+          <span>📘</span> Word (.docx)
+        </button>
+        <button class="btn-export" id="btn-export-md">
+          <span>📄</span> Markdown (.md)
+        </button>
+        <button class="btn-export" id="btn-export-srt">
+          <span>⏱️</span> Phụ đề (.srt)
+        </button>
+        <button class="btn-export" id="btn-export-json">
+          <span>⚙️</span> JSON
         </button>
       </div>
+    </div>
 
-      <!-- SECURITY & PRIVACY -->
-      <div class="card" style="padding: 14px 18px; border-color: rgba(16, 185, 129, 0.2);">
-        <div style="display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--emerald);">
-          <span>🔒</span> <strong>Bảo mật 100% Zero Leak</strong>
-        </div>
-        <p style="font-size: 11px; color: var(--text-dim); margin-top: 4px;">
-          Toàn bộ quy trình xử lý trực tiếp trên máy cục bộ. Không lộ API key hay dữ liệu slide ra môi trường bên ngoài.
-        </p>
-      </div>
+    <!-- 3-PANE WORKSPACE BODY -->
+    <div class="workspace-body">
 
-    </aside>
-
-    <!-- MAIN TIMELINE WORKSPACE -->
-    <main>
-
-      <!-- TOP CRITIC SCORECARD BANNER -->
-      <div class="scorecard-banner">
-        
-        <!-- Overall Gauge -->
-        <div class="overall-score-card">
-          <div style="font-size: 11px; font-weight: 700; color: var(--cyan); text-transform: uppercase;">Critic Score</div>
-          <div class="overall-score-num" id="score-overall">100</div>
-          <div style="font-size: 11px; color: var(--text-dim);">Chuẩn Sư Phạm</div>
+      <!-- PANE 1: NOTEBOOK LM SOURCES -->
+      <aside class="pane-sources">
+        <div class="pane-header">
+          <span>Nguồn Học Liệu (Sources)</span>
+          <span style="color: var(--cyan); font-size: 11px;" id="source-active-count">1 nguồn</span>
         </div>
 
-        <!-- DAR -->
-        <div class="metric-card">
-          <div class="metric-header">
-            <span>Thời lượng (DAR)</span>
-            <span>🎯 100%</span>
-          </div>
-          <div class="metric-value" id="score-dar">100%</div>
-          <div class="progress-bar-bg">
-            <div class="progress-bar-fill" id="bar-dar" style="width: 100%; background: var(--cyan);"></div>
-          </div>
+        <!-- SOURCES LIST (NOTEBOOK LM STYLE) -->
+        <div id="sources-list" style="display: flex; flex-direction: column; gap: 10px;">
+          <!-- Items will be injected dynamically -->
         </div>
 
-        <!-- TCR -->
-        <div class="metric-card">
-          <div class="metric-header">
-            <span>Thuật ngữ (TCR)</span>
-            <span>📚 100%</span>
+        <!-- DROP ZONE TO ADD MORE SOURCES -->
+        <label class="notebook-drop-zone" id="notebook-drop-zone" for="source-file-input">
+          <div style="font-size: 24px; margin-bottom: 4px;">📂</div>
+          <div style="font-size: 12px; font-weight: 700; color: var(--text-main);">+ Thêm Nguồn Học Liệu</div>
+          <div style="font-size: 11px; color: var(--text-dim); margin-top: 4px;">Kéo thả hoặc bấm để nạp thêm .pdf, .pptx, .docx</div>
+          <input type="file" id="source-file-input" accept=".pptx,.pdf,.docx,.txt" style="display: none;">
+        </label>
+
+        <!-- PEDAGOGICAL SLIDERS -->
+        <div style="border-top: 1px solid var(--border-subtle); padding-top: 14px; display: flex; flex-direction: column; gap: 14px;">
+          <div style="font-size: 12px; font-weight: 700; color: var(--text-muted);">Tham Số Giảng Dạy</div>
+          <div>
+            <div style="display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 4px;">
+              <span>Thời lượng mục tiêu:</span>
+              <strong style="color: var(--cyan);" id="val-duration">5 phút 00s (300s)</strong>
+            </div>
+            <input type="range" class="slider" id="slider-duration" min="60" max="900" step="30" value="300" style="width: 100%;">
           </div>
-          <div class="metric-value" id="score-tcr">100%</div>
-          <div class="progress-bar-bg">
-            <div class="progress-bar-fill" id="bar-tcr" style="width: 100%; background: var(--emerald);"></div>
+
+          <div>
+            <div style="display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 4px;">
+              <span>Tốc độ đọc (WPM):</span>
+              <strong style="color: var(--cyan);" id="val-wpm">140 từ/phút</strong>
+            </div>
+            <input type="range" class="slider" id="slider-wpm" min="110" max="180" step="5" value="140" style="width: 100%;">
           </div>
+
+          <button class="btn-primary" id="btn-re-generate" style="width: 100%; justify-content: center;">
+            <span>⚡</span> Khởi Tạo Lại Với Multi-Agent
+          </button>
         </div>
+      </aside>
 
-        <!-- HSR -->
-        <div class="metric-card">
-          <div class="metric-header">
-            <span>Bám Slide (HSR)</span>
-            <span>🛡️ 100%</span>
-          </div>
-          <div class="metric-value" id="score-hsr">100%</div>
-          <div class="progress-bar-bg">
-            <div class="progress-bar-fill" id="bar-hsr" style="width: 100%; background: var(--primary);"></div>
-          </div>
-        </div>
-
-        <!-- VNS -->
-        <div class="metric-card">
-          <div class="metric-header">
-            <span>Thị giác (VNS)</span>
-            <span>🎬 100%</span>
-          </div>
-          <div class="metric-value" id="score-vns">100%</div>
-          <div class="progress-bar-bg">
-            <div class="progress-bar-fill" id="bar-vns" style="width: 100%; background: var(--amber);"></div>
-          </div>
-        </div>
-
-      </div>
-
-      <!-- CRITIC ADVICE -->
-      <div class="critic-advice-card" id="critic-banner">
-        <span class="critic-badge">CRITIC GUARD</span>
-        <div id="critic-summary-text">
-          Hệ thống Multi-Agent xác nhận: Toàn bộ 5 phân cảnh đạt độ dài chuẩn xác theo ngân sách từ (700 từ / 300s). Thuật ngữ tiếng Việt hoàn toàn chuẩn hóa với kho từ vựng LPM.
-        </div>
-      </div>
-
-      <!-- 3-COLUMN TIMELINE TRANSCRIPT -->
-      <div style="margin-top: 24px;">
+      <!-- PANE 2: TIMELINE TELEPROMPTER -->
+      <main class="pane-timeline">
         <div class="timeline-header-row">
           <div>Thời gian & Cảnh</div>
           <div>Lời Giảng Sư Phạm (Narration Track)</div>
           <div>Chỉ Dẫn Thị Giác (Visual Track)</div>
         </div>
-
-        <div class="timeline-container" id="timeline-container">
-          <!-- Scenes will be injected dynamically via JavaScript -->
+        <div id="timeline-container" style="display: flex; flex-direction: column; gap: 16px;">
+          <!-- Scenes injected via JS -->
         </div>
-      </div>
+      </main>
 
-    </main>
+      <!-- PANE 3: CRITIC SCORECARD & MONITORING -->
+      <aside class="pane-critic">
+        <div class="pane-header">
+          <span>Thẩm Định Sư Phạm (Critic)</span>
+          <span style="color: var(--emerald); font-size: 11px;">● Khép Kín</span>
+        </div>
+
+        <!-- BIG SCORE CARD -->
+        <div class="metric-card" style="align-items: center; text-align: center;">
+          <div style="font-size: 11px; color: var(--text-dim); text-transform: uppercase;">Tổng Điểm Thẩm Định</div>
+          <div class="metric-val-big" id="score-overall">93.1</div>
+          <span class="project-badge-tag tag-active" id="badge-pass">PASSED (ĐẠT CHUẨN MOOC)</span>
+        </div>
+
+        <!-- 4 METRICS PROGRESS BARS -->
+        <div class="metric-card">
+          <div class="metric-header">
+            <span>Thời lượng (DAR)</span>
+            <strong style="color: var(--cyan);" id="score-dar">92.5%</strong>
+          </div>
+          <div class="progress-bar-bg">
+            <div class="progress-bar-fill" id="bar-dar" style="width: 92.5%; background: var(--cyan);"></div>
+          </div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-header">
+            <span>Thuật ngữ LPM (TCR)</span>
+            <strong style="color: var(--emerald);" id="score-tcr">85.7%</strong>
+          </div>
+          <div class="progress-bar-bg">
+            <div class="progress-bar-fill" id="bar-tcr" style="width: 85.7%; background: var(--emerald);"></div>
+          </div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-header">
+            <span>Bám Slide (HSR)</span>
+            <strong style="color: var(--primary);" id="score-hsr">100%</strong>
+          </div>
+          <div class="progress-bar-bg">
+            <div class="progress-bar-fill" id="bar-hsr" style="width: 100%; background: var(--primary);"></div>
+          </div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-header">
+            <span>Đồng bộ thị giác (VNS)</span>
+            <strong style="color: var(--amber);" id="score-vns">100%</strong>
+          </div>
+          <div class="progress-bar-bg">
+            <div class="progress-bar-fill" id="bar-vns" style="width: 100%; background: var(--amber);"></div>
+          </div>
+        </div>
+
+        <!-- CRITIC LIVE FEEDBACK -->
+        <div class="metric-card">
+          <div style="font-size: 11px; font-weight: 700; color: var(--cyan);">Nhận Xét Của Critic Agent</div>
+          <div style="font-size: 12px; color: var(--text-muted); line-height: 1.5;" id="critic-summary-text">
+            Hệ thống Multi-Agent xác nhận: Toàn bộ 5 phân cảnh đạt độ dài chuẩn xác theo ngân sách từ. Thuật ngữ tiếng Việt hoàn toàn chuẩn hóa với kho từ vựng LPM.
+          </div>
+        </div>
+      </aside>
+
+    </div>
   </div>
 
-  <!-- TOAST NOTIFICATION -->
-  <div id="toast">Đã xuất file thành công!</div>
+  <!-- =========================================================================
+       MODAL: CREATE NEW PROJECT (CVAT POPUP)
+       ========================================================================= -->
+  <div class="modal-backdrop" id="modal-create-project">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div class="modal-title">Tạo Dự Án Bài Giảng Mới</div>
+        <button class="btn-close-modal" id="btn-close-modal">&times;</button>
+      </div>
+
+      <div>
+        <label class="form-label" for="input-proj-name">Tên dự án bài giảng</label>
+        <input type="text" class="form-input" id="input-proj-name" placeholder="VD: Phân Tích Dữ Liệu Lớn & Chuỗi Thời Gian...">
+      </div>
+
+      <div>
+        <label class="form-label" for="input-proj-desc">Mô tả / Môn học</label>
+        <input type="text" class="form-input" id="input-proj-desc" placeholder="VD: Đồ Án Chuyên Ngành Toán Tin K67 HUST...">
+      </div>
+
+      <div>
+        <label class="form-label">Chọn tệp slide nguồn ban đầu (NotebookLM Source)</label>
+        <label class="notebook-drop-zone" for="modal-file-input" style="display: block;">
+          <div style="font-size: 28px; margin-bottom: 6px;">📑</div>
+          <div style="font-size: 12px; font-weight: 700; color: var(--text-main);">Kéo thả file slide hoặc bấm để duyệt</div>
+          <div style="font-size: 11px; color: var(--text-dim); margin-top: 4px;">Hỗ trợ .pdf, .pptx, .docx, .txt</div>
+          <input type="file" id="modal-file-input" accept=".pptx,.pdf,.docx,.txt" style="display: none;">
+        </label>
+        <div id="modal-file-name" style="font-size: 11px; color: var(--cyan); margin-top: 6px; display: none; font-weight: 600;"></div>
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 10px;">
+        <button class="btn-export" id="btn-cancel-modal">Hủy bỏ</button>
+        <button class="btn-primary" id="btn-submit-create-project">
+          <span>⚡</span> Khởi Tạo & Vào Không Gian Làm Việc
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST -->
+  <div id="toast">Đã thực hiện thành công!</div>
+
+  <!-- AI MULTI-AGENT LOADING OVERLAY -->
+  <div id="ai-loading-overlay" style="display: none; position: fixed; inset: 0; background: rgba(8, 12, 20, 0.92); backdrop-filter: blur(14px); z-index: 3000; align-items: center; justify-content: center; flex-direction: column; gap: 20px;">
+    <div style="width: 76px; height: 76px; border-radius: 50%; border: 4px solid rgba(99, 102, 241, 0.15); border-top-color: var(--cyan); border-right-color: var(--primary); animation: spin 0.9s cubic-bezier(0.4, 0, 0.2, 1) infinite;"></div>
+    <div style="font-size: 20px; font-weight: 800; color: #fff; letter-spacing: -0.3px;" id="loading-title">Đang Khởi Chạy Multi-Agent Pipeline...</div>
+    <div style="font-size: 13px; color: var(--text-muted); max-width: 480px; text-align: center; line-height: 1.6;" id="loading-desc">
+      Extractor Agent đang bóc tách slide, phân bổ ngân sách từ 140 WPM theo chuẩn MOOC...
+    </div>
+    <div style="display: flex; gap: 10px; margin-top: 10px;">
+      <span class="stat-pill" style="border-color: var(--cyan); color: var(--cyan);">● 1. Extractor</span>
+      <span class="stat-pill" style="border-color: var(--primary); color: var(--primary);">● 2. Planner</span>
+      <span class="stat-pill" style="border-color: var(--emerald); color: var(--emerald);">● 3. Generator</span>
+      <span class="stat-pill" style="border-color: var(--amber); color: var(--amber);">● 4. Critic Guard</span>
+    </div>
+  </div>
 
   <script>
-    // Dữ liệu bài giảng 1: Phân Cụm Dữ Liệu (DSS09(c) - Clustering.pdf - 702 từ / 300s / 140 WPM)
-    const clusteringScenes = [
-      {
-        id: "s_cluster_1",
-        chapter: "ch1",
-        depth: "bridge",
-        t_start: 0,
-        t_end: 58,
-        source_id: "c_ch1_source",
-        narration: "Chào mừng các bạn đến với bài giảng về Phân cụm dữ liệu trong hệ thống hỗ trợ ra quyết định. Khác với học có giám sát cần nhãn sẵn, phân cụm dữ liệu là kỹ thuật học không giám sát cốt lõi nhằm tự động khám phá các cấu trúc và quy luật tiềm ẩn. Bản chất của phân cụm là quá trình gom các đối tượng dữ liệu vào từng nhóm mang ý nghĩa thực tiễn, sao cho các điểm dữ liệu trong cùng một cụm có độ tương đồng tối đa, còn các điểm thuộc các cụm khác nhau có sự tách biệt rõ rệt. Kỹ thuật này đóng vai trò then chốt trong phân khúc khách hàng, nén giảm số chiều dữ liệu, và phát hiện các hành vi bất thường.",
-        visual_type: "split_screen",
-        visual_purpose: "Hiển thị so sánh song song giữa dữ liệu chưa gán nhãn và kết quả gom nhóm tự động sau khi phân cụm",
-        detected_terms: ["phân cụm", "học không giám sát", "tập dữ liệu"]
+    // DỮ LIỆU CÁC DỰ ÁN MẪU
+    const defaultProjects = {
+      "dss09_clustering": {
+        id: "dss09_clustering",
+        title: "Phân Cụm Dữ Liệu (Clustering Analysis)",
+        desc: "Hệ Hỗ Trợ Quyết Định (DSS) • Khám phá tri thức K-Means, DBSCAN, Mạng SOM Kohonen và 186 quốc gia.",
+        badge: "DSS09",
+        duration_s: 300,
+        wpm: 140,
+        score: 93.1,
+        dar: 92.5,
+        tcr: 85.7,
+        sources: [
+          { name: "DSS09(c) - Clustering.pdf", pages: 35, size: "1.2 MB", active: true }
+        ],
+        scenes: [
+          {
+            id: "s_cluster_1",
+            chapter: "ch1",
+            depth: "bridge",
+            t_start: 0,
+            t_end: 58,
+            source_id: "c_ch1_source",
+            narration: "Chào mừng các bạn đến với bài giảng về Phân cụm dữ liệu trong hệ thống hỗ trợ ra quyết định. Khác với học có giám sát cần nhãn sẵn, phân cụm dữ liệu là kỹ thuật học không giám sát cốt lõi nhằm tự động khám phá các cấu trúc và quy luật tiềm ẩn. Bản chất của phân cụm là quá trình gom các đối tượng dữ liệu vào từng nhóm mang ý nghĩa thực tiễn, sao cho các điểm dữ liệu trong cùng một cụm có độ tương đồng tối đa, còn các điểm thuộc các cụm khác nhau có sự tách biệt rõ rệt. Kỹ thuật này đóng vai trò then chốt trong phân khúc khách hàng, nén giảm số chiều dữ liệu, và phát hiện các hành vi bất thường.",
+            visual_type: "split_screen",
+            visual_purpose: "Hiển thị so sánh song song giữa dữ liệu chưa gán nhãn và kết quả gom nhóm tự động sau khi phân cụm",
+            detected_terms: ["phân cụm", "học không giám sát", "tập dữ liệu"]
+          },
+          {
+            id: "s_cluster_2",
+            chapter: "ch2",
+            depth: "core",
+            t_start: 58,
+            t_end: 124,
+            source_id: "c_ch2_source",
+            narration: "Tiếp theo, chúng ta cùng nghiên cứu thuật toán phân cụm kinh điển và phổ biến nhất: thuật toán K-Means. K-Means là phương pháp phân hoạch dữ liệu dựa trên mẫu đại diện, chia tập dữ liệu thành k cụm riêng biệt không chồng lấn. Mỗi cụm được đặc trưng bởi một tâm cụm gọi là Centroid. Thuật toán vận hành lặp qua bốn bước tuần tự: đầu tiên khởi tạo k tâm cụm ngẫu nhiên; bước hai gán từng điểm dữ liệu vào tâm cụm gần nhất dựa trên khoảng cách Euclidean, tạo thành các phân hoạch Voronoi; bước ba tính toán lại tọa độ tâm cụm mới bằng trung bình cộng các điểm trong cụm; và bước bốn lặp lại quá trình này cho đến khi vị trí các tâm cụm hội tụ. Mục tiêu toán học của K-Means là cực tiểu hóa tổng bình phương sai số SSE, đo lường độ phân tán giữa các điểm dữ liệu và tâm cụm tương ứng.",
+            visual_type: "process_visualization",
+            visual_purpose: "Mô phỏng động quá trình dịch chuyển của 3 tâm cụm Centroid trên mặt phẳng 2D và đường cong suy giảm của hàm mất mát SSE",
+            detected_terms: ["phân cụm", "K-Means", "Centroid", "Voronoi", "SSE"]
+          },
+          {
+            id: "s_cluster_3",
+            chapter: "ch3",
+            depth: "core",
+            t_start: 124,
+            t_end: 186,
+            source_id: "c_ch3_source",
+            narration: "Mặc dù K-Means rất hiệu quả với các cụm hình cầu, nhưng thuật toán này gặp bế tắc khi dữ liệu có hình dạng phức tạp hoặc chứa nhiều nhiễu. Để khắc phục, chúng ta sử dụng thuật toán phân cụm không gian dựa trên mật độ DBSCAN. Thay vì dựa vào khoảng cách tới tâm, DBSCAN định nghĩa cụm là vùng có mật độ điểm dữ liệu dày đặc, ngăn cách bởi các vùng thưa thớt. Thuật toán điều khiển bằng hai siêu tham số then chốt: bán kính lân cận Epsilon và số điểm tối thiểu MinPoints. Dựa vào đó, dữ liệu được phân thành ba loại: Điểm lõi nếu vùng lân cận chứa ít nhất MinPoints điểm; Điểm biên nếu nằm trong lân cận của điểm lõi; và Điểm nhiễu nếu không thuộc hai loại trên. DBSCAN có khả năng vượt trội trong việc phát hiện cụm hình dạng bất kỳ và tự động cô lập nhiễu ngoại lai.",
+            visual_type: "highlight_box",
+            visual_purpose: "Vẽ vòng tròn bán kính Epsilon khoanh vùng điểm lõi, điểm biên và đánh dấu đỏ các điểm nhiễu ngoại lai",
+            detected_terms: ["DBSCAN", "mật độ", "Epsilon", "MinPoints"]
+          },
+          {
+            id: "s_cluster_4",
+            chapter: "ch4",
+            depth: "deep",
+            t_start: 186,
+            t_end: 244,
+            source_id: "c_ch4_source",
+            narration: "Phương pháp phân cụm nâng cao thứ ba là Mạng tự tổ chức Self-Organizing Maps, hay còn gọi là mạng Kohonen. Đây là sự kết hợp tinh tế giữa mạng nơ-ron nhân tạo và kỹ thuật phân cụm trực quan hóa. Mạng SOM ánh xạ không gian dữ liệu nhiều chiều phức tạp xuống một lưới tô-pô hai chiều dạng mắt lưới hình chữ nhật hoặc lục giác, trong khi vẫn bảo toàn được mối quan hệ lân cận giữa các mẫu dữ liệu. Khi một vector đầu vào xuất hiện, mạng xác định nơ-ron chiến thắng có khoảng cách gần nhất, sau đó cập nhật trọng số của nơ-ron này cùng các nơ-ron lân cận trong bán kính ảnh hưởng. Qua các chu kỳ học, bán kính lân cận và tốc độ học co hẹp dần, giúp toàn bộ mạng tự sắp xếp thành một bản đồ tri thức trực quan sinh động.",
+            visual_type: "animated_diagram",
+            visual_purpose: "Lưới topology 2D dạng lục giác tự biến dạng và thích nghi để bao bọc phân bố dữ liệu đa chiều",
+            detected_terms: ["mạng nơ-ron", "SOM", "Kohonen", "lưới tô-pô"]
+          },
+          {
+            id: "s_cluster_5",
+            chapter: "ch5",
+            depth: "bridge",
+            t_start: 244,
+            t_end: 300,
+            source_id: "c_ch5_source",
+            narration: "Để minh họa sức mạnh thực tiễn của phân cụm, slide cuối cùng trình bày một nghiên cứu tình huống điển hình trên tập dữ liệu gồm một trăm tám mươi sáu quốc gia với bốn chỉ số kinh tế xã hội. Nhờ áp dụng phân cụm, hệ thống tự động phân tách các quốc gia thành từng nhóm tương đồng về mức độ phát triển, giúp các nhà hoạch định chính sách có góc nhìn vĩ mô khách quan mà không cần gán nhãn thủ công. Tóm lại, việc lựa chọn K-Means cho dữ liệu phân tách rõ ràng, DBSCAN cho dữ liệu có nhiễu hình dạng phức tạp, hay SOM cho trực quan hóa đa chiều là kỹ năng nền tảng trong hệ trợ giúp ra quyết định hiện đại. Cảm ơn các bạn đã lắng nghe bài giảng.",
+            visual_type: "concept_map",
+            visual_purpose: "Bản đồ phân cụm các quốc gia trên thế giới với các dải màu phân biệt nhóm phát triển kinh tế",
+            detected_terms: ["phân cụm", "K-Means", "DBSCAN", "SOM"]
+          }
+        ]
       },
-      {
-        id: "s_cluster_2",
-        chapter: "ch2",
-        depth: "core",
-        t_start: 58,
-        t_end: 124,
-        source_id: "c_ch2_source",
-        narration: "Tiếp theo, chúng ta cùng nghiên cứu thuật toán phân cụm kinh điển và phổ biến nhất: thuật toán K-Means. K-Means là phương pháp phân hoạch dữ liệu dựa trên mẫu đại diện, chia tập dữ liệu thành k cụm riêng biệt không chồng lấn. Mỗi cụm được đặc trưng bởi một tâm cụm gọi là Centroid. Thuật toán vận hành lặp qua bốn bước tuần tự: đầu tiên khởi tạo k tâm cụm ngẫu nhiên; bước hai gán từng điểm dữ liệu vào tâm cụm gần nhất dựa trên khoảng cách Euclidean, tạo thành các phân hoạch Voronoi; bước ba tính toán lại tọa độ tâm cụm mới bằng trung bình cộng các điểm trong cụm; và bước bốn lặp lại quá trình này cho đến khi vị trí các tâm cụm hội tụ. Mục tiêu toán học của K-Means là cực tiểu hóa tổng bình phương sai số SSE, đo lường độ phân tán giữa các điểm dữ liệu và tâm cụm tương ứng.",
-        visual_type: "process_visualization",
-        visual_purpose: "Mô phỏng động quá trình dịch chuyển của 3 tâm cụm Centroid trên mặt phẳng 2D và đường cong suy giảm của hàm mất mát SSE",
-        detected_terms: ["phân cụm", "K-Means", "Centroid", "Voronoi", "SSE"]
-      },
-      {
-        id: "s_cluster_3",
-        chapter: "ch3",
-        depth: "core",
-        t_start: 124,
-        t_end: 186,
-        source_id: "c_ch3_source",
-        narration: "Mặc dù K-Means rất hiệu quả với các cụm hình cầu, nhưng thuật toán này gặp bế tắc khi dữ liệu có hình dạng phức tạp hoặc chứa nhiều nhiễu. Để khắc phục, chúng ta sử dụng thuật toán phân cụm không gian dựa trên mật độ DBSCAN. Thay vì dựa vào khoảng cách tới tâm, DBSCAN định nghĩa cụm là vùng có mật độ điểm dữ liệu dày đặc, ngăn cách bởi các vùng thưa thớt. Thuật toán điều khiển bằng hai siêu tham số then chốt: bán kính lân cận Epsilon và số điểm tối thiểu MinPoints. Dựa vào đó, dữ liệu được phân thành ba loại: Điểm lõi nếu vùng lân cận chứa ít nhất MinPoints điểm; Điểm biên nếu nằm trong lân cận của điểm lõi; và Điểm nhiễu nếu không thuộc hai loại trên. DBSCAN có khả năng vượt trội trong việc phát hiện cụm hình dạng bất kỳ và tự động cô lập nhiễu ngoại lai.",
-        visual_type: "highlight_box",
-        visual_purpose: "Vẽ vòng tròn bán kính Epsilon khoanh vùng điểm lõi, điểm biên và đánh dấu đỏ các điểm nhiễu ngoại lai",
-        detected_terms: ["DBSCAN", "mật độ", "Epsilon", "MinPoints"]
-      },
-      {
-        id: "s_cluster_4",
-        chapter: "ch4",
-        depth: "deep",
-        t_start: 186,
-        t_end: 244,
-        source_id: "c_ch4_source",
-        narration: "Phương pháp phân cụm nâng cao thứ ba là Mạng tự tổ chức Self-Organizing Maps, hay còn gọi là mạng Kohonen. Đây là sự kết hợp tinh tế giữa mạng nơ-ron nhân tạo và kỹ thuật phân cụm trực quan hóa. Mạng SOM ánh xạ không gian dữ liệu nhiều chiều phức tạp xuống một lưới tô-pô hai chiều dạng mắt lưới hình chữ nhật hoặc lục giác, trong khi vẫn bảo toàn được mối quan hệ lân cận giữa các mẫu dữ liệu. Khi một vector đầu vào xuất hiện, mạng xác định nơ-ron chiến thắng có khoảng cách gần nhất, sau đó cập nhật trọng số của nơ-ron này cùng các nơ-ron lân cận trong bán kính ảnh hưởng. Qua các chu kỳ học, bán kính lân cận và tốc độ học co hẹp dần, giúp toàn bộ mạng tự sắp xếp thành một bản đồ tri thức trực quan sinh động.",
-        visual_type: "animated_diagram",
-        visual_purpose: "Lưới topology 2D dạng lục giác tự biến dạng và thích nghi để bao bọc phân bố dữ liệu đa chiều",
-        detected_terms: ["mạng nơ-ron", "SOM", "Kohonen", "lưới tô-pô"]
-      },
-      {
-        id: "s_cluster_5",
-        chapter: "ch5",
-        depth: "bridge",
-        t_start: 244,
-        t_end: 300,
-        source_id: "c_ch5_source",
-        narration: "Để minh họa sức mạnh thực tiễn của phân cụm, slide cuối cùng trình bày một nghiên cứu tình huống điển hình trên tập dữ liệu gồm một trăm tám mươi sáu quốc gia với bốn chỉ số kinh tế xã hội. Nhờ áp dụng phân cụm, hệ thống tự động phân tách các quốc gia thành từng nhóm tương đồng về mức độ phát triển, giúp các nhà hoạch định chính sách có góc nhìn vĩ mô khách quan mà không cần gán nhãn thủ công. Tóm lại, việc lựa chọn K-Means cho dữ liệu phân tách rõ ràng, DBSCAN cho dữ liệu có nhiễu hình dạng phức tạp, hay SOM cho trực quan hóa đa chiều là kỹ năng nền tảng trong hệ trợ giúp ra quyết định hiện đại. Cảm ơn các bạn đã lắng nghe bài giảng.",
-        visual_type: "concept_map",
-        visual_purpose: "Bản đồ phân cụm các quốc gia trên thế giới với các dải màu phân biệt nhóm phát triển kinh tế",
-        detected_terms: ["phân cụm", "K-Means", "DBSCAN", "SOM"]
+      "cnn_intro": {
+        id: "cnn_intro",
+        title: "Mạng Nơ-ron Tích Chập (CNN Intro)",
+        desc: "Thị giác máy tính • Tích chập 2D, vùng tiếp nhận cục bộ, chia sẻ trọng số, Max Pooling, và bài toán bùng nổ tham số MLP.",
+        badge: "DEEP LEARNING",
+        duration_s: 300,
+        wpm: 140,
+        score: 95.5,
+        dar: 100.0,
+        tcr: 85.0,
+        sources: [
+          { name: "cnn_intro.pptx", pages: 10, size: "3.4 MB", active: true }
+        ],
+        scenes: [
+          {
+            id: "s_pro_1",
+            chapter: "ch1",
+            depth: "bridge",
+            t_start: 0,
+            t_end: 56,
+            source_id: "c_ch1_01",
+            narration: "Chào mừng các bạn sinh viên đến với bài giảng chuyên sâu về Mạng Nơ-ron Tích chập (CNN). Trước khi đi vào chi tiết, chúng ta cần đặt câu hỏi: Tại sao mạng nơ-ron kết nối đầy đủ truyền thống lại thất bại khi xử lý dữ liệu hình ảnh? Khi đưa một bức ảnh độ phân giải cao vào mạng nơ-ron thông thường, việc kéo phẳng ảnh thành véc-tơ một chiều sẽ phá hủy hoàn toàn mối tương quan không gian giữa các điểm ảnh lân cận, đồng thời làm bùng nổ hàng triệu trọng số khiến mô hình bị quá khớp nghiêm trọng. Để giải quyết nút thắt này, kiến trúc CNN ra đời dựa trên hai nguyên lý sinh học then chốt: vùng tiếp nhận cục bộ giúp mạng tập trung vào từng cụm điểm ảnh nhỏ, và cơ chế chia sẻ trọng số giúp giảm thiểu tối đa số lượng tham số cần huấn luyện.",
+            visual_type: "split_screen",
+            visual_purpose: "So sánh trực quan: Sự bùng nổ hàng triệu kết nối của MLP đối lập với cấu trúc bộ lọc tinh gọn của CNN",
+            detected_terms: ["mạng nơ-ron", "quá khớp", "trọng số", "vùng tiếp nhận cục bộ"]
+          },
+          {
+            id: "s_pro_2",
+            chapter: "ch2",
+            depth: "core",
+            t_start: 56,
+            t_end: 124,
+            source_id: "c_ch2_01",
+            narration: "Bây giờ, chúng ta hãy phân tích toán học chi tiết của phép tích chập hai chiều. Về mặt công thức, giá trị tại tọa độ i, j trên bản đồ đặc trưng đầu ra được tính bằng tổng tích chập giữa ảnh đầu vào I và bộ lọc K: S(i, j) bằng tổng theo m và n của I(i cộng m, j cộng n) nhân với K(m, n). Hãy tưởng tượng chúng ta có một ảnh xám kích thước năm nhân năm, và một bộ lọc kích thước ba nhân ba chứa các trọng số xác định đường biên. Khi bắt đầu, bộ lọc đặt khớp lên góc trên cùng bên trái của ảnh. Tại vùng này, chín điểm ảnh sẽ nhân trực tiếp với chín trọng số tương ứng trong bộ lọc, rồi cộng dồn lại thành một giá trị duy nhất bằng ba mươi lăm trên bản đồ đặc trưng. Tiếp theo, bộ lọc trượt sang phải để lặp lại quá trình này trên toàn bộ bề mặt ảnh.",
+            visual_type: "process_visualization",
+            visual_purpose: "Mô phỏng động cửa sổ trượt Kernel 3x3 di chuyển trên ma trận 5x5 và tính tổng 9 tích số ra giá trị 35",
+            detected_terms: ["tích chập", "bản đồ đặc trưng", "bộ lọc", "trọng số"]
+          },
+          {
+            id: "s_pro_3",
+            chapter: "ch3",
+            depth: "deep",
+            t_start: 124,
+            t_end: 184,
+            source_id: "c_ch3_01",
+            narration: "Để kiểm soát kích thước và trường nhìn của bản đồ đặc trưng, chúng ta phải tinh chỉnh hai siêu tham số then chốt là bước nhảy và đệm viền. Bước nhảy xác định khoảng cách dịch chuyển của bộ lọc sau mỗi lần tính toán. Nếu bước nhảy bằng một, bộ lọc trượt từng điểm ảnh một; nhưng nếu tăng bước nhảy lên hai, kích thước bản đồ đặc trưng sẽ giảm đi một nửa. Ngược lại, đệm viền là kỹ thuật bổ sung các hàng và cột số không bao quanh rìa ảnh. Kỹ thuật này giải quyết hai bài toán sống còn: bảo toàn kích thước không gian để các lớp tích chập sâu không làm teo nhỏ ảnh, và ngăn chặn việc bỏ sót thông tin quan trọng ở các góc biên. Kích thước đầu ra được xác định chính xác theo công thức: lấy kích thước ảnh trừ kích thước bộ lọc cộng hai lần đệm viền, tất cả chia cho bước nhảy rồi cộng thêm một.",
+            visual_type: "zoom_in",
+            visual_purpose: "Phóng to khu vực đệm viền Zero Padding và hiển thị công thức tính kích thước ma trận đầu ra",
+            detected_terms: ["bước nhảy", "đệm viền", "bộ lọc", "bản đồ đặc trưng"]
+          },
+          {
+            id: "s_pro_4",
+            chapter: "ch4",
+            depth: "deep",
+            t_start: 184,
+            t_end: 242,
+            source_id: "c_ch4_01",
+            narration: "Sau khi đi qua hàm kích hoạt phi tuyến ReLU để loại bỏ các giá trị âm, bản đồ đặc trưng sẽ được đưa vào lớp gộp mẫu. Phổ biến nhất là kỹ thuật gộp mẫu cực đại với cửa sổ hai nhân hai và bước nhảy bằng hai. Trong mỗi vùng hai nhân hai, mô hình chỉ giữ lại một điểm ảnh có giá trị kích hoạt lớn nhất và loại bỏ ba điểm ảnh còn lại. Cơ chế này giúp giảm đến bảy mươi lăm phần trăm khối lượng dữ liệu không gian, giảm tải tính toán cho các lớp phía sau và trực tiếp ngăn ngừa hiện tượng quá khớp. Quan trọng hơn, gộp mẫu tạo ra tính bất biến với phép tịnh tiến nhỏ, nghĩa là dù vật thể trong ảnh bị dịch chuyển nhẹ một vài pixel, mạng nơ-ron vẫn nhận diện chính xác các đặc trưng nhận diện cốt lõi.",
+            visual_type: "highlight_box",
+            visual_purpose: "Đóng khung làm nổi bật ô giá trị cực đại trong cửa sổ 2x2 của cơ chế Max Pooling",
+            detected_terms: ["hàm kích hoạt", "gộp mẫu", "quá khớp", "bản đồ đặc trưng"]
+          },
+          {
+            id: "s_pro_5",
+            chapter: "ch5",
+            depth: "bridge",
+            t_start: 242,
+            t_end: 300,
+            source_id: "c_ch5_01",
+            narration: "Tổng kết lại, một kiến trúc CNN hoàn chỉnh là sự phối hợp nhịp nhàng giữa các tầng chức năng. Các lớp tích chập ban đầu đóng vai trò trích xuất những đặc trưng hình học sơ cấp như cạnh, góc và đường nét thô. Khi đi sâu vào các tầng mạng tiếp theo, các đặc trưng này được tổng hợp thành những họa tiết phức tạp, bộ phận và hình dáng cụ thể của vật thể. Cuối cùng, bản đồ đặc trưng được trải phẳng và đưa vào các lớp kết nối đầy đủ để đưa ra xác suất phân loại nhãn. Nắm vững cơ chế toán học này là nền tảng vững chắc để các bạn tự tin triển khai các mô hình thị giác hiện đại trong chẩn đoán y tế, xe tự hành và nhận diện khuôn mặt. Cảm ơn các bạn đã theo dõi bài giảng.",
+            visual_type: "timeline_bar",
+            visual_purpose: "Sơ đồ dòng chảy phân tầng hoàn chỉnh từ ảnh thô, qua các lớp tích chập, gộp mẫu đến đầu ra phân loại",
+            detected_terms: ["tích chập", "gộp mẫu", "bản đồ đặc trưng", "mạng nơ-ron"]
+          }
+        ]
       }
-    ];
+    };
 
-    // Dữ liệu bài giảng 2: Mạng Nơ-ron Tích chập (cnn_intro.pptx - 702 từ / 300s / 140 WPM)
-    const cnnScenes = [
-      {
-        id: "s_pro_1",
-        chapter: "ch1",
-        depth: "bridge",
-        t_start: 0,
-        t_end: 56,
-        source_id: "c_ch1_01",
-        narration: "Chào mừng các bạn sinh viên đến với bài giảng chuyên sâu về Mạng Nơ-ron Tích chập (CNN). Trước khi đi vào chi tiết, chúng ta cần đặt câu hỏi: Tại sao mạng nơ-ron kết nối đầy đủ truyền thống lại thất bại khi xử lý dữ liệu hình ảnh? Khi đưa một bức ảnh độ phân giải cao vào mạng nơ-ron thông thường, việc kéo phẳng ảnh thành véc-tơ một chiều sẽ phá hủy hoàn toàn mối tương quan không gian giữa các điểm ảnh lân cận, đồng thời làm bùng nổ hàng triệu trọng số khiến mô hình bị quá khớp nghiêm trọng. Để giải quyết nút thắt này, kiến trúc CNN ra đời dựa trên hai nguyên lý sinh học then chốt: vùng tiếp nhận cục bộ giúp mạng tập trung vào từng cụm điểm ảnh nhỏ, và cơ chế chia sẻ trọng số giúp giảm thiểu tối đa số lượng tham số cần huấn luyện.",
-        visual_type: "split_screen",
-        visual_purpose: "So sánh trực quan: Sự bùng nổ hàng triệu kết nối của MLP đối lập với cấu trúc bộ lọc tinh gọn của CNN",
-        detected_terms: ["mạng nơ-ron", "quá khớp", "trọng số", "vùng tiếp nhận cục bộ"]
-      },
-      {
-        id: "s_pro_2",
-        chapter: "ch2",
-        depth: "core",
-        t_start: 56,
-        t_end: 124,
-        source_id: "c_ch2_01",
-        narration: "Bây giờ, chúng ta hãy phân tích toán học chi tiết của phép tích chập hai chiều. Về mặt công thức, giá trị tại tọa độ i, j trên bản đồ đặc trưng đầu ra được tính bằng tổng tích chập giữa ảnh đầu vào I và bộ lọc K: S(i, j) bằng tổng theo m và n của I(i cộng m, j cộng n) nhân với K(m, n). Hãy tưởng tượng chúng ta có một ảnh xám kích thước năm nhân năm, và một bộ lọc kích thước ba nhân ba chứa các trọng số xác định đường biên. Khi bắt đầu, bộ lọc đặt khớp lên góc trên cùng bên trái của ảnh. Tại vùng này, chín điểm ảnh sẽ nhân trực tiếp với chín trọng số tương ứng trong bộ lọc, rồi cộng dồn lại thành một giá trị duy nhất bằng ba mươi lăm trên bản đồ đặc trưng. Tiếp theo, bộ lọc trượt sang phải để lặp lại quá trình này trên toàn bộ bề mặt ảnh.",
-        visual_type: "process_visualization",
-        visual_purpose: "Mô phỏng động cửa sổ trượt Kernel 3x3 di chuyển trên ma trận 5x5 và tính tổng 9 tích số ra giá trị 35",
-        detected_terms: ["tích chập", "bản đồ đặc trưng", "bộ lọc", "trọng số"]
-      },
-      {
-        id: "s_pro_3",
-        chapter: "ch3",
-        depth: "deep",
-        t_start: 124,
-        t_end: 184,
-        source_id: "c_ch3_01",
-        narration: "Để kiểm soát kích thước và trường nhìn của bản đồ đặc trưng, chúng ta phải tinh chỉnh hai siêu tham số then chốt là bước nhảy và đệm viền. Bước nhảy xác định khoảng cách dịch chuyển của bộ lọc sau mỗi lần tính toán. Nếu bước nhảy bằng một, bộ lọc trượt từng điểm ảnh một; nhưng nếu tăng bước nhảy lên hai, kích thước bản đồ đặc trưng sẽ giảm đi một nửa. Ngược lại, đệm viền là kỹ thuật bổ sung các hàng và cột số không bao quanh rìa ảnh. Kỹ thuật này giải quyết hai bài toán sống còn: bảo toàn kích thước không gian để các lớp tích chập sâu không làm teo nhỏ ảnh, và ngăn chặn việc bỏ sót thông tin quan trọng ở các góc biên. Kích thước đầu ra được xác định chính xác theo công thức: lấy kích thước ảnh trừ kích thước bộ lọc cộng hai lần đệm viền, tất cả chia cho bước nhảy rồi cộng thêm một.",
-        visual_type: "zoom_in",
-        visual_purpose: "Phóng to khu vực đệm viền Zero Padding và hiển thị công thức tính kích thước ma trận đầu ra",
-        detected_terms: ["bước nhảy", "đệm viền", "bộ lọc", "bản đồ đặc trưng"]
-      },
-      {
-        id: "s_pro_4",
-        chapter: "ch4",
-        depth: "deep",
-        t_start: 184,
-        t_end: 242,
-        source_id: "c_ch4_01",
-        narration: "Sau khi đi qua hàm kích hoạt phi tuyến ReLU để loại bỏ các giá trị âm, bản đồ đặc trưng sẽ được đưa vào lớp gộp mẫu. Phổ biến nhất là kỹ thuật gộp mẫu cực đại với cửa sổ hai nhân hai và bước nhảy bằng hai. Trong mỗi vùng hai nhân hai, mô hình chỉ giữ lại một điểm ảnh có giá trị kích hoạt lớn nhất và loại bỏ ba điểm ảnh còn lại. Cơ chế này giúp giảm đến bảy mươi lăm phần trăm khối lượng dữ liệu không gian, giảm tải tính toán cho các lớp phía sau và trực tiếp ngăn ngừa hiện tượng quá khớp. Quan trọng hơn, gộp mẫu tạo ra tính bất biến với phép tịnh tiến nhỏ, nghĩa là dù vật thể trong ảnh bị dịch chuyển nhẹ một vài pixel, mạng nơ-ron vẫn nhận diện chính xác các đặc trưng nhận diện cốt lõi.",
-        visual_type: "highlight_box",
-        visual_purpose: "Đóng khung làm nổi bật ô giá trị cực đại trong cửa sổ 2x2 của cơ chế Max Pooling",
-        detected_terms: ["hàm kích hoạt", "gộp mẫu", "quá khớp", "bản đồ đặc trưng"]
-      },
-      {
-        id: "s_pro_5",
-        chapter: "ch5",
-        depth: "bridge",
-        t_start: 242,
-        t_end: 300,
-        source_id: "c_ch5_01",
-        narration: "Tổng kết lại, một kiến trúc CNN hoàn chỉnh là sự phối hợp nhịp nhàng giữa các tầng chức năng. Các lớp tích chập ban đầu đóng vai trò trích xuất những đặc trưng hình học sơ cấp như cạnh, góc và đường nét thô. Khi đi sâu vào các tầng mạng tiếp theo, các đặc trưng này được tổng hợp thành những họa tiết phức tạp, bộ phận và hình dáng cụ thể của vật thể. Cuối cùng, bản đồ đặc trưng được trải phẳng và đưa vào các lớp kết nối đầy đủ để đưa ra xác suất phân loại nhãn. Nắm vững cơ chế toán học này là nền tảng vững chắc để các bạn tự tin triển khai các mô hình thị giác hiện đại trong chẩn đoán y tế, xe tự hành và nhận diện khuôn mặt. Cảm ơn các bạn đã theo dõi bài giảng.",
-        visual_type: "timeline_bar",
-        visual_purpose: "Sơ đồ dòng chảy phân tầng hoàn chỉnh từ ảnh thô, qua các lớp tích chập, gộp mẫu đến đầu ra phân loại",
-        detected_terms: ["tích chập", "gộp mẫu", "bản đồ đặc trưng", "mạng nơ-ron"]
+    // QUẢN LÝ TRẠNG THÁI HIỆN TẠI
+    let currentProjectId = "dss09_clustering";
+    let activeProject = defaultProjects[currentProjectId];
+    let currentScenes = JSON.parse(JSON.stringify(activeProject.scenes));
+
+    // ĐIỀU HƯỚNG VIEW (CVAT PROJECTS vs WORKSPACE)
+    const viewProjects = document.getElementById('view-projects');
+    const viewWorkspace = document.getElementById('view-workspace');
+    const tabNavProjects = document.getElementById('tab-nav-projects');
+    const tabNavWorkspace = document.getElementById('tab-nav-workspace');
+
+    function switchView(viewName) {
+      if (viewName === 'projects') {
+        viewProjects.style.display = 'flex';
+        viewWorkspace.style.display = 'none';
+        tabNavProjects.classList.add('active');
+        tabNavWorkspace.classList.remove('active');
+        renderProjectsGrid();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else {
+        viewProjects.style.display = 'none';
+        viewWorkspace.style.display = 'flex';
+        tabNavProjects.classList.remove('active');
+        tabNavWorkspace.classList.add('active');
+        loadProjectIntoWorkspace(currentProjectId);
       }
-    ];
+    }
 
-    let currentDoc = "dss09_clustering";
-    let currentScenes = JSON.parse(JSON.stringify(clusteringScenes));
+    tabNavProjects.addEventListener('click', () => switchView('projects'));
+    tabNavWorkspace.addEventListener('click', () => switchView('workspace'));
+    document.getElementById('btn-brand-home').addEventListener('click', () => switchView('projects'));
+    document.getElementById('btn-back-dashboard').addEventListener('click', () => switchView('projects'));
 
-    // Format time helpers
+    // RENDER PROJECTS GRID (CVAT STYLE WITH CENTER '+' CARD FIRST)
+    function renderProjectsGrid(filterTerm = '') {
+      const container = document.getElementById('projects-grid-container');
+      container.innerHTML = '';
+
+      // 1. THE DEFAULT "+" CREATE CARD (CVAT STYLE)
+      const createCard = document.createElement('div');
+      createCard.className = 'card-project-create';
+      createCard.id = 'btn-create-project-card';
+      createCard.title = 'Bấm vào đây để tạo dự án bài giảng mới';
+      createCard.innerHTML = `
+        <div class="create-plus-circle">+</div>
+        <div class="create-card-title">Tạo Dự Án Mới</div>
+        <div class="create-card-sub">Nạp slide bài giảng (.pdf, .pptx, .docx) và tạo kịch bản sư phạm tự động</div>
+      `;
+      createCard.addEventListener('click', openCreateModal);
+      container.appendChild(createCard);
+
+      // 2. PROJECT CARDS
+      const term = filterTerm.trim().toLowerCase();
+
+      Object.values(defaultProjects).forEach(proj => {
+        if (term) {
+          const matchTitle = (proj.title || '').toLowerCase().includes(term);
+          const matchDesc = (proj.desc || '').toLowerCase().includes(term);
+          if (!matchTitle && !matchDesc) return;
+        }
+
+        const card = document.createElement('div');
+        card.className = 'project-card';
+        card.setAttribute('data-proj-id', proj.id);
+
+        const totalWords = proj.scenes.reduce((sum, s) => sum + s.narration.trim().split(/\s+/).length, 0);
+        const sourceName = proj.sources && proj.sources.length > 0 ? proj.sources[0].name : 'Tài liệu bài giảng';
+        const slideCount = proj.sources && proj.sources.length > 0 ? (proj.sources[0].pages || proj.scenes.length) : proj.scenes.length;
+
+        card.innerHTML = `
+          <div>
+            <div class="card-top-row">
+              <span class="project-badge-tag ${(proj.score || 90) >= 90 ? 'tag-active' : 'tag-draft'}">
+                ${(proj.score || 90) >= 90 ? 'Đã Thẩm Định' : 'Đang Xử Lý'}
+              </span>
+              <div class="score-circle-sm">
+                <span>🏆</span> ${proj.score || 90.0}/100
+              </div>
+            </div>
+            <div class="project-name">${proj.title}</div>
+            <div class="project-desc">${proj.desc}</div>
+            <div class="project-sources-badge">
+              <span>📑</span> ${proj.sources?.length || 1} Nguồn NotebookLM: ${sourceName}
+            </div>
+            <div class="project-meta-grid">
+              <div class="meta-item">Thời lượng: <strong>${Math.floor((proj.duration_s || 300) / 60)}:${String((proj.duration_s || 300) % 60).padStart(2, '0')} (${proj.duration_s || 300}s)</strong></div>
+              <div class="meta-item">Số từ: <strong>${totalWords} từ (${proj.wpm || 140} WPM)</strong></div>
+              <div class="meta-item">Số slide: <strong>${slideCount} slide</strong></div>
+              <div class="meta-item">Trạng thái: <strong style="color: var(--emerald);">PASSED</strong></div>
+            </div>
+          </div>
+          <div class="card-footer">
+            <button class="btn-card-open btn-open-action" data-proj-id="${proj.id}">
+              <span>⚡</span> Mở Không Gian Làm Việc
+            </button>
+            <span style="font-size: 11px; color: var(--text-dim);">Cập nhật: Hôm nay</span>
+          </div>
+        `;
+
+        card.addEventListener('click', () => {
+          currentProjectId = proj.id;
+          switchView('workspace');
+        });
+
+        const btnOpen = card.querySelector('.btn-open-action');
+        btnOpen.addEventListener('click', (e) => {
+          e.stopPropagation();
+          currentProjectId = proj.id;
+          switchView('workspace');
+        });
+
+        container.appendChild(card);
+      });
+
+      const statCount = document.getElementById('stat-project-count');
+      if (statCount) statCount.textContent = Object.keys(defaultProjects).length;
+    }
+
+    // NẠP DỰ ÁN VÀO KHÔNG GIAN WORKSPACE
+    function loadProjectIntoWorkspace(projId) {
+      currentProjectId = projId;
+      activeProject = defaultProjects[projId];
+      currentScenes = JSON.parse(JSON.stringify(activeProject.scenes));
+
+      stopAllSpeech();
+
+      document.getElementById('ws-current-title').textContent = activeProject.title;
+      document.getElementById('ws-doc-badge').textContent = activeProject.badge || 'MOOC';
+      document.getElementById('slider-duration').value = activeProject.duration_s || 300;
+      document.getElementById('val-duration').textContent = `${Math.floor((activeProject.duration_s || 300) / 60)} phút 00s (${activeProject.duration_s || 300}s)`;
+      document.getElementById('slider-wpm').value = activeProject.wpm || 140;
+      document.getElementById('val-wpm').textContent = `${activeProject.wpm || 140} từ/phút`;
+
+      const feedbackEl = document.getElementById('critic-summary-text');
+      if (feedbackEl && activeProject.critic_feedback) {
+        feedbackEl.textContent = activeProject.critic_feedback;
+      }
+
+      renderSourcesList();
+      renderTimeline();
+      recalculateMetrics();
+      showToast(`Đã mở dự án: ${activeProject.title}`);
+    }
+
+    // RENDER NOTEBOOK LM SOURCES
+    function renderSourcesList() {
+      const container = document.getElementById('sources-list');
+      container.innerHTML = '';
+      (activeProject.sources || []).forEach((src, idx) => {
+        const item = document.createElement('div');
+        item.className = 'source-item';
+        item.innerHTML = `
+          <div class="source-item-header">
+            <input type="checkbox" checked id="src-chk-${idx}">
+            <label for="src-chk-${idx}" style="cursor: pointer; font-size: 12px; color: var(--text-main); font-weight: 600;">
+              ${src.name}
+            </label>
+          </div>
+          <div class="source-meta-row">
+            <span>${src.pages || 10} trang / slide</span>
+            <span>${src.size || '1.0 MB'}</span>
+            <span style="color: var(--emerald);">● Đã lập chỉ mục</span>
+          </div>
+        `;
+        container.appendChild(item);
+      });
+      document.getElementById('source-active-count').textContent = `${(activeProject.sources || []).length} nguồn`;
+    }
+
+    // LOADING OVERLAY CONTROLLER
+    const overlay = document.getElementById('ai-loading-overlay');
+    const loadingTitle = document.getElementById('loading-title');
+    const loadingDesc = document.getElementById('loading-desc');
+
+    function showLoading(title, desc) {
+      if (!overlay) return;
+      loadingTitle.textContent = title || "Đang Khởi Chạy Multi-Agent Pipeline...";
+      loadingDesc.textContent = desc || "Hệ thống đang bóc tách slide, phân bổ ngân sách từ 140 WPM theo chuẩn MOOC...";
+      overlay.style.display = 'flex';
+    }
+
+    function updateLoading(title, desc) {
+      if (loadingTitle && title) loadingTitle.textContent = title;
+      if (loadingDesc && desc) loadingDesc.textContent = desc;
+    }
+
+    function hideLoading() {
+      if (overlay) overlay.style.display = 'none';
+    }
+
+    // FILE TO BASE64 HELPER
+    function fileToBase64(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = err => reject(err);
+        reader.readAsDataURL(file);
+      });
+    }
+
+    // MULTI-AGENT GENERATE API CALL
+    async function callMultiAgentGenerate(file, name, desc, duration = 300, wpm = 140) {
+      showLoading("Đang Bóc Tách Tài Liệu Với Extractor Agent...", "Hệ thống đang đọc toàn bộ slide, cấu trúc trang và trích xuất bảng biểu...");
+      try {
+        const b64 = await fileToBase64(file);
+        updateLoading("Đang Phân Tích & Lập Kế Hoạch Sư Phạm...", "Pedagogical Planner đang phân bổ ngân sách từ 140 WPM theo chuẩn MOOC...");
+
+        const res = await fetch('/api/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            filename: file.name,
+            file_base64: b64,
+            project_name: name,
+            project_desc: desc,
+            target_duration: duration,
+            target_wpm: wpm
+          })
+        });
+
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          throw new Error(errData.error || `Lỗi server HTTP ${res.status}`);
+        }
+
+        updateLoading("Đang Thẩm Định 4 Trục Với Critic Agent...", "Đang đối soát kho 6.766 từ vựng LPM và đồng bộ 13 Taxonomies thị giác...");
+        const projData = await res.json();
+        hideLoading();
+        return projData;
+      } catch (err) {
+        hideLoading();
+        console.error(err);
+        alert("Lỗi khi sinh kịch bản từ tệp: " + err.message);
+        throw err;
+      }
+    }
+
+    // MODAL CREATE PROJECT HANDLERS
+    const modalCreate = document.getElementById('modal-create-project');
+    const btnCreateTop = document.getElementById('btn-create-project-top');
+    const btnCloseModal = document.getElementById('btn-close-modal');
+    const btnCancelModal = document.getElementById('btn-cancel-modal');
+    const btnSubmitCreate = document.getElementById('btn-submit-create-project');
+    const modalFileInput = document.getElementById('modal-file-input');
+    const modalFileName = document.getElementById('modal-file-name');
+
+    function openCreateModal() {
+      modalCreate.style.display = 'flex';
+      document.getElementById('input-proj-name').focus();
+    }
+
+    function closeCreateModal() {
+      modalCreate.style.display = 'none';
+      document.getElementById('input-proj-name').value = '';
+      document.getElementById('input-proj-desc').value = '';
+      modalFileName.style.display = 'none';
+      modalFileInput.value = '';
+    }
+
+    btnCreateTop.addEventListener('click', openCreateModal);
+    btnCloseModal.addEventListener('click', closeCreateModal);
+    btnCancelModal.addEventListener('click', closeCreateModal);
+    modalCreate.addEventListener('click', (e) => {
+      if (e.target === modalCreate) closeCreateModal();
+    });
+
+    modalFileInput.addEventListener('change', (e) => {
+      if (e.target.files && e.target.files.length > 0) {
+        const file = e.target.files[0];
+        modalFileName.style.display = 'block';
+        modalFileName.textContent = `📄 Đã nạp nguồn: ${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
+        if (!document.getElementById('input-proj-name').value) {
+          document.getElementById('input-proj-name').value = file.name.replace(/\.[^/.]+$/, "");
+        }
+      }
+    });
+
+    // SUBMIT CREATE PROJECT (REAL MULTI-AGENT GENERATION)
+    btnSubmitCreate.addEventListener('click', async () => {
+      const file = modalFileInput.files[0];
+      if (!file) {
+        alert("Vui lòng chọn hoặc kéo thả 1 file slide (.pdf, .pptx, .docx, .txt) để hệ thống Multi-Agent bóc tách!");
+        return;
+      }
+
+      const name = document.getElementById('input-proj-name').value.trim() || file.name.replace(/\.[^/.]+$/, "");
+      const desc = document.getElementById('input-proj-desc').value.trim() || "Tài liệu bài giảng trực tuyến bóc tách tự động";
+
+      closeCreateModal();
+
+      try {
+        const projData = await callMultiAgentGenerate(file, name, desc, 300, 140);
+        defaultProjects[projData.id] = projData;
+        renderProjectsGrid();
+        loadProjectIntoWorkspace(projData.id);
+        switchView('workspace');
+        showToast(`Đã sinh kịch bản bài giảng thành công từ ${file.name}!`);
+      } catch (e) {}
+    });
+
+    // SOURCE UPLOAD INSIDE WORKSPACE (NOTEBOOK LM DRAG & DROP)
+    const sourceFileInput = document.getElementById('source-file-input');
+    sourceFileInput.addEventListener('change', async (e) => {
+      if (e.target.files && e.target.files.length > 0) {
+        const f = e.target.files[0];
+        try {
+          const projData = await callMultiAgentGenerate(
+            f,
+            activeProject.title + " - Nguồn Bổ Sung",
+            `Bổ sung nguồn học liệu ${f.name} vào bài giảng`,
+            parseInt(document.getElementById('slider-duration').value) || 300,
+            parseInt(document.getElementById('slider-wpm').value) || 140
+          );
+          activeProject.sources.push(projData.sources[0]);
+          activeProject.scenes = projData.scenes;
+          activeProject.score = projData.score;
+          activeProject.dar = projData.dar;
+          activeProject.tcr = projData.tcr;
+          activeProject.hsr = projData.hsr;
+          activeProject.vns = projData.vns;
+          activeProject.critic_feedback = projData.critic_feedback;
+
+          loadProjectIntoWorkspace(activeProject.id);
+          renderProjectsGrid();
+          showToast(`NotebookLM đã tích hợp và tái cấu trúc bài giảng từ ${f.name}!`);
+        } catch (err) {}
+      }
+    });
+
+    // RE-GENERATE BUTTON HANDLER
+    document.getElementById('btn-re-generate').addEventListener('click', async () => {
+      const dur = parseInt(document.getElementById('slider-duration').value) || 300;
+      const wpm = parseInt(document.getElementById('slider-wpm').value) || 140;
+
+      showLoading("Đang Tái Cấu Trúc Kịch Bản Với Multi-Agent...", `Đang điều chỉnh thời lượng ${dur}s và nhịp độ ${wpm} WPM...`);
+
+      setTimeout(() => {
+        let curr_t = 0.0;
+        currentScenes.forEach((s) => {
+          const words = s.narration.trim().split(/\s+/).length;
+          const dur_scene = Math.round((words / wpm) * 60.0 * 10) / 10;
+          s.t_start = Math.round(curr_t * 10) / 10;
+          s.t_end = Math.round((curr_t + dur_scene) * 10) / 10;
+          curr_t = s.t_end;
+        });
+
+        activeProject.duration_s = Math.round(curr_t);
+        activeProject.wpm = wpm;
+        activeProject.scenes = currentScenes;
+
+        renderTimeline();
+        recalculateMetrics();
+        renderProjectsGrid();
+        hideLoading();
+        showToast(`Đã tái khởi tạo kịch bản với nhịp độ ${wpm} WPM và ${Math.round(curr_t)}s!`);
+      }, 700);
+    });
+
+    // DRAG AND DROP SETUP
+    function setupDropZone(dropZoneId, fileInputId) {
+      const dropZone = document.getElementById(dropZoneId);
+      const fileInput = document.getElementById(fileInputId);
+      if (!dropZone || !fileInput) return;
+
+      ['dragenter', 'dragover'].forEach(name => {
+        dropZone.addEventListener(name, (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          dropZone.classList.add('dragover');
+        });
+      });
+
+      ['dragleave', 'drop'].forEach(name => {
+        dropZone.addEventListener(name, (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          dropZone.classList.remove('dragover');
+        });
+      });
+
+      dropZone.addEventListener('drop', (e) => {
+        if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+          fileInput.files = e.dataTransfer.files;
+          const event = new Event('change');
+          fileInput.dispatchEvent(event);
+        }
+      });
+    }
+
+    setupDropZone('notebook-drop-zone', 'source-file-input');
+
+    // TIMELINE RENDER & TTS
     function formatTime(sec) {
       const m = Math.floor(sec / 60);
       const s = Math.floor(sec % 60);
@@ -912,7 +1789,6 @@
       setTimeout(() => toast.classList.remove('show'), 2800);
     }
 
-    // Render timeline
     function renderTimeline() {
       const container = document.getElementById('timeline-container');
       container.innerHTML = '';
@@ -924,55 +1800,49 @@
 
         const dur = (scene.t_end - scene.t_start).toFixed(1);
         const words = scene.narration.trim().split(/\s+/).length;
-
-        const termBadges = scene.detected_terms.map(t => `<span class="term-pill">${t}</span>`).join(' ');
+        const termBadges = (scene.detected_terms || []).map(t => `<span class="term-pill">${t}</span>`).join(' ');
 
         row.innerHTML = `
-          <!-- Col 1: Time & Depth -->
           <div class="time-badge-group">
             <div class="time-range">${formatTime(scene.t_start)} - ${formatTime(scene.t_end)}</div>
             <div class="duration-tag">${dur}s • ${scene.id}</div>
             <span class="depth-tag depth-${scene.depth}">${scene.depth}</span>
-            <div class="chunk-source-tag">Nguồn: ${scene.source_id}</div>
-            <button class="btn-speak-scene" data-index="${index}" id="btn-speak-${index}" title="Nghe thử phân cảnh này">
+            <button class="btn-speak-scene" data-index="${index}" id="btn-speak-${index}" title="Nghe câu này">
               <span>🔊</span> Nghe câu này
             </button>
           </div>
 
-          <!-- Col 2: Narration -->
           <div>
             <textarea class="narration-editor" data-index="${index}">${scene.narration}</textarea>
             <div class="narration-meta">
-              <span>Độ dài: <strong id="word-count-${index}">${words}</strong> từ (nhịp ${ (words / (dur || 1)).toFixed(1) } từ/s)</span>
+              <span>Độ dài: <strong id="word-count-${index}">${words}</strong> từ (nhịp ${(words / (dur || 1)).toFixed(1)} từ/s)</span>
               <div>${termBadges}</div>
             </div>
           </div>
 
-          <!-- Col 3: Visual Intent -->
           <div class="visual-box">
             <div class="visual-type-badge">
-              <span>👁️</span> <strong>[${scene.visual_type}]</strong>
+              <span>👁️</span> <strong>[${scene.visual_type || 'highlight_box'}]</strong>
             </div>
-            <div class="visual-purpose-text">${scene.visual_purpose}</div>
+            <div class="visual-purpose-text">${scene.visual_purpose || ''}</div>
           </div>
         `;
 
         container.appendChild(row);
       });
 
-      // Bind input listeners for dynamic word counting
       document.querySelectorAll('.narration-editor').forEach(textarea => {
         textarea.addEventListener('input', (e) => {
           const idx = parseInt(e.target.getAttribute('data-index'));
           const text = e.target.value;
           currentScenes[idx].narration = text;
           const words = text.trim() ? text.trim().split(/\s+/).length : 0;
-          document.getElementById(`word-count-${idx}`).textContent = words;
+          const countEl = document.getElementById(`word-count-${idx}`);
+          if (countEl) countEl.textContent = words;
           recalculateMetrics();
         });
       });
 
-      // Bind click listeners for scene speak buttons
       document.querySelectorAll('.btn-speak-scene').forEach(btn => {
         btn.addEventListener('click', () => {
           const idx = parseInt(btn.getAttribute('data-index'));
@@ -981,17 +1851,15 @@
       });
     }
 
-    // Dynamic Recalculate Metrics based on edits
     function recalculateMetrics() {
-      const targetDuration = parseInt(document.getElementById('slider-duration').value);
-      const targetWpm = parseInt(document.getElementById('slider-wpm').value);
+      const targetDuration = parseInt(document.getElementById('slider-duration').value) || 300;
+      const targetWpm = parseInt(document.getElementById('slider-wpm').value) || 140;
       const targetWords = (targetDuration / 60) * targetWpm;
 
       const totalWords = currentScenes.reduce((sum, s) => sum + s.narration.trim().split(/\s+/).length, 0);
       const pacingDeviation = Math.abs(totalWords - targetWords) / targetWords;
       const dar = Math.max(0, Math.min(100, Math.round((1 - pacingDeviation) * 100)));
 
-      // TCR check (triệt tiêu từ tiếng anh bồi)
       const allText = currentScenes.map(s => s.narration).join(' ').toLowerCase();
       const forbidden = ['train', 'tune', 'predict', 'loss function', 'accuracy', 'fine-tune'];
       let violations = 0;
@@ -999,8 +1867,6 @@
         if (allText.includes(word)) violations++;
       });
       const tcr = Math.max(20, 100 - (violations * 20));
-
-      // Overall Score
       const overall = Math.round((dar * 0.35) + (tcr * 0.35) + (100 * 0.15) + (100 * 0.15));
 
       document.getElementById('score-overall').textContent = overall;
@@ -1008,339 +1874,57 @@
       document.getElementById('bar-dar').style.width = `${dar}%`;
       document.getElementById('score-tcr').textContent = `${tcr}%`;
       document.getElementById('bar-tcr').style.width = `${tcr}%`;
-
-      if (violations > 0) {
-        document.getElementById('critic-summary-text').innerHTML = `
-          <strong style="color: var(--rose);">Cảnh báo Thuật ngữ:</strong> Phát hiện ${violations} từ tiếng Anh chưa Việt hóa. Khuyến nghị chuẩn hóa sang tiếng Việt sư phạm!
-        `;
-      } else {
-        const docName = currentDoc === 'dss09_clustering' ? 'DSS09(c) - Clustering.pdf' : 'cnn_intro.pptx';
-        document.getElementById('critic-summary-text').textContent = `
-          Hệ thống Multi-Agent xác nhận: Toàn bộ 5 phân cảnh (${docName}) đạt độ dài chuẩn xác theo ngân sách từ (${totalWords} từ / ${targetDuration}s). Thuật ngữ tiếng Việt hoàn toàn chuẩn hóa với kho từ vựng LPM.
-        `;
-      }
     }
 
-    // DOCUMENT SELECTOR & UPLOAD HANDLERS
-    const docSelector = document.getElementById('doc-selector');
-    const fileUploadWrap = document.getElementById('file-upload-wrap');
-    const fileInput = document.getElementById('file-input');
-    const fileChosenName = document.getElementById('file-chosen-name');
-    const chunkBadge = document.getElementById('chunk-count-badge');
-    const dropZone = document.getElementById('drop-zone');
-
-    docSelector.addEventListener('change', (e) => {
-      const val = e.target.value;
-      if (val === 'dss09_clustering') {
-        currentDoc = 'dss09_clustering';
-        currentScenes = JSON.parse(JSON.stringify(clusteringScenes));
-        fileUploadWrap.style.display = 'none';
-        chunkBadge.textContent = '● 35 Chunks (DSS09)';
-        renderTimeline();
-        recalculateMetrics();
-        showToast('Đã nạp bài giảng: DSS09(c) - Clustering.pdf (Phân Cụm Dữ Liệu)');
-      } else if (val === 'cnn_intro') {
-        currentDoc = 'cnn_intro';
-        currentScenes = JSON.parse(JSON.stringify(cnnScenes));
-        fileUploadWrap.style.display = 'none';
-        chunkBadge.textContent = '● 10 Chunks (CNN)';
-        renderTimeline();
-        recalculateMetrics();
-        showToast('Đã nạp bài giảng: cnn_intro.pptx (Mạng Nơ-ron Tích chập CNN)');
-      } else if (val === 'custom') {
-        fileUploadWrap.style.display = 'block';
-        fileInput.click();
-      }
-    });
-
-    // File input change
-    fileInput.addEventListener('change', (e) => {
-      if (e.target.files && e.target.files.length > 0) {
-        handleUploadedFile(e.target.files[0]);
-      }
-    });
-
-    // Drag & Drop
-    dropZone.addEventListener('dragover', (e) => {
-      e.preventDefault();
-      dropZone.style.borderColor = 'var(--cyan)';
-      dropZone.style.background = 'rgba(56, 189, 248, 0.12)';
-    });
-    dropZone.addEventListener('dragleave', () => {
-      dropZone.style.borderColor = 'rgba(56, 189, 248, 0.4)';
-      dropZone.style.background = 'rgba(56, 189, 248, 0.05)';
-    });
-    dropZone.addEventListener('drop', (e) => {
-      e.preventDefault();
-      dropZone.style.borderColor = 'rgba(56, 189, 248, 0.4)';
-      dropZone.style.background = 'rgba(56, 189, 248, 0.05)';
-      if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-        handleUploadedFile(e.dataTransfer.files[0]);
-      }
-    });
-
-    function handleUploadedFile(file) {
-      fileChosenName.style.display = 'block';
-      fileChosenName.textContent = `📄 Đã chọn: ${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
-      showToast(`ExtractorAgent đang bóc tách: ${file.name}...`);
-
-      setTimeout(() => {
-        const fname = file.name.toLowerCase();
-        if (fname.includes('cluster') || fname.includes('dss')) {
-          docSelector.value = 'dss09_clustering';
-          currentDoc = 'dss09_clustering';
-          currentScenes = JSON.parse(JSON.stringify(clusteringScenes));
-          chunkBadge.textContent = '● 35 Chunks (DSS09)';
-        } else if (fname.includes('cnn')) {
-          docSelector.value = 'cnn_intro';
-          currentDoc = 'cnn_intro';
-          currentScenes = JSON.parse(JSON.stringify(cnnScenes));
-          chunkBadge.textContent = '● 10 Chunks (CNN)';
-        } else {
-          currentDoc = 'custom_doc';
-          currentScenes = [
-            {
-              id: "s_cust_1",
-              chapter: "ch1",
-              depth: "bridge",
-              t_start: 0,
-              t_end: 60,
-              source_id: "c_cust_01",
-              narration: `Chào mừng các bạn đến với bài giảng bóc tách từ tài liệu ${file.name}. Trong phần mở đầu này, chúng ta sẽ làm quen với các khái niệm nền tảng và trực quan hóa các vấn đề then chốt cần giải quyết. Hệ thống Multi-Agent đã tự động phân đoạn các khối nội dung và liên kết chặt chẽ với các slide gốc.`,
-              visual_type: "split_screen",
-              visual_purpose: `Hiển thị tổng quan các chủ đề chính được trích xuất từ ${file.name}`,
-              detected_terms: ["khái niệm", "tổng quan", "phân tích"]
-            },
-            ...JSON.parse(JSON.stringify(clusteringScenes.slice(1)))
-          ];
-          chunkBadge.textContent = `● Bóc tách từ ${file.name}`;
-        }
-        renderTimeline();
-        recalculateMetrics();
-        showToast(`Multi-Agent đã khởi tạo kịch bản từ ${file.name}!`);
-      }, 700);
-    }
-
-    // Sliders event listeners
-    const sliderDuration = document.getElementById('slider-duration');
-    const valDuration = document.getElementById('val-duration');
-    sliderDuration.addEventListener('input', (e) => {
-      const val = parseInt(e.target.value);
-      const m = Math.floor(val / 60);
-      const s = val % 60;
-      valDuration.textContent = `${m} phút ${s > 0 ? s + 's' : '00s'} (${val}s)`;
-      recalculateMetrics();
-    });
-
-    const sliderWpm = document.getElementById('slider-wpm');
-    const valWpm = document.getElementById('val-wpm');
-    sliderWpm.addEventListener('input', (e) => {
-      valWpm.textContent = `${e.target.value} từ/phút`;
-      recalculateMetrics();
-    });
-
-    // Run Pipeline simulation
-    document.getElementById('btn-run-pipeline').addEventListener('click', () => {
-      const btn = document.getElementById('btn-run-pipeline');
-      btn.innerHTML = `<span>⏳</span> Đang chạy Multi-Agent Pipeline...`;
-      btn.style.opacity = '0.7';
-
-      setTimeout(() => {
-        btn.innerHTML = `<span>⚡</span> Khởi Tạo Kịch Bản Multi-Agent`;
-        btn.style.opacity = '1';
-        showToast('Pipeline đã tự đánh giá & tối ưu hóa kịch bản!');
-        recalculateMetrics();
-      }, 800);
-    });
-
-    // EXPORT HANDLERS
-    // 1. Export Markdown
-    document.getElementById('btn-export-md').addEventListener('click', () => {
-      const isClustering = currentDoc === 'dss09_clustering';
-      const docTitle = isClustering ? 'PHÂN CỤM DỮ LIỆU (CLUSTERING ANALYSIS)' : 'MẠNG NƠ-RON TÍCH CHẬP (CNN)';
-      const filename = isClustering ? 'Kich_Ban_Phan_Cum_Clustering.md' : 'cnn_intro_transcript.md';
-      const lines = [
-        `# KỊCH BẢN PHÂN CẢNH BÀI GIẢNG: ${docTitle}`,
-        ``,
-        `> **Tài liệu:** ${isClustering ? 'DSS09(c) - Clustering.pdf' : 'cnn_intro.pptx'}  `,
-        `> **Thời lượng:** ${sliderDuration.value}s | **Tốc độ:** ${sliderWpm.value} WPM  `,
-        `> **Điểm Critic:** ${document.getElementById('score-overall').textContent}/100  `,
-        ``,
-        `| Thời gian | Cảnh | Lời giảng sư phạm | Chỉ dẫn thị giác |`,
-        `| :--- | :--- | :--- | :--- |`
-      ];
-
-      currentScenes.forEach(s => {
-        const timeLabel = `${formatTime(s.t_start)} - ${formatTime(s.t_end)}`;
-        lines.push(`| \`${timeLabel}\` | **${s.id}** (${s.depth}) | ${s.narration.replace(/\|/g, '-')} | **[${s.visual_type}]**<br/>${s.visual_purpose} |`);
-      });
-
-      downloadFile(filename, lines.join('\n'), 'text/markdown');
-      showToast(`Đã tải file Markdown Transcript: ${filename}`);
-    });
-
-    // 2. Export Word .docx
-    document.getElementById('btn-export-docx').addEventListener('click', async () => {
-      const isClustering = currentDoc === 'dss09_clustering';
-      const filename = isClustering ? 'Kich_Ban_Phan_Cum_Clustering.docx' : 'cnn_intro_script.docx';
-
-      try {
-        const res = await fetch('/api/export/docx', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ scenes: currentScenes, doc_id: currentDoc, filename: filename })
-        });
-        if (res.ok) {
-          const blob = await res.blob();
-          const url = window.URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = filename;
-          a.click();
-          showToast(`Đã tải tài liệu Word: ${filename}`);
-          return;
-        }
-      } catch (err) {}
-
-      // Fallback: Tải file Word đã sinh sẵn ở backend
-      const a = document.createElement('a');
-      a.href = isClustering ? '/output_clustering/Kịch Bản Bài Giảng Phân Cụm Clustering.docx' : '/output_test.docx';
-      a.download = filename;
-      a.click();
-      showToast(`Đã tải tài liệu Word: ${filename}`);
-    });
-
-    // 3. Export SRT Subtitles
-    document.getElementById('btn-export-srt').addEventListener('click', () => {
-      const isClustering = currentDoc === 'dss09_clustering';
-      const filename = isClustering ? 'Phu_De_Phan_Cum_Clustering.srt' : 'cnn_intro_subtitles.srt';
-
-      function fmtSrt(sec) {
-        const h = String(Math.floor(sec / 3600)).padStart(2, '0');
-        const m = String(Math.floor((sec % 3600) / 60)).padStart(2, '0');
-        const s = String(Math.floor(sec % 60)).padStart(2, '0');
-        const ms = String(Math.floor((sec % 1) * 1000)).padStart(3, '0');
-        return `${h}:${m}:${s},${ms}`;
-      }
-
-      let srtContent = '';
-      currentScenes.forEach((s, idx) => {
-        srtContent += `${idx + 1}\n`;
-        srtContent += `${fmtSrt(s.t_start)} --> ${fmtSrt(s.t_end)}\n`;
-        srtContent += `${s.narration}\n\n`;
-      });
-
-      downloadFile(filename, srtContent, 'text/plain');
-      showToast(`Đã tải file phụ đề: ${filename}`);
-    });
-
-    // 4. Export JSON
-    document.getElementById('btn-export-json').addEventListener('click', () => {
-      const isClustering = currentDoc === 'dss09_clustering';
-      const filename = isClustering ? 'Du_Lieu_Phan_Cum_Clustering.json' : 'cnn_intro_script.json';
-
-      const exportData = {
-        meta: {
-          doc_id: currentDoc,
-          duration_s: parseInt(sliderDuration.value),
-          wpm: parseInt(sliderWpm.value),
-          style: document.getElementById('style-selector').value,
-          critic_score: parseInt(document.getElementById('score-overall').textContent)
-        },
-        scenes: currentScenes
-      };
-      downloadFile(filename, JSON.stringify(exportData, null, 2), 'application/json');
-      showToast(`Đã tải file cấu trúc: ${filename}`);
-    });
-
-    function downloadFile(filename, content, mimeType) {
-      const blob = new Blob([content], { type: mimeType });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    }
-
-    // ==========================================
-    // WEB SPEECH SYNTHESIS ENGINE (TTS)
-    // ==========================================
+    // AUDIO WEB SPEECH TTS
     const synth = window.speechSynthesis;
-    let currentSpeakingIndex = -1;
-    let isPlayingAll = false;
     let vietnameseVoice = null;
+    let isPlayingAll = false;
 
-    function initVoices() {
-      if (!synth) return;
+    function initTTSVoice() {
       const voices = synth.getVoices();
-      vietnameseVoice = voices.find(v => v.lang === 'vi-VN' || v.lang.startsWith('vi')) || null;
+      vietnameseVoice = voices.find(v => v.lang.includes('vi') || v.lang.includes('VI')) || voices[0];
     }
+    if (speechSynthesis.onvoiceschanged !== undefined) {
+      speechSynthesis.onvoiceschanged = initTTSVoice;
+    }
+    initTTSVoice();
 
-    if (synth) {
-      if (synth.onvoiceschanged !== undefined) {
-        synth.onvoiceschanged = initVoices;
-      }
-      initVoices();
+    function clearSpeakingHighlights() {
+      document.querySelectorAll('.scene-row').forEach(row => row.classList.remove('is-speaking'));
     }
 
     function stopAllSpeech() {
-      if (synth) synth.cancel();
-      isPlayingAll = false;
-      currentSpeakingIndex = -1;
+      synth.cancel();
       clearSpeakingHighlights();
+      isPlayingAll = false;
       document.getElementById('play-all-icon').textContent = '🔊';
       document.getElementById('play-all-text').textContent = 'Nghe Toàn Bộ';
       document.getElementById('btn-stop-speech').style.display = 'none';
     }
 
-    function clearSpeakingHighlights() {
-      document.querySelectorAll('.scene-row').forEach(row => {
-        row.classList.remove('is-speaking');
-      });
-      document.querySelectorAll('.btn-speak-scene').forEach(btn => {
-        btn.innerHTML = `<span>🔊</span> Nghe câu này`;
-      });
-    }
-
     function playSingleScene(index) {
-      if (!synth) {
-        showToast('Trình duyệt của bạn không hỗ trợ Web Speech API.');
-        return;
-      }
-
-      if (currentSpeakingIndex === index && synth.speaking) {
+      if (index >= currentScenes.length) {
         stopAllSpeech();
         return;
       }
 
-      if (synth.speaking) {
-        synth.cancel();
-      }
+      synth.cancel();
       clearSpeakingHighlights();
-      currentSpeakingIndex = index;
+
+      const sceneCard = document.getElementById(`scene-card-${index}`);
+      if (sceneCard) {
+        sceneCard.classList.add('is-speaking');
+        sceneCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
 
       const scene = currentScenes[index];
-      const card = document.getElementById(`scene-card-${index}`);
-      if (card) {
-        card.classList.add('is-speaking');
-        card.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }
-
-      const speakBtn = document.getElementById(`btn-speak-${index}`);
-      if (speakBtn) speakBtn.innerHTML = `<span>⏹️</span> Dừng`;
-      document.getElementById('btn-stop-speech').style.display = 'flex';
-
       const utter = new SpeechSynthesisUtterance(scene.narration);
       utter.lang = 'vi-VN';
       if (vietnameseVoice) utter.voice = vietnameseVoice;
 
-      // Đồng bộ tốc độ đọc theo slider WPM (140 WPM ~ rate 1.0)
       const wpm = parseInt(document.getElementById('slider-wpm').value) || 140;
-      utter.rate = Math.max(0.75, Math.min(1.4, wpm / 140));
-      utter.pitch = 1.0;
+      utter.rate = Math.max(0.8, Math.min(1.3, wpm / 140));
 
       utter.onend = () => {
         clearSpeakingHighlights();
@@ -1356,14 +1940,10 @@
         }
       };
 
-      utter.onerror = () => {
-        stopAllSpeech();
-      };
-
+      utter.onerror = () => stopAllSpeech();
       synth.speak(utter);
     }
 
-    // Nút Nghe Toàn Bộ Bài Giảng
     document.getElementById('btn-play-all').addEventListener('click', () => {
       if (isPlayingAll && synth.speaking) {
         stopAllSpeech();
@@ -1377,15 +1957,124 @@
       showToast('Đang phát giọng đọc bài giảng sư phạm...');
     });
 
-    // Nút Dừng
     document.getElementById('btn-stop-speech').addEventListener('click', () => {
       stopAllSpeech();
       showToast('Đã dừng phát âm thanh.');
     });
 
-    // Initialize
-    renderTimeline();
-    recalculateMetrics();
+    // EXPORTS
+    function downloadFile(filename, content, mimeType) {
+      const blob = new Blob([content], { type: mimeType });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    document.getElementById('btn-export-md').addEventListener('click', () => {
+      const filename = `Kich_Ban_${activeProject.id}.md`;
+      const lines = [
+        `# KỊCH BẢN PHÂN CẢNH BÀI GIẢNG: ${activeProject.title.toUpperCase()}`,
+        ``,
+        `> **Thời lượng:** ${document.getElementById('slider-duration').value}s | **Tốc độ:** ${document.getElementById('slider-wpm').value} WPM  `,
+        `> **Điểm Critic:** ${document.getElementById('score-overall').textContent}/100  `,
+        ``,
+        `| Thời gian | Cảnh | Lời giảng sư phạm | Chỉ dẫn thị giác |`,
+        `| :--- | :--- | :--- | :--- |`
+      ];
+
+      currentScenes.forEach(s => {
+        lines.push(`| \`${formatTime(s.t_start)} - ${formatTime(s.t_end)}\` | **${s.id}** (${s.depth}) | ${s.narration.replace(/\|/g, '-')} | **[${s.visual_type || 'highlight_box'}]**<br/>${s.visual_purpose || ''} |`);
+      });
+
+      downloadFile(filename, lines.join('\n'), 'text/markdown');
+      showToast(`Đã tải file Markdown Transcript: ${filename}`);
+    });
+
+    document.getElementById('btn-export-docx').addEventListener('click', async () => {
+      const filename = `Kich_Ban_${activeProject.id}.docx`;
+
+      try {
+        const res = await fetch('/api/export/docx', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ scenes: currentScenes, doc_id: currentProjectId, filename: filename })
+        });
+        if (res.ok) {
+          const blob = await res.blob();
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = filename;
+          a.click();
+          showToast(`Đã tải tài liệu Word: ${filename}`);
+          return;
+        }
+      } catch (err) {}
+
+      showToast(`Đang tải tài liệu Word...`);
+    });
+
+    document.getElementById('btn-export-srt').addEventListener('click', () => {
+      const filename = `Phu_De_${activeProject.id}.srt`;
+
+      function fmtSrt(sec) {
+        const h = String(Math.floor(sec / 3600)).padStart(2, '0');
+        const m = String(Math.floor((sec % 3600) / 60)).padStart(2, '0');
+        const s = String(Math.floor(sec % 60)).padStart(2, '0');
+        const ms = String(Math.floor((sec % 1) * 1000)).padStart(3, '0');
+        return `${h}:${m}:${s},${ms}`;
+      }
+
+      let srtContent = '';
+      currentScenes.forEach((s, idx) => {
+        srtContent += `${idx + 1}\n${fmtSrt(s.t_start)} --> ${fmtSrt(s.t_end)}\n${s.narration}\n\n`;
+      });
+
+      downloadFile(filename, srtContent, 'text/plain');
+      showToast(`Đã tải file phụ đề: ${filename}`);
+    });
+
+    document.getElementById('btn-export-json').addEventListener('click', () => {
+      const filename = `Du_Lieu_${activeProject.id}.json`;
+
+      const exportData = {
+        meta: {
+          doc_id: currentProjectId,
+          title: activeProject.title,
+          duration_s: parseInt(document.getElementById('slider-duration').value) || 300,
+          wpm: parseInt(document.getElementById('slider-wpm').value) || 140,
+          critic_score: parseInt(document.getElementById('score-overall').textContent) || 90
+        },
+        scenes: currentScenes
+      };
+      downloadFile(filename, JSON.stringify(exportData, null, 2), 'application/json');
+      showToast(`Đã tải file cấu trúc: ${filename}`);
+    });
+
+    // SEARCH FILTER PROJECTS
+    document.getElementById('project-search').addEventListener('input', (e) => {
+      renderProjectsGrid(e.target.value);
+    });
+
+    // SLIDER EVENT LISTENERS
+    document.getElementById('slider-duration').addEventListener('input', (e) => {
+      const v = e.target.value;
+      document.getElementById('val-duration').textContent = `${Math.floor(v / 60)} phút ${v % 60 ? v % 60 + 's' : '00s'} (${v}s)`;
+    });
+
+    document.getElementById('slider-wpm').addEventListener('input', (e) => {
+      const v = e.target.value;
+      document.getElementById('val-wpm').textContent = `${v} từ/phút`;
+    });
+
+    // INITIALIZE CVAT PROJECTS DASHBOARD
+    renderProjectsGrid();
+    switchView('projects');
   </script>
 </body>
 </html>

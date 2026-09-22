@@ -142,6 +142,49 @@ class StudioHandler(BaseHTTPRequestHandler):
                 self._send_json({"error": str(e)}, status=500)
                 return
 
+        if url_path == "/api/generate":
+            try:
+                import base64
+                data = json.loads(body)
+                filename = data.get("filename", "tai_lieu_hoc.pdf")
+                file_b64 = data.get("file_base64", "")
+                proj_name = data.get("project_name", "")
+                proj_desc = data.get("project_desc", "")
+                target_duration = int(data.get("target_duration", 300))
+                target_wpm = int(data.get("target_wpm", 140))
+
+                uploads_dir = ROOT_DIR / "studio" / "uploads"
+                uploads_dir.mkdir(parents=True, exist_ok=True)
+                target_file = uploads_dir / filename
+
+                if file_b64:
+                    if "," in file_b64:
+                        file_b64 = file_b64.split(",", 1)[1]
+                    target_file.write_bytes(base64.b64decode(file_b64))
+                elif not target_file.exists():
+                    candidate = ROOT_DIR / filename
+                    if candidate.exists():
+                        target_file = candidate
+                    else:
+                        raise ValueError(f"Không tìm thấy tệp {filename} và không có dữ liệu tải lên.")
+
+                from codebase.clsg.studio_generator import generate_studio_project
+                proj_data = generate_studio_project(
+                    target_file,
+                    project_name=proj_name or None,
+                    project_desc=proj_desc or None,
+                    target_duration_s=target_duration,
+                    target_wpm=target_wpm,
+                )
+
+                self._send_json(proj_data)
+                return
+            except Exception as e:
+                import traceback
+                traceback.print_exc()
+                self._send_json({"error": str(e)}, status=500)
+                return
+
         self.send_error(404, "Endpoint Not Found")
 
 
