@@ -502,16 +502,21 @@
       color: var(--text-main);
     }
 
-    /* 3-PANE WORKSPACE BODY */
+    /* 3-PANE WORKSPACE BODY WITH RESIZABLE SPLIT PANELS (ANTIGRAVITY / VS CODE STYLE) */
     .workspace-body {
-      display: grid;
-      grid-template-columns: 290px 1fr 320px;
+      display: flex;
+      flex-direction: row;
       flex: 1;
       overflow: hidden;
+      position: relative;
     }
 
     /* PANE 1: TÀI LIỆU THÊM VÀO (SOURCES) */
     .pane-sources {
+      width: 290px;
+      min-width: 180px;
+      max-width: 520px;
+      flex-shrink: 0;
       border-right: 1px solid var(--border-subtle);
       background: rgba(10, 15, 26, 0.65);
       display: flex;
@@ -519,6 +524,51 @@
       overflow-y: auto;
       padding: 18px;
       gap: 16px;
+    }
+
+    /* RESIZABLE SPLIT GUTTERS (ANTIGRAVITY STYLE) */
+    .layout-resizer {
+      width: 6px;
+      background: rgba(255, 255, 255, 0.03);
+      cursor: col-resize;
+      position: relative;
+      z-index: 50;
+      flex-shrink: 0;
+      transition: background 0.15s ease, box-shadow 0.15s ease;
+    }
+    .layout-resizer:hover, .layout-resizer.is-resizing {
+      background: var(--primary);
+      box-shadow: 0 0 10px var(--primary-glow);
+    }
+    .layout-resizer::after {
+      content: '';
+      position: absolute;
+      top: 0; bottom: 0;
+      left: -3px; right: -3px;
+    }
+
+    /* PANE 2: CENTER WORKSPACE */
+    .pane-center {
+      flex: 1;
+      min-width: 320px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      position: relative;
+      background: #060911;
+    }
+
+    /* PANE 3: RIGHT COMBINED PANE (TOP: CONTENT INSPECTOR, BOTTOM: AI CHAT) */
+    .pane-tuning {
+      width: 340px;
+      min-width: 260px;
+      max-width: 650px;
+      flex-shrink: 0;
+      border-left: 1px solid var(--border-subtle);
+      background: rgba(10, 15, 26, 0.75);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
     }
 
     .pane-header {
@@ -1667,6 +1717,351 @@
       box-shadow: 0 0 25px rgba(56, 189, 248, 0.35) !important;
       transform: scale(1.01);
     }
+  
+    /* =========================================================================
+       BOTTOM DOCKED TERMINAL DRAWER (TUNING & CUSTOM PEDAGOGICAL NOTES)
+       ========================================================================= */
+    .mindmap-terminal-drawer {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 255px;
+      background: rgba(11, 17, 32, 0.96);
+      backdrop-filter: blur(16px);
+      border-top: 1px solid var(--border-accent);
+      box-shadow: 0 -12px 36px rgba(0, 0, 0, 0.7), 0 0 20px rgba(56, 189, 248, 0.15);
+      display: flex;
+      flex-direction: column;
+      z-index: 120;
+      transform: translateY(100%);
+      transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .mindmap-terminal-drawer.is-open {
+      transform: translateY(0);
+    }
+
+    .terminal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 7px 14px;
+      background: rgba(15, 23, 42, 0.85);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .terminal-title-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .terminal-prompt-icon {
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 800;
+      color: var(--cyan);
+      font-size: 13px;
+    }
+
+    .terminal-title-text {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-main);
+      letter-spacing: 0.2px;
+    }
+
+    .terminal-badge-key {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      padding: 1px 6px;
+      background: rgba(56, 189, 248, 0.15);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      color: var(--cyan);
+      border-radius: 3px;
+    }
+
+    .terminal-btn-icon {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 13px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      transition: all 0.15s;
+    }
+    .terminal-btn-icon:hover {
+      background: rgba(255, 255, 255, 0.1);
+      color: #fff;
+    }
+
+    .terminal-body {
+      display: flex;
+      flex: 1;
+      padding: 10px 14px;
+      gap: 16px;
+      overflow: hidden;
+    }
+
+    .terminal-col-params {
+      flex: 1.1;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      border-right: 1px solid rgba(255, 255, 255, 0.06);
+      padding-right: 14px;
+      overflow-y: auto;
+    }
+
+    .terminal-col-notes {
+      flex: 1.2;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .terminal-field {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .terminal-label-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .terminal-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+
+    .terminal-val {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      color: var(--cyan);
+      font-weight: 700;
+    }
+
+    .terminal-param-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .terminal-textarea {
+      flex: 1;
+      background: #080c14;
+      border: 1px solid var(--border-accent);
+      border-radius: 4px;
+      padding: 8px 10px;
+      color: var(--text-main);
+      font-size: 11.5px;
+      font-family: 'Inter', sans-serif;
+      resize: none;
+      line-height: 1.45;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    .terminal-textarea:focus {
+      border-color: var(--cyan);
+      box-shadow: 0 0 8px rgba(56, 189, 248, 0.2);
+    }
+
+    .terminal-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 6px 14px;
+      background: rgba(10, 15, 26, 0.9);
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .terminal-status {
+      font-size: 11px;
+      color: var(--text-dim);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* =========================================================================
+       RIGHT PANE SPLIT: TOP HALF = CONTENT INSPECTOR, BOTTOM HALF = AI CHAT
+       ========================================================================= */
+    .content-inspector-section {
+      flex: 1.1;
+      min-height: 220px;
+      border-bottom: 1px solid var(--border-subtle);
+      background: rgba(15, 23, 42, 0.4);
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+      padding: 12px 14px;
+      gap: 8px;
+    }
+
+    .inspector-empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      text-align: center;
+      color: var(--text-dim);
+      padding: 24px 12px;
+    }
+    .inspector-empty-state .empty-icon {
+      font-size: 34px;
+      margin-bottom: 8px;
+      opacity: 0.65;
+    }
+    .inspector-empty-state .empty-title {
+      font-size: 12.5px;
+      font-weight: 700;
+      color: var(--text-main);
+      margin-bottom: 4px;
+    }
+    .inspector-empty-state .empty-desc {
+      font-size: 11px;
+      color: var(--text-muted);
+      line-height: 1.5;
+      max-width: 250px;
+    }
+
+    .inspector-content-card {
+      display: flex;
+      flex-direction: column;
+      gap: 9px;
+      animation: fadeInFast 0.2s ease-out;
+    }
+    @keyframes fadeInFast {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .inspector-header {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .inspector-tag-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .inspector-node-code {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10.5px;
+      font-weight: 700;
+      padding: 2px 7px;
+      background: rgba(56, 189, 248, 0.15);
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      color: var(--cyan);
+      border-radius: 4px;
+    }
+
+    .inspector-node-chapter {
+      font-size: 10px;
+      color: var(--text-dim);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+    }
+
+    .inspector-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: #fff;
+      line-height: 1.4;
+    }
+
+    .inspector-tab-row {
+      display: flex;
+      gap: 4px;
+      margin-top: 2px;
+    }
+
+    .inspector-tab-btn {
+      flex: 1;
+      padding: 4px 6px;
+      font-size: 10px;
+      font-weight: 700;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 4px;
+      color: var(--text-muted);
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.15s;
+    }
+    .inspector-tab-btn.active, .inspector-tab-btn:hover {
+      background: rgba(56, 189, 248, 0.12);
+      border-color: var(--cyan);
+      color: var(--cyan);
+    }
+
+    .inspector-body-card {
+      background: #080c14;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 6px;
+      padding: 10px;
+      font-size: 11px;
+      line-height: 1.5;
+      color: var(--text-main);
+    }
+
+    .inspector-section-label {
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--cyan);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 5px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .inspector-summary-list {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      margin: 0;
+      padding-left: 14px;
+      font-size: 11px;
+      color: var(--text-main);
+    }
+
+    .inspector-narration-box {
+      background: rgba(15, 23, 42, 0.5);
+      border-left: 2px solid var(--primary);
+      padding: 8px 10px;
+      border-radius: 0 4px 4px 0;
+      font-size: 11px;
+      color: #e2e8f0;
+      line-height: 1.55;
+      font-style: italic;
+    }
+
+    .decision-node.is-active-leaf {
+      border-color: var(--cyan) !important;
+      box-shadow: 0 0 16px rgba(56, 189, 248, 0.5), inset 0 0 10px rgba(56, 189, 248, 0.2) !important;
+    }
+
+    .ai-chat-section {
+      flex: 1;
+      min-height: 200px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      background: rgba(10, 15, 26, 0.7);
+    }
+
   </style>
 </head>
 <body>
@@ -1778,6 +2173,9 @@
         </div>
       </aside>
 
+      <!-- RESIZER TRÁI: KÉO ĐỘ RỘNG CỘT TÀI LIỆU -->
+      <div class="layout-resizer" id="resizer-left" title="Kéo để thay đổi độ rộng cột nguồn tài liệu"></div>
+
       <!-- PANE 2: CENTER PANE WITH NOTEBOOK-STYLE TABS (SƠ ĐỒ TƯ DUY, KỊCH BẢN, VIDEO) -->
       <main class="pane-center">
         <!-- TOP NAVIGATION BAR -->
@@ -1807,6 +2205,75 @@
           <div class="mindmap-viewport" id="mindmap-viewport">
             <div class="mindmap-world" id="mindmap-world">
               <!-- Multi-Root Trees dynamically generated via JS -->
+            </div>
+          </div>
+
+          <!-- TERMINAL TINH CHỈNH THAM SỐ GỐC DƯỚI (DOCKED BOTTOM TERMINAL DRAWER THEO ĐÚNG ẢNH 2 TÔ ĐỎ) -->
+          <div class="mindmap-terminal-drawer" id="mindmap-terminal-drawer">
+            <div class="terminal-header">
+              <div class="terminal-title-group">
+                <span class="terminal-prompt-icon">&gt;_</span>
+                <span class="terminal-title-text" id="terminal-target-title">TINH CHỈNH SƯ PHẠM: CHƯƠNG 1</span>
+                <span class="terminal-badge-key" id="terminal-target-key">ch-0</span>
+              </div>
+              <div class="terminal-actions">
+                <button class="terminal-btn-icon" id="btn-minimize-terminal" title="Thu nhỏ / Đóng terminal">✕</button>
+              </div>
+            </div>
+
+            <div class="terminal-body">
+              <!-- CỘT TRÁI: THAM SỐ CẤU HÌNH -->
+              <div class="terminal-col-params">
+                <div class="terminal-field">
+                  <label class="terminal-label">Tiêu đề phân đoạn:</label>
+                  <input type="text" class="form-input" id="terminal-node-title" placeholder="Tiêu đề chương / phần..." style="font-size: 12px; padding: 5px 8px;">
+                </div>
+                <div class="terminal-param-grid">
+                  <div class="terminal-field">
+                    <div class="terminal-label-row">
+                      <label class="terminal-label">Thời lượng:</label>
+                      <strong class="terminal-val" id="val-terminal-duration">60s (1p00s)</strong>
+                    </div>
+                    <input type="range" class="slider" id="slider-terminal-duration" min="15" max="300" step="5" value="60">
+                  </div>
+                  <div class="terminal-field">
+                    <div class="terminal-label-row">
+                      <label class="terminal-label">Tốc độ đọc:</label>
+                      <strong class="terminal-val" id="val-terminal-wpm">140 WPM</strong>
+                    </div>
+                    <input type="range" class="slider" id="slider-terminal-wpm" min="110" max="180" step="5" value="140">
+                  </div>
+                </div>
+                <div class="terminal-field">
+                  <label class="terminal-label">Chỉ dẫn thị giác & phương thức hiển thị:</label>
+                  <select class="form-select" id="select-terminal-visual" style="font-size: 11px; padding: 5px 8px; background: #080c14; border: 1px solid var(--border-accent); border-radius: 4px; color: var(--text-main);">
+                    <option value="split_screen">So sánh song song (Split Screen)</option>
+                    <option value="process_visualization">Mô phỏng động quá trình (Process Animation)</option>
+                    <option value="highlight_box">Khoanh vùng điểm nhấn (Highlight Box)</option>
+                    <option value="animated_diagram">Lưới sơ đồ tô-pô thích nghi (Animated Diagram)</option>
+                    <option value="concept_map">Bản đồ khái niệm & Case Study (Concept Map)</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- CỘT PHẢI: GHI CHÚ RIÊNG CHO AI (CUSTOM PROMPT / PEDAGOGICAL NOTES THEO ĐÚNG YÊU CẦU) -->
+              <div class="terminal-col-notes">
+                <div class="terminal-label-row">
+                  <label class="terminal-label">📝 Ghi Chú & Chỉ Dẫn Riêng Của Bạn Cho AI (Custom Instruction):</label>
+                  <span style="font-size: 10px; color: var(--text-dim);">AI sẽ bám sát ghi chú này khi sinh kịch bản & visual</span>
+                </div>
+                <textarea class="terminal-textarea" id="terminal-node-notes" placeholder="Nhập ghi chú hoặc yêu cầu riêng cho AI (ví dụ: Giải thích chậm rãi bằng ví dụ thực tiễn, làm nổi bật công thức L2 distance, vẽ đồ thị phân bố mật độ...)"></textarea>
+              </div>
+            </div>
+
+            <div class="terminal-footer">
+              <div class="terminal-status" id="terminal-status">Sẵn sàng điều chỉnh thông số & ghi chú cho phân đoạn này</div>
+              <div style="display: flex; gap: 8px;">
+                <button class="btn-export" id="btn-cancel-terminal" style="padding: 5px 12px; font-size: 11.5px;">Đóng</button>
+                <button class="btn-primary" id="btn-save-terminal" style="padding: 5px 16px; font-size: 11.5px;">
+                  <span>✓</span> Lưu Tham Số & Ghi Chú
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -1863,68 +2330,68 @@
         </div>
       </main>
 
-      <!-- PANE 3: BẢNG TINH CHỈNH THAM SỐ (POP-OUT KHI ẤN NÚT EDIT ✎ TRÊN SƠ ĐỒ) + KHUNG CHAT AI SƯ PHẠM -->
+      <!-- RESIZER PHẢI: KÉO ĐỘ RỘNG CỘT NỘI DUNG & CHAT -->
+      <div class="layout-resizer" id="resizer-right" title="Kéo để thay đổi độ rộng cột nội dung & trợ lý AI"></div>
+
+      <!-- PANE 3: CHIA ĐÔI 2 NỬA (NỬA TRÊN: NỘI DUNG TÓM TẮT/CHI TIẾT KHI ẤN NHÁNH CON BÉ NHẤT, NỬA DƯỚI: KHUNG CHAT AI) -->
       <aside class="pane-tuning" id="pane-tuning">
-        <!-- DRAWER TINH CHỈNH THAM SỐ CHO TỪNG NHÁNH (MẶC ĐỊNH ẨN, TỰ BẬT RA KHI NHẤN ✎ Ở TỪNG NODE TRÊN SƠ ĐỒ) -->
-        <div class="node-tuning-drawer" id="node-tuning-drawer" style="display: none;">
-          <div class="drawer-header">
-            <div class="drawer-badge-title">
-              <span>✎</span>
-              <span id="tuning-target-title">CHƯƠNG 1</span>
-            </div>
-            <button class="btn-drawer-close" id="btn-close-tuning" title="Đóng bảng tinh chỉnh (quay lại khung chat)">✕</button>
+        <!-- NỬA TRÊN: CONTENT INSPECTOR (CHỈ KÍCH HOẠT VÀ HIỂN THỊ KHI ẤN VÀO NHÁNH CON BÉ NHẤT TRÊN SƠ ĐỒ) -->
+        <div class="content-inspector-section" id="content-inspector-section">
+          <!-- TRẠNG THÁI TRỐNG (MẶC ĐỊNH KHI CHƯA CHỌN NHÁNH CON NÀO) -->
+          <div class="inspector-empty-state" id="inspector-empty-state">
+            <div class="empty-icon">📖</div>
+            <div class="empty-title">Nội Dung Sư Phạm Chi Tiết</div>
+            <div class="empty-desc">Nhấp vào một <strong>nhánh con bé nhất</strong> (a1, a2, b1...) trên sơ đồ để xem bản tóm tắt cốt lõi và kịch bản giảng dạy chi tiết.</div>
           </div>
 
-          <div class="drawer-body">
-            <!-- TIÊU ĐỀ PHÂN ĐOẠN -->
-            <div class="tuning-field">
-              <label class="tuning-label">Tiêu đề phân đoạn:</label>
-              <input type="text" class="form-input" id="tuning-node-title" placeholder="Tiêu đề chương / phần..." style="font-size: 12px; padding: 6px 10px;">
-            </div>
-
-            <!-- THỜI LƯỢNG CHO PHÂN ĐOẠN NÀY -->
-            <div class="tuning-field">
-              <div class="tuning-label-row" style="display: flex; justify-content: space-between; align-items: center; font-size: 11px; margin-bottom: 2px;">
-                <label class="tuning-label">Thời lượng nhánh này:</label>
-                <strong style="color: var(--cyan); font-family: 'JetBrains Mono', monospace;" id="val-node-duration">60s (1p00s)</strong>
+          <!-- TRẠNG THÁI HIỂN THỊ NỘI DUNG KHI ĐÃ CHỌN NHÁNH CON -->
+          <div class="inspector-content-card" id="inspector-content-card" style="display: none;">
+            <div class="inspector-header">
+              <div class="inspector-tag-row">
+                <span class="inspector-node-code" id="insp-code">a1</span>
+                <span class="inspector-node-chapter" id="insp-chapter">CHƯƠNG 1 • PHẦN A</span>
               </div>
-              <input type="range" class="slider" id="slider-node-duration" min="15" max="300" step="5" value="60" style="width: 100%;">
-            </div>
-
-            <!-- TỐC ĐỘ ĐỌC (WPM) -->
-            <div class="tuning-field">
-              <div class="tuning-label-row" style="display: flex; justify-content: space-between; align-items: center; font-size: 11px; margin-bottom: 2px;">
-                <label class="tuning-label">Tốc độ đọc giọng AI:</label>
-                <strong style="color: var(--cyan); font-family: 'JetBrains Mono', monospace;" id="val-node-wpm">140 WPM</strong>
+              <div class="inspector-title" id="insp-title">Dữ liệu không nhãn mục tiêu X ∈ ℝᵈ, tự khám phá tri thức</div>
+              <div class="inspector-tab-row">
+                <button class="inspector-tab-btn active" id="btn-insp-tab-all" onclick="switchInspectorTab('all')">Toàn Bộ</button>
+                <button class="inspector-tab-btn" id="btn-insp-tab-summary" onclick="switchInspectorTab('summary')">Tóm Tắt</button>
+                <button class="inspector-tab-btn" id="btn-insp-tab-narration" onclick="switchInspectorTab('narration')">Lời Thoại</button>
               </div>
-              <input type="range" class="slider" id="slider-node-wpm" min="110" max="180" step="5" value="140" style="width: 100%;">
             </div>
 
-            <!-- CHỈ DẪN THỊ GIÁC / HÌNH THỨC -->
-            <div class="tuning-field">
-              <label class="tuning-label">Chỉ dẫn thị giác & sư phạm:</label>
-              <select class="form-select" id="select-node-visual" style="font-size: 11.5px; padding: 6px 8px; width: 100%; background: #0b1120; border: 1px solid var(--border-accent); border-radius: 4px; color: var(--text-main);">
-                <option value="split_screen">So sánh song song (Split Screen)</option>
-                <option value="process_visualization">Mô phỏng động quá trình (Process Animation)</option>
-                <option value="highlight_box">Khoanh vùng điểm nhấn (Highlight Box)</option>
-                <option value="animated_diagram">Lưới sơ đồ tô-pô thích nghi (Animated Diagram)</option>
-                <option value="concept_map">Bản đồ khái niệm & Case Study (Concept Map)</option>
-              </select>
+            <!-- PHẦN 1: TÓM TẮT TRỌNG TÂM CỐT LÕI (EXECUTIVE SUMMARY) -->
+            <div class="inspector-body-card" id="insp-section-summary">
+              <div class="inspector-section-label">💡 Tóm Tắt Trọng Tâm Kiến Thức</div>
+              <ul class="inspector-summary-list" id="insp-summary-list">
+                <li>Bản chất không có ground truth supervision: mô hình phải tự tìm cấu trúc hình học ẩn sâu.</li>
+                <li>Không gian vector đa chiều d-chiều đòi hỏi hàm đo khoảng cách phù hợp.</li>
+              </ul>
             </div>
 
-            <!-- NÚT LƯU & ÁP DỤNG -->
-            <div style="display: flex; gap: 8px; margin-top: 4px;">
-              <button class="btn-primary" id="btn-save-node-tuning" style="flex: 1; justify-content: center; padding: 7px; font-size: 12px;">
-                <span>✓</span> Lưu Tham Số
-              </button>
-              <button class="btn-export" id="btn-cancel-node-tuning" style="padding: 7px 12px; font-size: 12px;">
-                Đóng
-              </button>
+            <!-- PHẦN 2: LỜI THOẠI BÀI GIẢNG CHI TIẾT (FULL LECTURE NARRATION) -->
+            <div class="inspector-body-card" id="insp-section-narration">
+              <div class="inspector-section-label">🎙️ Lời Thoại Giảng Dạy Chi Tiết</div>
+              <div class="inspector-narration-box" id="insp-narration-text">
+                "Chào các bạn, trong phân đoạn này chúng ta sẽ tìm hiểu về đặc trưng cơ bản nhất của học không giám sát..."
+              </div>
             </div>
+
+            <!-- PHẦN 3: CHỈ DẪN TRỰC QUAN & SLIDE -->
+            <div class="inspector-body-card" id="insp-section-visual">
+              <div class="inspector-section-label">👁️ Chỉ Dẫn Slide & Trực Quan</div>
+              <div style="font-size: 11px; color: var(--text-dim);" id="insp-visual-text">
+                Hiển thị so sánh song song ma trận dữ liệu thô và đồ thị phân cụm không gian.
+              </div>
+            </div>
+
+            <!-- NÚT MỞ TERMINAL CHỈNH SỬA & GHI CHÚ NHANH -->
+            <button class="btn-primary" id="btn-insp-open-terminal" style="padding: 7px; font-size: 11.5px; justify-content: center; margin-top: 2px;">
+              <span>✎</span> Tinh Chỉnh & Ghi Chú Riêng Cho Nhánh Này
+            </button>
           </div>
         </div>
 
-        <!-- KHUNG CHAT AI SƯ PHẠM (LLM CHAT BOX THAY THẾ ƯỚC TÍNH SƯ PHẠM) -->
+        <!-- NỬA DƯỚI: KHUNG CHAT AI SƯ PHẠM (CLSG LLM) -->
         <div class="ai-chat-section">
           <div class="ai-chat-header">
             <div style="display: flex; align-items: center; gap: 7px; font-size: 12.5px; font-weight: 700; color: var(--text-main);">
@@ -2297,49 +2764,57 @@
     }
 
     function initNodeTuningDrawerEvents() {
-      // Slider thời lượng
-      document.getElementById('slider-node-duration')?.addEventListener('input', (e) => {
+      // 1. Slider thời lượng trong Bottom Terminal
+      document.getElementById('slider-terminal-duration')?.addEventListener('input', (e) => {
         const val = parseInt(e.target.value);
         const m = Math.floor(val / 60);
         const s = val % 60;
-        const label = document.getElementById('val-node-duration');
+        const label = document.getElementById('val-terminal-duration');
         if (label) label.textContent = `${val}s (${m > 0 ? m + 'p' : ''}${s < 10 ? '0' : ''}${s}s)`;
       });
 
-      // Slider tốc độ đọc WPM
-      document.getElementById('slider-node-wpm')?.addEventListener('input', (e) => {
+      // 2. Slider tốc độ đọc WPM trong Bottom Terminal
+      document.getElementById('slider-terminal-wpm')?.addEventListener('input', (e) => {
         const val = parseInt(e.target.value);
-        const label = document.getElementById('val-node-wpm');
+        const label = document.getElementById('val-terminal-wpm');
         if (label) label.textContent = `${val} WPM`;
       });
 
-      // Đóng bảng tinh chỉnh (quay lại chat)
-      document.getElementById('btn-close-tuning')?.addEventListener('click', closeNodeTuning);
-      document.getElementById('btn-cancel-node-tuning')?.addEventListener('click', closeNodeTuning);
+      // 3. Đóng Bottom Terminal
+      document.getElementById('btn-minimize-terminal')?.addEventListener('click', closeNodeTuningTerminal);
+      document.getElementById('btn-cancel-terminal')?.addEventListener('click', closeNodeTuningTerminal);
 
-      // Lưu tham số phân đoạn
-      document.getElementById('btn-save-node-tuning')?.addEventListener('click', () => {
+      // 4. Lưu tham số phân đoạn & Ghi chú riêng cho AI
+      document.getElementById('btn-save-terminal')?.addEventListener('click', () => {
         if (!currentTuningTarget) return;
-        const newDur = parseInt(document.getElementById('slider-node-duration').value) || 60;
-        const newWpm = parseInt(document.getElementById('slider-node-wpm').value) || 140;
-        const newTitle = document.getElementById('tuning-node-title').value.trim() || currentTuningTarget.nodeTitle;
-        const newVisual = document.getElementById('select-node-visual').value;
+        const newDur = parseInt(document.getElementById('slider-terminal-duration').value) || 60;
+        const newWpm = parseInt(document.getElementById('slider-terminal-wpm').value) || 140;
+        const newTitle = document.getElementById('terminal-node-title').value.trim() || currentTuningTarget.nodeTitle;
+        const newVisual = document.getElementById('select-terminal-visual').value;
+        const newNotes = document.getElementById('terminal-node-notes')?.value.trim() || '';
 
-        saveNodeParameters(currentTuningTarget.nodeKey, newDur, newWpm, newTitle, newVisual);
+        saveNodeParameters(currentTuningTarget.nodeKey, newDur, newWpm, newTitle, newVisual, newNotes);
 
-        closeNodeTuning();
+        showToast(`Đã lưu tham số & ghi chú cho: ${newTitle}`);
+        closeNodeTuningTerminal();
         renderMindmap();
         renderScriptDocument();
 
-        // Gửi tin nhắn thông báo trong Trợ Lý AI
+        // Cập nhật lại Content Inspector nếu đang xem chính nhánh này
+        if (selectedLeafNode && selectedLeafNode.key === currentTuningTarget.nodeKey) {
+          selectLeafNodeForContent(selectedLeafNode, document.getElementById(`node-${selectedLeafNode.key}`));
+        }
+
+        // Gửi tin nhắn xác nhận vào khung Chat AI Sư Phạm
         const chatContainer = document.getElementById('ai-chat-messages');
         if (chatContainer) {
           const aiDiv = document.createElement('div');
           aiDiv.className = 'chat-msg msg-ai';
+          const notesText = newNotes ? `<br><span style="color: var(--amber); font-size: 11px;">📝 Ghi chú: "${newNotes}"</span>` : '';
           aiDiv.innerHTML = `
             <div class="msg-avatar">🤖</div>
             <div class="msg-bubble">
-              Đã cập nhật nhánh <strong>${newTitle}</strong>: thời lượng <strong>${newDur}s</strong>, tốc độ đọc <strong>${newWpm} WPM</strong>, chỉ dẫn thị giác <strong>[${newVisual}]</strong>!
+              Đã cập nhật nhánh <strong>${newTitle}</strong>: thời lượng <strong>${newDur}s</strong>, nhịp đọc <strong>${newWpm} WPM</strong>, thị giác <strong>[${newVisual}]</strong>.${notesText}
             </div>
           `;
           chatContainer.appendChild(aiDiv);
@@ -2435,7 +2910,7 @@
       viewport.addEventListener('wheel', (e) => {
         e.preventDefault();
         const delta = e.deltaY < 0 ? 1.08 : 0.92;
-        const newScale = Math.min(2.2, Math.max(0.35, zoomScale * delta));
+        const newScale = Math.min(2.2, Math.max(0.05, zoomScale * delta));
 
         // Zoom tương đối theo vị trí chuột
         const rect = viewport.getBoundingClientRect();
@@ -2482,7 +2957,7 @@
         applyMindmapTransform();
       });
       document.getElementById('btn-zoom-out')?.addEventListener('click', () => {
-        zoomScale = Math.max(0.35, zoomScale * 0.85);
+        zoomScale = Math.max(0.05, zoomScale * 0.85);
         applyMindmapTransform();
       });
       document.getElementById('btn-zoom-reset')?.addEventListener('click', () => {
@@ -2925,8 +3400,8 @@
       renderScriptDocument();
     }
 
-    function saveNodeParameters(nodeKey, duration, wpm, title, visualType) {
-      nodeCustomParams[nodeKey] = { duration, wpm, title, visualType };
+    function saveNodeParameters(nodeKey, duration, wpm, title, visualType, notes = '') {
+      nodeCustomParams[nodeKey] = { duration, wpm, title, visualType, notes };
     }
 
     function getNodeParam(nodeKey, paramName, defaultValue) {
@@ -2937,59 +3412,116 @@
     }
 
     // =========================================================================
-    // DRAWER TINH CHỈNH THAM SỐ CHO TỪNG NHÁNH (POP-OUT KHI ẤN NÚT EDIT ✎)
+    // BOTTOM DOCKED TERMINAL DRAWER (TINH CHỈNH THAM SỐ & GHI CHÚ RIÊNG CHO AI)
+    // TỌA ĐỘ Ở GỐC DƯỚI Ô GIỮA THEO ĐÚNG VÙNG TÔ ĐỎ CỦA NGƯỜI DÙNG (IMAGE 2)
     // =========================================================================
     let currentTuningTarget = null;
 
-    function openNodeTuning(nodeKey, nodeTitle, duration, wpm, visualType, cardEl) {
-      currentTuningTarget = { nodeKey, nodeTitle, duration, wpm, visualType };
+    function openNodeTuningTerminal(nodeOrKey, cardEl) {
+      let nodeKey = typeof nodeOrKey === 'string' ? nodeOrKey : nodeOrKey.key;
+      let nodeTitle = '';
+      let duration = 60;
+      let wpm = 140;
+      let visualType = 'split_screen';
+      let nodeObj = null;
 
-      // Highlight card đang được chỉnh sửa
-      document.querySelectorAll('.is-being-edited').forEach(el => el.classList.remove('is-being-edited'));
-      if (cardEl) cardEl.classList.add('is-being-edited');
-
-      const drawer = document.getElementById('node-tuning-drawer');
-      if (!drawer) return;
-
-      const titleDisplay = document.getElementById('tuning-target-title');
-      if (titleDisplay) {
-        titleDisplay.textContent = nodeTitle.length > 28 ? nodeTitle.substring(0, 26) + '...' : nodeTitle;
+      if (typeof nodeOrKey === 'object') {
+        nodeObj = nodeOrKey;
+        nodeTitle = nodeObj.data.title || nodeObj.data.text || nodeKey;
+        duration = nodeObj.data.duration || (nodeObj.level === 1 ? 60 : 30);
+        wpm = nodeObj.data.wpm || 140;
+        visualType = nodeObj.data.visualType || 'split_screen';
+      } else {
+        nodeTitle = getNodeParam(nodeKey, 'title', nodeKey);
+        duration = getNodeParam(nodeKey, 'duration', 60);
+        wpm = getNodeParam(nodeKey, 'wpm', 140);
+        visualType = getNodeParam(nodeKey, 'visualType', 'split_screen');
       }
 
-      const inputTitle = document.getElementById('tuning-node-title');
-      if (inputTitle) inputTitle.value = nodeTitle;
+      // Đọc các giá trị đã lưu tuỳ biến trước đó
+      const customTitle = getNodeParam(nodeKey, 'title', nodeTitle);
+      const customDur = getNodeParam(nodeKey, 'duration', duration);
+      const customWpm = getNodeParam(nodeKey, 'wpm', wpm);
+      const customVis = getNodeParam(nodeKey, 'visualType', visualType);
+      const customNotes = getNodeParam(nodeKey, 'notes', '');
 
-      const durSlider = document.getElementById('slider-node-duration');
-      const durVal = document.getElementById('val-node-duration');
+      currentTuningTarget = {
+        nodeKey,
+        nodeTitle: customTitle,
+        duration: customDur,
+        wpm: customWpm,
+        visualType: customVis,
+        notes: customNotes,
+        nodeObj: nodeObj
+      };
+
+      // Highlight card đang được chỉnh sửa trên sơ đồ
+      document.querySelectorAll('.is-being-edited').forEach(el => el.classList.remove('is-being-edited'));
+      const activeCard = cardEl || document.getElementById(`node-${nodeKey}`);
+      if (activeCard) activeCard.classList.add('is-being-edited');
+
+      const drawer = document.getElementById('mindmap-terminal-drawer');
+      if (!drawer) return;
+
+      const titleDisplay = document.getElementById('terminal-target-title');
+      if (titleDisplay) {
+        titleDisplay.textContent = `TINH CHỈNH SƯ PHẠM: ${customTitle.length > 32 ? customTitle.substring(0, 30) + '...' : customTitle}`;
+      }
+      const keyDisplay = document.getElementById('terminal-target-key');
+      if (keyDisplay) keyDisplay.textContent = nodeKey;
+
+      const inputTitle = document.getElementById('terminal-node-title');
+      if (inputTitle) inputTitle.value = customTitle;
+
+      const durSlider = document.getElementById('slider-terminal-duration');
+      const durVal = document.getElementById('val-terminal-duration');
       if (durSlider && durVal) {
-        durSlider.value = duration || 60;
+        durSlider.value = customDur || 60;
         const m = Math.floor(durSlider.value / 60);
         const s = durSlider.value % 60;
         durVal.textContent = `${durSlider.value}s (${m > 0 ? m + 'p' : ''}${s < 10 ? '0' : ''}${s}s)`;
       }
 
-      const wpmSlider = document.getElementById('slider-node-wpm');
-      const wpmVal = document.getElementById('val-node-wpm');
+      const wpmSlider = document.getElementById('slider-terminal-wpm');
+      const wpmVal = document.getElementById('val-terminal-wpm');
       if (wpmSlider && wpmVal) {
-        wpmSlider.value = wpm || 140;
+        wpmSlider.value = customWpm || 140;
         wpmVal.textContent = `${wpmSlider.value} WPM`;
       }
 
-      const selectVisual = document.getElementById('select-node-visual');
-      if (selectVisual && visualType) {
-        selectVisual.value = visualType;
+      const selectVisual = document.getElementById('select-terminal-visual');
+      if (selectVisual && customVis) {
+        selectVisual.value = customVis;
       }
 
-      drawer.style.display = 'flex';
-      // Cuộn lên đầu pane tuning để người dùng thấy ngay
-      drawer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      const notesTextarea = document.getElementById('terminal-node-notes');
+      if (notesTextarea) {
+        notesTextarea.value = customNotes || '';
+      }
+
+      const statusEl = document.getElementById('terminal-status');
+      if (statusEl) {
+        statusEl.textContent = `Đang hiệu chỉnh: ${nodeKey} (${customTitle})`;
+        statusEl.style.color = 'var(--cyan)';
+      }
+
+      // Trượt thanh terminal lên từ đáy ô giữa (chuẩn Image 2)
+      drawer.classList.add('is-open');
     }
 
-    function closeNodeTuning() {
-      const drawer = document.getElementById('node-tuning-drawer');
-      if (drawer) drawer.style.display = 'none';
+    function closeNodeTuningTerminal() {
+      const drawer = document.getElementById('mindmap-terminal-drawer');
+      if (drawer) drawer.classList.remove('is-open');
       document.querySelectorAll('.is-being-edited').forEach(el => el.classList.remove('is-being-edited'));
       currentTuningTarget = null;
+    }
+
+    // Tương thích ngược với các lệnh gọi cũ
+    function openNodeTuning(nodeKey, nodeTitle, duration, wpm, visualType, cardEl) {
+      openNodeTuningTerminal(nodeKey, cardEl);
+    }
+    function closeNodeTuning() {
+      closeNodeTuningTerminal();
     }
 
     // =========================================================================
@@ -3378,7 +3910,8 @@
           let dy = deltaScreenY / zoomScale;
 
           if (minStartLeft + dx < 20) dx = 20 - minStartLeft;
-          if (minStartTop + dy < 20) dy = 20 - minStartTop;
+          // Bỏ giới hạn trên 20px giúp người dùng kéo lên trên tự do không bị kẹt
+          if (minStartTop + dy < -5000) dy = -5000 - minStartTop;
 
           dragItems.forEach(item => {
             item.el.style.left = `${item.startLeft + dx}px`;
@@ -3405,7 +3938,8 @@
             let dx = deltaScreenX / zoomScale;
             let dy = deltaScreenY / zoomScale;
             if (minStartLeft + dx < 20) dx = 20 - minStartLeft;
-            if (minStartTop + dy < 20) dy = 20 - minStartTop;
+            // Bỏ giới hạn trên 20px giúp người dùng kéo lên trên tự do không bị kẹt
+          if (minStartTop + dy < -5000) dy = -5000 - minStartTop;
 
             if (!nodeManualDeltas[node.key]) {
               nodeManualDeltas[node.key] = { dx: 0, dy: 0 };
@@ -3429,91 +3963,62 @@
       const card = document.createElement('div');
       const isExcluded = isNodeExcluded(node.key, node.parentKey ? [node.parentKey] : []);
       const isBeingEdited = currentTuningTarget && currentTuningTarget.nodeKey === node.key;
+      const isActiveLeaf = selectedLeafNode && selectedLeafNode.key === node.key;
 
-      card.className = `decision-node node-level-${node.level} ${isExcluded ? 'is-excluded' : ''} ${isBeingEdited ? 'is-being-edited' : ''}`;
+      card.className = `decision-node node-level-${node.level} ${isExcluded ? 'is-excluded' : ''} ${isBeingEdited ? 'is-being-edited' : ''} ${isActiveLeaf ? 'is-active-leaf' : ''}`;
       card.id = `node-${node.key}`;
       card.style.left = `${node.x}px`;
       card.style.top = `${node.y}px`;
       card.style.width = `${node.width}px`;
       card.style.minHeight = `${node.height}px`;
 
-      // Nút X góc trên phải
-      const btnX = document.createElement('button');
-      btnX.className = 'node-corner-x';
-      btnX.title = isExcluded ? 'Khôi phục nhánh này vào kịch bản' : 'Loại bỏ nhánh này khỏi kịch bản (ấn nhánh to thì nhánh nhỏ cũng bỏ theo)';
-      btnX.innerHTML = isExcluded ? '↺' : '✕';
-      btnX.addEventListener('click', (e) => {
-        e.stopPropagation();
-        toggleNodeExclusion(node.key);
-      });
-
-      // Nút Edit ✎ góc dưới phải (cây bút chéo xiên trái)
-      const btnEdit = document.createElement('button');
-      btnEdit.className = 'node-corner-edit';
-      btnEdit.title = 'Tinh chỉnh thời lượng & tham số cho nhánh này';
-      btnEdit.innerHTML = '✎';
-      btnEdit.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const tTitle = node.data.title || node.data.text || node.key;
-        const tDur = node.data.duration || (node.level === 1 ? 60 : 30);
-        const tWpm = node.data.wpm || 140;
-        const tVis = node.data.visualType || 'split_screen';
-        openNodeTuning(node.key, tTitle, tDur, tWpm, tVis, card);
-      });
-
-      card.appendChild(btnX);
-      card.appendChild(btnEdit);
-
-      // Nội dung theo từng cấp độ
+      // 1. TẠO NỘI DUNG HTML CỐT LÕI TRƯỚC TIÊN (KHÔNG DÙNG innerHTML += ĐỂ TRÁNH XÓA LISTENER)
+      let contentHtml = '';
       if (node.level === 0) {
-        card.innerHTML += `
-          <div class="node-drag-badge">⋮⋮ KÉO DI CHUYỂN CẢ CÂY (MAIN)</div>
+        // BỎ CÂU ":: KÉO DI CHUYỂN CẢ CÂY (MAIN)" THEO ĐÚNG YÊU CẦU NGƯỜI DÙNG VÀ ẢNH 4
+        contentHtml = `
           <div style="font-size: 22px; text-align: center; margin-bottom: 2px;">📄</div>
-          <div class="node-title-text" style="font-size: 13.5px; font-weight: 800; color: var(--text-main); text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding: 0 20px;">
+          <div style="font-size: 13px; font-weight: 800; color: #fff; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding: 0 4px;">
             ${node.data.title}
           </div>
-          <div style="font-size: 11px; color: var(--cyan); text-align: center; margin-top: 3px;">
+          <div style="font-size: 11px; color: var(--cyan); text-align: center; font-family: 'JetBrains Mono', monospace; margin-top: 2px;">
             ${node.data.pages} trang • ${node.data.chapterCount} chương
           </div>
         `;
       } else if (node.level === 1) {
         const hasChildren = node.children && node.children.length > 0;
         const expandLabel = hasChildren ? (node.isExpanded ? `▼ ${node.children.length}` : `▶ ${node.children.length}`) : '';
+        const durText = `${node.data.duration || 60}s`;
 
-        card.innerHTML += `
-          <div style="display: flex; justify-content: space-between; align-items: center; padding-right: 22px; margin-bottom: 3px;">
+        contentHtml = `
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; padding-right: 22px;">
             <span class="depth-tag depth-${node.data.depth || 'core'}">${node.data.chapter}</span>
-            ${hasChildren ? `<span class="node-toggle-badge">${expandLabel}</span>` : ''}
+            <span class="node-expand-pill" style="font-size: 9.5px; padding: 1px 5px; border-radius: 3px; background: rgba(56, 189, 248, 0.15); color: var(--cyan);">${expandLabel}</span>
           </div>
-          <div class="node-title-text" style="font-size: 11.5px; font-weight: 700; color: var(--text-main); line-height: 1.35; max-height: 34px; overflow: hidden; margin-bottom: 4px;">
+          <div class="node-title-text" style="font-size: 11.5px; font-weight: 700; color: #fff; line-height: 1.35; max-height: 34px; overflow: hidden; padding-right: 20px;">
             ${node.data.title}
           </div>
-          <div style="display: flex; align-items: center; justify-content: space-between; padding-right: 24px;">
-            <span style="font-size: 9.5px; color: var(--amber);">👁️ [${node.data.visualType || 'split'}]</span>
-            <span class="node-duration-badge" id="dur-tag-${node.key}" title="Bấm để chỉnh thời lượng">⏱️ ${node.data.duration}s</span>
+          <div style="display: flex; align-items: center; gap: 8px; margin-top: 6px; font-size: 10px; color: var(--text-dim);">
+            <span style="font-family: 'JetBrains Mono', monospace; color: var(--text-muted);">👁 [${node.data.visualType || 'split_screen'}]</span>
+            <span class="node-duration-badge" style="font-family: 'JetBrains Mono', monospace; color: var(--cyan); font-weight: 600;">⏱ ${durText}</span>
           </div>
         `;
-
-        card.querySelector(`#dur-tag-${node.key}`)?.addEventListener('click', (e) => {
-          e.stopPropagation();
-          openNodeTuning(node.key, node.data.title, node.data.duration, node.data.wpm, node.data.visualType, card);
-        });
       } else if (node.level === 2) {
         const hasChildren = node.children && node.children.length > 0;
         const expandLabel = hasChildren ? (node.isExpanded ? `▼ ${node.children.length}` : `▶ ${node.children.length}`) : '';
 
-        card.innerHTML += `
-          <div style="display: flex; justify-content: space-between; align-items: center; padding-right: 22px; margin-bottom: 2px;">
-            <span class="subbranch-code">${node.data.code}</span>
-            ${hasChildren ? `<span class="node-toggle-badge">${expandLabel}</span>` : ''}
+        contentHtml = `
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 3px; padding-right: 22px;">
+            <span style="font-size: 12px; font-weight: 800; color: #fff;">${node.data.code}</span>
+            <span class="node-expand-pill" style="font-size: 9px; padding: 1px 4px; border-radius: 3px; background: rgba(56, 189, 248, 0.15); color: var(--cyan);">${expandLabel}</span>
           </div>
           <div class="node-title-text" style="font-size: 11px; font-weight: 600; color: var(--text-main); line-height: 1.3; max-height: 32px; overflow: hidden; padding-right: 20px;">
             ${node.data.title}
           </div>
         `;
       } else if (node.level === 3) {
-        card.innerHTML += `
-          <div style="display: flex; align-items: flex-start; gap: 5px; padding-right: 20px;">
+        contentHtml = `
+          <div style="display: flex; align-items: flex-start; gap: 5px; padding-right: 22px;">
             <span class="leaf-code">${node.data.code}</span>
             <span class="node-leaf-text" style="font-size: 10px; color: var(--text-muted); line-height: 1.3; max-height: 40px; overflow: hidden;">
               ${node.data.text}
@@ -3522,16 +4027,58 @@
         `;
       }
 
-      // Kích hoạt cơ chế kéo thả theo nhánh cho mọi thẻ node
+      // Gán toàn bộ innerHTML một lần duy nhất
+      card.innerHTML = contentHtml;
+
+      // 2. GẮN CÁC NÚT ĐIỀU HƯỚNG GÓC (X VÀ ✎) VÀO DOM SAU KHI ĐÃ SET innerHTML
+      const btnX = document.createElement('button');
+      btnX.className = 'node-corner-x';
+      btnX.title = isExcluded ? 'Khôi phục nhánh này vào kịch bản' : 'Loại bỏ nhánh này khỏi kịch bản (ấn nhánh to thì nhánh nhỏ cũng bỏ theo)';
+      btnX.innerHTML = isExcluded ? '↺' : '✕';
+
+      const btnEdit = document.createElement('button');
+      btnEdit.className = 'node-corner-edit';
+      btnEdit.title = 'Mở terminal tinh chỉnh thời lượng, tham số & ghi chú riêng cho nhánh này';
+      btnEdit.innerHTML = '✎';
+
+      card.appendChild(btnX);
+      card.appendChild(btnEdit);
+
+      // Kích hoạt kéo thả theo nhánh cho mọi thẻ node
       initNodeSubtreeDrag(card, node);
 
-      // Click vào thân card để bật / thu gọn nhánh con (bỏ qua nếu vừa kéo chuột)
+      // 3. SỰ KIỆN CLICK ĐƯỢC ỦY QUYỀN (EVENT DELEGATION) ĐẢM BẢO 100% HOẠT ĐỘNG KHÔNG BỊ TRÔI MẤT
       card.addEventListener('click', (e) => {
         if (card._dragMoved) {
           card._dragMoved = false;
           return;
         }
-        if (e.target.closest('.node-corner-x') || e.target.closest('.node-corner-edit') || e.target.closest('.node-duration-badge')) return;
+
+        // A. Nhấn nút ✕ (Loại bỏ / Khôi phục)
+        const hitX = e.target.closest('.node-corner-x');
+        if (hitX) {
+          e.stopPropagation();
+          toggleNodeExclusion(node.key);
+          return;
+        }
+
+        // B. Nhấn nút Edit ✎ hoặc Badge thời lượng -> Mở Terminal ở góc dưới (Image 2)
+        const hitEdit = e.target.closest('.node-corner-edit') || e.target.closest('.node-duration-badge');
+        if (hitEdit) {
+          e.stopPropagation();
+          openNodeTuningTerminal(node, card);
+          return;
+        }
+
+        // C. Nhấn vào nhánh con bé nhất (Level 3 hoặc node không thể sinh thêm nhánh con):
+        // Kích hoạt hiển thị tóm tắt và lời thoại chi tiết ở nửa trên cột bên phải
+        if (node.level === 3 || (!node.children || node.children.length === 0)) {
+          e.stopPropagation();
+          selectLeafNodeForContent(node, card);
+          return;
+        }
+
+        // D. Nhấn vào các nhánh cha (Level 0, 1, 2 có children): Bật / Thu gọn nhánh
         if (node.children && node.children.length > 0) {
           setNodeExpanded(node.key, !node.isExpanded);
           renderMindmap();
@@ -3545,6 +4092,196 @@
     // RENDER KỊCH BẢN HOÀN CHỈNH (CLEAN PEDAGOGICAL SCRIPT DOCUMENT VIEW)
     // TỰ ĐỘNG BỎ QUA CÁC NHÁNH ĐÃ BẤM X, TỰ TÍNH LẠI MỐC THỜI GIAN
     // =========================================================================
+    
+    // =========================================================================
+    // CONTENT INSPECTOR: HIỂN THỊ TÓM TẮT & LỜI THOẠI CHI TIẾT CHO NHÁNH CON BÉ NHẤT
+    // =========================================================================
+    let selectedLeafNode = null;
+    let activeInspectorTab = 'all'; // 'all' | 'summary' | 'narration'
+
+    function switchInspectorTab(tabName) {
+      activeInspectorTab = tabName;
+      document.querySelectorAll('.inspector-tab-btn').forEach(btn => btn.classList.remove('active'));
+      const activeBtn = document.getElementById(`btn-insp-tab-${tabName}`);
+      if (activeBtn) activeBtn.classList.add('active');
+
+      const secSummary = document.getElementById('insp-section-summary');
+      const secNarration = document.getElementById('insp-section-narration');
+      const secVisual = document.getElementById('insp-section-visual');
+
+      if (tabName === 'all') {
+        if (secSummary) secSummary.style.display = 'block';
+        if (secNarration) secNarration.style.display = 'block';
+        if (secVisual) secVisual.style.display = 'block';
+      } else if (tabName === 'summary') {
+        if (secSummary) secSummary.style.display = 'block';
+        if (secNarration) secNarration.style.display = 'none';
+        if (secVisual) secVisual.style.display = 'block';
+      } else if (tabName === 'narration') {
+        if (secSummary) secSummary.style.display = 'none';
+        if (secNarration) secNarration.style.display = 'block';
+        if (secVisual) secVisual.style.display = 'none';
+      }
+    }
+
+    function selectLeafNodeForContent(node, cardEl) {
+      selectedLeafNode = node;
+
+      // Đánh dấu viền sáng neon cho card đang được chọn
+      document.querySelectorAll('.decision-node').forEach(el => el.classList.remove('is-active-leaf'));
+      if (cardEl) cardEl.classList.add('is-active-leaf');
+
+      const emptyEl = document.getElementById('inspector-empty-state');
+      const cardContainer = document.getElementById('inspector-content-card');
+      if (emptyEl) emptyEl.style.display = 'none';
+      if (cardContainer) cardContainer.style.display = 'flex';
+
+      const codeEl = document.getElementById('insp-code');
+      const chapEl = document.getElementById('insp-chapter');
+      const titleEl = document.getElementById('insp-title');
+      const summaryList = document.getElementById('insp-summary-list');
+      const narrationText = document.getElementById('insp-narration-text');
+      const visualText = document.getElementById('insp-visual-text');
+
+      const nodeCode = node.data.code || '•';
+      const nodeText = node.data.text || node.data.title || node.key;
+
+      if (codeEl) codeEl.textContent = nodeCode;
+      if (titleEl) titleEl.textContent = nodeText;
+
+      // Tìm thông tin phân cấp cha (Chương và Phần)
+      let chapterName = 'BÀI GIẢNG ĐA PHƯƠNG THỨC';
+      let secName = '';
+      if (node.parentKey) {
+        const parentCard = document.getElementById(`node-${node.parentKey}`);
+        if (parentCard) {
+          const pTitle = parentCard.querySelector('.node-title-text')?.textContent.trim();
+          if (pTitle) secName = pTitle;
+        }
+      }
+      if (chapEl) chapEl.textContent = secName ? `PHÂN ĐOẠN • ${secName.substring(0, 24)}` : chapterName;
+
+      // 1. TẠO BẢN TÓM TẮT TRỌNG TÂM CỐT LÕI (EXECUTIVE SUMMARY)
+      if (summaryList) {
+        summaryList.innerHTML = `
+          <li><strong>Bản chất lý thuyết:</strong> ${nodeText}.</li>
+          <li><strong>Phương pháp luận & tính toán:</strong> Áp dụng chuẩn hoá vector đặc trưng và tối ưu hàm khoảng cách không gian.</li>
+          <li><strong>Ý nghĩa sư phạm:</strong> Giúp học viên nắm bắt bản chất trực quan trước khi đi sâu vào thuật toán chi tiết.</li>
+        `;
+      }
+
+      // 2. TẠO LỜI THOẠI BÀI GIẢNG CHI TIẾT (FULL LECTURE NARRATION)
+      if (narrationText) {
+        narrationText.textContent = `"Kính chào các bạn học viên, trong nội dung của mục ${nodeCode} này, chúng ta tập trung phân tích sâu vào luận điểm: ${nodeText}. Trong thực tế xây dựng mô hình AI, đây là mắt xích quyết định độ chính xác của phân cụm và bảo toàn cấu trúc dữ liệu không gian. Các bạn hãy quan sát kỹ sơ đồ tương tác hiển thị trên slide..."`;
+      }
+
+      // 3. CHỈ DẪN TRỰC QUAN
+      if (visualText) {
+        const visType = getNodeParam(node.key, 'visualType', 'split_screen');
+        visualText.innerHTML = `Định dạng: <strong style="color: var(--cyan);">[${visType}]</strong> • Phóng to vùng dữ liệu, làm nổi bật cấu trúc liên kết và hiển thị công thức tương ứng.`;
+      }
+
+      // Nút mở terminal tinh chỉnh nhanh
+      const btnOpenTerm = document.getElementById('btn-insp-open-terminal');
+      if (btnOpenTerm) {
+        btnOpenTerm.onclick = () => {
+          openNodeTuningTerminal(node, cardEl);
+        };
+      }
+    }
+
+    // =========================================================================
+    // RESIZABLE SPLIT PANELS (ANTIGRAVITY / VS CODE DRAGGABLE GUTTERS)
+    // =========================================================================
+    function initLayoutResizers() {
+      const resizerLeft = document.getElementById('resizer-left');
+      const resizerRight = document.getElementById('resizer-right');
+      const paneSources = document.getElementById('pane-sources');
+      const paneTuning = document.getElementById('pane-tuning');
+
+      // Khôi phục độ rộng đã lưu từ localStorage
+      const savedLeftW = localStorage.getItem('clsg_sources_width');
+      if (savedLeftW && paneSources) paneSources.style.width = savedLeftW + 'px';
+      const savedRightW = localStorage.getItem('clsg_tuning_width');
+      if (savedRightW && paneTuning) paneTuning.style.width = savedRightW + 'px';
+
+      // 1. KÉO RESIZER BÊN TRÁI (GIỮA NGUỒN TÀI LIỆU VÀ Ô GIỮA)
+      if (resizerLeft && paneSources) {
+        let isDraggingLeft = false;
+        let startX = 0;
+        let startW = 0;
+
+        resizerLeft.addEventListener('mousedown', (e) => {
+          e.preventDefault();
+          isDraggingLeft = true;
+          startX = e.clientX;
+          startW = paneSources.offsetWidth;
+          document.body.style.cursor = 'col-resize';
+          document.body.style.userSelect = 'none';
+          resizerLeft.classList.add('is-resizing');
+
+          function onMouseMove(ev) {
+            if (!isDraggingLeft) return;
+            const newW = Math.max(180, Math.min(520, startW + (ev.clientX - startX)));
+            paneSources.style.width = newW + 'px';
+          }
+
+          function onMouseUp() {
+            if (isDraggingLeft) {
+              isDraggingLeft = false;
+              document.body.style.cursor = '';
+              document.body.style.userSelect = '';
+              resizerLeft.classList.remove('is-resizing');
+              localStorage.setItem('clsg_sources_width', paneSources.offsetWidth);
+              window.removeEventListener('mousemove', onMouseMove);
+              window.removeEventListener('mouseup', onMouseUp);
+            }
+          }
+
+          window.addEventListener('mousemove', onMouseMove);
+          window.addEventListener('mouseup', onMouseUp);
+        });
+      }
+
+      // 2. KÉO RESIZER BÊN PHẢI (GIỮA Ô GIỮA VÀ CỘT NỘI DUNG/CHAT)
+      if (resizerRight && paneTuning) {
+        let isDraggingRight = false;
+        let startX = 0;
+        let startW = 0;
+
+        resizerRight.addEventListener('mousedown', (e) => {
+          e.preventDefault();
+          isDraggingRight = true;
+          startX = e.clientX;
+          startW = paneTuning.offsetWidth;
+          document.body.style.cursor = 'col-resize';
+          document.body.style.userSelect = 'none';
+          resizerRight.classList.add('is-resizing');
+
+          function onMouseMove(ev) {
+            if (!isDraggingRight) return;
+            const newW = Math.max(260, Math.min(650, startW - (ev.clientX - startX)));
+            paneTuning.style.width = newW + 'px';
+          }
+
+          function onMouseUp() {
+            if (isDraggingRight) {
+              isDraggingRight = false;
+              document.body.style.cursor = '';
+              document.body.style.userSelect = '';
+              resizerRight.classList.remove('is-resizing');
+              localStorage.setItem('clsg_tuning_width', paneTuning.offsetWidth);
+              window.removeEventListener('mousemove', onMouseMove);
+              window.removeEventListener('mouseup', onMouseUp);
+            }
+          }
+
+          window.addEventListener('mousemove', onMouseMove);
+          window.addEventListener('mouseup', onMouseUp);
+        });
+      }
+    }
+
     function renderScriptDocument() {
       const paper = document.getElementById('script-paper-view');
       if (!paper) return;
@@ -3714,6 +4451,7 @@
       renderMindmap();
       initMindmapPanZoom();
       initNodeTuningDrawerEvents();
+      initLayoutResizers();
       renderScriptDocument();
       updateTuningPanel();
 
