@@ -273,19 +273,19 @@
       gap: 22px;
     }
 
-    /* 1. THE DEFAULT "+" CREATE CARD (DẤU + ĐẶT CHUẨN TÂM) */
+    /* 1. THE DEFAULT "+" CREATE CARD (TỐI GIẢN, DẤU + TẠI TÂM) */
     .card-project-create {
       background: rgba(15, 23, 42, 0.4);
       border: 2px dashed rgba(99, 102, 241, 0.35);
       border-radius: var(--radius-md);
-      min-height: 290px;
+      min-height: 195px;
       height: 100%;
       cursor: pointer;
       transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       position: relative;
       overflow: hidden;
       box-sizing: border-box;
-      padding: 24px;
+      padding: 20px;
     }
 
     .card-project-create:hover {
@@ -297,18 +297,18 @@
 
     .create-plus-circle {
       position: absolute;
-      top: 50%;
+      top: 42%;
       left: 50%;
       transform: translate(-50%, -50%);
-      width: 72px;
-      height: 72px;
+      width: 62px;
+      height: 62px;
       border-radius: 50%;
       background: rgba(99, 102, 241, 0.15);
       border: 1.5px solid rgba(99, 102, 241, 0.4);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 40px;
+      font-size: 36px;
       font-weight: 300;
       color: var(--cyan);
       transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
@@ -325,35 +325,35 @@
 
     .create-card-text-group {
       position: absolute;
-      bottom: 20px;
-      left: 16px;
-      right: 16px;
+      bottom: 16px;
+      left: 14px;
+      right: 14px;
       text-align: center;
       pointer-events: none;
     }
 
     .create-card-title {
-      font-size: 16px;
+      font-size: 15px;
       font-weight: 700;
       color: var(--text-main);
-      margin-bottom: 4px;
+      margin-bottom: 2px;
     }
 
     .create-card-sub {
-      font-size: 11.5px;
+      font-size: 11px;
       color: var(--text-muted);
       text-align: center;
       max-width: 240px;
       margin: 0 auto;
-      line-height: 1.4;
+      line-height: 1.3;
     }
 
-    /* 2. REGULAR PROJECT CARD */
+    /* 2. REGULAR PROJECT CARD (TỐI GIẢN THEO YÊU CẦU: HIỆN ĐƠN GIẢN TÊN PROJECT, BỎ ĐIỂM FAKE) */
     .project-card {
       background: var(--bg-card);
       border: 1px solid var(--border-subtle);
       border-radius: var(--radius-md);
-      min-height: 270px;
+      min-height: 195px;
       padding: 20px;
       display: flex;
       flex-direction: column;
@@ -374,7 +374,7 @@
     .card-top-row {
       display: flex;
       justify-content: space-between;
-      align-items: flex-start;
+      align-items: center;
       margin-bottom: 12px;
     }
 
@@ -393,71 +393,30 @@
       border: 1px solid rgba(16, 185, 129, 0.3);
     }
 
-    .tag-draft {
-      background: rgba(245, 158, 11, 0.15);
-      color: var(--amber);
-      border: 1px solid rgba(245, 158, 11, 0.3);
-    }
-
-    .score-circle-sm {
-      display: flex;
-      align-items: center;
-      gap: 5px;
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 13px;
-      font-weight: 700;
-      color: var(--cyan);
-      background: rgba(56, 189, 248, 0.1);
-      padding: 4px 8px;
-      border-radius: 6px;
-    }
-
     .project-name {
-      font-size: 16px;
+      font-size: 17px;
       font-weight: 700;
       line-height: 1.4;
-      margin-bottom: 6px;
+      margin-bottom: 10px;
       color: var(--text-main);
     }
 
-    .project-desc {
-      font-size: 12px;
-      color: var(--text-muted);
-      line-height: 1.5;
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-      margin-bottom: 14px;
-    }
-
     .project-sources-badge {
-      font-size: 11px;
+      font-size: 11.5px;
       color: var(--cyan);
       background: rgba(56, 189, 248, 0.08);
       border: 1px solid rgba(56, 189, 248, 0.2);
       border-radius: 6px;
-      padding: 6px 10px;
-      margin-bottom: 14px;
+      padding: 6px 12px;
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 7px;
       font-weight: 600;
-    }
-
-    .project-meta-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
-      padding-top: 12px;
-      border-top: 1px solid rgba(255, 255, 255, 0.05);
-      font-size: 11px;
-      color: var(--text-dim);
-    }
-
-    .meta-item strong {
-      color: var(--text-main);
-      font-family: 'JetBrains Mono', monospace;
+      width: fit-content;
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
 
     .card-footer {
@@ -465,7 +424,7 @@
       justify-content: space-between;
       align-items: center;
       margin-top: 16px;
-      padding-top: 12px;
+      padding-top: 14px;
       border-top: 1px solid var(--border-subtle);
     }
 
@@ -490,7 +449,7 @@
     }
 
     /* =========================================================================
-       VIEW 2: MULTIMODAL WORKSPACE (SOURCES + TIMELINE + CRITIC)
+       VIEW 2: MULTIMODAL WORKSPACE (SOURCES + CENTER TABS + TUNING PANE)
        ========================================================================= */
     #view-workspace {
       display: none;
@@ -521,14 +480,14 @@
       background: transparent;
       border: 1px solid var(--border-subtle);
       color: var(--text-muted);
-      padding: 4px 10px;
+      padding: 5px 12px;
       border-radius: 6px;
       font-size: 12px;
       font-weight: 600;
       cursor: pointer;
       display: flex;
       align-items: center;
-      gap: 5px;
+      gap: 6px;
       transition: all 0.2s;
     }
 
@@ -546,20 +505,20 @@
     /* 3-PANE WORKSPACE BODY */
     .workspace-body {
       display: grid;
-      grid-template-columns: 320px 1fr 340px;
+      grid-template-columns: 290px 1fr 320px;
       flex: 1;
       overflow: hidden;
     }
 
-    /* PANE 1: MULTIMODAL SOURCES */
+    /* PANE 1: TÀI LIỆU THÊM VÀO (SOURCES) */
     .pane-sources {
       border-right: 1px solid var(--border-subtle);
-      background: rgba(10, 15, 26, 0.6);
+      background: rgba(10, 15, 26, 0.65);
       display: flex;
       flex-direction: column;
       overflow-y: auto;
       padding: 18px;
-      gap: 18px;
+      gap: 16px;
     }
 
     .pane-header {
@@ -603,12 +562,11 @@
       color: var(--text-dim);
     }
 
-    /* SOURCES DRAG & DROP ZONE */
     .source-drop-zone {
       border: 2px dashed rgba(56, 189, 248, 0.35);
       border-radius: var(--radius-sm);
       background: rgba(56, 189, 248, 0.04);
-      padding: 18px 12px;
+      padding: 20px 14px;
       text-align: center;
       cursor: pointer;
       transition: all 0.2s;
@@ -620,14 +578,222 @@
       box-shadow: 0 0 20px rgba(56, 189, 248, 0.15);
     }
 
-    /* PANE 2: TIMELINE SCRIPT */
+    /* PANE 2: CENTER PANE WITH NOTEBOOK-STYLE TABS */
+    .pane-center {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      overflow: hidden;
+      background: rgba(8, 12, 20, 0.4);
+    }
+
+    .center-nav-bar {
+      height: 48px;
+      border-bottom: 1px solid var(--border-subtle);
+      background: rgba(15, 23, 42, 0.65);
+      display: flex;
+      align-items: center;
+      padding: 0 16px;
+      gap: 8px;
+      z-index: 10;
+    }
+
+    .center-nav-btn {
+      background: transparent;
+      border: 1px solid transparent;
+      color: var(--text-muted);
+      padding: 6px 14px;
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      transition: all 0.2s ease;
+    }
+
+    .center-nav-btn:hover {
+      color: var(--text-main);
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    .center-nav-btn.active {
+      color: var(--cyan);
+      background: rgba(56, 189, 248, 0.12);
+      border-color: rgba(56, 189, 248, 0.35);
+      box-shadow: 0 0 14px rgba(56, 189, 248, 0.15);
+    }
+
+    .center-tab-pane {
+      display: none;
+      flex: 1;
+      overflow-y: auto;
+      flex-direction: column;
+    }
+
+    .center-tab-pane.active {
+      display: flex;
+    }
+
+    /* 1. SƠ ĐỒ TƯ DUY (MINDMAP) */
+    .mindmap-container {
+      flex: 1;
+      overflow-y: auto;
+      padding: 26px;
+      background: 
+        radial-gradient(circle at 30% 30%, rgba(99, 102, 241, 0.08) 0%, transparent 60%),
+        radial-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 0);
+      background-size: 100% 100%, 22px 22px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .mindmap-header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .mindmap-canvas-wrap {
+      display: flex;
+      gap: 32px;
+      align-items: stretch;
+      min-height: 480px;
+      position: relative;
+    }
+
+    .mindmap-root-column {
+      flex: 0 0 280px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .mindmap-root-card {
+      background: linear-gradient(135deg, rgba(30, 41, 59, 0.95), rgba(15, 23, 42, 0.98));
+      border: 2px solid var(--cyan);
+      border-radius: var(--radius-md);
+      padding: 26px 20px;
+      text-align: center;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), 0 0 30px var(--cyan-glow);
+      position: relative;
+      width: 100%;
+    }
+
+    .mindmap-root-card::after {
+      content: '';
+      position: absolute;
+      right: -32px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 32px;
+      height: 2px;
+      background: linear-gradient(90deg, var(--cyan), var(--primary));
+    }
+
+    .mindmap-branches-column {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      justify-content: center;
+      position: relative;
+    }
+
+    .mindmap-branches-column::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 24px;
+      bottom: 24px;
+      width: 2px;
+      background: rgba(56, 189, 248, 0.3);
+    }
+
+    .mindmap-branch-node {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-left: 3px solid var(--cyan);
+      border-radius: var(--radius-sm);
+      padding: 14px 18px;
+      margin-left: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: all 0.25s ease;
+      cursor: pointer;
+      position: relative;
+    }
+
+    .mindmap-branch-node::before {
+      content: '';
+      position: absolute;
+      left: -16px;
+      top: 50%;
+      width: 16px;
+      height: 2px;
+      background: rgba(56, 189, 248, 0.3);
+    }
+
+    .mindmap-branch-node:hover {
+      background: var(--bg-card-hover);
+      border-color: var(--cyan);
+      border-left-color: var(--cyan);
+      transform: translateX(5px);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4), 0 0 16px rgba(56, 189, 248, 0.2);
+    }
+
+    .branch-info-col {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .branch-chapter-badge {
+      font-size: 10.5px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--cyan);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .branch-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    .branch-terms-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 2px;
+    }
+
+    .branch-leaf-pill {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      color: var(--text-muted);
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-weight: 500;
+    }
+
+    /* 2. KỊCH BẢN GIẢNG DẠY (SCRIPT) */
     .pane-timeline {
       display: flex;
       flex-direction: column;
       overflow-y: auto;
       padding: 24px;
-      gap: 20px;
-      background: rgba(8, 12, 20, 0.4);
+      gap: 18px;
     }
 
     .timeline-header-row {
@@ -657,13 +823,6 @@
     .scene-row:hover {
       border-color: rgba(99, 102, 241, 0.3);
       background: var(--bg-card-hover);
-    }
-
-    .scene-row.is-speaking {
-      border-color: var(--cyan) !important;
-      box-shadow: 0 0 30px rgba(56, 189, 248, 0.3) !important;
-      background: rgba(15, 23, 42, 0.98) !important;
-      transform: scale(1.008);
     }
 
     .time-badge-group {
@@ -697,27 +856,6 @@
     .depth-bridge { background: rgba(56, 189, 248, 0.15); color: var(--cyan); }
     .depth-core { background: rgba(99, 102, 241, 0.15); color: var(--primary); }
     .depth-deep { background: rgba(245, 158, 11, 0.15); color: var(--amber); }
-
-    .btn-speak-scene {
-      background: rgba(56, 189, 248, 0.1);
-      border: 1px solid rgba(56, 189, 248, 0.25);
-      color: var(--cyan);
-      padding: 4px 8px;
-      border-radius: 6px;
-      font-size: 11px;
-      font-weight: 600;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      width: fit-content;
-      margin-top: 8px;
-      transition: all 0.2s;
-    }
-
-    .btn-speak-scene:hover {
-      background: rgba(56, 189, 248, 0.2);
-    }
 
     .narration-editor {
       width: 100%;
@@ -781,18 +919,74 @@
       line-height: 1.4;
     }
 
-    /* PANE 3: CRITIC & MONITORING */
-    .pane-critic {
+    /* 3. VIDEO BÀI GIẢNG (PREVIEW PLACEHOLDER) */
+    .video-preview-container {
+      flex: 1;
+      overflow-y: auto;
+      padding: 28px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .video-screen-mockup {
+      width: 100%;
+      max-width: 820px;
+      aspect-ratio: 16 / 9;
+      background: #000;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: var(--radius-md);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8), 0 0 30px rgba(99, 102, 241, 0.15);
+    }
+
+    .video-mock-slide {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      background: linear-gradient(135deg, #0f172a, #1e1b4b);
+      padding: 30px;
+      text-align: center;
+    }
+
+    .video-teleprompter-overlay {
+      background: linear-gradient(0deg, rgba(0, 0, 0, 0.9) 0%, rgba(0, 0, 0, 0.7) 70%, transparent 100%);
+      padding: 16px 24px;
+      color: #fff;
+      font-size: 13.5px;
+      line-height: 1.5;
+      text-align: center;
+    }
+
+    .video-mock-controls {
+      height: 48px;
+      background: rgba(10, 15, 26, 0.95);
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 18px;
+    }
+
+    /* PANE 3: BẢNG TINH CHỈNH THAM SỐ (THỜI LƯỢNG & TỐC ĐỘ ĐỌC) */
+    .pane-tuning {
       border-left: 1px solid var(--border-subtle);
-      background: rgba(10, 15, 26, 0.6);
+      background: rgba(10, 15, 26, 0.65);
       display: flex;
       flex-direction: column;
       overflow-y: auto;
       padding: 18px;
-      gap: 18px;
+      gap: 16px;
     }
 
-    .metric-card {
+    .tuning-card {
       background: var(--bg-card);
       border: 1px solid var(--border-subtle);
       border-radius: var(--radius-sm);
@@ -802,33 +996,42 @@
       gap: 8px;
     }
 
-    .metric-header {
+    .tuning-label-row {
       display: flex;
       justify-content: space-between;
-      font-size: 11px;
+      align-items: center;
+      font-size: 12px;
       color: var(--text-muted);
       font-weight: 600;
+    }
+
+    .tuning-meta-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 4px;
+    }
+
+    .tuning-meta-item {
+      background: rgba(8, 12, 20, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.04);
+      border-radius: 6px;
+      padding: 8px 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .tuning-meta-title {
+      font-size: 10px;
+      color: var(--text-dim);
       text-transform: uppercase;
+      font-weight: 600;
     }
 
-    .metric-val-big {
-      font-size: 26px;
-      font-weight: 800;
+    .tuning-meta-item strong {
+      font-size: 12.5px;
       font-family: 'JetBrains Mono', monospace;
-      color: var(--cyan);
-    }
-
-    .progress-bar-bg {
-      height: 6px;
-      background: rgba(255, 255, 255, 0.06);
-      border-radius: 3px;
-      overflow: hidden;
-    }
-
-    .progress-bar-fill {
-      height: 100%;
-      border-radius: 3px;
-      transition: width 0.4s ease;
     }
 
     /* =========================================================================
@@ -1011,12 +1214,6 @@
       </div>
 
       <div class="header-actions">
-        <button class="btn-primary" id="btn-play-all" style="background: linear-gradient(135deg, var(--emerald), #059669);">
-          <span id="play-all-icon">🔊</span> <span id="play-all-text">Nghe Toàn Bộ</span>
-        </button>
-        <button class="btn-export" id="btn-stop-speech" style="display: none; border-color: rgba(244, 63, 94, 0.4); color: var(--rose);">
-          <span>⏹️</span> Dừng
-        </button>
         <button class="btn-export" id="btn-export-docx">
           <span>📘</span> Word (.docx)
         </button>
@@ -1035,11 +1232,11 @@
     <!-- 3-PANE WORKSPACE BODY -->
     <div class="workspace-body">
 
-      <!-- PANE 1: MULTIMODAL SOURCES -->
+      <!-- PANE 1: DANH SÁCH TÀI LIỆU THÊM VÀO (SOURCES) -->
       <aside class="pane-sources">
         <div class="pane-header">
-          <span>Nguồn Học Liệu (Sources)</span>
-          <span style="color: var(--cyan); font-size: 11px;" id="source-active-count">1 nguồn</span>
+          <span>Tài Liệu Đã Thêm</span>
+          <span style="color: var(--cyan); font-size: 11px;" id="source-active-count">1 tệp</span>
         </div>
 
         <!-- SOURCES LIST -->
@@ -1049,111 +1246,165 @@
 
         <!-- DROP ZONE TO ADD MORE SOURCES -->
         <label class="source-drop-zone" id="source-drop-zone" for="source-file-input">
-          <div style="font-size: 24px; margin-bottom: 4px;">📂</div>
-          <div style="font-size: 12px; font-weight: 700; color: var(--text-main);">+ Thêm Nguồn Học Liệu</div>
+          <div style="font-size: 26px; margin-bottom: 4px;">📂</div>
+          <div style="font-size: 12px; font-weight: 700; color: var(--text-main);">+ Thêm Tài Liệu</div>
           <div style="font-size: 11px; color: var(--text-dim); margin-top: 4px;">Kéo thả hoặc bấm để nạp thêm .pdf, .pptx, .docx</div>
           <input type="file" id="source-file-input" accept=".pptx,.pdf,.docx,.txt" style="display: none;">
         </label>
-
-        <!-- PEDAGOGICAL SLIDERS -->
-        <div style="border-top: 1px solid var(--border-subtle); padding-top: 14px; display: flex; flex-direction: column; gap: 14px;">
-          <div style="font-size: 12px; font-weight: 700; color: var(--text-muted);">Tham Số Giảng Dạy</div>
-          <div>
-            <div style="display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 4px;">
-              <span>Thời lượng mục tiêu:</span>
-              <strong style="color: var(--cyan);" id="val-duration">5 phút 00s (300s)</strong>
-            </div>
-            <input type="range" class="slider" id="slider-duration" min="60" max="900" step="30" value="300" style="width: 100%;">
-          </div>
-
-          <div>
-            <div style="display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 4px;">
-              <span>Tốc độ đọc (WPM):</span>
-              <strong style="color: var(--cyan);" id="val-wpm">140 từ/phút</strong>
-            </div>
-            <input type="range" class="slider" id="slider-wpm" min="110" max="180" step="5" value="140" style="width: 100%;">
-          </div>
-
-          <button class="btn-primary" id="btn-re-generate" style="width: 100%; justify-content: center;">
-            <span>⚡</span> Khởi Tạo Lại Với Multi-Agent
-          </button>
-        </div>
       </aside>
 
-      <!-- PANE 2: TIMELINE TELEPROMPTER -->
-      <main class="pane-timeline">
-        <div class="timeline-header-row">
-          <div>Thời gian & Cảnh</div>
-          <div>Lời Giảng Sư Phạm (Narration Track)</div>
-          <div>Chỉ Dẫn Thị Giác (Visual Track)</div>
+      <!-- PANE 2: CENTER PANE WITH NOTEBOOK-STYLE TABS (SƠ ĐỒ TƯ DUY, KỊCH BẢN, VIDEO) -->
+      <main class="pane-center">
+        <!-- TOP NAVIGATION BAR -->
+        <div class="center-nav-bar">
+          <button class="center-nav-btn active" id="btn-tab-mindmap">
+            <span>🧠</span> Sơ Đồ Tư Duy
+          </button>
+          <button class="center-nav-btn" id="btn-tab-script">
+            <span>📜</span> Kịch Bản Giảng Dạy
+          </button>
+          <button class="center-nav-btn" id="btn-tab-video">
+            <span>🎬</span> Video Bài Giảng
+          </button>
         </div>
-        <div id="timeline-container" style="display: flex; flex-direction: column; gap: 16px;">
-          <!-- Scenes injected via JS -->
+
+        <!-- TAB 1: SƠ ĐỒ TƯ DUY (MẶC ĐỊNH HIỆN ĐẦU TIÊN) -->
+        <div class="center-tab-pane active" id="tab-content-mindmap">
+          <div class="mindmap-container">
+            <div class="mindmap-header-row">
+              <div style="font-size: 14px; font-weight: 700; color: var(--text-main); display: flex; align-items: center; gap: 8px;">
+                <span>🧠</span> Sơ Đồ Tư Duy Bài Giảng (Pedagogical Mindmap)
+              </div>
+              <div style="font-size: 11.5px; color: var(--text-dim);">
+                💡 Bấm vào từng nhánh để xem kịch bản chi tiết
+              </div>
+            </div>
+
+            <div class="mindmap-canvas-wrap">
+              <div class="mindmap-root-column">
+                <div class="mindmap-root-card">
+                  <div style="font-size: 32px; margin-bottom: 8px;">🎓</div>
+                  <div style="font-size: 16px; font-weight: 800; color: var(--text-main); margin-bottom: 6px;" id="mindmap-root-title">
+                    Phân Cụm Dữ Liệu
+                  </div>
+                  <div style="font-size: 11.5px; color: var(--cyan);" id="mindmap-root-sub">
+                    Chủ đề trọng tâm • 5 phân nhánh
+                  </div>
+                </div>
+              </div>
+
+              <div class="mindmap-branches-column" id="mindmap-branches-container">
+                <!-- Branches dynamically injected via JS -->
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 2: KỊCH BẢN GIẢNG DẠY (CHƯA CẦN VOICE) -->
+        <div class="center-tab-pane" id="tab-content-script">
+          <div class="pane-timeline">
+            <div class="timeline-header-row">
+              <div>Thời gian & Cảnh</div>
+              <div>Lời Giảng Sư Phạm (Narration Track)</div>
+              <div>Chỉ Dẫn Thị Giác (Visual Track)</div>
+            </div>
+            <div id="timeline-container" style="display: flex; flex-direction: column; gap: 16px;">
+              <!-- Scenes injected via JS -->
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 3: VIDEO BÀI GIẢNG (TẠM THỜI ĐỂ ĐÓ) -->
+        <div class="center-tab-pane" id="tab-content-video">
+          <div class="video-preview-container">
+            <div class="video-screen-mockup">
+              <div class="video-mock-slide">
+                <div style="text-align: center;">
+                  <div style="font-size: 48px; margin-bottom: 12px;">📽️</div>
+                  <div style="font-size: 20px; font-weight: 800; color: #fff;" id="video-mock-title">Phân Cụm Dữ Liệu</div>
+                  <div style="font-size: 12px; color: var(--cyan); margin-top: 6px;" id="video-mock-badge">1080p Full HD • 60 FPS • Tỷ lệ 16:9</div>
+                </div>
+              </div>
+              <div class="video-teleprompter-overlay" id="video-teleprompter-text">
+                Chào mừng các bạn đến với bài giảng về Phân cụm dữ liệu trong hệ thống hỗ trợ ra quyết định...
+              </div>
+              <div class="video-mock-controls">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                  <button style="background: none; border: none; color: #fff; font-size: 16px; cursor: pointer;">▶️</button>
+                  <span style="font-size: 11px; color: var(--text-dim); font-family: 'JetBrains Mono', monospace;">00:00 / 05:00</span>
+                </div>
+                <div style="font-size: 11px; color: var(--emerald); font-weight: 600;">
+                  ● Khung hình chuẩn định dạng bài giảng MOOC
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </main>
 
-      <!-- PANE 3: CRITIC SCORECARD & MONITORING -->
-      <aside class="pane-critic">
+      <!-- PANE 3: BẢNG TINH CHỈNH THAM SỐ (THỜI LƯỢNG & TỐC ĐỘ ĐỌC) -->
+      <aside class="pane-tuning">
         <div class="pane-header">
-          <span>Thẩm Định Sư Phạm (Critic)</span>
-          <span style="color: var(--emerald); font-size: 11px;">● Khép Kín</span>
+          <span>⚙️ Tinh Chỉnh Tham Số</span>
+          <span style="color: var(--cyan); font-size: 11px;">● Trực quan</span>
         </div>
 
-        <!-- BIG SCORE CARD -->
-        <div class="metric-card" style="align-items: center; text-align: center;">
-          <div style="font-size: 11px; color: var(--text-dim); text-transform: uppercase;">Tổng Điểm Thẩm Định</div>
-          <div class="metric-val-big" id="score-overall">93.1</div>
-          <span class="project-badge-tag tag-active" id="badge-pass">PASSED (ĐẠT CHUẨN MOOC)</span>
+        <!-- THỜI LƯỢNG -->
+        <div class="tuning-card">
+          <div class="tuning-label-row">
+            <span>Thời lượng bài giảng:</span>
+            <strong style="color: var(--cyan);" id="val-duration">5 phút 00s (300s)</strong>
+          </div>
+          <input type="range" class="slider" id="slider-duration" min="60" max="1800" step="30" value="300" style="width: 100%;">
         </div>
 
-        <!-- 4 METRICS PROGRESS BARS -->
-        <div class="metric-card">
-          <div class="metric-header">
-            <span>Thời lượng (DAR)</span>
-            <strong style="color: var(--cyan);" id="score-dar">92.5%</strong>
+        <!-- TỐC ĐỘ ĐỌC -->
+        <div class="tuning-card">
+          <div class="tuning-label-row">
+            <span>Tốc độ đọc (WPM):</span>
+            <strong style="color: var(--cyan);" id="val-wpm">140 từ/phút</strong>
           </div>
-          <div class="progress-bar-bg">
-            <div class="progress-bar-fill" id="bar-dar" style="width: 92.5%; background: var(--cyan);"></div>
-          </div>
+          <input type="range" class="slider" id="slider-wpm" min="110" max="180" step="5" value="140" style="width: 100%;">
         </div>
 
-        <div class="metric-card">
-          <div class="metric-header">
-            <span>Thuật ngữ LPM (TCR)</span>
-            <strong style="color: var(--emerald);" id="score-tcr">85.7%</strong>
+        <!-- ƯỚC TÍNH SƯ PHẠM TÍNH TOÁN THEO THỜI GIAN THỰC -->
+        <div class="tuning-card">
+          <div style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">
+            Ước Tính Sư Phạm
           </div>
-          <div class="progress-bar-bg">
-            <div class="progress-bar-fill" id="bar-tcr" style="width: 85.7%; background: var(--emerald);"></div>
-          </div>
-        </div>
-
-        <div class="metric-card">
-          <div class="metric-header">
-            <span>Bám Slide (HSR)</span>
-            <strong style="color: var(--primary);" id="score-hsr">100%</strong>
-          </div>
-          <div class="progress-bar-bg">
-            <div class="progress-bar-fill" id="bar-hsr" style="width: 100%; background: var(--primary);"></div>
-          </div>
-        </div>
-
-        <div class="metric-card">
-          <div class="metric-header">
-            <span>Đồng bộ thị giác (VNS)</span>
-            <strong style="color: var(--amber);" id="score-vns">100%</strong>
-          </div>
-          <div class="progress-bar-bg">
-            <div class="progress-bar-fill" id="bar-vns" style="width: 100%; background: var(--amber);"></div>
+          <div class="tuning-meta-grid">
+            <div class="tuning-meta-item">
+              <span class="tuning-meta-title">Ngân sách từ:</span>
+              <strong id="tuning-calc-words" style="color: var(--cyan);">700 từ</strong>
+            </div>
+            <div class="tuning-meta-item">
+              <span class="tuning-meta-title">Số phân cảnh:</span>
+              <strong id="tuning-calc-scenes" style="color: var(--emerald);">5 cảnh</strong>
+            </div>
+            <div class="tuning-meta-item">
+              <span class="tuning-meta-title">Nhịp trung bình:</span>
+              <strong id="tuning-calc-scene-dur" style="color: var(--amber);">~60s / cảnh</strong>
+            </div>
+            <div class="tuning-meta-item">
+              <span class="tuning-meta-title">Chuẩn định dạng:</span>
+              <strong style="color: var(--primary);">MOOC Video</strong>
+            </div>
           </div>
         </div>
 
-        <!-- CRITIC LIVE FEEDBACK -->
-        <div class="metric-card">
-          <div style="font-size: 11px; font-weight: 700; color: var(--cyan);">Nhận Xét Của Critic Agent</div>
-          <div style="font-size: 12px; color: var(--text-muted); line-height: 1.5;" id="critic-summary-text">
-            Hệ thống Multi-Agent xác nhận: Toàn bộ 5 phân cảnh đạt độ dài chuẩn xác theo ngân sách từ. Thuật ngữ tiếng Việt hoàn toàn chuẩn hóa với kho từ vựng LPM.
+        <!-- THÔNG TIN BÀI GIẢNG -->
+        <div class="tuning-card">
+          <div style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">
+            Thông Tin Bài Giảng
           </div>
+          <div id="tuning-proj-title" style="font-size: 13px; font-weight: 700; color: var(--text-main); margin-bottom: 4px;">...</div>
+          <div id="tuning-proj-desc" style="font-size: 12px; color: var(--text-muted); line-height: 1.4;">...</div>
         </div>
+
+        <!-- NÚT TẠO LẠI -->
+        <button class="btn-primary" id="btn-re-generate" style="width: 100%; justify-content: center; padding: 12px; font-size: 13px; margin-top: auto;">
+          <span>⚡</span> Cập Nhật & Tạo Lại Kịch Bản
+        </button>
       </aside>
 
     </div>
@@ -1402,12 +1653,12 @@
     document.getElementById('btn-brand-home').addEventListener('click', () => switchView('projects'));
     document.getElementById('btn-back-dashboard').addEventListener('click', () => switchView('projects'));
 
-    // RENDER PROJECTS GRID (VỚI DẤU '+' TẠI TÂM)
+    // RENDER PROJECTS GRID (TỐI GIẢN THEO YÊU CẦU: HIỆN ĐƠN GIẢN TÊN PROJECT, BỎ ĐIỂM FAKE)
     function renderProjectsGrid(filterTerm = '') {
       const container = document.getElementById('projects-grid-container');
       container.innerHTML = '';
 
-      // 1. THE DEFAULT "+" CREATE CARD
+      // 1. THE DEFAULT "+" CREATE CARD (TÂM ĐỐI XỨNG)
       const createCard = document.createElement('div');
       createCard.className = 'card-project-create';
       createCard.id = 'btn-create-project-card';
@@ -1422,7 +1673,7 @@
       createCard.addEventListener('click', openCreateModal);
       container.appendChild(createCard);
 
-      // 2. PROJECT CARDS
+      // 2. PROJECT CARDS (ĐƠN GIẢN, HIỆN TÊN PROJECT, NGUỒN, VÀ NÚT MỞ)
       const term = filterTerm.trim().toLowerCase();
 
       Object.values(defaultProjects).forEach(proj => {
@@ -1436,37 +1687,26 @@
         card.className = 'project-card';
         card.setAttribute('data-proj-id', proj.id);
 
-        const totalWords = proj.scenes.reduce((sum, s) => sum + s.narration.trim().split(/\s+/).length, 0);
         const sourceName = proj.sources && proj.sources.length > 0 ? proj.sources[0].name : 'Tài liệu bài giảng';
-        const slideCount = proj.sources && proj.sources.length > 0 ? (proj.sources[0].pages || proj.scenes.length) : proj.scenes.length;
 
         card.innerHTML = `
           <div>
             <div class="card-top-row">
-              <span class="project-badge-tag ${(proj.score || 90) >= 90 ? 'tag-active' : 'tag-draft'}">
-                ${(proj.score || 90) >= 90 ? 'Đã Thẩm Định' : 'Đang Xử Lý'}
+              <span class="project-badge-tag tag-active">
+                ● Sẵn Sàng
               </span>
-              <div class="score-circle-sm">
-                <span>🏆</span> ${proj.score || 90.0}/100
-              </div>
+              <span style="font-size: 11px; color: var(--text-dim); font-family: 'JetBrains Mono', monospace;">${proj.badge || 'SLIDE'}</span>
             </div>
             <div class="project-name">${proj.title}</div>
-            <div class="project-desc">${proj.desc}</div>
-            <div class="project-sources-badge">
-              <span>📑</span> ${proj.sources?.length || 1} Nguồn học liệu: ${sourceName}
-            </div>
-            <div class="project-meta-grid">
-              <div class="meta-item">Thời lượng: <strong>${Math.floor((proj.duration_s || 300) / 60)}:${String((proj.duration_s || 300) % 60).padStart(2, '0')} (${proj.duration_s || 300}s)</strong></div>
-              <div class="meta-item">Số từ: <strong>${totalWords} từ (${proj.wpm || 140} WPM)</strong></div>
-              <div class="meta-item">Số slide: <strong>${slideCount} slide</strong></div>
-              <div class="meta-item">Trạng thái: <strong style="color: var(--emerald);">PASSED</strong></div>
+            <div class="project-sources-badge" title="${sourceName}">
+              <span>📄</span> ${sourceName}
             </div>
           </div>
           <div class="card-footer">
             <button class="btn-card-open btn-open-action" data-proj-id="${proj.id}">
               <span>⚡</span> Mở Không Gian Làm Việc
             </button>
-            <span style="font-size: 11px; color: var(--text-dim);">Cập nhật: Hôm nay</span>
+            <span style="font-size: 11px; color: var(--text-dim);">Vào dự án →</span>
           </div>
         `;
 
@@ -1484,9 +1724,112 @@
 
         container.appendChild(card);
       });
+    }
 
-      const statCount = document.getElementById('stat-project-count');
-      if (statCount) statCount.textContent = Object.keys(defaultProjects).length;
+    // CHUYỂN ĐỔI TAB Ở Ô GIỮA (SƠ ĐỒ TƯ DUY, KỊCH BẢN, VIDEO)
+    function switchCenterTab(tabName) {
+      document.querySelectorAll('.center-nav-btn').forEach(btn => btn.classList.remove('active'));
+      document.querySelectorAll('.center-tab-pane').forEach(pane => pane.classList.remove('active'));
+
+      if (tabName === 'mindmap') {
+        document.getElementById('btn-tab-mindmap')?.classList.add('active');
+        document.getElementById('tab-content-mindmap')?.classList.add('active');
+      } else if (tabName === 'script') {
+        document.getElementById('btn-tab-script')?.classList.add('active');
+        document.getElementById('tab-content-script')?.classList.add('active');
+      } else if (tabName === 'video') {
+        document.getElementById('btn-tab-video')?.classList.add('active');
+        document.getElementById('tab-content-video')?.classList.add('active');
+      }
+    }
+
+    document.getElementById('btn-tab-mindmap')?.addEventListener('click', () => switchCenterTab('mindmap'));
+    document.getElementById('btn-tab-script')?.addEventListener('click', () => switchCenterTab('script'));
+    document.getElementById('btn-tab-video')?.addEventListener('click', () => switchCenterTab('video'));
+
+    // CẬP NHẬT BẢNG TINH CHỈNH THAM SỐ (PANE 3)
+    function updateTuningPanel() {
+      const dur = parseInt(activeProject.duration_s || 300);
+      const wpm = parseInt(activeProject.wpm || 140);
+
+      document.getElementById('slider-duration').value = dur;
+      document.getElementById('val-duration').textContent = `${Math.floor(dur / 60)} phút ${dur % 60 ? dur % 60 + 's' : '00s'} (${dur}s)`;
+      document.getElementById('slider-wpm').value = wpm;
+      document.getElementById('val-wpm').textContent = `${wpm} từ/phút`;
+
+      const targetWords = Math.round((dur / 60) * wpm);
+      document.getElementById('tuning-calc-words').textContent = `${targetWords} từ`;
+      document.getElementById('tuning-calc-scenes').textContent = `${currentScenes.length} cảnh`;
+      document.getElementById('tuning-calc-scene-dur').textContent = `~${Math.round(dur / Math.max(1, currentScenes.length))}s / cảnh`;
+
+      document.getElementById('tuning-proj-title').textContent = activeProject.title;
+      document.getElementById('tuning-proj-desc').textContent = activeProject.desc || 'Bài giảng đa phương thức chuẩn sư phạm';
+    }
+
+    // RENDER SƠ ĐỒ TƯ DUY (MINDMAP) - TỰ ĐỘNG PHÂN NHÁNH TỪ CÁC PHÂN CẢNH BÀI GIẢNG
+    function renderMindmap() {
+      const rootTitle = document.getElementById('mindmap-root-title');
+      const rootSub = document.getElementById('mindmap-root-sub');
+      const container = document.getElementById('mindmap-branches-container');
+
+      if (rootTitle) rootTitle.textContent = activeProject.title;
+      if (rootSub) rootSub.textContent = `Chủ đề trọng tâm • ${currentScenes.length} phân nhánh sư phạm`;
+
+      if (!container) return;
+      container.innerHTML = '';
+
+      currentScenes.forEach((scene, idx) => {
+        const branchCard = document.createElement('div');
+        branchCard.className = 'mindmap-branch-node';
+        branchCard.title = 'Bấm để chuyển sang kịch bản phân cảnh này';
+
+        const termsPills = (scene.detected_terms || ['Thuật ngữ trọng tâm', 'Khái niệm'])
+          .slice(0, 4)
+          .map(t => `<span class="branch-leaf-pill">🌿 ${t}</span>`)
+          .join('');
+
+        // Trích xuất tiêu đề ngắn gọn cho nhánh
+        let branchName = scene.visual_purpose ? scene.visual_purpose.split('•')[0].trim() : `Phân đoạn ${idx + 1}`;
+        if (branchName.length > 55) branchName = branchName.substring(0, 52) + '...';
+
+        branchCard.innerHTML = `
+          <div class="branch-info-col">
+            <div class="branch-chapter-badge">
+              <span>● CHƯƠNG ${idx + 1}</span>
+              <span style="color: var(--text-dim); font-family: 'JetBrains Mono', monospace;">[${formatTime(scene.t_start)} - ${formatTime(scene.t_end)}]</span>
+              <span class="depth-tag depth-${scene.depth}">${scene.depth}</span>
+            </div>
+            <div class="branch-title">${branchName}</div>
+            <div class="branch-terms-row">${termsPills}</div>
+          </div>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span class="visual-type-badge">[${scene.visual_type || 'split_screen'}]</span>
+            <span style="font-size: 13px; color: var(--cyan);">→</span>
+          </div>
+        `;
+
+        branchCard.addEventListener('click', () => {
+          switchCenterTab('script');
+          setTimeout(() => {
+            const row = document.getElementById(`scene-card-${idx}`);
+            if (row) {
+              row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              row.style.borderColor = 'var(--cyan)';
+              setTimeout(() => row.style.borderColor = 'var(--border-subtle)', 1500);
+            }
+          }, 80);
+        });
+
+        container.appendChild(branchCard);
+      });
+
+      // Cập nhật preview video mock
+      const videoTitle = document.getElementById('video-mock-title');
+      if (videoTitle) videoTitle.textContent = activeProject.title;
+      const teleText = document.getElementById('video-teleprompter-text');
+      if (teleText && currentScenes.length > 0) {
+        teleText.textContent = currentScenes[0].narration;
+      }
     }
 
     // NẠP DỰ ÁN VÀO KHÔNG GIAN WORKSPACE
@@ -1495,23 +1838,17 @@
       activeProject = defaultProjects[projId];
       currentScenes = JSON.parse(JSON.stringify(activeProject.scenes));
 
-      stopAllSpeech();
-
       document.getElementById('ws-current-title').textContent = activeProject.title;
       document.getElementById('ws-doc-badge').textContent = activeProject.badge || 'MOOC';
-      document.getElementById('slider-duration').value = activeProject.duration_s || 300;
-      document.getElementById('val-duration').textContent = `${Math.floor((activeProject.duration_s || 300) / 60)} phút 00s (${activeProject.duration_s || 300}s)`;
-      document.getElementById('slider-wpm').value = activeProject.wpm || 140;
-      document.getElementById('val-wpm').textContent = `${activeProject.wpm || 140} từ/phút`;
-
-      const feedbackEl = document.getElementById('critic-summary-text');
-      if (feedbackEl && activeProject.critic_feedback) {
-        feedbackEl.textContent = activeProject.critic_feedback;
-      }
 
       renderSourcesList();
+      renderMindmap();
       renderTimeline();
-      recalculateMetrics();
+      updateTuningPanel();
+
+      // Mặc định tự động mở Sơ Đồ Tư Duy (Mindmap) ở giữa theo đúng yêu cầu
+      switchCenterTab('mindmap');
+
       showToast(`Đã mở dự án: ${activeProject.title}`);
     }
 
@@ -1941,7 +2278,8 @@
 
         currentScenes = projData.scenes;
         renderTimeline();
-        recalculateMetrics();
+        renderMindmap();
+        updateTuningPanel();
         renderProjectsGrid();
         hideLoading();
         showToast(`Đã tái cấu trúc bài giảng: ${Math.floor(dur/60)} phút (${projData.scenes.length} phân cảnh, DAR ${projData.dar}%)!`);
@@ -2000,6 +2338,7 @@
 
     function renderTimeline() {
       const container = document.getElementById('timeline-container');
+      if (!container) return;
       container.innerHTML = '';
 
       currentScenes.forEach((scene, index) => {
@@ -2016,9 +2355,6 @@
             <div class="time-range">${formatTime(scene.t_start)} - ${formatTime(scene.t_end)}</div>
             <div class="duration-tag">${dur}s • ${scene.id}</div>
             <span class="depth-tag depth-${scene.depth}">${scene.depth}</span>
-            <button class="btn-speak-scene" data-index="${index}" id="btn-speak-${index}" title="Nghe câu này">
-              <span>🔊</span> Nghe câu này
-            </button>
           </div>
 
           <div>
@@ -2048,14 +2384,6 @@
           const words = text.trim() ? text.trim().split(/\s+/).length : 0;
           const countEl = document.getElementById(`word-count-${idx}`);
           if (countEl) countEl.textContent = words;
-          recalculateMetrics();
-        });
-      });
-
-      document.querySelectorAll('.btn-speak-scene').forEach(btn => {
-        btn.addEventListener('click', () => {
-          const idx = parseInt(btn.getAttribute('data-index'));
-          playSingleScene(idx);
         });
       });
     }
@@ -2107,9 +2435,9 @@
       synth.cancel();
       clearSpeakingHighlights();
       isPlayingAll = false;
-      document.getElementById('play-all-icon').textContent = '🔊';
-      document.getElementById('play-all-text').textContent = 'Nghe Toàn Bộ';
-      document.getElementById('btn-stop-speech').style.display = 'none';
+      const pIcon = document.getElementById('play-all-icon'); if (pIcon) pIcon.textContent = '🔊';
+      const pText = document.getElementById('play-all-text'); if (pText) pText.textContent = 'Nghe Toàn Bộ';
+      const sBtn = document.getElementById('btn-stop-speech'); if (sBtn) sBtn.style.display = 'none';
     }
 
     function playSingleScene(index) {
@@ -2153,7 +2481,7 @@
       synth.speak(utter);
     }
 
-    document.getElementById('btn-play-all').addEventListener('click', () => {
+    document.getElementById('btn-play-all')?.addEventListener('click', () => {
       if (isPlayingAll && synth.speaking) {
         stopAllSpeech();
         return;
@@ -2166,7 +2494,7 @@
       showToast('Đang phát giọng đọc bài giảng sư phạm...');
     });
 
-    document.getElementById('btn-stop-speech').addEventListener('click', () => {
+    document.getElementById('btn-stop-speech')?.addEventListener('click', () => {
       stopAllSpeech();
       showToast('Đã dừng phát âm thanh.');
     });
@@ -2270,15 +2598,33 @@
       renderProjectsGrid(e.target.value);
     });
 
-    // SLIDER EVENT LISTENERS
-    document.getElementById('slider-duration').addEventListener('input', (e) => {
-      const v = e.target.value;
+    // SLIDER EVENT LISTENERS (CẬP NHẬT SỐ LIỆU TỨC THÌ TRÊN BẢNG TINH CHỈNH)
+    document.getElementById('slider-duration')?.addEventListener('input', (e) => {
+      const v = parseInt(e.target.value);
+      const wpm = parseInt(document.getElementById('slider-wpm')?.value || 140);
       document.getElementById('val-duration').textContent = `${Math.floor(v / 60)} phút ${v % 60 ? v % 60 + 's' : '00s'} (${v}s)`;
+
+      // Tính lại ngân sách từ và nhịp ước tính
+      const targetWords = Math.round((v / 60) * wpm);
+      const wordsEl = document.getElementById('tuning-calc-words');
+      if (wordsEl) wordsEl.textContent = `${targetWords} từ`;
+
+      const numScenes = Math.max(5, Math.min(30, Math.round(v / 60)));
+      const scenesEl = document.getElementById('tuning-calc-scenes');
+      if (scenesEl) scenesEl.textContent = `${numScenes} cảnh`;
+
+      const durEl = document.getElementById('tuning-calc-scene-dur');
+      if (durEl) durEl.textContent = `~${Math.round(v / numScenes)}s / cảnh`;
     });
 
-    document.getElementById('slider-wpm').addEventListener('input', (e) => {
-      const v = e.target.value;
-      document.getElementById('val-wpm').textContent = `${v} từ/phút`;
+    document.getElementById('slider-wpm')?.addEventListener('input', (e) => {
+      const wpm = parseInt(e.target.value);
+      const dur = parseInt(document.getElementById('slider-duration')?.value || 300);
+      document.getElementById('val-wpm').textContent = `${wpm} từ/phút`;
+
+      const targetWords = Math.round((dur / 60) * wpm);
+      const wordsEl = document.getElementById('tuning-calc-words');
+      if (wordsEl) wordsEl.textContent = `${targetWords} từ`;
     });
 
     // HEALTH CHECK LOCAL STUDIO SERVER
