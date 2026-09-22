@@ -792,7 +792,7 @@
     /* BRANCHES ROW (MỌC TỪ TRÊN XUỐNG DƯỚI) */
     .tree-branches-row {
       display: flex;
-      gap: 16px;
+      gap: 22px;
       justify-content: center;
       align-items: flex-start;
       position: relative;
@@ -803,7 +803,7 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      width: 220px;
+      width: 275px;
       position: relative;
     }
 
@@ -814,6 +814,7 @@
       margin: 0 auto;
     }
 
+    /* LEVEL 1: CHƯƠNG (BẤM ĐỂ NỞ RA / THU VÀO PHẦN a, b, c) */
     .tree-branch-card {
       width: 100%;
       background: var(--bg-card);
@@ -825,14 +826,15 @@
       cursor: pointer;
       position: relative;
       box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+      user-select: none;
     }
 
     .tree-branch-card:hover {
       background: var(--bg-card-hover);
       border-color: var(--cyan);
       border-top-color: var(--cyan);
-      transform: translateY(-3px);
-      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.5), 0 0 16px rgba(56, 189, 248, 0.25);
+      transform: translateY(-2px);
+      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.5), 0 0 16px rgba(56, 189, 248, 0.22);
     }
 
     .branch-card-header {
@@ -846,61 +848,150 @@
       font-size: 12px;
       font-weight: 700;
       color: var(--text-main);
-      line-height: 1.35;
+      line-height: 1.4;
       margin-bottom: 6px;
     }
 
-    .branch-expand-btn {
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid rgba(255, 255, 255, 0.1);
+    .node-toggle-badge {
+      background: rgba(99, 102, 241, 0.2);
+      border: 1px solid rgba(99, 102, 241, 0.45);
       color: var(--cyan);
-      width: 20px;
-      height: 20px;
-      border-radius: 4px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
       font-size: 10px;
-      cursor: pointer;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 4px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
       transition: all 0.2s;
     }
 
-    .branch-expand-btn:hover {
-      background: var(--cyan);
-      color: #080c14;
+    .tree-branch-card:hover .node-toggle-badge,
+    .tree-subbranch-card:hover .node-toggle-badge {
+      background: rgba(56, 189, 248, 0.25);
+      border-color: var(--cyan);
+      color: #fff;
     }
 
-    .tree-leaf-box {
-      border-top: 1px solid rgba(255, 255, 255, 0.06);
-      padding-top: 6px;
+    /* LEVEL 2: PHÂN MỤC (PHẦN a, b, c) */
+    .tree-level2-container {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .tree-level2-container.collapsed {
+      display: none;
+    }
+
+    .tree-level2-stem {
+      width: 2px;
+      height: 14px;
+      background: linear-gradient(180deg, var(--cyan), var(--primary));
+      margin: 0 auto;
+    }
+
+    .tree-level2-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      width: 100%;
+    }
+
+    .tree-subbranch-card {
+      width: 100%;
+      background: rgba(15, 23, 42, 0.94);
+      border: 1px solid rgba(99, 102, 241, 0.35);
+      border-left: 3px solid var(--primary);
+      border-radius: 6px;
+      padding: 10px 12px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      user-select: none;
+    }
+
+    .tree-subbranch-card:hover {
+      background: rgba(30, 41, 59, 0.98);
+      border-color: var(--cyan);
+      border-left-color: var(--cyan);
+      transform: translateX(2px);
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.45), 0 0 12px rgba(56, 189, 248, 0.18);
+    }
+
+    .subbranch-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 4px;
+    }
+
+    .subbranch-code {
+      font-size: 11px;
+      font-weight: 800;
+      color: var(--cyan);
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+
+    .subbranch-title {
+      font-size: 11.5px;
+      font-weight: 600;
+      color: var(--text-main);
+      line-height: 1.35;
+    }
+
+    /* LEVEL 3: TIỂU TIẾT (a1, a2, a3) */
+    .tree-level3-container {
+      margin-top: 8px;
+      padding-left: 10px;
+      border-left: 2px dashed rgba(56, 189, 248, 0.35);
       display: flex;
       flex-direction: column;
       gap: 5px;
     }
 
-    .tree-leaf-box.collapsed {
+    .tree-level3-container.collapsed {
       display: none;
     }
 
-    .tree-leaf-tag {
-      background: rgba(255, 255, 255, 0.04);
+    .tree-leaf-node {
+      background: rgba(255, 255, 255, 0.035);
       border: 1px solid rgba(255, 255, 255, 0.07);
-      color: var(--text-muted);
-      font-size: 10.5px;
-      padding: 2px 6px;
       border-radius: 4px;
-      display: inline-block;
-      line-height: 1.2;
+      padding: 5px 8px;
+      font-size: 10.5px;
+      color: var(--text-muted);
+      line-height: 1.35;
+      display: flex;
+      align-items: flex-start;
+      gap: 6px;
+      transition: all 0.15s ease;
     }
 
-    .tree-action-link {
-      font-size: 10.5px;
+    .tree-leaf-node:hover {
+      background: rgba(56, 189, 248, 0.08);
+      border-color: rgba(56, 189, 248, 0.35);
+      color: var(--text-main);
+    }
+
+    .leaf-code {
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 700;
+      font-size: 10px;
       color: var(--cyan);
-      font-weight: 600;
-      margin-top: 3px;
-      display: flex;
-      align-items: center;
-      gap: 4px;
+      background: rgba(56, 189, 248, 0.14);
+      border: 1px solid rgba(56, 189, 248, 0.28);
+      border-radius: 3px;
+      padding: 0 4px;
+      flex-shrink: 0;
+      line-height: 1.4;
+    }
+
+    .leaf-text {
+      flex: 1;
+      word-break: break-word;
     }
 
     /* 2. KỊCH BẢN GIẢNG DẠY (SCRIPT) */
@@ -1511,14 +1602,12 @@
 
         <!-- TAB 1: SƠ ĐỒ TƯ DUY (PAN & ZOOM, TOP-DOWN, ĐA GỐC ĐỘC LẬP TỪNG TỆP) -->
         <div class="center-tab-pane active" id="tab-content-mindmap" style="position: relative;">
-          <!-- FLOATING TOOLBAR: PAN/ZOOM & EXPAND/COLLAPSE -->
+          <!-- FLOATING TOOLBAR: PAN/ZOOM -->
           <div class="mindmap-floating-controls">
             <button class="mindmap-ctrl-btn" id="btn-zoom-in" title="Phóng to (hoặc lăn chuột lên)">➕</button>
             <button class="mindmap-ctrl-btn" id="btn-zoom-out" title="Thu nhỏ (hoặc lăn chuột xuống)">➖</button>
             <span class="mindmap-zoom-label" id="label-zoom">85%</span>
             <button class="mindmap-ctrl-btn" id="btn-zoom-reset" title="Đặt lại góc nhìn">⟲ Căn Giữa</button>
-            <button class="mindmap-ctrl-btn" id="btn-expand-all" title="Mở rộng tất cả cực đại">📂 Mở Rộng</button>
-            <button class="mindmap-ctrl-btn" id="btn-collapse-all" title="Thu gọn">📁 Thu Gọn</button>
           </div>
 
           <!-- CANVAS VIEWPORT (HỖ TRỢ LĂN CHUỘT PHÓNG TO/THU NHỎ VÀ KÉO DI CHUYỂN NHƯ CVAT) -->
@@ -2037,8 +2126,12 @@
 
       // 2. Kéo di chuyển toàn bộ bàn vẽ (Click & Drag Pan giống CVAT)
       viewport.addEventListener('mousedown', (e) => {
-        // Nếu click vào nút điều khiển hoặc thẻ gốc thì không pan toàn cảnh
-        if (e.target.closest('.mindmap-floating-controls') || e.target.closest('.tree-root-card') || e.target.closest('.tree-branch-card')) {
+        // Nếu click vào nút điều khiển hoặc các node trong cây sơ đồ thì không pan bàn vẽ
+        if (e.target.closest('.mindmap-floating-controls') || 
+            e.target.closest('.tree-root-card') || 
+            e.target.closest('.tree-branch-card') || 
+            e.target.closest('.tree-subbranch-card') || 
+            e.target.closest('.tree-leaf-node')) {
           return;
         }
         isPanning = true;
@@ -2077,20 +2170,421 @@
         applyMindmapTransform();
       });
 
-      document.getElementById('btn-expand-all')?.addEventListener('click', () => {
-        document.querySelectorAll('.tree-leaf-box').forEach(box => box.classList.remove('collapsed'));
-        document.querySelectorAll('.branch-expand-btn').forEach(btn => btn.textContent = '▼');
-      });
-      document.getElementById('btn-collapse-all')?.addEventListener('click', () => {
-        document.querySelectorAll('.tree-leaf-box').forEach(box => box.classList.add('collapsed'));
-        document.querySelectorAll('.branch-expand-btn').forEach(btn => btn.textContent = '▶');
-      });
+      // Global expand/collapse buttons removed as requested - users expand/collapse directly on each node
 
       applyMindmapTransform();
     }
 
     // =========================================================================
+    // DỮ LIỆU PHÂN CẤP CHUYÊN SÂU 3 TẦNG: CHƯƠNG -> PHẦN a, b, c -> a1, a2, a3
+    // =========================================================================
+    const ACADEMIC_HIERARCHY_DATA = {
+      dss09_clustering: [
+        {
+          chapter: "CHƯƠNG 1",
+          title: "Bản chất học không giám sát & Ma trận khoảng cách",
+          depth: "core",
+          visual_type: "split_screen",
+          sections: [
+            {
+              code: "Phần a",
+              title: "Bản chất học không giám sát (Unsupervised Learning)",
+              items: [
+                { code: "a1", text: "Dữ liệu không nhãn mục tiêu X ∈ ℝᵈ, tự khám phá tri thức" },
+                { code: "a2", text: "Nhận diện phân bố cụm mật độ tự nhiên trong không gian" },
+                { code: "a3", text: "Ứng dụng phân khúc người dùng và phân tích biểu hiện gen" }
+              ]
+            },
+            {
+              code: "Phần b",
+              title: "Ma trận tương đồng & Đo lường khoảng cách",
+              items: [
+                { code: "b1", text: "Khoảng cách Euclidean L₂ và khoảng cách Manhattan L₁" },
+                { code: "b2", text: "Độ tương đồng Cosine đo góc giữa các vector đặc trưng" },
+                { code: "b3", text: "Chuẩn hóa dữ liệu Z-score và Min-Max tránh lệch thang đo" }
+              ]
+            },
+            {
+              code: "Phần c",
+              title: "Phân loại các trường phái phân cụm",
+              items: [
+                { code: "c1", text: "Phân cụm phân hoạch đại diện: K-Means, K-Medoids" },
+                { code: "c2", text: "Phân cụm dựa trên mật độ điểm: DBSCAN, OPTICS" },
+                { code: "c3", text: "Mạng nơ-ron tô-pô thích nghi: Kohonen SOM" }
+              ]
+            }
+          ]
+        },
+        {
+          chapter: "CHƯƠNG 2",
+          title: "Mô phỏng động quá trình dịch chuyển 3 tâm cụm K-Means",
+          depth: "core",
+          visual_type: "process_visualization",
+          sections: [
+            {
+              code: "Phần a",
+              title: "Khởi tạo tâm cụm & Phân hoạch Voronoi",
+              items: [
+                { code: "a1", text: "Khởi tạo ngẫu nhiên K tâm cụm ban đầu hoặc dùng K-Means++" },
+                { code: "a2", text: "Phân hoạch không gian thành các ô đa giác Voronoi lân cận" },
+                { code: "a3", text: "Gán từng điểm dữ liệu vào Centroid gần nhất theo khoảng cách" }
+              ]
+            },
+            {
+              code: "Phần b",
+              title: "Cập nhật tọa độ trọng tâm Centroid",
+              items: [
+                { code: "b1", text: "Tính trọng tâm mới μⱼ = (1/|Cⱼ|) ∑ xᵢ của từng cụm" },
+                { code: "b2", text: "Lặp lại chu trình gán - cập nhật cho đến khi vị trí hội tụ" },
+                { code: "b3", text: "Tiêu chuẩn dừng: độ dịch chuyển nhỏ hơn ε hoặc chạm max_iter" }
+              ]
+            },
+            {
+              code: "Phần c",
+              title: "Đánh giá hàm mất mát SSE & Chọn K tối ưu",
+              items: [
+                { code: "c1", text: "Hàm mất mát SSE = ∑ ∑ ||x - μⱼ||² đo phân tán nội cụm" },
+                { code: "c2", text: "Phương pháp điểm gãy khuỷu tay (Elbow Method) dò K" },
+                { code: "c3", text: "Hệ số Silhouette Score đánh giá độ tách biệt giữa các cụm" }
+              ]
+            }
+          ]
+        },
+        {
+          chapter: "CHƯƠNG 3",
+          title: "Vẽ vòng tròn bán kính Epsilon & Thuật toán DBSCAN",
+          depth: "core",
+          visual_type: "highlight_box",
+          sections: [
+            {
+              code: "Phần a",
+              title: "Cơ chế mật độ & 2 siêu tham số then chốt",
+              items: [
+                { code: "a1", text: "Bán kính lân cận Epsilon (ε-neighborhood) quét mật độ" },
+                { code: "a2", text: "Số điểm tối thiểu MinPoints (MinPts) cấu thành cụm" },
+                { code: "a3", text: "Tự động phát hiện số lượng cụm mà không cần khai báo K" }
+              ]
+            },
+            {
+              code: "Phần b",
+              title: "Phân loại 3 trạng thái điểm dữ liệu",
+              items: [
+                { code: "b1", text: "Điểm lõi (Core Point): chứa ≥ MinPoints trong bán kính ε" },
+                { code: "b2", text: "Điểm biên (Border Point): nằm trong vùng lân cận của điểm lõi" },
+                { code: "b3", text: "Điểm nhiễu (Noise): điểm cô lập, tự động loại bỏ ngoại lai" }
+              ]
+            },
+            {
+              code: "Phần c",
+              title: "Lan truyền kết nối mật độ",
+              items: [
+                { code: "c1", text: "Quan hệ chạm trực tiếp mật độ (Directly Density-Reachable)" },
+                { code: "c2", text: "Quan hệ kết nối chuỗi mật độ (Density-Connected Cluster)" },
+                { code: "c3", text: "Phát hiện cụm hình dạng uốn lượn phi tuyến phức tạp" }
+              ]
+            }
+          ]
+        },
+        {
+          chapter: "CHƯƠNG 4",
+          title: "Lưới topology 2D lục giác tự thích nghi & Kohonen SOM",
+          depth: "deep",
+          visual_type: "animated_diagram",
+          sections: [
+            {
+              code: "Phần a",
+              title: "Cấu trúc lưới nơ-ron tô-pô 2D",
+              items: [
+                { code: "a1", text: "Mắt lưới chữ nhật hoặc cấu trúc tổ ong lục giác 2D" },
+                { code: "a2", text: "Mỗi nơ-ron sở hữu vector trọng số wᵢ cùng số chiều dữ liệu" },
+                { code: "a3", text: "Bảo toàn quan hệ lân cận không gian khi giảm số chiều" }
+              ]
+            },
+            {
+              code: "Phần b",
+              title: "Cơ chế cạnh tranh & Nơ-ron chiến thắng (BMU)",
+              items: [
+                { code: "b1", text: "Best Matching Unit (BMU): nơ-ron có khoảng cách gần mẫu nhất" },
+                { code: "b2", text: "Hàm lân cận Gaussian h_ci(t) thu hẹp dần theo thời gian" },
+                { code: "b3", text: "Cập nhật trọng số của BMU và các nơ-ron láng giềng" }
+              ]
+            },
+            {
+              code: "Phần c",
+              title: "Chiếu trực quan hóa bản đồ tri thức",
+              items: [
+                { code: "c1", text: "Biểu đồ khoảng cách thống nhất U-Matrix trực quan" },
+                { code: "c2", text: "Nhận diện đường biên tự nhiên giữa các cụm tri thức" },
+                { code: "c3", text: "Nén chiều dữ liệu phi tuyến tính mà không làm vỡ cấu trúc" }
+              ]
+            }
+          ]
+        },
+        {
+          chapter: "CHƯƠNG 5",
+          title: "Bản đồ phân cụm 186 quốc gia & Trợ giúp ra quyết định",
+          depth: "bridge",
+          visual_type: "concept_map",
+          sections: [
+            {
+              code: "Phần a",
+              title: "Dữ liệu kinh tế - xã hội 186 quốc gia",
+              items: [
+                { code: "a1", text: "Thu nhập bình quân GDP per capita & tuổi thọ trung bình" },
+                { code: "a2", text: "Tỷ lệ tử vong sơ sinh và cán cân thương mại vĩ mô" },
+                { code: "a3", text: "Chuẩn hóa ma trận chỉ số trước khi đưa vào phân cụm" }
+              ]
+            },
+            {
+              code: "Phần b",
+              title: "So sánh thực nghiệm K-Means, DBSCAN & SOM",
+              items: [
+                { code: "b1", text: "K-Means: Phân 3 tầng kinh tế phát triển cao - trung - thấp" },
+                { code: "b2", text: "DBSCAN: Tách riêng các quốc gia đặc thù tài chính dị biệt" },
+                { code: "b3", text: "SOM: Bản đồ màu 2D phản ánh liên minh địa kinh tế" }
+              ]
+            },
+            {
+              code: "Phần c",
+              title: "Ứng dụng sư phạm & Trợ giúp ra quyết định",
+              items: [
+                { code: "c1", text: "Phân loại khách quan không phụ thuộc cảm tính con người" },
+                { code: "c2", text: "Khuyến nghị lựa chọn thuật toán phù hợp với từng bài toán" },
+                { code: "c3", text: "Tổng kết bài giảng và định hướng học tập nâng cao" }
+              ]
+            }
+          ]
+        }
+      ],
+      cnn_intro: [
+        {
+          chapter: "CHƯƠNG 1",
+          title: "So sánh trực quan MLP và cấu trúc bộ lọc tinh gọn CNN",
+          depth: "bridge",
+          visual_type: "split_screen",
+          sections: [
+            {
+              code: "Phần a",
+              title: "Hạn chế của mạng MLP truyền thống",
+              items: [
+                { code: "a1", text: "Phá vỡ tương quan không gian 2D khi kéo phẳng ảnh (Flatten)" },
+                { code: "a2", text: "Bùng nổ hàng triệu trọng số gây quá khớp (Overfitting)" },
+                { code: "a3", text: "Chi phí tính toán khổng lồ với ảnh độ phân giải cao" }
+              ]
+            },
+            {
+              code: "Phần b",
+              title: "Hai nguyên lý sinh học then chốt của CNN",
+              items: [
+                { code: "b1", text: "Vùng tiếp nhận cục bộ (Local Receptive Fields)" },
+                { code: "b2", text: "Cơ chế chia sẻ trọng số (Shared Weights / Weight Tying)" },
+                { code: "b3", text: "Tính bất biến với dịch chuyển không gian (Translation Invariance)" }
+              ]
+            },
+            {
+              code: "Phần c",
+              title: "Tổng quan các tầng kiến trúc CNN",
+              items: [
+                { code: "c1", text: "Tầng tích chập (Convolutional Layer) trích xuất đặc trưng" },
+                { code: "c2", text: "Tầng phi tuyến ReLU & Tầng gộp mẫu (Pooling Layer)" },
+                { code: "c3", text: "Tầng kết nối đầy đủ (Fully Connected) phân loại nhãn" }
+              ]
+            }
+          ]
+        },
+        {
+          chapter: "CHƯƠNG 2",
+          title: "Mô phỏng động cửa sổ trượt Kernel 3x3 trên ma trận 5x5",
+          depth: "core",
+          visual_type: "process_visualization",
+          sections: [
+            {
+              code: "Phần a",
+              title: "Công thức toán học phép tích chập 2D",
+              items: [
+                { code: "a1", text: "Tổng tích chập: S(i, j) = ∑∑ I(i+m, j+n) · K(m, n)" },
+                { code: "a2", text: "Phép nhân từng phần tử (Element-wise) rồi cộng dồn tích số" },
+                { code: "a3", text: "Bản đồ đặc trưng đầu ra (Feature Map / Activation Map)" }
+              ]
+            },
+            {
+              code: "Phần b",
+              title: "Cơ chế hoạt động của bộ lọc Kernel",
+              items: [
+                { code: "b1", text: "Bộ lọc 3x3 dò tìm các đường biên ngang, dọc và đường chéo" },
+                { code: "b2", text: "Cửa sổ trượt quét tuần tự từ trái sang phải, từ trên xuống dưới" },
+                { code: "b3", text: "Trọng số bộ lọc được học tự động thông qua lan truyền ngược" }
+              ]
+            },
+            {
+              code: "Phần c",
+              title: "Ý nghĩa vật lý của Feature Map",
+              items: [
+                { code: "c1", text: "Độ kích hoạt cao phản ánh sự xuất hiện của đặc trưng mục tiêu" },
+                { code: "c2", text: "Kênh đơn (Grayscale) so với đa kênh màu (RGB 3 Channels)" },
+                { code: "c3", text: "Nhiều bộ lọc tạo thành tập hợp đa bản đồ đặc trưng" }
+              ]
+            }
+          ]
+        },
+        {
+          chapter: "CHƯƠNG 3",
+          title: "Phóng to khu vực đệm viền Zero Padding & Bước nhảy Stride",
+          depth: "deep",
+          visual_type: "zoom_in",
+          sections: [
+            {
+              code: "Phần a",
+              title: "Siêu tham số Bước nhảy (Stride)",
+              items: [
+                { code: "a1", text: "Stride = 1: Bộ lọc dịch chuyển 1 pixel mỗi bước" },
+                { code: "a2", text: "Stride = 2: Thu nhỏ kích thước bản đồ đặc trưng một nửa" },
+                { code: "a3", text: "Cân bằng giữa độ phân giải không gian và tốc độ tính toán" }
+              ]
+            },
+            {
+              code: "Phần b",
+              title: "Kỹ thuật Đệm viền (Zero Padding)",
+              items: [
+                { code: "b1", text: "Bổ sung các hàng và cột giá trị 0 quanh viền biên ảnh" },
+                { code: "b2", text: "Bảo toàn kích thước không gian qua các lớp tích chập sâu (Same Padding)" },
+                { code: "b3", text: "Ngăn chặn việc bỏ sót thông tin đặc trưng ở rìa góc ảnh" }
+              ]
+            },
+            {
+              code: "Phần c",
+              title: "Công thức xác định kích thước đầu ra",
+              items: [
+                { code: "c1", text: "O = ⌊(W - K + 2P) / S⌋ + 1" },
+                { code: "c2", text: "Kiểm tra tính tương thích giữa W, K, P, S" },
+                { code: "c3", text: "Ứng dụng trong việc thiết kế chiều sâu mạng CNN" }
+              ]
+            }
+          ]
+        },
+        {
+          chapter: "CHƯƠNG 4",
+          title: "Làm nổi bật ô giá trị cực đại trong Max Pooling 2x2 & ReLU",
+          depth: "deep",
+          visual_type: "highlight_box",
+          sections: [
+            {
+              code: "Phần a",
+              title: "Hàm kích hoạt phi tuyến ReLU",
+              items: [
+                { code: "a1", text: "f(x) = max(0, x): Triệt tiêu hoàn toàn các giá trị âm" },
+                { code: "a2", text: "Giải quyết bài toán triệt tiêu đạo hàm (Vanishing Gradient)" },
+                { code: "a3", text: "Tạo tính thưa (Sparsity) giúp mô hình biểu diễn hiệu quả" }
+              ]
+            },
+            {
+              code: "Phần b",
+              title: "Cơ chế gộp mẫu cực đại (Max Pooling)",
+              items: [
+                { code: "b1", text: "Cửa sổ kích thước 2x2 với bước nhảy Stride = 2" },
+                { code: "b2", text: "Giữ lại giá trị lớn nhất trong mỗi khối 4 điểm ảnh" },
+                { code: "b3", text: "Giảm 75% khối lượng dữ liệu không gian, giảm thiểu quá khớp" }
+              ]
+            },
+            {
+              code: "Phần c",
+              title: "Tính bất biến với phép dịch chuyển (Translation Invariance)",
+              items: [
+                { code: "c1", text: "Nhận dạng vật thể chính xác ngay cả khi bị dịch chuyển vài pixel" },
+                { code: "c2", text: "So sánh Max Pooling và Average Pooling" },
+                { code: "c3", text: "Tối ưu hóa bộ nhớ đệm và tốc độ inference" }
+              ]
+            }
+          ]
+        },
+        {
+          chapter: "CHƯƠNG 5",
+          title: "Sơ đồ dòng chảy phân tầng hoàn chỉnh từ ảnh thô đến phân loại",
+          depth: "bridge",
+          visual_type: "timeline_bar",
+          sections: [
+            {
+              code: "Phần a",
+              title: "Đặc tính phân tầng của các lớp biểu diễn",
+              items: [
+                { code: "a1", text: "Lớp đầu: Cạnh, góc, kết cấu hình học cơ sở (Low-level)" },
+                { code: "a2", text: "Lớp giữa: Họa tiết, bộ phận chi tiết (Mid-level)" },
+                { code: "a3", text: "Lớp sâu: Hình dáng tổng thể của đối tượng (High-level)" }
+              ]
+            },
+            {
+              code: "Phần b",
+              title: "Tầng phân loại kết nối đầy đủ (Dense / FC)",
+              items: [
+                { code: "b1", text: "Trải phẳng Feature Map thành vector 1D (Flatten)" },
+                { code: "b2", text: "Hàm Softmax tính toán xác suất phân loại các nhãn lớp" },
+                { code: "b3", text: "Đo lường hàm mất mát Cross-Entropy Loss" }
+              ]
+            },
+            {
+              code: "Phần c",
+              title: "Ứng dụng công nghiệp & Các kiến trúc kinh điển",
+              items: [
+                { code: "c1", text: "Kiến trúc AlexNet, VGG, ResNet với Residual Connection" },
+                { code: "c2", text: "Ứng dụng trong chẩn đoán y tế, xe tự hành, nhận diện khuôn mặt" },
+                { code: "c3", text: "Tổng kết bài học và câu hỏi thảo luận sư phạm" }
+              ]
+            }
+          ]
+        }
+      ]
+    };
+
+    function getProjectHierarchy(proj, scenes) {
+      if (proj && ACADEMIC_HIERARCHY_DATA[proj.id]) {
+        return ACADEMIC_HIERARCHY_DATA[proj.id];
+      }
+      return scenes.map((sc, i) => {
+        const rawTitle = sc.visual_purpose ? sc.visual_purpose.split('•')[0].trim() : `Chương ${i + 1}`;
+        const cleanTitle = rawTitle.length > 55 ? rawTitle.substring(0, 52) + '...' : rawTitle;
+        const terms = (sc.detected_terms && sc.detected_terms.length > 0) ? sc.detected_terms : ['Khái niệm cốt lõi', 'Thuật ngữ', 'Phương pháp'];
+        
+        return {
+          chapter: `CHƯƠNG ${i + 1}`,
+          title: cleanTitle,
+          depth: sc.depth || 'core',
+          visual_type: sc.visual_type || 'split_screen',
+          sections: [
+            {
+              code: "Phần a",
+              title: `Cơ sở lý thuyết & ${terms[0] || 'Khái niệm chính'}`,
+              items: [
+                { code: "a1", text: `Định nghĩa và bản chất của ${terms[0] || 'khái niệm'}` },
+                { code: "a2", text: `Mục tiêu sư phạm: ${sc.depth === 'deep' ? 'Phân tích chuyên sâu' : 'Nền tảng cốt lõi'}` },
+                { code: "a3", text: `Phạm vi áp dụng trong bài giảng (${sc.t_end - sc.t_start}s)` }
+              ]
+            },
+            {
+              code: "Phần b",
+              title: `Phương pháp & ${terms[1] || 'Mô phỏng trực quan'}`,
+              items: [
+                { code: "b1", text: `Trực quan hóa: dạng [${sc.visual_type || 'split_screen'}]` },
+                { code: "b2", text: `Kỹ thuật xử lý: ${sc.visual_purpose ? sc.visual_purpose.substring(0, 45) + '...' : 'Diễn giải trực quan'}` },
+                { code: "b3", text: `Liên kết các thuật ngữ liên quan: ${(sc.detected_terms || []).slice(0, 3).join(', ') || 'Thuật ngữ cốt lõi'}` }
+              ]
+            },
+            {
+              code: "Phần c",
+              title: `Đánh giá & ${terms[2] || 'Ứng dụng thực tiễn'}`,
+              items: [
+                { code: "c1", text: `Độ đo sư phạm và phân bổ nhịp điệu bài giảng` },
+                { code: "c2", text: `Tổng kết các kết quả và điểm nhấn phân cảnh` },
+                { code: "c3", text: `Chuyển tiếp logic sang phân cảnh tiếp theo` }
+              ]
+            }
+          ]
+        };
+      });
+    }
+
+    // =========================================================================
     // RENDER SƠ ĐỒ TƯ DUY: MỌC TỪ TRÊN XUỐNG, ĐA GỐC ĐỘC LẬP TỪNG TỆP
+    // CÂY PHÂN CẤP SÂU 3 TẦNG: BẤM TRỰC TIẾP ĐỂ NỞ RA / THU VÀO (KHÔNG BẬT TAB KỊCH BẢN)
     // =========================================================================
     function renderMindmap() {
       const world = document.getElementById('mindmap-world');
@@ -2102,12 +2596,14 @@
         ? activeProject.sources
         : [{ name: activeProject.title + '.pdf', pages: 35, size: '1.2 MB' }];
 
+      const hierarchyChapters = getProjectHierarchy(activeProject, currentScenes);
+
       sources.forEach((src, srcIdx) => {
         const treeContainer = document.createElement('div');
         treeContainer.className = 'tree-root-container';
         treeContainer.id = `tree-root-${srcIdx}`;
         // Định vị vị trí ban đầu của từng gốc (cách nhau theo chiều ngang, tránh đè lên nhau)
-        treeContainer.style.left = `${60 + srcIdx * 1220}px`;
+        treeContainer.style.left = `${60 + srcIdx * 1550}px`;
         treeContainer.style.top = `40px`;
 
         // 1. Thẻ GỐC TRÊN CÙNG (Có thể kéo thả di chuyển vị trí gốc tùy ý)
@@ -2120,7 +2616,7 @@
           <div class="tree-root-title" title="${src.name}">${src.name}</div>
           <div class="tree-root-meta">
             <span>${src.pages || 10} slide / trang</span> • 
-            <span>${currentScenes.length} phân nhánh</span>
+            <span>${hierarchyChapters.length} chương</span>
           </div>
         `;
 
@@ -2163,77 +2659,123 @@
         const bus = document.createElement('div');
         bus.className = 'tree-branches-bus';
         // Chiều rộng bus tương ứng với số phân cảnh
-        bus.style.width = `${Math.max(260, (currentScenes.length - 1) * 236)}px`;
+        bus.style.width = `${Math.max(280, (hierarchyChapters.length - 1) * 297)}px`;
         treeContainer.appendChild(bus);
 
         // 4. Hàng các phân nhánh mọc thẳng đứng TỪ TRÊN XUỐNG DƯỚI (Top-to-Bottom)
         const branchesRow = document.createElement('div');
         branchesRow.className = 'tree-branches-row';
 
-        currentScenes.forEach((scene, scIdx) => {
+        hierarchyChapters.forEach((chData, chIdx) => {
           const col = document.createElement('div');
           col.className = 'tree-branch-col';
 
-          // Dây nối dọc từ bus xuống card
+          // Dây nối dọc từ bus xuống card Chương
           const dropLine = document.createElement('div');
           dropLine.className = 'tree-drop-line';
           col.appendChild(dropLine);
 
-          // Card nhánh
+          // Card Level 1: CHƯƠNG (Bấm vào để nở ra / thu vào Level 2 Phần a, b, c)
           const branchCard = document.createElement('div');
           branchCard.className = 'tree-branch-card';
-          branchCard.id = `branch-node-${srcIdx}-${scIdx}`;
+          branchCard.id = `branch-node-${srcIdx}-${chIdx}`;
+          branchCard.title = 'Bấm vào để nở ra / thu vào các phần con của chương này';
 
-          let branchTitle = scene.visual_purpose ? scene.visual_purpose.split('•')[0].trim() : `Chương ${scIdx + 1}`;
-          if (branchTitle.length > 50) branchTitle = branchTitle.substring(0, 48) + '...';
-
-          const termsHtml = (scene.detected_terms || ['Khái niệm cốt lõi', 'Thuật ngữ'])
-            .slice(0, 3)
-            .map(t => `<span class="tree-leaf-tag">🌿 ${t}</span>`)
-            .join(' ');
+          let isLevel2Expanded = true; // Mặc định mở Level 2 (Phần a, b, c)
 
           branchCard.innerHTML = `
             <div class="branch-card-header">
-              <span class="depth-tag depth-${scene.depth}">CHƯƠNG ${scIdx + 1}</span>
-              <button class="branch-expand-btn" title="Thu gọn / Mở rộng">▼</button>
+              <span class="depth-tag depth-${chData.depth || 'core'}">${chData.chapter}</span>
+              <span class="node-toggle-badge" id="badge-ch-${srcIdx}-${chIdx}">
+                ${isLevel2Expanded ? '▼' : '▶'} ${chData.sections.length} Phần
+              </span>
             </div>
-            <div class="branch-card-title">${branchTitle}</div>
-            
-            <div class="tree-leaf-box">
-              <div style="display: flex; flex-wrap: wrap; gap: 4px;">${termsHtml}</div>
-              <div style="font-size: 10px; color: var(--amber); margin-top: 2px;">👁️ [${scene.visual_type || 'split_screen'}]</div>
-              <div class="tree-action-link">Xem kịch bản →</div>
-            </div>
+            <div class="branch-card-title">${chData.title}</div>
+            <div style="font-size: 10px; color: var(--amber);">👁️ [${chData.visual_type || 'split_screen'}]</div>
           `;
 
-          // Bấm nút thu gọn / mở rộng
-          const expandBtn = branchCard.querySelector('.branch-expand-btn');
-          const leafBox = branchCard.querySelector('.tree-leaf-box');
-          expandBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            if (leafBox.classList.contains('collapsed')) {
-              leafBox.classList.remove('collapsed');
-              expandBtn.textContent = '▼';
+          // Container Level 2: PHÂN MỤC (Phần a, b, c)
+          const level2Container = document.createElement('div');
+          level2Container.className = 'tree-level2-container';
+          if (!isLevel2Expanded) level2Container.classList.add('collapsed');
+
+          const level2Stem = document.createElement('div');
+          level2Stem.className = 'tree-level2-stem';
+          level2Container.appendChild(level2Stem);
+
+          const level2List = document.createElement('div');
+          level2List.className = 'tree-level2-list';
+
+          // Level 1 Card Click: Nở ra / Thu vào Level 2 (KHÔNG BẬT SANG SCRIPT)
+          branchCard.addEventListener('click', (e) => {
+            // Không chuyển sang kịch bản! Chỉ toggle nở ra thu vào
+            isLevel2Expanded = !isLevel2Expanded;
+            const badge = branchCard.querySelector(`#badge-ch-${srcIdx}-${chIdx}`);
+            if (isLevel2Expanded) {
+              level2Container.classList.remove('collapsed');
+              if (badge) badge.innerHTML = `▼ ${chData.sections.length} Phần`;
             } else {
-              leafBox.classList.add('collapsed');
-              expandBtn.textContent = '▶';
+              level2Container.classList.add('collapsed');
+              if (badge) badge.innerHTML = `▶ ${chData.sections.length} Phần`;
             }
           });
 
-          // Bấm card chuyển sang tab kịch bản
-          branchCard.addEventListener('click', () => {
-            switchCenterTab('script');
-            setTimeout(() => {
-              const row = document.getElementById(`scene-card-${scIdx}`);
-              if (row) {
-                row.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                row.style.borderColor = 'var(--cyan)';
-                setTimeout(() => row.style.borderColor = 'var(--border-subtle)', 1500);
+          // Duyệt qua từng Phần (Level 2: Phần a, b, c)
+          chData.sections.forEach((sec, secIdx) => {
+            const subCard = document.createElement('div');
+            subCard.className = 'tree-subbranch-card';
+            subCard.title = 'Bấm vào để nở ra / thu vào các chi tiết con (a1, a2, a3...)';
+
+            // Mặc định: Chương 1 - Phần a mở sẵn a1, a2, a3 để user thấy cây 3 tầng ngay; các phần khác thu gọn
+            let isLevel3Expanded = (chIdx === 0 && secIdx === 0);
+
+            subCard.innerHTML = `
+              <div class="subbranch-header">
+                <span class="subbranch-code">${sec.code}</span>
+                <span class="node-toggle-badge" id="badge-sec-${srcIdx}-${chIdx}-${secIdx}">
+                  ${isLevel3Expanded ? '▼' : '▶'} ${sec.items.length} mục
+                </span>
+              </div>
+              <div class="subbranch-title">${sec.title}</div>
+            `;
+
+            // Container Level 3: TIỂU TIẾT (a1, a2, a3)
+            const level3Container = document.createElement('div');
+            level3Container.className = 'tree-level3-container';
+            if (!isLevel3Expanded) level3Container.classList.add('collapsed');
+
+            sec.items.forEach(item => {
+              const leafNode = document.createElement('div');
+              leafNode.className = 'tree-leaf-node';
+              leafNode.innerHTML = `
+                <span class="leaf-code">${item.code}</span>
+                <span class="leaf-text">${item.text}</span>
+              `;
+              level3Container.appendChild(leafNode);
+            });
+
+            // Level 2 Card Click: Nở ra / Thu vào Level 3
+            subCard.addEventListener('click', (e) => {
+              e.stopPropagation(); // Không kích hoạt click của Level 1
+              isLevel3Expanded = !isLevel3Expanded;
+              const secBadge = subCard.querySelector(`#badge-sec-${srcIdx}-${chIdx}-${secIdx}`);
+              if (isLevel3Expanded) {
+                level3Container.classList.remove('collapsed');
+                if (secBadge) secBadge.innerHTML = `▼ ${sec.items.length} mục`;
+              } else {
+                level3Container.classList.add('collapsed');
+                if (secBadge) secBadge.innerHTML = `▶ ${sec.items.length} mục`;
               }
-            }, 80);
+            });
+
+            subCard.appendChild(level3Container);
+            level2List.appendChild(subCard);
           });
 
+          level2Container.appendChild(level2List);
+
           col.appendChild(branchCard);
+          col.appendChild(level2Container);
           branchesRow.appendChild(col);
         });
 
