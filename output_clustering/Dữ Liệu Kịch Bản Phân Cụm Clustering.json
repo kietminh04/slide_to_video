@@ -1,0 +1,73 @@
+{
+  "metadata": {
+    "title": "Bài 9 (c): Phân Cụm Dữ Liệu (Clustering Analysis)",
+    "source_file": "DSS09(c) - Clustering.pdf",
+    "duration_s": 300,
+    "total_words": 758,
+    "critic_scorecard": {
+      "overall_score": 93.1,
+      "dar": 92.53,
+      "tcr": 85.71,
+      "hsr": 100.0,
+      "vns": 100.0,
+      "passed": true
+    }
+  },
+  "scenes": [
+    {
+      "id": "s_cluster_1",
+      "chapter": "ch1",
+      "depth": "bridge",
+      "time": "0.0s - 58.0s",
+      "narration": "Chào mừng các bạn đến với bài giảng về Phân cụm dữ liệu trong hệ thống hỗ trợ ra quyết định. Khác với học có giám sát cần nhãn sẵn, phân cụm dữ liệu là kỹ thuật học không giám sát cốt lõi nhằm tự động khám phá các cấu trúc và quy luật tiềm ẩn. Bản chất của phân cụm là quá trình gom các đối tượng dữ liệu vào từng nhóm mang ý nghĩa thực tiễn, sao cho các điểm dữ liệu trong cùng một cụm có độ tương đồng tối đa, còn các điểm thuộc các cụm khác nhau có sự tách biệt rõ rệt. Kỹ thuật này đóng vai trò then chốt trong phân khúc khách hàng, nén giảm số chiều dữ liệu, và phát hiện các hành vi bất thường.",
+      "visual": {
+        "type": "split_screen",
+        "purpose": "Hiển thị so sánh song song giữa dữ liệu chưa gán nhãn và kết quả gom nhóm tự động sau khi phân cụm"
+      }
+    },
+    {
+      "id": "s_cluster_2",
+      "chapter": "ch2",
+      "depth": "core",
+      "time": "58.0s - 124.0s",
+      "narration": "Tiếp theo, chúng ta cùng nghiên cứu thuật toán phân cụm kinh điển và phổ biến nhất: thuật toán K-Means. K-Means là phương pháp phân hoạch dữ liệu dựa trên mẫu đại diện, chia tập dữ liệu thành k cụm riêng biệt không chồng lấn. Mỗi cụm được đặc trưng bởi một tâm cụm gọi là Centroid. Thuật toán vận hành lặp qua bốn bước tuần tự: đầu tiên khởi tạo k tâm cụm ngẫu nhiên; bước hai gán từng điểm dữ liệu vào tâm cụm gần nhất dựa trên khoảng cách Euclidean, tạo thành các phân hoạch Voronoi; bước ba tính toán lại tọa độ tâm cụm mới bằng trung bình cộng các điểm trong cụm; và bước bốn lặp lại quá trình này cho đến khi vị trí các tâm cụm hội tụ. Mục tiêu toán học của K-Means là cực tiểu hóa tổng bình phương sai số SSE, đo lường độ phân tán giữa các điểm dữ liệu và tâm cụm tương ứng.",
+      "visual": {
+        "type": "process_visualization",
+        "purpose": "Mô phỏng động quá trình dịch chuyển của 3 tâm cụm Centroid trên mặt phẳng 2D và đường cong suy giảm của hàm mất mát SSE"
+      }
+    },
+    {
+      "id": "s_cluster_3",
+      "chapter": "ch3",
+      "depth": "core",
+      "time": "124.0s - 186.0s",
+      "narration": "Mặc dù K-Means rất hiệu quả với các cụm hình cầu, nhưng thuật toán này gặp bế tắc khi dữ liệu có hình dạng phức tạp hoặc chứa nhiều nhiễu. Để khắc phục, chúng ta sử dụng thuật toán phân cụm không gian dựa trên mật độ DBSCAN. Thay vì dựa vào khoảng cách tới tâm, DBSCAN định nghĩa cụm là vùng có mật độ điểm dữ liệu dày đặc, ngăn cách bởi các vùng thưa thớt. Thuật toán điều khiển bằng hai siêu tham số then chốt: bán kính lân cận Epsilon và số điểm tối thiểu MinPoints. Dựa vào đó, dữ liệu được phân thành ba loại: Điểm lõi nếu vùng lân cận chứa ít nhất MinPoints điểm; Điểm biên nếu nằm trong lân cận của điểm lõi; và Điểm nhiễu nếu không thuộc hai loại trên. DBSCAN có khả năng vượt trội trong việc phát hiện cụm hình dạng bất kỳ và tự động cô lập nhiễu ngoại lai.",
+      "visual": {
+        "type": "highlight_box",
+        "purpose": "Vẽ vòng tròn bán kính Epsilon khoanh vùng điểm lõi, điểm biên và đánh dấu đỏ các điểm nhiễu ngoại lai"
+      }
+    },
+    {
+      "id": "s_cluster_4",
+      "chapter": "ch4",
+      "depth": "deep",
+      "time": "186.0s - 244.0s",
+      "narration": "Phương pháp phân cụm nâng cao thứ ba là Mạng tự tổ chức Self-Organizing Maps, hay còn gọi là mạng Kohonen. Đây là sự kết hợp tinh tế giữa mạng nơ-ron nhân tạo và kỹ thuật phân cụm trực quan hóa. Mạng SOM ánh xạ không gian dữ liệu nhiều chiều phức tạp xuống một lưới tô-pô hai chiều dạng mắt lưới hình chữ nhật hoặc lục giác, trong khi vẫn bảo toàn được mối quan hệ lân cận giữa các mẫu dữ liệu. Khi một vector đầu vào xuất hiện, mạng xác định nơ-ron chiến thắng có khoảng cách gần nhất, sau đó cập nhật trọng số của nơ-ron này cùng các nơ-ron lân cận trong bán kính ảnh hưởng. Qua các chu kỳ học, bán kính lân cận và tốc độ học co hẹp dần, giúp toàn bộ mạng tự sắp xếp thành một bản đồ tri thức trực quan sinh động.",
+      "visual": {
+        "type": "animated_diagram",
+        "purpose": "Lưới topology 2D dạng lục giác tự biến dạng và thích nghi để bao bọc phân bố dữ liệu đa chiều"
+      }
+    },
+    {
+      "id": "s_cluster_5",
+      "chapter": "ch5",
+      "depth": "bridge",
+      "time": "244.0s - 300.0s",
+      "narration": "Để minh họa sức mạnh thực tiễn của phân cụm, slide cuối cùng trình bày một nghiên cứu tình huống điển hình trên tập dữ liệu gồm một trăm tám mươi sáu quốc gia với bốn chỉ số kinh tế xã hội. Nhờ áp dụng phân cụm, hệ thống tự động phân tách các quốc gia thành từng nhóm tương đồng về mức độ phát triển, giúp các nhà hoạch định chính sách có góc nhìn vĩ mô khách quan mà không cần gán nhãn thủ công. Tóm lại, việc lựa chọn K-Means cho dữ liệu phân tách rõ ràng, DBSCAN cho dữ liệu có nhiễu hình dạng phức tạp, hay SOM cho trực quan hóa đa chiều là kỹ năng nền tảng trong hệ trợ giúp ra quyết định hiện đại. Cảm ơn các bạn đã lắng nghe bài giảng.",
+      "visual": {
+        "type": "concept_map",
+        "purpose": "Bản đồ phân cụm các quốc gia trên thế giới với các dải màu phân biệt nhóm phát triển kinh tế"
+      }
+    }
+  ]
+}

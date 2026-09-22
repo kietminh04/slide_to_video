@@ -63,7 +63,8 @@ PRESERVED_ENGLISH_TERMS = {
     "epoch", "batch size", "dropout",
     "attention mechanism", "softmax", "relu", "sigmoid", "cross-entropy",
     "adam", "sgd", "token", "embedding", "latent space", "bounding box",
-    "iou", "map", "f1-score", "roc-auc"
+    "iou", "map", "f1-score", "roc-auc",
+    "kmeans", "k-means", "dbscan", "som", "epsilon", "minpoints", "centroid", "voronoi", "sse", "kohonen", "rapidminer"
 }
 
 # Động từ/từ đệm tiếng Anh cấm dùng trong bài giảng tiếng Việt
@@ -101,7 +102,9 @@ VIETNAMESE_ASCII_WORDS = {
     "nang", "cao", "co", "ban", "sau", "day", "day", "du", "dung", "sai", "loi", "vi", "pham",
     "thay", "tim", "thu", "sung", "xung", "quanh", "hay", "teo", "nguy", "khai", "xe",
     "lai", "nua", "de", "gia", "chin", "bay", "muoi", "lam", "nhe", "hinh", "van",
-    "ven", "dang", "thoa", "man", "chac", "tam", "khoang", "cach", "buoc", "nhay", "dem", "vien"
+    "ven", "dang", "thoa", "man", "chac", "tam", "khoang", "cach", "buoc", "nhay", "dem", "vien",
+    "khoa", "quy", "gom", "sao", "nhau", "khuc", "nen", "hop", "lap", "tuan", "tu", "gop", "nhom",
+    "vua", "tuy", "ngoai", "vong", "tron", "mat", "luoi", "chu", "nhat", "luc", "giac", "luat", "tiem", "an"
 }
 
 
