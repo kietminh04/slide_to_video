@@ -1,0 +1,59 @@
+1
+00:00:00,000 --> 00:00:02,569
+Nội dung mặc định từ FakeLLMProvider.
+
+2
+00:00:02,569 --> 00:00:13,280
+Cụ thể hơn trong phần này, chúng ta cần đặc biệt lưu ý đến nguyên lý cấu trúc và ứng dụng thực tiễn của nó.
+
+3
+00:00:13,280 --> 00:00:23,990
+Cụ thể hơn trong phần này, chúng ta cần đặc biệt lưu ý đến nguyên lý cấu trúc và ứng dụng thực tiễn của nó.
+
+4
+00:00:24,000 --> 00:00:26,570
+Nội dung mặc định từ FakeLLMProvider.
+
+5
+00:00:26,570 --> 00:00:37,280
+Cụ thể hơn trong phần này, chúng ta cần đặc biệt lưu ý đến nguyên lý cấu trúc và ứng dụng thực tiễn của nó.
+
+6
+00:00:37,280 --> 00:00:47,990
+Cụ thể hơn trong phần này, chúng ta cần đặc biệt lưu ý đến nguyên lý cấu trúc và ứng dụng thực tiễn của nó.
+
+7
+00:00:48,000 --> 00:00:50,570
+Nội dung mặc định từ FakeLLMProvider.
+
+8
+00:00:50,570 --> 00:01:01,280
+Cụ thể hơn trong phần này, chúng ta cần đặc biệt lưu ý đến nguyên lý cấu trúc và ứng dụng thực tiễn của nó.
+
+9
+00:01:01,280 --> 00:01:11,990
+Cụ thể hơn trong phần này, chúng ta cần đặc biệt lưu ý đến nguyên lý cấu trúc và ứng dụng thực tiễn của nó.
+
+10
+00:01:12,000 --> 00:01:14,569
+Nội dung mặc định từ FakeLLMProvider.
+
+11
+00:01:14,569 --> 00:01:25,280
+Cụ thể hơn trong phần này, chúng ta cần đặc biệt lưu ý đến nguyên lý cấu trúc và ứng dụng thực tiễn của nó.
+
+12
+00:01:25,280 --> 00:01:35,990
+Cụ thể hơn trong phần này, chúng ta cần đặc biệt lưu ý đến nguyên lý cấu trúc và ứng dụng thực tiễn của nó.
+
+13
+00:01:36,000 --> 00:01:38,569
+Nội dung mặc định từ FakeLLMProvider.
+
+14
+00:01:38,569 --> 00:01:49,280
+Cụ thể hơn trong phần này, chúng ta cần đặc biệt lưu ý đến nguyên lý cấu trúc và ứng dụng thực tiễn của nó.
+
+15
+00:01:49,280 --> 00:01:59,990
+Cụ thể hơn trong phần này, chúng ta cần đặc biệt lưu ý đến nguyên lý cấu trúc và ứng dụng thực tiễn của nó.

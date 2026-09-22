@@ -136,10 +136,22 @@ class ScriptMeta(BaseModel):
     models: dict[str, str] = {}  # vai trò -> tên model đã dùng
 
 
+class CriticScorecard(BaseModel):
+    """Bảng điểm đánh giá đa chiều của Critic Agent."""
+    pacing_score: float = 100.0  # Điểm bám sát ngân sách từ/thời lượng (0-100)
+    terminology_score: float = 100.0  # Điểm tuân thủ thuật ngữ chuẩn Glossary (0-100)
+    grounding_score: float = 100.0  # Điểm chống ảo giác / trích nguồn (0-100)
+    visual_score: float = 100.0  # Điểm ăn khớp thị giác Visual Intent (0-100)
+    overall_score: float = 100.0
+    passed: bool = True
+    feedback: list[str] = []
+
+
 class Script(BaseModel):
     """Kịch bản hoàn chỉnh."""
     meta: ScriptMeta
     scenes: list[Scene]
+    critic_scorecard: CriticScorecard | None = None
 
 
 # === Guard ===

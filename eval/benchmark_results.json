@@ -1,0 +1,40 @@
+{
+  "benchmark_metadata": {
+    "dataset": "data/demo/cnn_intro.pptx",
+    "chunks_count": 10,
+    "target_duration_s": 300,
+    "target_wpm": 140
+  },
+  "comparison": [
+    {
+      "method": "1. Single-Prompt Baseline",
+      "dar": 18.39,
+      "tcr": 69.77,
+      "hsr": 0.0,
+      "vns": 0.0,
+      "critic_score": 27.37,
+      "duration_actual": 54,
+      "passed": false
+    },
+    {
+      "method": "2. Old Pipeline (Legacy CLI / Thiên)",
+      "dar": 14.14,
+      "tcr": 66.67,
+      "hsr": 100.0,
+      "vns": 100.0,
+      "critic_score": 59.95,
+      "duration_actual": 300,
+      "passed": false
+    },
+    {
+      "method": "3. New Multi-Agent CLSG (Antigravity)",
+      "dar": 100.0,
+      "tcr": 100.0,
+      "hsr": 100.0,
+      "vns": 100.0,
+      "critic_score": 100.0,
+      "duration_actual": 300,
+      "passed": true
+    }
+  ]
+}

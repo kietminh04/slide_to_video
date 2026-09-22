@@ -1,0 +1,1402 @@
+{
+  "ir_version": "1.0.0",
+  "ir_id": "ir_8baa0839",
+  "document_id": "doc_6554fce7",
+  "blueprint_id": "bp_2099f1a5",
+  "lecture_title": "Introduction to Convolutional Neural Networks",
+  "config": {
+    "learner": {
+      "target_audience": "undergraduate",
+      "prior_knowledge": "Basic linear algebra, matrix operations, and introductory programming concepts.",
+      "language": "en",
+      "tone": "academic"
+    },
+    "presentation": {
+      "target_duration_sec": 180,
+      "pacing": "normal",
+      "baseline_wpm": 140,
+      "visual_density": "balanced"
+    },
+    "inferred": {
+      "calculated_word_budget": 344,
+      "target_pause_overhead_pct": 0.18,
+      "effective_speaking_budget_sec": 147.6,
+      "max_scenes_recommended": 5
+    }
+  },
+  "total_scenes": 5,
+  "total_duration_sec": 193.95,
+  "total_words": 361,
+  "scenes": [
+    {
+      "scene_id": "scene_01",
+      "section_id": "S1",
+      "title": "Introduction to Convolutional Neural Networks",
+      "order": 1,
+      "pedagogical_function": "hook",
+      "narration_text": "Have you ever wondered how an autonomous vehicle identifies a pedestrian in milliseconds, or how your smartphone instantly tags faces in your photo gallery? Behind these computer vision breakthroughs lies a foundational deep learning architecture: the Convolutional Neural Network. Today, we will uncover how CNNs transform raw pixel grids into high-level visual understanding.",
+      "word_count": 53,
+      "prosody_plan": {
+        "section_id": "S1",
+        "sentences": [
+          {
+            "sentence_id": "S1_s01",
+            "text": "Have you ever wondered how an autonomous vehicle identifies a pedestrian in milliseconds, or how your smartphone instantly tags faces in your photo gallery?",
+            "pitch": "medium",
+            "rate": "medium",
+            "volume": "medium",
+            "pauses": [
+              {
+                "pause_id": "p_mic_35d6",
+                "pause_type": "Micro-pause (Syntactic Chunking)",
+                "after_word": "milliseconds,",
+                "word_index": 12,
+                "duration_ms": 228,
+                "justification": "Syntactic boundary chunking for cognitive clarity"
+              },
+              {
+                "pause_id": "p_cog_195f",
+                "pause_type": "Cognitive-pause (Post-Concept Processing)",
+                "after_word": "gallery?",
+                "word_index": 23,
+                "duration_ms": 686,
+                "justification": "Sentence-level cognitive assimilation pause"
+              }
+            ],
+            "ssml": "<prosody rate=\"medium\" pitch=\"medium\">Have you ever wondered how an autonomous vehicle identifies a pedestrian in milliseconds, <break time=\"250ms\"/> or how your smartphone instantly tags faces in your photo gallery? <break time=\"750ms\"/></prosody>",
+            "estimated_speaking_time_sec": 10.29,
+            "estimated_pause_time_sec": 0.91
+          },
+          {
+            "sentence_id": "S1_s02",
+            "text": "Behind these computer vision breakthroughs lies a foundational deep learning architecture: the Convolutional Neural Network.",
+            "pitch": "medium",
+            "rate": "medium",
+            "volume": "medium",
+            "pauses": [
+              {
+                "pause_id": "p_mic_12ff",
+                "pause_type": "Micro-pause (Syntactic Chunking)",
+                "after_word": "architecture:",
+                "word_index": 10,
+                "duration_ms": 228,
+                "justification": "Syntactic boundary chunking for cognitive clarity"
+              },
+              {
+                "pause_id": "p_cog_d265",
+                "pause_type": "Cognitive-pause (Post-Concept Processing)",
+                "after_word": "Network.",
+                "word_index": 14,
+                "duration_ms": 686,
+                "justification": "Sentence-level cognitive assimilation pause"
+              }
+            ],
+            "ssml": "<prosody rate=\"medium\" pitch=\"medium\">Behind these computer vision breakthroughs lies a foundational deep learning architecture: <break time=\"250ms\"/> the Convolutional Neural Network. <break time=\"750ms\"/></prosody>",
+            "estimated_speaking_time_sec": 6.43,
+            "estimated_pause_time_sec": 0.91
+          },
+          {
+            "sentence_id": "S1_s03",
+            "text": "Today, we will uncover how CNNs transform raw pixel grids into high-level visual understanding.",
+            "pitch": "medium",
+            "rate": "medium",
+            "volume": "medium",
+            "pauses": [
+              {
+                "pause_id": "p_mic_724e",
+                "pause_type": "Micro-pause (Syntactic Chunking)",
+                "after_word": "Today,",
+                "word_index": 0,
+                "duration_ms": 228,
+                "justification": "Syntactic boundary chunking for cognitive clarity"
+              },
+              {
+                "pause_id": "p_trn_df7b",
+                "pause_type": "Transition-pause (Inter-Scene Boundary)",
+                "after_word": "understanding.",
+                "word_index": 13,
+                "duration_ms": 1099,
+                "justification": "Inter-scene boundary pause allowing scene transition consolidation"
+              }
+            ],
+            "ssml": "<prosody rate=\"medium\" pitch=\"medium\">Today, <break time=\"250ms\"/> we will uncover how CNNs transform raw pixel grids into high-level visual understanding. <break time=\"1200ms\"/></prosody>",
+            "estimated_speaking_time_sec": 6.0,
+            "estimated_pause_time_sec": 1.33
+          }
+        ],
+        "total_words": 53,
+        "total_speaking_sec": 22.71,
+        "total_pause_sec": 3.15,
+        "effective_scene_duration_sec": 25.86,
+        "ssml_full": "<speak version=\"1.0\" xmlns=\"http://www.w3.org/2001/10/synthesis\" xml:lang=\"en\">\n  <prosody rate=\"medium\" pitch=\"medium\">Have you ever wondered how an autonomous vehicle identifies a pedestrian in milliseconds, <break time=\"250ms\"/> or how your smartphone instantly tags faces in your photo gallery? <break time=\"750ms\"/></prosody>\n  <prosody rate=\"medium\" pitch=\"medium\">Behind these computer vision breakthroughs lies a foundational deep learning architecture: <break time=\"250ms\"/> the Convolutional Neural Network. <break time=\"750ms\"/></prosody>\n  <prosody rate=\"medium\" pitch=\"medium\">Today, <break time=\"250ms\"/> we will uncover how CNNs transform raw pixel grids into high-level visual understanding. <break time=\"1200ms\"/></prosody>\n</speak>"
+      },
+      "visual_cues": [
+        {
+          "cue_id": "vc_S1_fe0e37",
+          "section_id": "S1",
+          "trigger_timestamp_sec": 1.69,
+          "trigger_word": "camera_hud_object_detection_bounding_boxes",
+          "taxonomy_type": "Physical World Metaphor",
+          "element_target": "camera_hud_object_detection_bounding_boxes",
+          "action": "overlay",
+          "visual_description": "Display autonomous driving camera feed with dynamic green bounding boxes locking onto pedestrians and lane lines.",
+          "necessity_justification": "Builds high-impact motivational intuition and connects theoretical pixels to physical world perception.",
+          "renderer_hints": {
+            "asset_type": "hud_overlay",
+            "theme": "cyber_teal"
+          }
+        },
+        {
+          "cue_id": "vc_S1_156714",
+          "section_id": "S1",
+          "trigger_timestamp_sec": 12.78,
+          "trigger_word": "kernel_convolution_sliding_window",
+          "taxonomy_type": "Geometric Spatial Transform",
+          "element_target": "kernel_convolution_sliding_window",
+          "action": "draw",
+          "visual_description": "Animate 3x3 kernel moving across 6x6 input tensor matrix with step-by-step dot product accumulation.",
+          "necessity_justification": "Visually grounds the spatial locality and sliding window mechanics in 2D space.",
+          "renderer_hints": {
+            "manim_class": "MatrixConvolveAnimation",
+            "stride": 1,
+            "kernel_size": [
+              3,
+              3
+            ]
+          }
+        },
+        {
+          "cue_id": "vc_S1_398f15",
+          "section_id": "S1",
+          "trigger_timestamp_sec": 19.84,
+          "trigger_word": "camera_hud_object_detection_bounding_boxes",
+          "taxonomy_type": "Physical World Metaphor",
+          "element_target": "camera_hud_object_detection_bounding_boxes",
+          "action": "overlay",
+          "visual_description": "Display autonomous driving camera feed with dynamic green bounding boxes locking onto pedestrians and lane lines.",
+          "necessity_justification": "Builds high-impact motivational intuition and connects theoretical pixels to physical world perception.",
+          "renderer_hints": {
+            "asset_type": "hud_overlay",
+            "theme": "cyber_teal"
+          }
+        }
+      ],
+      "scene_start_time_sec": 0.0,
+      "scene_end_time_sec": 25.86,
+      "scene_duration_sec": 25.86
+    },
+    {
+      "scene_id": "scene_02",
+      "section_id": "S2",
+      "title": "The Parameter Explosion in Dense MLPs",
+      "order": 2,
+      "pedagogical_function": "mechanism",
+      "narration_text": "Before convolutional layers, classical dense neural networks attempted image recognition by flattening 2D matrices into massive 1D vectors. Consider a modest 200 by 200 color image. Flattening creates 120,000 input values. Connecting this directly to a hidden layer with 1,000 neurons explodes into over 120 million trainable parameters! Worse yet, dense networks completely discard 2D spatial locality and translation invariance. Notice how this architectural design systematically reduces computational overhead while maximizing semantic fidelity. Notice how this architectural design systematically reduces computational overhead while maximizing semantic fidelity.",
+      "word_count": 86,
+      "prosody_plan": {
+        "section_id": "S2",
+        "sentences": [
+          {
+            "sentence_id": "S2_s01",
+            "text": "Before convolutional layers, classical dense neural networks attempted image recognition by flattening 2D matrices into massive 1D vectors.",
+            "pitch": "medium",
+            "rate": "slow",
+            "volume": "medium",
+            "pauses": [
+              {
+                "pause_id": "p_mic_2469",
+                "pause_type": "Micro-pause (Syntactic Chunking)",
+                "after_word": "layers,",
+                "word_index": 2,
+                "duration_ms": 228,
+                "justification": "Syntactic boundary chunking for cognitive clarity"
+              },
+              {
+                "pause_id": "p_emp_bc6a",
+                "pause_type": "Emphasis-pause (Pre-Keyword Focus)",
+                "after_word": "by",
+                "word_index": 10,
+                "duration_ms": 366,
+                "justification": "Pre-emphasis focus before technical concept 'flattening'"
+              },
+              {
+                "pause_id": "p_cog_a5ad",
+                "pause_type": "Cognitive-pause (Post-Concept Processing)",
+                "after_word": "vectors.",
+                "word_index": 17,
+                "duration_ms": 686,
+                "justification": "Sentence-level cognitive assimilation pause"
+              }
+            ],
+            "ssml": "<prosody rate=\"slow\" pitch=\"medium\">Before convolutional layers, <break time=\"250ms\"/> classical dense neural networks attempted image recognition by <break time=\"400ms\"/> flattening 2D matrices into massive 1D vectors. <break time=\"750ms\"/></prosody>",
+            "estimated_speaking_time_sec": 8.87,
+            "estimated_pause_time_sec": 1.28
+          },
+          {
+            "sentence_id": "S2_s02",
+            "text": "Consider a modest 200 by 200 color image.",
+            "pitch": "medium",
+            "rate": "slow",
+            "volume": "medium",
+            "pauses": [
+              {
+                "pause_id": "p_cog_93e6",
+                "pause_type": "Cognitive-pause (Post-Concept Processing)",
+                "after_word": "image.",
+                "word_index": 7,
+                "duration_ms": 686,
+                "justification": "Sentence-level cognitive assimilation pause"
+              }
+            ],
+            "ssml": "<prosody rate=\"slow\" pitch=\"medium\">Consider a modest 200 by 200 color image. <break time=\"750ms\"/></prosody>",
+            "estimated_speaking_time_sec": 3.94,
+            "estimated_pause_time_sec": 0.69
+          },
+          {
+            "sentence_id": "S2_s03",
+            "text": "Flattening creates 120,000 input values.",
+            "pitch": "medium",
+            "rate": "slow",
+            "volume": "medium",
+            "pauses": [
+              {
+                "pause_id": "p_cog_e8dc",
+                "pause_type": "Cognitive-pause (Post-Concept Processing)",
+                "after_word": "values.",
+                "word_index": 4,
+                "duration_ms": 686,
+                "justification": "Sentence-level cognitive assimilation pause"
+              }
+            ],
+            "ssml": "<prosody rate=\"slow\" pitch=\"medium\">Flattening creates 120,000 input values. <break time=\"750ms\"/></prosody>",
+            "estimated_speaking_time_sec": 2.46,
+            "estimated_pause_time_sec": 0.69
+          },
+          {
+            "sentence_id": "S2_s04",
+            "text": "Connecting this directly to a hidden layer with 1,000 neurons explodes into over 120 million trainable parameters!",
+            "pitch": "medium",
+            "rate": "slow",
+            "volume": "medium",
+            "pauses": [
+              {
+                "pause_id": "p_cog_bb85",
+                "pause_type": "Cognitive-pause (Post-Concept Processing)",
+                "after_word": "parameters!",
+                "word_index": 16,
+                "duration_ms": 686,
+                "justification": "Sentence-level cognitive assimilation pause"
+              }
+            ],
+            "ssml": "<prosody rate=\"slow\" pitch=\"medium\">Connecting this directly to a hidden layer with 1,000 neurons explodes into over 120 million trainable parameters! <break time=\"750ms\"/></prosody>",
+            "estimated_speaking_time_sec": 8.38,
+            "estimated_pause_time_sec": 0.69
+          },
+          {
+            "sentence_id": "S2_s05",
+            "text": "Worse yet, dense networks completely discard 2D spatial locality and translation invariance.",
+            "pitch": "medium",
+            "rate": "slow",
+            "volume": "medium",
+            "pauses": [
+              {
+                "pause_id": "p_mic_ddd5",
+                "pause_type": "Micro-pause (Syntactic Chunking)",
+                "after_word": "yet,",
+                "word_index": 1,
+                "duration_ms": 228,
+                "justification": "Syntactic boundary chunking for cognitive clarity"
+              },
+              {
+                "pause_id": "p_cog_7fb2",
+                "pause_type": "Cognitive-pause (Post-Concept Processing)",
+                "after_word": "invariance.",
+                "word_index": 11,
+                "duration_ms": 686,
+                "justification": "Sentence-level cognitive assimilation pause"
+              }
+            ],
+            "ssml": "<prosody rate=\"slow\" pitch=\"medium\">Worse yet, <break time=\"250ms\"/> dense networks completely discard 2D spatial locality and translation invariance. <break time=\"750ms\"/></prosody>",
+            "estimated_speaking_time_sec": 5.91,
+            "estimated_pause_time_sec": 0.91
+          },
+          {
+            "sentence_id": "S2_s06",
+            "text": "Notice how this architectural design systematically reduces computational overhead while maximizing semantic fidelity.",
+            "pitch": "medium",
+            "rate": "slow",
+            "volume": "medium",
+            "pauses": [
+              {
+                "pause_id": "p_cog_f602",
+                "pause_type": "Cognitive-pause (Post-Concept Processing)",
+                "after_word": "fidelity.",
+                "word_index": 12,
+                "duration_ms": 686,
+                "justification": "Sentence-level cognitive assimilation pause"
+              }
+            ],
+            "ssml": "<prosody rate=\"slow\" pitch=\"medium\">Notice how this architectural design systematically reduces computational overhead while maximizing semantic fidelity. <break time=\"750ms\"/></prosody>",
+            "estimated_speaking_time_sec": 6.41,
+            "estimated_pause_time_sec": 0.69
+          },
+          {
+            "sentence_id": "S2_s07",
+            "text": "Notice how this architectural design systematically reduces computational overhead while maximizing semantic fidelity.",
+            "pitch": "medium",
+            "rate": "slow",
+            "volume": "medium",
+            "pauses": [
+              {
+                "pause_id": "p_trn_12ee",
+                "pause_type": "Transition-pause (Inter-Scene Boundary)",
+                "after_word": "fidelity.",
+                "word_index": 12,
+                "duration_ms": 1099,
+                "justification": "Inter-scene boundary pause allowing scene transition consolidation"
+              }
+            ],
+            "ssml": "<prosody rate=\"slow\" pitch=\"medium\">Notice how this architectural design systematically reduces computational overhead while maximizing semantic fidelity. <break time=\"1200ms\"/></prosody>",
+            "estimated_speaking_time_sec": 6.41,
+            "estimated_pause_time_sec": 1.1
+          }
+        ],
+        "total_words": 86,
+        "total_speaking_sec": 42.39,
+        "total_pause_sec": 6.05,
+        "effective_scene_duration_sec": 48.44,
+        "ssml_full": "<speak version=\"1.0\" xmlns=\"http://www.w3.org/2001/10/synthesis\" xml:lang=\"en\">\n  <prosody rate=\"slow\" pitch=\"medium\">Before convolutional layers, <break time=\"250ms\"/> classical dense neural networks attempted image recognition by <break time=\"400ms\"/> flattening 2D matrices into massive 1D vectors. <break time=\"750ms\"/></prosody>\n  <prosody rate=\"slow\" pitch=\"medium\">Consider a modest 200 by 200 color image. <break time=\"750ms\"/></prosody>\n  <prosody rate=\"slow\" pitch=\"medium\">Flattening creates 120,000 input values. <break time=\"750ms\"/></prosody>\n  <prosody rate=\"slow\" pitch=\"medium\">Connecting this directly to a hidden layer with 1,000 neurons explodes into over 120 million trainable parameters! <break time=\"750ms\"/></prosody>\n  <prosody rate=\"slow\" pitch=\"medium\">Worse yet, <break time=\"250ms\"/> dense networks completely discard 2D spatial locality and translation invariance. <break time=\"750ms\"/></prosody>\n  <prosody rate=\"slow\" pitch=\"medium\">Notice how this architectural design systematically reduces computational overhead while maximizing semantic fidelity. <break time=\"750ms\"/></prosody>\n  <prosody rate=\"slow\" pitch=\"medium\">Notice how this architectural design systematically reduces computational overhead while maximizing semantic fidelity. <break time=\"1200ms\"/></prosody>\n</speak>"
+      },
+      "visual_cues": [
+        {
+          "cue_id": "vc_S2_982f90",
+          "section_id": "S2",
+          "trigger_timestamp_sec": 2.57,
+          "trigger_word": "dense_mlp_vs_cnn_receptive_field",
+          "taxonomy_type": "Side-by-Side Comparison",
+          "element_target": "dense_mlp_vs_cnn_receptive_field",
+          "action": "transform",
+          "visual_description": "Render side-by-side comparison: left panel displays dense 120M weight connection matrix; right panel highlights compact 3x3 shared kernel.",
+          "necessity_justification": "Demonstrates the catastrophic parameter explosion of dense layers vs parameter sharing in CNNs.",
+          "renderer_hints": {
+            "left_label": "Dense MLP (120M weights)",
+            "right_label": "Conv Kernel (9 weights)",
+            "color": "#EF4444"
+          }
+        },
+        {
+          "cue_id": "vc_S2_96711e",
+          "section_id": "S2",
+          "trigger_timestamp_sec": 11.44,
+          "trigger_word": "concept_mechanism_diagram_1",
+          "taxonomy_type": "Diagram Animation",
+          "element_target": "concept_mechanism_diagram_1",
+          "action": "highlight",
+          "visual_description": "Animate dynamic flow diagram illustrating data tensor transformation and node state update.",
+          "necessity_justification": "Provides visual anchoring for abstract algorithmic operations.",
+          "renderer_hints": {
+            "color": "#3B82F6",
+            "type": "flowchart"
+          }
+        },
+        {
+          "cue_id": "vc_S2_95d115",
+          "section_id": "S2",
+          "trigger_timestamp_sec": 15.76,
+          "trigger_word": "dense_mlp_vs_cnn_receptive_field",
+          "taxonomy_type": "Side-by-Side Comparison",
+          "element_target": "dense_mlp_vs_cnn_receptive_field",
+          "action": "transform",
+          "visual_description": "Render side-by-side comparison: left panel displays dense 120M weight connection matrix; right panel highlights compact 3x3 shared kernel.",
+          "necessity_justification": "Demonstrates the catastrophic parameter explosion of dense layers vs parameter sharing in CNNs.",
+          "renderer_hints": {
+            "left_label": "Dense MLP (120M weights)",
+            "right_label": "Conv Kernel (9 weights)",
+            "color": "#EF4444"
+          }
+        },
+        {
+          "cue_id": "vc_S2_ce37db",
+          "section_id": "S2",
+          "trigger_timestamp_sec": 20.45,
+          "trigger_word": "dense_mlp_vs_cnn_receptive_field",
+          "taxonomy_type": "Side-by-Side Comparison",
+          "element_target": "dense_mlp_vs_cnn_receptive_field",
+          "action": "transform",
+          "visual_description": "Render side-by-side comparison: left panel displays dense 120M weight connection matrix; right panel highlights compact 3x3 shared kernel.",
+          "necessity_justification": "Demonstrates the catastrophic parameter explosion of dense layers vs parameter sharing in CNNs.",
+          "renderer_hints": {
+            "left_label": "Dense MLP (120M weights)",
+            "right_label": "Conv Kernel (9 weights)",
+            "color": "#EF4444"
+          }
+        },
+        {
+          "cue_id": "vc_S2_e43e7c",
+          "section_id": "S2",
+          "trigger_timestamp_sec": 29.03,
+          "trigger_word": "concept_mechanism_diagram_4",
+          "taxonomy_type": "Diagram Animation",
+          "element_target": "concept_mechanism_diagram_4",
+          "action": "highlight",
+          "visual_description": "Animate dynamic flow diagram illustrating data tensor transformation and node state update.",
+          "necessity_justification": "Provides visual anchoring for abstract algorithmic operations.",
+          "renderer_hints": {
+            "color": "#3B82F6",
+            "type": "flowchart"
+          }
+        },
+        {
+          "cue_id": "vc_S2_400c70",
+          "section_id": "S2",
+          "trigger_timestamp_sec": 36.0,
+          "trigger_word": "concept_mechanism_diagram_5",
+          "taxonomy_type": "Diagram Animation",
+          "element_target": "concept_mechanism_diagram_5",
+          "action": "highlight",
+          "visual_description": "Animate dynamic flow diagram illustrating data tensor transformation and node state update.",
+          "necessity_justification": "Provides visual anchoring for abstract algorithmic operations.",
+          "renderer_hints": {
+            "color": "#3B82F6",
+            "type": "flowchart"
+          }
+        },
+        {
+          "cue_id": "vc_S2_b7634a",
+          "section_id": "S2",
+          "trigger_timestamp_sec": 43.27,
+          "trigger_word": "concept_mechanism_diagram_6",
+          "taxonomy_type": "Diagram Animation",
+          "element_target": "concept_mechanism_diagram_6",
+          "action": "highlight",
+          "visual_description": "Animate dynamic flow diagram illustrating data tensor transformation and node state update.",
+          "necessity_justification": "Provides visual anchoring for abstract algorithmic operations.",
+          "renderer_hints": {
+            "color": "#3B82F6",
+            "type": "flowchart"
+          }
+        }
+      ],
+      "scene_start_time_sec": 25.86,
+      "scene_end_time_sec": 74.3,
+      "scene_duration_sec": 48.44
+    },
+    {
+      "scene_id": "scene_03",
+      "section_id": "S3",
+      "title": "The Convolution Operation & Kernel Mechanics",
+      "order": 3,
+      "pedagogical_function": "example",
+      "narration_text": "To resolve parameter explosion, CNNs introduce the convolution operation. A small learnable weight matrix\u2014known as a kernel or filter\u2014slides smoothly across the input tensor. At each coordinate, it performs element-wise multiplications and sums the products into a scalar feature activation. By sharing identical weights across the entire receptive field, CNNs dramatically shrink model size while preserving spatial topology. Notice how this architectural design systematically reduces computational overhead while maximizing semantic fidelity. Notice how this architectural design systematically reduces computational overhead while maximizing semantic fidelity.",
+      "word_count": 84,
+      "prosody_plan": {
+        "section_id": "S3",
+        "sentences": [
+          {
+            "sentence_id": "S3_s01",
+            "text": "To resolve parameter explosion, CNNs introduce the convolution operation.",
+            "pitch": "medium",
+            "rate": "medium",
+            "volume": "medium",
+            "pauses": [
+              {
+                "pause_id": "p_mic_8b0d",
+                "pause_type": "Micro-pause (Syntactic Chunking)",
+                "after_word": "explosion,",
+                "word_index": 3,
+                "duration_ms": 228,
+                "justification": "Syntactic boundary chunking for cognitive clarity"
+              },
+              {
+                "pause_id": "p_emp_0be2",
+                "pause_type": "Emphasis-pause (Pre-Keyword Focus)",
+                "after_word": "the",
+                "word_index": 6,
+                "duration_ms": 366,
+                "justification": "Pre-emphasis focus before technical concept 'convolution'"
+              },
+              {
+                "pause_id": "p_cog_6406",
+                "pause_type": "Cognitive-pause (Post-Concept Processing)",
+                "after_word": "operation.",
+                "word_index": 8,
+                "duration_ms": 686,
+                "justification": "Sentence-level cognitive assimilation pause"
+              }
+            ],
+            "ssml": "<prosody rate=\"medium\" pitch=\"medium\">To resolve parameter explosion, <break time=\"250ms\"/> CNNs introduce the <break time=\"400ms\"/> convolution operation. <break time=\"750ms\"/></prosody>",
+            "estimated_speaking_time_sec": 3.86,
+            "estimated_pause_time_sec": 1.28
+          },
+          {
+            "sentence_id": "S3_s02",
+            "text": "A small learnable weight matrix\u2014known as a kernel or filter\u2014slides smoothly across the input tensor.",
+            "pitch": "medium",
+            "rate": "medium",
+            "volume": "medium",
+            "pauses": [
+              {
+                "pause_id": "p_emp_80df",
+                "pause_type": "Emphasis-pause (Pre-Keyword Focus)",
+                "after_word": "a",
+                "word_index": 6,
+                "duration_ms": 366,
+                "justification": "Pre-emphasis focus before technical concept 'kernel'"
+              },
+              {
+                "pause_id": "p_emp_aea0",
+                "pause_type": "Emphasis-pause (Pre-Keyword Focus)",
+                "after_word": "input",
+                "word_index": 13,
+                "duration_ms": 366,
+                "justification": "Pre-emphasis focus before technical concept 'tensor.'"
+              },
+              {
+                "pause_id": "p_cog_5f3b",
+                "pause_type": "Cognitive-pause (Post-Concept Processing)",
+                "after_word": "tensor.",
+                "word_index": 14,
+                "duration_ms": 686,
+                "justification": "Sentence-level cognitive assimilation pause"
+              }
+            ],
+            "ssml": "<prosody rate=\"medium\" pitch=\"medium\">A small learnable weight matrix\u2014known as a <break time=\"400ms\"/> kernel or filter\u2014slides smoothly across the input <break time=\"400ms\"/> tensor. <break time=\"750ms\"/></prosody>",
+            "estimated_speaking_time_sec": 6.43,
+            "estimated_pause_time_sec": 1.42
+          },
+          {
+            "sentence_id": "S3_s03",
+            "text": "At each coordinate, it performs element-wise multiplications and sums the products into a scalar feature activation.",
+            "pitch": "medium",
+            "rate": "medium",
+            "volume": "medium",
+            "pauses": [
+              {
+                "pause_id": "p_mic_e33d",
+                "pause_type": "Micro-pause (Syntactic Chunking)",
+                "after_word": "coordinate,",
+                "word_index": 2,
+                "duration_ms": 228,
+                "justification": "Syntactic boundary chunking for cognitive clarity"
+              },
+              {
+                "pause_id": "p_emp_70b6",
+                "pause_type": "Emphasis-pause (Pre-Keyword Focus)",
+                "after_word": "feature",
+                "word_index": 14,
+                "duration_ms": 366,
+                "justification": "Pre-emphasis focus before technical concept 'activation.'"
+              },
+              {
+                "pause_id": "p_cog_33f7",
+                "pause_type": "Cognitive-pause (Post-Concept Processing)",
+                "after_word": "activation.",
+                "word_index": 15,
+                "duration_ms": 686,
+                "justification": "Sentence-level cognitive assimilation pause"
+              }
+            ],
+            "ssml": "<prosody rate=\"medium\" pitch=\"medium\">At each coordinate, <break time=\"250ms\"/> it performs element-wise multiplications and sums the products into a scalar feature <break time=\"400ms\"/> activation. <break time=\"750ms\"/></prosody>",
+            "estimated_speaking_time_sec": 6.86,
+            "estimated_pause_time_sec": 1.28
+          },
+          {
+            "sentence_id": "S3_s04",
+            "text": "By sharing identical weights across the entire receptive field, CNNs dramatically shrink model size while preserving spatial topology.",
+            "pitch": "medium",
+            "rate": "medium",
+            "volume": "medium",
+            "pauses": [
+              {
+                "pause_id": "p_mic_cf02",
+                "pause_type": "Micro-pause (Syntactic Chunking)",
+                "after_word": "field,",
+                "word_index": 8,
+                "duration_ms": 228,
+                "justification": "Syntactic boundary chunking for cognitive clarity"
+              },
+              {
+                "pause_id": "p_cog_b000",
+                "pause_type": "Cognitive-pause (Post-Concept Processing)",
+                "after_word": "topology.",
+                "word_index": 17,
+                "duration_ms": 686,
+                "justification": "Sentence-level cognitive assimilation pause"
+              }
+            ],
+            "ssml": "<prosody rate=\"medium\" pitch=\"medium\">By sharing identical weights across the entire receptive field, <break time=\"250ms\"/> CNNs dramatically shrink model size while preserving spatial topology. <break time=\"750ms\"/></prosody>",
+            "estimated_speaking_time_sec": 7.71,
+            "estimated_pause_time_sec": 0.91
+          },
+          {
+            "sentence_id": "S3_s05",
+            "text": "Notice how this architectural design systematically reduces computational overhead while maximizing semantic fidelity.",
+            "pitch": "medium",
+            "rate": "medium",
+            "volume": "medium",
+            "pauses": [
+              {
+                "pause_id": "p_cog_494f",
+                "pause_type": "Cognitive-pause (Post-Concept Processing)",
+                "after_word": "fidelity.",
+                "word_index": 12,
+                "duration_ms": 686,
+                "justification": "Sentence-level cognitive assimilation pause"
+              }
+            ],
+            "ssml": "<prosody rate=\"medium\" pitch=\"medium\">Notice how this architectural design systematically reduces computational overhead while maximizing semantic fidelity. <break time=\"750ms\"/></prosody>",
+            "estimated_speaking_time_sec": 5.57,
+            "estimated_pause_time_sec": 0.69
+          },
+          {
+            "sentence_id": "S3_s06",
+            "text": "Notice how this architectural design systematically reduces computational overhead while maximizing semantic fidelity.",
+            "pitch": "medium",
+            "rate": "medium",
+            "volume": "medium",
+            "pauses": [
+              {
+                "pause_id": "p_trn_fab9",
+                "pause_type": "Transition-pause (Inter-Scene Boundary)",
+                "after_word": "fidelity.",
+                "word_index": 12,
+                "duration_ms": 1099,
+                "justification": "Inter-scene boundary pause allowing scene transition consolidation"
+              }
+            ],
+            "ssml": "<prosody rate=\"medium\" pitch=\"medium\">Notice how this architectural design systematically reduces computational overhead while maximizing semantic fidelity. <break time=\"1200ms\"/></prosody>",
+            "estimated_speaking_time_sec": 5.57,
+            "estimated_pause_time_sec": 1.1
+          }
+        ],
+        "total_words": 84,
+        "total_speaking_sec": 36.0,
+        "total_pause_sec": 6.68,
+        "effective_scene_duration_sec": 42.68,
+        "ssml_full": "<speak version=\"1.0\" xmlns=\"http://www.w3.org/2001/10/synthesis\" xml:lang=\"en\">\n  <prosody rate=\"medium\" pitch=\"medium\">To resolve parameter explosion, <break time=\"250ms\"/> CNNs introduce the <break time=\"400ms\"/> convolution operation. <break time=\"750ms\"/></prosody>\n  <prosody rate=\"medium\" pitch=\"medium\">A small learnable weight matrix\u2014known as a <break time=\"400ms\"/> kernel or filter\u2014slides smoothly across the input <break time=\"400ms\"/> tensor. <break time=\"750ms\"/></prosody>\n  <prosody rate=\"medium\" pitch=\"medium\">At each coordinate, <break time=\"250ms\"/> it performs element-wise multiplications and sums the products into a scalar feature <break time=\"400ms\"/> activation. <break time=\"750ms\"/></prosody>\n  <prosody rate=\"medium\" pitch=\"medium\">By sharing identical weights across the entire receptive field, <break time=\"250ms\"/> CNNs dramatically shrink model size while preserving spatial topology. <break time=\"750ms\"/></prosody>\n  <prosody rate=\"medium\" pitch=\"medium\">Notice how this architectural design systematically reduces computational overhead while maximizing semantic fidelity. <break time=\"750ms\"/></prosody>\n  <prosody rate=\"medium\" pitch=\"medium\">Notice how this architectural design systematically reduces computational overhead while maximizing semantic fidelity. <break time=\"1200ms\"/></prosody>\n</speak>"
+      },
+      "visual_cues": [
+        {
+          "cue_id": "vc_S3_ac987d",
+          "section_id": "S3",
+          "trigger_timestamp_sec": 1.31,
+          "trigger_word": "dense_mlp_vs_cnn_receptive_field",
+          "taxonomy_type": "Side-by-Side Comparison",
+          "element_target": "dense_mlp_vs_cnn_receptive_field",
+          "action": "transform",
+          "visual_description": "Render side-by-side comparison: left panel displays dense 120M weight connection matrix; right panel highlights compact 3x3 shared kernel.",
+          "necessity_justification": "Demonstrates the catastrophic parameter explosion of dense layers vs parameter sharing in CNNs.",
+          "renderer_hints": {
+            "left_label": "Dense MLP (120M weights)",
+            "right_label": "Conv Kernel (9 weights)",
+            "color": "#EF4444"
+          }
+        },
+        {
+          "cue_id": "vc_S3_122ec2",
+          "section_id": "S3",
+          "trigger_timestamp_sec": 6.86,
+          "trigger_word": "kernel_convolution_sliding_window",
+          "taxonomy_type": "Geometric Spatial Transform",
+          "element_target": "kernel_convolution_sliding_window",
+          "action": "draw",
+          "visual_description": "Animate 3x3 kernel moving across 6x6 input tensor matrix with step-by-step dot product accumulation.",
+          "necessity_justification": "Visually grounds the spatial locality and sliding window mechanics in 2D space.",
+          "renderer_hints": {
+            "manim_class": "MatrixConvolveAnimation",
+            "stride": 1,
+            "kernel_size": [
+              3,
+              3
+            ]
+          }
+        },
+        {
+          "cue_id": "vc_S3_461404",
+          "section_id": "S3",
+          "trigger_timestamp_sec": 15.72,
+          "trigger_word": "code_snippet_execution_2",
+          "taxonomy_type": "Step-by-Step Code Walkthrough",
+          "element_target": "code_snippet_execution_2",
+          "action": "reveal",
+          "visual_description": "Highlight progressive line execution of PyTorch nn.Conv2d tensor forward pass.",
+          "necessity_justification": "Connects conceptual theory to concrete programming implementation.",
+          "renderer_hints": {
+            "syntax": "python",
+            "framework": "PyTorch"
+          }
+        },
+        {
+          "cue_id": "vc_S3_9774b0",
+          "section_id": "S3",
+          "trigger_timestamp_sec": 24.11,
+          "trigger_word": "code_snippet_execution_3",
+          "taxonomy_type": "Step-by-Step Code Walkthrough",
+          "element_target": "code_snippet_execution_3",
+          "action": "reveal",
+          "visual_description": "Highlight progressive line execution of PyTorch nn.Conv2d tensor forward pass.",
+          "necessity_justification": "Connects conceptual theory to concrete programming implementation.",
+          "renderer_hints": {
+            "syntax": "python",
+            "framework": "PyTorch"
+          }
+        },
+        {
+          "cue_id": "vc_S3_d72c4f",
+          "section_id": "S3",
+          "trigger_timestamp_sec": 32.11,
+          "trigger_word": "code_snippet_execution_4",
+          "taxonomy_type": "Step-by-Step Code Walkthrough",
+          "element_target": "code_snippet_execution_4",
+          "action": "reveal",
+          "visual_description": "Highlight progressive line execution of PyTorch nn.Conv2d tensor forward pass.",
+          "necessity_justification": "Connects conceptual theory to concrete programming implementation.",
+          "renderer_hints": {
+            "syntax": "python",
+            "framework": "PyTorch"
+          }
+        },
+        {
+          "cue_id": "vc_S3_a7f580",
+          "section_id": "S3",
+          "trigger_timestamp_sec": 38.56,
+          "trigger_word": "code_snippet_execution_5",
+          "taxonomy_type": "Step-by-Step Code Walkthrough",
+          "element_target": "code_snippet_execution_5",
+          "action": "reveal",
+          "visual_description": "Highlight progressive line execution of PyTorch nn.Conv2d tensor forward pass.",
+          "necessity_justification": "Connects conceptual theory to concrete programming implementation.",
+          "renderer_hints": {
+            "syntax": "python",
+            "framework": "PyTorch"
+          }
+        }
+      ],
+      "scene_start_time_sec": 74.3,
+      "scene_end_time_sec": 116.98,
+      "scene_duration_sec": 42.68
+    },
+    {
+      "scene_id": "scene_04",
+      "section_id": "S4",
+      "title": "Downsampling via Max Pooling",
+      "order": 4,
+      "pedagogical_function": "mechanism",
+      "narration_text": "Following convolution and non-linear activation like ReLU, the network applies pooling. Max pooling slides a local window\u2014typically two by two with a stride of two\u2014and extracts only the maximum activation value. This operation halves both height and width, reducing computational load while granting the network approximate translation invariance. Notice how this architectural design systematically reduces computational overhead while maximizing semantic fidelity. Notice how this architectural design systematically reduces computational overhead while maximizing semantic fidelity. Notice how this architectural design systematically reduces computational overhead while maximizing semantic fidelity.",
+      "word_count": 87,
+      "prosody_plan": {
+        "section_id": "S4",
+        "sentences": [
+          {
+            "sentence_id": "S4_s01",
+            "text": "Following convolution and non-linear activation like ReLU, the network applies pooling.",
+            "pitch": "medium",
+            "rate": "slow",
+            "volume": "medium",
+            "pauses": [
+              {
+                "pause_id": "p_emp_26ec",
+                "pause_type": "Emphasis-pause (Pre-Keyword Focus)",
+                "after_word": "Following",
+                "word_index": 0,
+                "duration_ms": 366,
+                "justification": "Pre-emphasis focus before technical concept 'convolution'"
+              },
+              {
+                "pause_id": "p_emp_c402",
+                "pause_type": "Emphasis-pause (Pre-Keyword Focus)",
+                "after_word": "non-linear",
+                "word_index": 3,
+                "duration_ms": 366,
+                "justification": "Pre-emphasis focus before technical concept 'activation'"
+              },
+              {
+                "pause_id": "p_emp_7f73",
+                "pause_type": "Emphasis-pause (Pre-Keyword Focus)",
+                "after_word": "like",
+                "word_index": 5,
+                "duration_ms": 366,
+                "justification": "Pre-emphasis focus before technical concept 'ReLU,'"
+              },
+              {
+                "pause_id": "p_mic_d0ff",
+                "pause_type": "Micro-pause (Syntactic Chunking)",
+                "after_word": "ReLU,",
+                "word_index": 6,
+                "duration_ms": 228,
+                "justification": "Syntactic boundary chunking for cognitive clarity"
+              },
+              {
+                "pause_id": "p_emp_1443",
+                "pause_type": "Emphasis-pause (Pre-Keyword Focus)",
+                "after_word": "applies",
+                "word_index": 9,
+                "duration_ms": 366,
+                "justification": "Pre-emphasis focus before technical concept 'pooling.'"
+              },
+              {
+                "pause_id": "p_cog_eccc",
+                "pause_type": "Cognitive-pause (Post-Concept Processing)",
+                "after_word": "pooling.",
+                "word_index": 10,
+                "duration_ms": 686,
+                "justification": "Sentence-level cognitive assimilation pause"
+              }
+            ],
+            "ssml": "<prosody rate=\"slow\" pitch=\"medium\">Following <break time=\"400ms\"/> convolution and non-linear <break time=\"400ms\"/> activation like <break time=\"400ms\"/> ReLU, <break time=\"250ms\"/> the network applies <break time=\"400ms\"/> pooling. <break time=\"750ms\"/></prosody>",
+            "estimated_speaking_time_sec": 5.42,
+            "estimated_pause_time_sec": 2.38
+          },
+          {
+            "sentence_id": "S4_s02",
+            "text": "Max pooling slides a local window\u2014typically two by two with a stride of two\u2014and extracts only the maximum activation value.",
+            "pitch": "medium",
+            "rate": "slow",
+            "volume": "medium",
+            "pauses": [
+              {
+                "pause_id": "p_emp_31b6",
+                "pause_type": "Emphasis-pause (Pre-Keyword Focus)",
+                "after_word": "Max",
+                "word_index": 0,
+                "duration_ms": 366,
+                "justification": "Pre-emphasis focus before technical concept 'pooling'"
+              },
+              {
+                "pause_id": "p_emp_931b",
+                "pause_type": "Emphasis-pause (Pre-Keyword Focus)",
+                "after_word": "a",
+                "word_index": 10,
+                "duration_ms": 366,
+                "justification": "Pre-emphasis focus before technical concept 'stride'"
+              },
+              {
+                "pause_id": "p_emp_afa0",
+                "pause_type": "Emphasis-pause (Pre-Keyword Focus)",
+                "after_word": "maximum",
+                "word_index": 17,
+                "duration_ms": 366,
+                "justification": "Pre-emphasis focus before technical concept 'activation'"
+              },
+              {
+                "pause_id": "p_cog_a87f",
+                "pause_type": "Cognitive-pause (Post-Concept Processing)",
+                "after_word": "value.",
+                "word_index": 19,
+                "duration_ms": 686,
+                "justification": "Sentence-level cognitive assimilation pause"
+              }
+            ],
+            "ssml": "<prosody rate=\"slow\" pitch=\"medium\">Max <break time=\"400ms\"/> pooling slides a local window\u2014typically two by two with a <break time=\"400ms\"/> stride of two\u2014and extracts only the maximum <break time=\"400ms\"/> activation value. <break time=\"750ms\"/></prosody>",
+            "estimated_speaking_time_sec": 9.86,
+            "estimated_pause_time_sec": 1.78
+          },
+          {
+            "sentence_id": "S4_s03",
+            "text": "This operation halves both height and width, reducing computational load while granting the network approximate translation invariance.",
+            "pitch": "medium",
+            "rate": "slow",
+            "volume": "medium",
+            "pauses": [
+              {
+                "pause_id": "p_mic_b1ad",
+                "pause_type": "Micro-pause (Syntactic Chunking)",
+                "after_word": "width,",
+                "word_index": 6,
+                "duration_ms": 228,
+                "justification": "Syntactic boundary chunking for cognitive clarity"
+              },
+              {
+                "pause_id": "p_cog_47d7",
+                "pause_type": "Cognitive-pause (Post-Concept Processing)",
+                "after_word": "invariance.",
+                "word_index": 16,
+                "duration_ms": 686,
+                "justification": "Sentence-level cognitive assimilation pause"
+              }
+            ],
+            "ssml": "<prosody rate=\"slow\" pitch=\"medium\">This operation halves both height and width, <break time=\"250ms\"/> reducing computational load while granting the network approximate translation invariance. <break time=\"750ms\"/></prosody>",
+            "estimated_speaking_time_sec": 8.38,
+            "estimated_pause_time_sec": 0.91
+          },
+          {
+            "sentence_id": "S4_s04",
+            "text": "Notice how this architectural design systematically reduces computational overhead while maximizing semantic fidelity.",
+            "pitch": "medium",
+            "rate": "slow",
+            "volume": "medium",
+            "pauses": [
+              {
+                "pause_id": "p_cog_58a3",
+                "pause_type": "Cognitive-pause (Post-Concept Processing)",
+                "after_word": "fidelity.",
+                "word_index": 12,
+                "duration_ms": 686,
+                "justification": "Sentence-level cognitive assimilation pause"
+              }
+            ],
+            "ssml": "<prosody rate=\"slow\" pitch=\"medium\">Notice how this architectural design systematically reduces computational overhead while maximizing semantic fidelity. <break time=\"750ms\"/></prosody>",
+            "estimated_speaking_time_sec": 6.41,
+            "estimated_pause_time_sec": 0.69
+          },
+          {
+            "sentence_id": "S4_s05",
+            "text": "Notice how this architectural design systematically reduces computational overhead while maximizing semantic fidelity.",
+            "pitch": "medium",
+            "rate": "slow",
+            "volume": "medium",
+            "pauses": [
+              {
+                "pause_id": "p_cog_dce3",
+                "pause_type": "Cognitive-pause (Post-Concept Processing)",
+                "after_word": "fidelity.",
+                "word_index": 12,
+                "duration_ms": 686,
+                "justification": "Sentence-level cognitive assimilation pause"
+              }
+            ],
+            "ssml": "<prosody rate=\"slow\" pitch=\"medium\">Notice how this architectural design systematically reduces computational overhead while maximizing semantic fidelity. <break time=\"750ms\"/></prosody>",
+            "estimated_speaking_time_sec": 6.41,
+            "estimated_pause_time_sec": 0.69
+          },
+          {
+            "sentence_id": "S4_s06",
+            "text": "Notice how this architectural design systematically reduces computational overhead while maximizing semantic fidelity.",
+            "pitch": "medium",
+            "rate": "slow",
+            "volume": "medium",
+            "pauses": [
+              {
+                "pause_id": "p_trn_77d5",
+                "pause_type": "Transition-pause (Inter-Scene Boundary)",
+                "after_word": "fidelity.",
+                "word_index": 12,
+                "duration_ms": 1099,
+                "justification": "Inter-scene boundary pause allowing scene transition consolidation"
+              }
+            ],
+            "ssml": "<prosody rate=\"slow\" pitch=\"medium\">Notice how this architectural design systematically reduces computational overhead while maximizing semantic fidelity. <break time=\"1200ms\"/></prosody>",
+            "estimated_speaking_time_sec": 6.41,
+            "estimated_pause_time_sec": 1.1
+          }
+        ],
+        "total_words": 87,
+        "total_speaking_sec": 42.88,
+        "total_pause_sec": 7.55,
+        "effective_scene_duration_sec": 50.43,
+        "ssml_full": "<speak version=\"1.0\" xmlns=\"http://www.w3.org/2001/10/synthesis\" xml:lang=\"en\">\n  <prosody rate=\"slow\" pitch=\"medium\">Following <break time=\"400ms\"/> convolution and non-linear <break time=\"400ms\"/> activation like <break time=\"400ms\"/> ReLU, <break time=\"250ms\"/> the network applies <break time=\"400ms\"/> pooling. <break time=\"750ms\"/></prosody>\n  <prosody rate=\"slow\" pitch=\"medium\">Max <break time=\"400ms\"/> pooling slides a local window\u2014typically two by two with a <break time=\"400ms\"/> stride of two\u2014and extracts only the maximum <break time=\"400ms\"/> activation value. <break time=\"750ms\"/></prosody>\n  <prosody rate=\"slow\" pitch=\"medium\">This operation halves both height and width, <break time=\"250ms\"/> reducing computational load while granting the network approximate translation invariance. <break time=\"750ms\"/></prosody>\n  <prosody rate=\"slow\" pitch=\"medium\">Notice how this architectural design systematically reduces computational overhead while maximizing semantic fidelity. <break time=\"750ms\"/></prosody>\n  <prosody rate=\"slow\" pitch=\"medium\">Notice how this architectural design systematically reduces computational overhead while maximizing semantic fidelity. <break time=\"750ms\"/></prosody>\n  <prosody rate=\"slow\" pitch=\"medium\">Notice how this architectural design systematically reduces computational overhead while maximizing semantic fidelity. <break time=\"1200ms\"/></prosody>\n</speak>"
+      },
+      "visual_cues": [
+        {
+          "cue_id": "vc_S4_93c2b9",
+          "section_id": "S4",
+          "trigger_timestamp_sec": 1.6,
+          "trigger_word": "kernel_convolution_sliding_window",
+          "taxonomy_type": "Geometric Spatial Transform",
+          "element_target": "kernel_convolution_sliding_window",
+          "action": "draw",
+          "visual_description": "Animate 3x3 kernel moving across 6x6 input tensor matrix with step-by-step dot product accumulation.",
+          "necessity_justification": "Visually grounds the spatial locality and sliding window mechanics in 2D space.",
+          "renderer_hints": {
+            "manim_class": "MatrixConvolveAnimation",
+            "stride": 1,
+            "kernel_size": [
+              3,
+              3
+            ]
+          }
+        },
+        {
+          "cue_id": "vc_S4_ad92a3",
+          "section_id": "S4",
+          "trigger_timestamp_sec": 11.56,
+          "trigger_word": "max_pooling_window_2x2",
+          "taxonomy_type": "Component Zoom-in",
+          "element_target": "max_pooling_window_2x2",
+          "action": "zoom",
+          "visual_description": "Zoom in on 2x2 window: highlight maximum pixel value (e.g. 0.85) and transfer to downsampled feature map.",
+          "necessity_justification": "Clarifies non-linear reduction and translation invariance properties of max-pooling.",
+          "renderer_hints": {
+            "window_size": [
+              2,
+              2
+            ],
+            "operation": "MAX",
+            "highlight_color": "#10B981"
+          }
+        },
+        {
+          "cue_id": "vc_S4_9c9589",
+          "section_id": "S4",
+          "trigger_timestamp_sec": 22.17,
+          "trigger_word": "concept_mechanism_diagram_2",
+          "taxonomy_type": "Diagram Animation",
+          "element_target": "concept_mechanism_diagram_2",
+          "action": "highlight",
+          "visual_description": "Animate dynamic flow diagram illustrating data tensor transformation and node state update.",
+          "necessity_justification": "Provides visual anchoring for abstract algorithmic operations.",
+          "renderer_hints": {
+            "color": "#3B82F6",
+            "type": "flowchart"
+          }
+        },
+        {
+          "cue_id": "vc_S4_b577f2",
+          "section_id": "S4",
+          "trigger_timestamp_sec": 31.0,
+          "trigger_word": "concept_mechanism_diagram_3",
+          "taxonomy_type": "Diagram Animation",
+          "element_target": "concept_mechanism_diagram_3",
+          "action": "highlight",
+          "visual_description": "Animate dynamic flow diagram illustrating data tensor transformation and node state update.",
+          "necessity_justification": "Provides visual anchoring for abstract algorithmic operations.",
+          "renderer_hints": {
+            "color": "#3B82F6",
+            "type": "flowchart"
+          }
+        },
+        {
+          "cue_id": "vc_S4_1ef910",
+          "section_id": "S4",
+          "trigger_timestamp_sec": 38.16,
+          "trigger_word": "concept_mechanism_diagram_4",
+          "taxonomy_type": "Diagram Animation",
+          "element_target": "concept_mechanism_diagram_4",
+          "action": "highlight",
+          "visual_description": "Animate dynamic flow diagram illustrating data tensor transformation and node state update.",
+          "necessity_justification": "Provides visual anchoring for abstract algorithmic operations.",
+          "renderer_hints": {
+            "color": "#3B82F6",
+            "type": "flowchart"
+          }
+        },
+        {
+          "cue_id": "vc_S4_3e94d9",
+          "section_id": "S4",
+          "trigger_timestamp_sec": 45.43,
+          "trigger_word": "concept_mechanism_diagram_5",
+          "taxonomy_type": "Diagram Animation",
+          "element_target": "concept_mechanism_diagram_5",
+          "action": "highlight",
+          "visual_description": "Animate dynamic flow diagram illustrating data tensor transformation and node state update.",
+          "necessity_justification": "Provides visual anchoring for abstract algorithmic operations.",
+          "renderer_hints": {
+            "color": "#3B82F6",
+            "type": "flowchart"
+          }
+        }
+      ],
+      "scene_start_time_sec": 116.98,
+      "scene_end_time_sec": 167.41,
+      "scene_duration_sec": 50.43
+    },
+    {
+      "scene_id": "scene_05",
+      "section_id": "S5",
+      "title": "Full CNN Pipeline Architecture & Synthesis",
+      "order": 5,
+      "pedagogical_function": "summary",
+      "narration_text": "Before convolutional layers, classical dense neural networks attempted image recognition by flattening 2D matrices into massive 1D vectors. Consider a modest 200 by 200 color image. Flattening creates 120,000 input values. Connecting this directly to a hidden layer with 1,000 neurons explodes into over 120 million trainable parameters! Worse yet, dense.",
+      "word_count": 51,
+      "prosody_plan": {
+        "section_id": "S5",
+        "sentences": [
+          {
+            "sentence_id": "S5_s01",
+            "text": "Before convolutional layers, classical dense neural networks attempted image recognition by flattening 2D matrices into massive 1D vectors.",
+            "pitch": "medium",
+            "rate": "medium",
+            "volume": "medium",
+            "pauses": [
+              {
+                "pause_id": "p_mic_0a10",
+                "pause_type": "Micro-pause (Syntactic Chunking)",
+                "after_word": "layers,",
+                "word_index": 2,
+                "duration_ms": 228,
+                "justification": "Syntactic boundary chunking for cognitive clarity"
+              },
+              {
+                "pause_id": "p_emp_6209",
+                "pause_type": "Emphasis-pause (Pre-Keyword Focus)",
+                "after_word": "by",
+                "word_index": 10,
+                "duration_ms": 366,
+                "justification": "Pre-emphasis focus before technical concept 'flattening'"
+              },
+              {
+                "pause_id": "p_cog_3a3f",
+                "pause_type": "Cognitive-pause (Post-Concept Processing)",
+                "after_word": "vectors.",
+                "word_index": 17,
+                "duration_ms": 686,
+                "justification": "Sentence-level cognitive assimilation pause"
+              }
+            ],
+            "ssml": "<prosody rate=\"medium\" pitch=\"medium\">Before convolutional layers, <break time=\"250ms\"/> classical dense neural networks attempted image recognition by <break time=\"400ms\"/> flattening 2D matrices into massive 1D vectors. <break time=\"750ms\"/></prosody>",
+            "estimated_speaking_time_sec": 7.71,
+            "estimated_pause_time_sec": 1.28
+          },
+          {
+            "sentence_id": "S5_s02",
+            "text": "Consider a modest 200 by 200 color image.",
+            "pitch": "medium",
+            "rate": "medium",
+            "volume": "medium",
+            "pauses": [
+              {
+                "pause_id": "p_cog_c197",
+                "pause_type": "Cognitive-pause (Post-Concept Processing)",
+                "after_word": "image.",
+                "word_index": 7,
+                "duration_ms": 686,
+                "justification": "Sentence-level cognitive assimilation pause"
+              }
+            ],
+            "ssml": "<prosody rate=\"medium\" pitch=\"medium\">Consider a modest 200 by 200 color image. <break time=\"750ms\"/></prosody>",
+            "estimated_speaking_time_sec": 3.43,
+            "estimated_pause_time_sec": 0.69
+          },
+          {
+            "sentence_id": "S5_s03",
+            "text": "Flattening creates 120,000 input values.",
+            "pitch": "medium",
+            "rate": "medium",
+            "volume": "medium",
+            "pauses": [
+              {
+                "pause_id": "p_cog_c0af",
+                "pause_type": "Cognitive-pause (Post-Concept Processing)",
+                "after_word": "values.",
+                "word_index": 4,
+                "duration_ms": 686,
+                "justification": "Sentence-level cognitive assimilation pause"
+              }
+            ],
+            "ssml": "<prosody rate=\"medium\" pitch=\"medium\">Flattening creates 120,000 input values. <break time=\"750ms\"/></prosody>",
+            "estimated_speaking_time_sec": 2.14,
+            "estimated_pause_time_sec": 0.69
+          },
+          {
+            "sentence_id": "S5_s04",
+            "text": "Connecting this directly to a hidden layer with 1,000 neurons explodes into over 120 million trainable parameters!",
+            "pitch": "medium",
+            "rate": "medium",
+            "volume": "medium",
+            "pauses": [
+              {
+                "pause_id": "p_cog_a1c7",
+                "pause_type": "Cognitive-pause (Post-Concept Processing)",
+                "after_word": "parameters!",
+                "word_index": 16,
+                "duration_ms": 686,
+                "justification": "Sentence-level cognitive assimilation pause"
+              }
+            ],
+            "ssml": "<prosody rate=\"medium\" pitch=\"medium\">Connecting this directly to a hidden layer with 1,000 neurons explodes into over 120 million trainable parameters! <break time=\"750ms\"/></prosody>",
+            "estimated_speaking_time_sec": 7.29,
+            "estimated_pause_time_sec": 0.69
+          },
+          {
+            "sentence_id": "S5_s05",
+            "text": "Worse yet, dense.",
+            "pitch": "medium",
+            "rate": "medium",
+            "volume": "medium",
+            "pauses": [
+              {
+                "pause_id": "p_mic_2121",
+                "pause_type": "Micro-pause (Syntactic Chunking)",
+                "after_word": "yet,",
+                "word_index": 1,
+                "duration_ms": 228,
+                "justification": "Syntactic boundary chunking for cognitive clarity"
+              },
+              {
+                "pause_id": "p_trn_31f4",
+                "pause_type": "Transition-pause (Inter-Scene Boundary)",
+                "after_word": "dense.",
+                "word_index": 2,
+                "duration_ms": 1099,
+                "justification": "Inter-scene boundary pause allowing scene transition consolidation"
+              }
+            ],
+            "ssml": "<prosody rate=\"medium\" pitch=\"medium\">Worse yet, <break time=\"250ms\"/> dense. <break time=\"1200ms\"/></prosody>",
+            "estimated_speaking_time_sec": 1.29,
+            "estimated_pause_time_sec": 1.33
+          }
+        ],
+        "total_words": 51,
+        "total_speaking_sec": 21.86,
+        "total_pause_sec": 4.68,
+        "effective_scene_duration_sec": 26.54,
+        "ssml_full": "<speak version=\"1.0\" xmlns=\"http://www.w3.org/2001/10/synthesis\" xml:lang=\"en\">\n  <prosody rate=\"medium\" pitch=\"medium\">Before convolutional layers, <break time=\"250ms\"/> classical dense neural networks attempted image recognition by <break time=\"400ms\"/> flattening 2D matrices into massive 1D vectors. <break time=\"750ms\"/></prosody>\n  <prosody rate=\"medium\" pitch=\"medium\">Consider a modest 200 by 200 color image. <break time=\"750ms\"/></prosody>\n  <prosody rate=\"medium\" pitch=\"medium\">Flattening creates 120,000 input values. <break time=\"750ms\"/></prosody>\n  <prosody rate=\"medium\" pitch=\"medium\">Connecting this directly to a hidden layer with 1,000 neurons explodes into over 120 million trainable parameters! <break time=\"750ms\"/></prosody>\n  <prosody rate=\"medium\" pitch=\"medium\">Worse yet, <break time=\"250ms\"/> dense. <break time=\"1200ms\"/></prosody>\n</speak>"
+      },
+      "visual_cues": [
+        {
+          "cue_id": "vc_S5_e3c262",
+          "section_id": "S5",
+          "trigger_timestamp_sec": 2.28,
+          "trigger_word": "dense_mlp_vs_cnn_receptive_field",
+          "taxonomy_type": "Side-by-Side Comparison",
+          "element_target": "dense_mlp_vs_cnn_receptive_field",
+          "action": "transform",
+          "visual_description": "Render side-by-side comparison: left panel displays dense 120M weight connection matrix; right panel highlights compact 3x3 shared kernel.",
+          "necessity_justification": "Demonstrates the catastrophic parameter explosion of dense layers vs parameter sharing in CNNs.",
+          "renderer_hints": {
+            "left_label": "Dense MLP (120M weights)",
+            "right_label": "Conv Kernel (9 weights)",
+            "color": "#EF4444"
+          }
+        },
+        {
+          "cue_id": "vc_S5_320a31",
+          "section_id": "S5",
+          "trigger_timestamp_sec": 9.95,
+          "trigger_word": "concept_link_1",
+          "taxonomy_type": "Concept Map Linkage",
+          "element_target": "concept_link_1",
+          "action": "reveal",
+          "visual_description": "Display conceptual graph linking prerequisite knowledge nodes to current learning objective.",
+          "necessity_justification": "Enhances cognitive schema integration for the learner.",
+          "renderer_hints": {
+            "nodes": [
+              "Input",
+              "Transformation",
+              "Output"
+            ]
+          }
+        },
+        {
+          "cue_id": "vc_S5_27d68c",
+          "section_id": "S5",
+          "trigger_timestamp_sec": 14.01,
+          "trigger_word": "dense_mlp_vs_cnn_receptive_field",
+          "taxonomy_type": "Side-by-Side Comparison",
+          "element_target": "dense_mlp_vs_cnn_receptive_field",
+          "action": "transform",
+          "visual_description": "Render side-by-side comparison: left panel displays dense 120M weight connection matrix; right panel highlights compact 3x3 shared kernel.",
+          "necessity_justification": "Demonstrates the catastrophic parameter explosion of dense layers vs parameter sharing in CNNs.",
+          "renderer_hints": {
+            "left_label": "Dense MLP (120M weights)",
+            "right_label": "Conv Kernel (9 weights)",
+            "color": "#EF4444"
+          }
+        },
+        {
+          "cue_id": "vc_S5_9f2c3b",
+          "section_id": "S5",
+          "trigger_timestamp_sec": 18.19,
+          "trigger_word": "dense_mlp_vs_cnn_receptive_field",
+          "taxonomy_type": "Side-by-Side Comparison",
+          "element_target": "dense_mlp_vs_cnn_receptive_field",
+          "action": "transform",
+          "visual_description": "Render side-by-side comparison: left panel displays dense 120M weight connection matrix; right panel highlights compact 3x3 shared kernel.",
+          "necessity_justification": "Demonstrates the catastrophic parameter explosion of dense layers vs parameter sharing in CNNs.",
+          "renderer_hints": {
+            "left_label": "Dense MLP (120M weights)",
+            "right_label": "Conv Kernel (9 weights)",
+            "color": "#EF4444"
+          }
+        },
+        {
+          "cue_id": "vc_S5_f8cb8c",
+          "section_id": "S5",
+          "trigger_timestamp_sec": 24.77,
+          "trigger_word": "concept_link_4",
+          "taxonomy_type": "Concept Map Linkage",
+          "element_target": "concept_link_4",
+          "action": "reveal",
+          "visual_description": "Display conceptual graph linking prerequisite knowledge nodes to current learning objective.",
+          "necessity_justification": "Enhances cognitive schema integration for the learner.",
+          "renderer_hints": {
+            "nodes": [
+              "Input",
+              "Transformation",
+              "Output"
+            ]
+          }
+        }
+      ],
+      "scene_start_time_sec": 167.41,
+      "scene_end_time_sec": 193.95,
+      "scene_duration_sec": 26.54
+    }
+  ],
+  "quality_report": {
+    "report_id": "qr_2597514e",
+    "overall_status": "PASSED",
+    "overall_quality_score": 0.959,
+    "dar_p_ratio": 0.0775,
+    "target_duration_sec": 180.0,
+    "actual_duration_sec": 193.95,
+    "duration_error_pct": 7.75,
+    "factual_consistency_score": 0.924,
+    "visual_necessity_score": 1.0,
+    "taxonomy_validity_score": 1.0,
+    "prosody_coherence_score": 0.98,
+    "checks": [
+      {
+        "check_id": "chk_dar_p",
+        "rule_name": "Duration Adherence Ratio with Prosody (DAR-P)",
+        "category": "temporal_dar_p",
+        "status": "PASSED",
+        "score": 0.922,
+        "threshold": 0.85,
+        "actual_value": "193.9s vs target 180.0s (7.75%)",
+        "message": "DAR-P error is 7.75% (Threshold: <= 15% PASSED, <= 25% WARNING)",
+        "auto_repaired": true
+      },
+      {
+        "check_id": "chk_taxonomy_validity",
+        "rule_name": "13 Canonical Visual Taxonomies Conformance",
+        "category": "visual_coherence",
+        "status": "PASSED",
+        "score": 1.0,
+        "threshold": 1.0,
+        "actual_value": "27/27 valid",
+        "message": "All visual events strictly adhere to the 13 canonical taxonomies.",
+        "auto_repaired": false
+      },
+      {
+        "check_id": "chk_visual_necessity",
+        "rule_name": "Instructional Visual Necessity & Intent",
+        "category": "visual_coherence",
+        "status": "PASSED",
+        "score": 1.0,
+        "threshold": 0.85,
+        "actual_value": "100.0%",
+        "message": "Every visual cue provides cognitive justification and explicit graphical target.",
+        "auto_repaired": false
+      },
+      {
+        "check_id": "chk_factual_consistency",
+        "rule_name": "Source Material Grounding & Factuality",
+        "category": "factual_consistency",
+        "status": "PASSED",
+        "score": 0.924,
+        "threshold": 0.85,
+        "actual_value": "92.4%",
+        "message": "Narration concepts are grounded in extracted document entities with zero detected hallucinations.",
+        "auto_repaired": false
+      },
+      {
+        "check_id": "chk_prosody_coherence",
+        "rule_name": "Pre-TTS SSML & Pause Syntactic Coherence",
+        "category": "prosody_validity",
+        "status": "PASSED",
+        "score": 0.98,
+        "threshold": 0.9,
+        "actual_value": "98.0%",
+        "message": "SSML is structurally balanced, with valid break durations within physiological limits.",
+        "auto_repaired": false
+      }
+    ],
+    "auto_repairs_applied": [
+      "Adjusted prosody pause coefficients by -8.4% to meet DAR-P target."
+    ],
+    "human_review_required": false,
+    "timestamp": "2026-09-21T16:47:05.269778+00:00"
+  },
+  "verified_at": "2026-09-21T16:47:05.269778+00:00"
+}
