@@ -636,155 +636,271 @@
       display: flex;
     }
 
-    /* 1. SƠ ĐỒ TƯ DUY (MINDMAP) */
-    .mindmap-container {
+    /* 1. SƠ ĐỒ TƯ DUY (MINDMAP) - PAN & ZOOM, TOP-DOWN, ĐA GỐC ĐỘC LẬP TỪNG TỆP */
+    .mindmap-viewport {
       flex: 1;
-      overflow-y: auto;
-      padding: 26px;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      position: relative;
+      cursor: grab;
+      user-select: none;
       background: 
-        radial-gradient(circle at 30% 30%, rgba(99, 102, 241, 0.08) 0%, transparent 60%),
-        radial-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 0);
-      background-size: 100% 100%, 22px 22px;
+        radial-gradient(circle at 50% 50%, rgba(99, 102, 241, 0.05) 0%, transparent 70%),
+        radial-gradient(rgba(255, 255, 255, 0.05) 1.5px, transparent 0);
+      background-size: 100% 100%, 28px 28px;
+    }
+
+    .mindmap-viewport:active {
+      cursor: grabbing;
+    }
+
+    .mindmap-world {
+      position: absolute;
+      top: 0;
+      left: 0;
+      transform-origin: 0 0;
+      min-width: 3200px;
+      min-height: 2000px;
+    }
+
+    /* FLOATING CONTROLS (ZOOM & EXPAND) */
+    .mindmap-floating-controls {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      padding: 6px 10px;
+      backdrop-filter: blur(14px);
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+    }
+
+    .mindmap-ctrl-btn {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      color: var(--text-main);
+      padding: 5px 9px;
+      border-radius: 5px;
+      font-size: 11.5px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .mindmap-ctrl-btn:hover {
+      background: var(--cyan);
+      color: #080c14;
+      border-color: var(--cyan);
+    }
+
+    .mindmap-zoom-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      color: var(--cyan);
+      font-weight: 700;
+      padding: 0 4px;
+    }
+
+    /* TREE ROOT CONTAINER (MỖI TỆP LÀ 1 CÂY GỐC ĐỘC LẬP MỌC TỪ TRÊN XUỐNG) */
+    .tree-root-container {
+      position: absolute;
       display: flex;
       flex-direction: column;
-      gap: 20px;
-    }
-
-    .mindmap-header-row {
-      display: flex;
-      justify-content: space-between;
       align-items: center;
-      padding-bottom: 12px;
-      border-bottom: 1px solid var(--border-subtle);
+      cursor: default;
     }
 
-    .mindmap-canvas-wrap {
-      display: flex;
-      gap: 32px;
-      align-items: stretch;
-      min-height: 480px;
-      position: relative;
-    }
-
-    .mindmap-root-column {
-      flex: 0 0 280px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .mindmap-root-card {
+    .tree-root-card {
       background: linear-gradient(135deg, rgba(30, 41, 59, 0.95), rgba(15, 23, 42, 0.98));
       border: 2px solid var(--cyan);
       border-radius: var(--radius-md);
-      padding: 26px 20px;
+      padding: 16px 22px;
       text-align: center;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), 0 0 30px var(--cyan-glow);
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.6), 0 0 25px var(--cyan-glow);
+      min-width: 280px;
+      max-width: 360px;
       position: relative;
-      width: 100%;
+      cursor: grab;
+      transition: transform 0.2s, box-shadow 0.2s;
     }
 
-    .mindmap-root-card::after {
-      content: '';
+    .tree-root-card:active {
+      cursor: grabbing;
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.8), 0 0 35px var(--cyan);
+    }
+
+    .tree-root-drag-badge {
       position: absolute;
-      right: -32px;
-      top: 50%;
-      transform: translateY(-50%);
-      width: 32px;
-      height: 2px;
-      background: linear-gradient(90deg, var(--cyan), var(--primary));
-    }
-
-    .mindmap-branches-column {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
-      justify-content: center;
-      position: relative;
-    }
-
-    .mindmap-branches-column::before {
-      content: '';
-      position: absolute;
-      left: 0;
-      top: 24px;
-      bottom: 24px;
-      width: 2px;
-      background: rgba(56, 189, 248, 0.3);
-    }
-
-    .mindmap-branch-node {
-      background: var(--bg-card);
-      border: 1px solid var(--border-subtle);
-      border-left: 3px solid var(--cyan);
-      border-radius: var(--radius-sm);
-      padding: 14px 18px;
-      margin-left: 16px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      transition: all 0.25s ease;
-      cursor: pointer;
-      position: relative;
-    }
-
-    .mindmap-branch-node::before {
-      content: '';
-      position: absolute;
-      left: -16px;
-      top: 50%;
-      width: 16px;
-      height: 2px;
-      background: rgba(56, 189, 248, 0.3);
-    }
-
-    .mindmap-branch-node:hover {
-      background: var(--bg-card-hover);
-      border-color: var(--cyan);
-      border-left-color: var(--cyan);
-      transform: translateX(5px);
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4), 0 0 16px rgba(56, 189, 248, 0.2);
-    }
-
-    .branch-info-col {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-
-    .branch-chapter-badge {
-      font-size: 10.5px;
+      top: -10px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(99, 102, 241, 0.4);
+      border: 1px solid var(--cyan);
+      color: var(--cyan);
+      font-size: 9.5px;
       font-weight: 700;
+      padding: 1px 8px;
+      border-radius: 10px;
       text-transform: uppercase;
       letter-spacing: 0.5px;
+      white-space: nowrap;
+    }
+
+    .tree-root-title {
+      font-size: 14.5px;
+      font-weight: 800;
+      color: var(--text-main);
+      margin: 4px 0 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .tree-root-meta {
+      font-size: 11px;
       color: var(--cyan);
       display: flex;
       align-items: center;
+      justify-content: center;
       gap: 6px;
     }
 
-    .branch-title {
-      font-size: 14px;
+    /* VERTICAL STEM & HORIZONTAL CONNECTOR */
+    .tree-stem-vertical {
+      width: 2px;
+      height: 26px;
+      background: linear-gradient(180deg, var(--cyan), var(--primary));
+      margin: 0 auto;
+    }
+
+    .tree-branches-bus {
+      height: 2px;
+      background: rgba(56, 189, 248, 0.4);
+      position: relative;
+      box-shadow: 0 0 10px rgba(56, 189, 248, 0.3);
+    }
+
+    /* BRANCHES ROW (MỌC TỪ TRÊN XUỐNG DƯỚI) */
+    .tree-branches-row {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      align-items: flex-start;
+      position: relative;
+      margin-top: -2px;
+    }
+
+    .tree-branch-col {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 220px;
+      position: relative;
+    }
+
+    .tree-drop-line {
+      width: 2px;
+      height: 20px;
+      background: rgba(56, 189, 248, 0.4);
+      margin: 0 auto;
+    }
+
+    .tree-branch-card {
+      width: 100%;
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-top: 3px solid var(--cyan);
+      border-radius: var(--radius-sm);
+      padding: 12px 14px;
+      transition: all 0.25s ease;
+      cursor: pointer;
+      position: relative;
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+    }
+
+    .tree-branch-card:hover {
+      background: var(--bg-card-hover);
+      border-color: var(--cyan);
+      border-top-color: var(--cyan);
+      transform: translateY(-3px);
+      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.5), 0 0 16px rgba(56, 189, 248, 0.25);
+    }
+
+    .branch-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+
+    .branch-card-title {
+      font-size: 12px;
       font-weight: 700;
       color: var(--text-main);
+      line-height: 1.35;
+      margin-bottom: 6px;
     }
 
-    .branch-terms-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-      margin-top: 2px;
-    }
-
-    .branch-leaf-pill {
+    .branch-expand-btn {
       background: rgba(255, 255, 255, 0.05);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      color: var(--text-muted);
-      font-size: 11px;
-      padding: 2px 8px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: var(--cyan);
+      width: 20px;
+      height: 20px;
       border-radius: 4px;
-      font-weight: 500;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .branch-expand-btn:hover {
+      background: var(--cyan);
+      color: #080c14;
+    }
+
+    .tree-leaf-box {
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
+      padding-top: 6px;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .tree-leaf-box.collapsed {
+      display: none;
+    }
+
+    .tree-leaf-tag {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      color: var(--text-muted);
+      font-size: 10.5px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      display: inline-block;
+      line-height: 1.2;
+    }
+
+    .tree-action-link {
+      font-size: 10.5px;
+      color: var(--cyan);
+      font-weight: 600;
+      margin-top: 3px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
     }
 
     /* 2. KỊCH BẢN GIẢNG DẠY (SCRIPT) */
@@ -975,63 +1091,185 @@
       padding: 0 18px;
     }
 
-    /* PANE 3: BẢNG TINH CHỈNH THAM SỐ (THỜI LƯỢNG & TỐC ĐỘ ĐỌC) */
+    /* PANE 3: BẢNG TINH CHỈNH THAM SỐ + Ô CHAT AI SƯ PHẠM (LLM CHAT BOX) */
     .pane-tuning {
       border-left: 1px solid var(--border-subtle);
-      background: rgba(10, 15, 26, 0.65);
+      background: rgba(10, 15, 26, 0.75);
       display: flex;
       flex-direction: column;
       overflow-y: auto;
-      padding: 18px;
-      gap: 16px;
+      padding: 16px;
+      gap: 12px;
     }
 
     .tuning-card {
       background: var(--bg-card);
       border: 1px solid var(--border-subtle);
       border-radius: var(--radius-sm);
-      padding: 14px;
+      padding: 12px 14px;
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: 6px;
     }
 
     .tuning-label-row {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      font-size: 12px;
+      font-size: 11.5px;
       color: var(--text-muted);
       font-weight: 600;
     }
 
-    .tuning-meta-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
-      margin-top: 4px;
-    }
-
-    .tuning-meta-item {
-      background: rgba(8, 12, 20, 0.6);
-      border: 1px solid rgba(255, 255, 255, 0.04);
-      border-radius: 6px;
-      padding: 8px 10px;
+    /* AI CHAT SECTION */
+    .ai-chat-section {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
       display: flex;
       flex-direction: column;
-      gap: 2px;
+      flex: 1;
+      min-height: 380px;
+      overflow: hidden;
     }
 
-    .tuning-meta-title {
-      font-size: 10px;
-      color: var(--text-dim);
-      text-transform: uppercase;
-      font-weight: 600;
+    .ai-chat-header {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border-subtle);
+      background: rgba(15, 23, 42, 0.7);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
     }
 
-    .tuning-meta-item strong {
-      font-size: 12.5px;
-      font-family: 'JetBrains Mono', monospace;
+    .ai-chat-messages {
+      flex: 1;
+      padding: 12px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      font-size: 12px;
+    }
+
+    .chat-msg {
+      display: flex;
+      gap: 8px;
+      align-items: flex-start;
+      max-width: 95%;
+    }
+
+    .chat-msg.msg-ai {
+      align-self: flex-start;
+    }
+
+    .chat-msg.msg-user {
+      align-self: flex-end;
+      flex-direction: row-reverse;
+    }
+
+    .msg-avatar {
+      font-size: 15px;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: rgba(99, 102, 241, 0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .msg-bubble {
+      padding: 8px 12px;
+      border-radius: 10px;
+      line-height: 1.45;
+    }
+
+    .msg-ai .msg-bubble {
+      background: rgba(15, 23, 42, 0.85);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-main);
+    }
+
+    .msg-user .msg-bubble {
+      background: linear-gradient(135deg, var(--primary), #4f46e5);
+      color: #fff;
+    }
+
+    .chat-suggestions {
+      margin-top: 4px;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .chat-pill-btn {
+      background: rgba(56, 189, 248, 0.08);
+      border: 1px solid rgba(56, 189, 248, 0.2);
+      color: var(--cyan);
+      font-size: 11px;
+      padding: 5px 8px;
+      border-radius: 6px;
+      cursor: pointer;
+      text-align: left;
+      transition: all 0.2s;
+    }
+
+    .chat-pill-btn:hover {
+      background: rgba(56, 189, 248, 0.16);
+      border-color: var(--cyan);
+      transform: translateX(2px);
+    }
+
+    .ai-chat-input-row {
+      padding: 8px 10px;
+      border-top: 1px solid var(--border-subtle);
+      background: rgba(15, 23, 42, 0.8);
+      display: flex;
+      gap: 6px;
+      align-items: flex-end;
+    }
+
+    .chat-input {
+      flex: 1;
+      background: rgba(8, 12, 20, 0.85);
+      border: 1px solid var(--border-subtle);
+      border-radius: 6px;
+      color: var(--text-main);
+      padding: 8px 10px;
+      font-size: 12px;
+      font-family: inherit;
+      resize: none;
+      max-height: 60px;
+      line-height: 1.4;
+    }
+
+    .chat-input:focus {
+      outline: none;
+      border-color: var(--cyan);
+    }
+
+    .btn-chat-send {
+      background: linear-gradient(135deg, var(--cyan), var(--primary));
+      border: none;
+      color: #080c14;
+      font-weight: 800;
+      width: 32px;
+      height: 32px;
+      border-radius: 6px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      transition: all 0.2s;
+      flex-shrink: 0;
+    }
+
+    .btn-chat-send:hover {
+      filter: brightness(1.15);
+      transform: scale(1.05);
     }
 
     /* =========================================================================
@@ -1232,25 +1470,28 @@
     <!-- 3-PANE WORKSPACE BODY -->
     <div class="workspace-body">
 
-      <!-- PANE 1: DANH SÁCH TÀI LIỆU THÊM VÀO (SOURCES) -->
+      <!-- PANE 1: NGUỒN TÀI LIỆU (+ THÊM TÀI LIỆU Ở TRÊN, DƯỚI LÀ DANH SÁCH ĐÃ UP VÀO) -->
       <aside class="pane-sources">
         <div class="pane-header">
-          <span>Tài Liệu Đã Thêm</span>
+          <span>Nguồn Tài Liệu</span>
           <span style="color: var(--cyan); font-size: 11px;" id="source-active-count">1 tệp</span>
         </div>
 
-        <!-- SOURCES LIST -->
-        <div id="sources-list" style="display: flex; flex-direction: column; gap: 10px;">
-          <!-- Items will be injected dynamically -->
-        </div>
-
-        <!-- DROP ZONE TO ADD MORE SOURCES -->
+        <!-- Ô THÊM TÀI LIỆU Ở TRÊN -->
         <label class="source-drop-zone" id="source-drop-zone" for="source-file-input">
           <div style="font-size: 26px; margin-bottom: 4px;">📂</div>
           <div style="font-size: 12px; font-weight: 700; color: var(--text-main);">+ Thêm Tài Liệu</div>
-          <div style="font-size: 11px; color: var(--text-dim); margin-top: 4px;">Kéo thả hoặc bấm để nạp thêm .pdf, .pptx, .docx</div>
+          <div style="font-size: 11px; color: var(--text-dim); margin-top: 4px;">Kéo thả hoặc bấm để nạp .pdf, .pptx, .docx</div>
           <input type="file" id="source-file-input" accept=".pptx,.pdf,.docx,.txt" style="display: none;">
         </label>
+
+        <!-- DƯỚI ĐÓ LÀ DANH SÁCH CÁC TÀI LIỆU ĐÃ UP VÀO -->
+        <div style="font-size: 11px; font-weight: 700; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 4px;">
+          Tài Liệu Đã Nạp
+        </div>
+        <div id="sources-list" style="display: flex; flex-direction: column; gap: 10px;">
+          <!-- Items will be injected dynamically -->
+        </div>
       </aside>
 
       <!-- PANE 2: CENTER PANE WITH NOTEBOOK-STYLE TABS (SƠ ĐỒ TƯ DUY, KỊCH BẢN, VIDEO) -->
@@ -1268,34 +1509,22 @@
           </button>
         </div>
 
-        <!-- TAB 1: SƠ ĐỒ TƯ DUY (MẶC ĐỊNH HIỆN ĐẦU TIÊN) -->
-        <div class="center-tab-pane active" id="tab-content-mindmap">
-          <div class="mindmap-container">
-            <div class="mindmap-header-row">
-              <div style="font-size: 14px; font-weight: 700; color: var(--text-main); display: flex; align-items: center; gap: 8px;">
-                <span>🧠</span> Sơ Đồ Tư Duy Bài Giảng (Pedagogical Mindmap)
-              </div>
-              <div style="font-size: 11.5px; color: var(--text-dim);">
-                💡 Bấm vào từng nhánh để xem kịch bản chi tiết
-              </div>
-            </div>
+        <!-- TAB 1: SƠ ĐỒ TƯ DUY (PAN & ZOOM, TOP-DOWN, ĐA GỐC ĐỘC LẬP TỪNG TỆP) -->
+        <div class="center-tab-pane active" id="tab-content-mindmap" style="position: relative;">
+          <!-- FLOATING TOOLBAR: PAN/ZOOM & EXPAND/COLLAPSE -->
+          <div class="mindmap-floating-controls">
+            <button class="mindmap-ctrl-btn" id="btn-zoom-in" title="Phóng to (hoặc lăn chuột lên)">➕</button>
+            <button class="mindmap-ctrl-btn" id="btn-zoom-out" title="Thu nhỏ (hoặc lăn chuột xuống)">➖</button>
+            <span class="mindmap-zoom-label" id="label-zoom">85%</span>
+            <button class="mindmap-ctrl-btn" id="btn-zoom-reset" title="Đặt lại góc nhìn">⟲ Căn Giữa</button>
+            <button class="mindmap-ctrl-btn" id="btn-expand-all" title="Mở rộng tất cả cực đại">📂 Mở Rộng</button>
+            <button class="mindmap-ctrl-btn" id="btn-collapse-all" title="Thu gọn">📁 Thu Gọn</button>
+          </div>
 
-            <div class="mindmap-canvas-wrap">
-              <div class="mindmap-root-column">
-                <div class="mindmap-root-card">
-                  <div style="font-size: 32px; margin-bottom: 8px;">🎓</div>
-                  <div style="font-size: 16px; font-weight: 800; color: var(--text-main); margin-bottom: 6px;" id="mindmap-root-title">
-                    Phân Cụm Dữ Liệu
-                  </div>
-                  <div style="font-size: 11.5px; color: var(--cyan);" id="mindmap-root-sub">
-                    Chủ đề trọng tâm • 5 phân nhánh
-                  </div>
-                </div>
-              </div>
-
-              <div class="mindmap-branches-column" id="mindmap-branches-container">
-                <!-- Branches dynamically injected via JS -->
-              </div>
+          <!-- CANVAS VIEWPORT (HỖ TRỢ LĂN CHUỘT PHÓNG TO/THU NHỎ VÀ KÉO DI CHUYỂN NHƯ CVAT) -->
+          <div class="mindmap-viewport" id="mindmap-viewport">
+            <div class="mindmap-world" id="mindmap-world">
+              <!-- Multi-Root Trees dynamically generated via JS -->
             </div>
           </div>
         </div>
@@ -1342,7 +1571,7 @@
         </div>
       </main>
 
-      <!-- PANE 3: BẢNG TINH CHỈNH THAM SỐ (THỜI LƯỢNG & TỐC ĐỘ ĐỌC) -->
+      <!-- PANE 3: BẢNG TINH CHỈNH THAM SỐ + Ô CHAT AI SƯ PHẠM (LLM CHAT BOX) -->
       <aside class="pane-tuning">
         <div class="pane-header">
           <span>⚙️ Tinh Chỉnh Tham Số</span>
@@ -1367,44 +1596,44 @@
           <input type="range" class="slider" id="slider-wpm" min="110" max="180" step="5" value="140" style="width: 100%;">
         </div>
 
-        <!-- ƯỚC TÍNH SƯ PHẠM TÍNH TOÁN THEO THỜI GIAN THỰC -->
-        <div class="tuning-card">
-          <div style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">
-            Ước Tính Sư Phạm
-          </div>
-          <div class="tuning-meta-grid">
-            <div class="tuning-meta-item">
-              <span class="tuning-meta-title">Ngân sách từ:</span>
-              <strong id="tuning-calc-words" style="color: var(--cyan);">700 từ</strong>
-            </div>
-            <div class="tuning-meta-item">
-              <span class="tuning-meta-title">Số phân cảnh:</span>
-              <strong id="tuning-calc-scenes" style="color: var(--emerald);">5 cảnh</strong>
-            </div>
-            <div class="tuning-meta-item">
-              <span class="tuning-meta-title">Nhịp trung bình:</span>
-              <strong id="tuning-calc-scene-dur" style="color: var(--amber);">~60s / cảnh</strong>
-            </div>
-            <div class="tuning-meta-item">
-              <span class="tuning-meta-title">Chuẩn định dạng:</span>
-              <strong style="color: var(--primary);">MOOC Video</strong>
-            </div>
-          </div>
-        </div>
-
-        <!-- THÔNG TIN BÀI GIẢNG -->
-        <div class="tuning-card">
-          <div style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">
-            Thông Tin Bài Giảng
-          </div>
-          <div id="tuning-proj-title" style="font-size: 13px; font-weight: 700; color: var(--text-main); margin-bottom: 4px;">...</div>
-          <div id="tuning-proj-desc" style="font-size: 12px; color: var(--text-muted); line-height: 1.4;">...</div>
-        </div>
-
-        <!-- NÚT TẠO LẠI -->
-        <button class="btn-primary" id="btn-re-generate" style="width: 100%; justify-content: center; padding: 12px; font-size: 13px; margin-top: auto;">
-          <span>⚡</span> Cập Nhật & Tạo Lại Kịch Bản
+        <!-- NÚT CẬP NHẬT THAM SỐ -->
+        <button class="btn-primary" id="btn-re-generate" style="width: 100%; justify-content: center; padding: 9px; font-size: 12.5px;">
+          <span>⚡</span> Cập Nhật Tham Số
         </button>
+
+        <!-- KHUNG CHAT AI SƯ PHẠM (LLM CHAT BOX THAY THẾ ƯỚC TÍNH SƯ PHẠM) -->
+        <div class="ai-chat-section">
+          <div class="ai-chat-header">
+            <div style="display: flex; align-items: center; gap: 7px; font-size: 12.5px; font-weight: 700; color: var(--text-main);">
+              <span>💬</span> Trợ Lý AI Bài Giảng
+            </div>
+            <span class="badge-pro" style="font-size: 9px; padding: 1px 6px;">CLSG LLM</span>
+          </div>
+
+          <!-- MESSAGES CONTAINER -->
+          <div class="ai-chat-messages" id="ai-chat-messages">
+            <div class="chat-msg msg-ai">
+              <div class="msg-avatar">🤖</div>
+              <div class="msg-bubble">
+                Chào bạn! Tôi là trợ lý AI sư phạm. Bạn có thể yêu cầu tạo video bài giảng, mở rộng nhánh sơ đồ tư duy hoặc tinh chỉnh kịch bản theo yêu cầu riêng.
+              </div>
+            </div>
+            <div class="chat-suggestions">
+              <div style="font-size: 10.5px; color: var(--text-dim); margin-bottom: 3px;">Gợi ý câu lệnh nhanh:</div>
+              <button class="chat-pill-btn" onclick="sendQuickPrompt('🎬 Yêu cầu tạo video bài giảng 5 phút chuẩn MOOC')">🎬 Tạo video 5 phút</button>
+              <button class="chat-pill-btn" onclick="sendQuickPrompt('🧠 Tự động phân nhánh sơ đồ tư duy chi tiết hơn')">🧠 Phân nhánh sơ đồ</button>
+              <button class="chat-pill-btn" onclick="sendQuickPrompt('⚡ Tăng nhịp độ giảng dạy lên 150 từ/phút')">⚡ Tăng nhịp độ 150 WPM</button>
+            </div>
+          </div>
+
+          <!-- CHAT INPUT -->
+          <div class="ai-chat-input-row">
+            <textarea class="chat-input" id="chat-input" placeholder="Yêu cầu AI tạo video, chỉnh kịch bản..." rows="1"></textarea>
+            <button class="btn-chat-send" id="btn-chat-send" title="Gửi yêu cầu">
+              <span>➤</span>
+            </button>
+          </div>
+        </div>
       </aside>
 
     </div>
@@ -1752,78 +1981,267 @@
       const dur = parseInt(activeProject.duration_s || 300);
       const wpm = parseInt(activeProject.wpm || 140);
 
-      document.getElementById('slider-duration').value = dur;
-      document.getElementById('val-duration').textContent = `${Math.floor(dur / 60)} phút ${dur % 60 ? dur % 60 + 's' : '00s'} (${dur}s)`;
-      document.getElementById('slider-wpm').value = wpm;
-      document.getElementById('val-wpm').textContent = `${wpm} từ/phút`;
+      const sDur = document.getElementById('slider-duration');
+      if (sDur) sDur.value = dur;
+      const vDur = document.getElementById('val-duration');
+      if (vDur) vDur.textContent = `${Math.floor(dur / 60)} phút ${dur % 60 ? dur % 60 + 's' : '00s'} (${dur}s)`;
 
-      const targetWords = Math.round((dur / 60) * wpm);
-      document.getElementById('tuning-calc-words').textContent = `${targetWords} từ`;
-      document.getElementById('tuning-calc-scenes').textContent = `${currentScenes.length} cảnh`;
-      document.getElementById('tuning-calc-scene-dur').textContent = `~${Math.round(dur / Math.max(1, currentScenes.length))}s / cảnh`;
-
-      document.getElementById('tuning-proj-title').textContent = activeProject.title;
-      document.getElementById('tuning-proj-desc').textContent = activeProject.desc || 'Bài giảng đa phương thức chuẩn sư phạm';
+      const sWpm = document.getElementById('slider-wpm');
+      if (sWpm) sWpm.value = wpm;
+      const vWpm = document.getElementById('val-wpm');
+      if (vWpm) vWpm.textContent = `${wpm} từ/phút`;
     }
 
-    // RENDER SƠ ĐỒ TƯ DUY (MINDMAP) - TỰ ĐỘNG PHÂN NHÁNH TỪ CÁC PHÂN CẢNH BÀI GIẢNG
+    // =========================================================================
+    // PAN & ZOOM CANVAS CHO SƠ ĐỒ TƯ DUY (CHUẨN CVAT / FIGMA)
+    // =========================================================================
+    let panX = 40;
+    let panY = 30;
+    let zoomScale = 0.85;
+    let isPanning = false;
+    let startX = 0;
+    let startY = 0;
+
+    function applyMindmapTransform() {
+      const world = document.getElementById('mindmap-world');
+      if (world) {
+        world.style.transform = `translate(${panX}px, ${panY}px) scale(${zoomScale})`;
+      }
+      const label = document.getElementById('label-zoom');
+      if (label) {
+        label.textContent = `${Math.round(zoomScale * 100)}%`;
+      }
+    }
+
+    function initMindmapPanZoom() {
+      const viewport = document.getElementById('mindmap-viewport');
+      if (!viewport) return;
+
+      // 1. Phóng to / Thu nhỏ bằng con lăn chuột (Mouse Wheel)
+      viewport.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        const delta = e.deltaY < 0 ? 1.08 : 0.92;
+        const newScale = Math.min(2.2, Math.max(0.35, zoomScale * delta));
+
+        // Zoom tương đối theo vị trí chuột
+        const rect = viewport.getBoundingClientRect();
+        const mouseX = e.clientX - rect.left;
+        const mouseY = e.clientY - rect.top;
+
+        panX = mouseX - (mouseX - panX) * (newScale / zoomScale);
+        panY = mouseY - (mouseY - panY) * (newScale / zoomScale);
+        zoomScale = newScale;
+
+        applyMindmapTransform();
+      }, { passive: false });
+
+      // 2. Kéo di chuyển toàn bộ bàn vẽ (Click & Drag Pan giống CVAT)
+      viewport.addEventListener('mousedown', (e) => {
+        // Nếu click vào nút điều khiển hoặc thẻ gốc thì không pan toàn cảnh
+        if (e.target.closest('.mindmap-floating-controls') || e.target.closest('.tree-root-card') || e.target.closest('.tree-branch-card')) {
+          return;
+        }
+        isPanning = true;
+        startX = e.clientX - panX;
+        startY = e.clientY - panY;
+        viewport.style.cursor = 'grabbing';
+      });
+
+      window.addEventListener('mousemove', (e) => {
+        if (!isPanning) return;
+        panX = e.clientX - startX;
+        panY = e.clientY - startY;
+        applyMindmapTransform();
+      });
+
+      window.addEventListener('mouseup', () => {
+        if (isPanning) {
+          isPanning = false;
+          if (viewport) viewport.style.cursor = 'grab';
+        }
+      });
+
+      // 3. Floating Toolbar Buttons
+      document.getElementById('btn-zoom-in')?.addEventListener('click', () => {
+        zoomScale = Math.min(2.2, zoomScale * 1.15);
+        applyMindmapTransform();
+      });
+      document.getElementById('btn-zoom-out')?.addEventListener('click', () => {
+        zoomScale = Math.max(0.35, zoomScale * 0.85);
+        applyMindmapTransform();
+      });
+      document.getElementById('btn-zoom-reset')?.addEventListener('click', () => {
+        panX = 40;
+        panY = 30;
+        zoomScale = 0.85;
+        applyMindmapTransform();
+      });
+
+      document.getElementById('btn-expand-all')?.addEventListener('click', () => {
+        document.querySelectorAll('.tree-leaf-box').forEach(box => box.classList.remove('collapsed'));
+        document.querySelectorAll('.branch-expand-btn').forEach(btn => btn.textContent = '▼');
+      });
+      document.getElementById('btn-collapse-all')?.addEventListener('click', () => {
+        document.querySelectorAll('.tree-leaf-box').forEach(box => box.classList.add('collapsed'));
+        document.querySelectorAll('.branch-expand-btn').forEach(btn => btn.textContent = '▶');
+      });
+
+      applyMindmapTransform();
+    }
+
+    // =========================================================================
+    // RENDER SƠ ĐỒ TƯ DUY: MỌC TỪ TRÊN XUỐNG, ĐA GỐC ĐỘC LẬP TỪNG TỆP
+    // =========================================================================
     function renderMindmap() {
-      const rootTitle = document.getElementById('mindmap-root-title');
-      const rootSub = document.getElementById('mindmap-root-sub');
-      const container = document.getElementById('mindmap-branches-container');
+      const world = document.getElementById('mindmap-world');
+      if (!world) return;
+      world.innerHTML = '';
 
-      if (rootTitle) rootTitle.textContent = activeProject.title;
-      if (rootSub) rootSub.textContent = `Chủ đề trọng tâm • ${currentScenes.length} phân nhánh sư phạm`;
+      // Danh sách các tệp nguồn: mỗi tệp tạo thành 1 CÂY GỐC RIÊNG BIỆT (không gộp lung tung)
+      const sources = (activeProject.sources && activeProject.sources.length > 0)
+        ? activeProject.sources
+        : [{ name: activeProject.title + '.pdf', pages: 35, size: '1.2 MB' }];
 
-      if (!container) return;
-      container.innerHTML = '';
+      sources.forEach((src, srcIdx) => {
+        const treeContainer = document.createElement('div');
+        treeContainer.className = 'tree-root-container';
+        treeContainer.id = `tree-root-${srcIdx}`;
+        // Định vị vị trí ban đầu của từng gốc (cách nhau theo chiều ngang, tránh đè lên nhau)
+        treeContainer.style.left = `${60 + srcIdx * 1220}px`;
+        treeContainer.style.top = `40px`;
 
-      currentScenes.forEach((scene, idx) => {
-        const branchCard = document.createElement('div');
-        branchCard.className = 'mindmap-branch-node';
-        branchCard.title = 'Bấm để chuyển sang kịch bản phân cảnh này';
-
-        const termsPills = (scene.detected_terms || ['Thuật ngữ trọng tâm', 'Khái niệm'])
-          .slice(0, 4)
-          .map(t => `<span class="branch-leaf-pill">🌿 ${t}</span>`)
-          .join('');
-
-        // Trích xuất tiêu đề ngắn gọn cho nhánh
-        let branchName = scene.visual_purpose ? scene.visual_purpose.split('•')[0].trim() : `Phân đoạn ${idx + 1}`;
-        if (branchName.length > 55) branchName = branchName.substring(0, 52) + '...';
-
-        branchCard.innerHTML = `
-          <div class="branch-info-col">
-            <div class="branch-chapter-badge">
-              <span>● CHƯƠNG ${idx + 1}</span>
-              <span style="color: var(--text-dim); font-family: 'JetBrains Mono', monospace;">[${formatTime(scene.t_start)} - ${formatTime(scene.t_end)}]</span>
-              <span class="depth-tag depth-${scene.depth}">${scene.depth}</span>
-            </div>
-            <div class="branch-title">${branchName}</div>
-            <div class="branch-terms-row">${termsPills}</div>
-          </div>
-          <div style="display: flex; align-items: center; gap: 8px;">
-            <span class="visual-type-badge">[${scene.visual_type || 'split_screen'}]</span>
-            <span style="font-size: 13px; color: var(--cyan);">→</span>
+        // 1. Thẻ GỐC TRÊN CÙNG (Có thể kéo thả di chuyển vị trí gốc tùy ý)
+        const rootCard = document.createElement('div');
+        rootCard.className = 'tree-root-card';
+        rootCard.title = 'Giữ và kéo để di chuyển gốc học liệu này';
+        rootCard.innerHTML = `
+          <div class="tree-root-drag-badge">⋮⋮ Kéo di chuyển gốc</div>
+          <div style="font-size: 26px; margin-bottom: 2px;">📄</div>
+          <div class="tree-root-title" title="${src.name}">${src.name}</div>
+          <div class="tree-root-meta">
+            <span>${src.pages || 10} slide / trang</span> • 
+            <span>${currentScenes.length} phân nhánh</span>
           </div>
         `;
 
-        branchCard.addEventListener('click', () => {
-          switchCenterTab('script');
-          setTimeout(() => {
-            const row = document.getElementById(`scene-card-${idx}`);
-            if (row) {
-              row.scrollIntoView({ behavior: 'smooth', block: 'center' });
-              row.style.borderColor = 'var(--cyan)';
-              setTimeout(() => row.style.borderColor = 'var(--border-subtle)', 1500);
-            }
-          }, 80);
+        // Cơ chế kéo di chuyển gốc cây độc lập (Free Draggable Root)
+        let isDraggingRoot = false;
+        let rootStartX = 0;
+        let rootStartY = 0;
+        let initialLeft = 0;
+        let initialTop = 0;
+
+        rootCard.addEventListener('mousedown', (e) => {
+          e.stopPropagation();
+          isDraggingRoot = true;
+          rootStartX = e.clientX;
+          rootStartY = e.clientY;
+          initialLeft = parseInt(treeContainer.style.left) || 0;
+          initialTop = parseInt(treeContainer.style.top) || 0;
         });
 
-        container.appendChild(branchCard);
+        window.addEventListener('mousemove', (e) => {
+          if (!isDraggingRoot) return;
+          const dx = (e.clientX - rootStartX) / zoomScale;
+          const dy = (e.clientY - rootStartY) / zoomScale;
+          treeContainer.style.left = `${initialLeft + dx}px`;
+          treeContainer.style.top = `${initialTop + dy}px`;
+        });
+
+        window.addEventListener('mouseup', () => {
+          if (isDraggingRoot) isDraggingRoot = false;
+        });
+
+        treeContainer.appendChild(rootCard);
+
+        // 2. Thân cây nối thẳng đứng từ trên xuống (Vertical Stem)
+        const stem = document.createElement('div');
+        stem.className = 'tree-stem-vertical';
+        treeContainer.appendChild(stem);
+
+        // 3. Đường ngang chia nhánh (Horizontal Connector Bus)
+        const bus = document.createElement('div');
+        bus.className = 'tree-branches-bus';
+        // Chiều rộng bus tương ứng với số phân cảnh
+        bus.style.width = `${Math.max(260, (currentScenes.length - 1) * 236)}px`;
+        treeContainer.appendChild(bus);
+
+        // 4. Hàng các phân nhánh mọc thẳng đứng TỪ TRÊN XUỐNG DƯỚI (Top-to-Bottom)
+        const branchesRow = document.createElement('div');
+        branchesRow.className = 'tree-branches-row';
+
+        currentScenes.forEach((scene, scIdx) => {
+          const col = document.createElement('div');
+          col.className = 'tree-branch-col';
+
+          // Dây nối dọc từ bus xuống card
+          const dropLine = document.createElement('div');
+          dropLine.className = 'tree-drop-line';
+          col.appendChild(dropLine);
+
+          // Card nhánh
+          const branchCard = document.createElement('div');
+          branchCard.className = 'tree-branch-card';
+          branchCard.id = `branch-node-${srcIdx}-${scIdx}`;
+
+          let branchTitle = scene.visual_purpose ? scene.visual_purpose.split('•')[0].trim() : `Chương ${scIdx + 1}`;
+          if (branchTitle.length > 50) branchTitle = branchTitle.substring(0, 48) + '...';
+
+          const termsHtml = (scene.detected_terms || ['Khái niệm cốt lõi', 'Thuật ngữ'])
+            .slice(0, 3)
+            .map(t => `<span class="tree-leaf-tag">🌿 ${t}</span>`)
+            .join(' ');
+
+          branchCard.innerHTML = `
+            <div class="branch-card-header">
+              <span class="depth-tag depth-${scene.depth}">CHƯƠNG ${scIdx + 1}</span>
+              <button class="branch-expand-btn" title="Thu gọn / Mở rộng">▼</button>
+            </div>
+            <div class="branch-card-title">${branchTitle}</div>
+            
+            <div class="tree-leaf-box">
+              <div style="display: flex; flex-wrap: wrap; gap: 4px;">${termsHtml}</div>
+              <div style="font-size: 10px; color: var(--amber); margin-top: 2px;">👁️ [${scene.visual_type || 'split_screen'}]</div>
+              <div class="tree-action-link">Xem kịch bản →</div>
+            </div>
+          `;
+
+          // Bấm nút thu gọn / mở rộng
+          const expandBtn = branchCard.querySelector('.branch-expand-btn');
+          const leafBox = branchCard.querySelector('.tree-leaf-box');
+          expandBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (leafBox.classList.contains('collapsed')) {
+              leafBox.classList.remove('collapsed');
+              expandBtn.textContent = '▼';
+            } else {
+              leafBox.classList.add('collapsed');
+              expandBtn.textContent = '▶';
+            }
+          });
+
+          // Bấm card chuyển sang tab kịch bản
+          branchCard.addEventListener('click', () => {
+            switchCenterTab('script');
+            setTimeout(() => {
+              const row = document.getElementById(`scene-card-${scIdx}`);
+              if (row) {
+                row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                row.style.borderColor = 'var(--cyan)';
+                setTimeout(() => row.style.borderColor = 'var(--border-subtle)', 1500);
+              }
+            }, 80);
+          });
+
+          col.appendChild(branchCard);
+          branchesRow.appendChild(col);
+        });
+
+        treeContainer.appendChild(branchesRow);
+        world.appendChild(treeContainer);
       });
 
-      // Cập nhật preview video mock
+      // Cập nhật video preview title
       const videoTitle = document.getElementById('video-mock-title');
       if (videoTitle) videoTitle.textContent = activeProject.title;
       const teleText = document.getElementById('video-teleprompter-text');
@@ -1831,6 +2249,66 @@
         teleText.textContent = currentScenes[0].narration;
       }
     }
+
+    // =========================================================================
+    // KHUNG CHAT AI SƯ PHẠM (LLM CHAT BOX)
+    // =========================================================================
+    function sendChatMessage(text) {
+      const msg = text || document.getElementById('chat-input')?.value.trim();
+      if (!msg) return;
+
+      const chatContainer = document.getElementById('ai-chat-messages');
+      if (!chatContainer) return;
+
+      // 1. Thêm tin nhắn của User
+      const userMsg = document.createElement('div');
+      userMsg.className = 'chat-msg msg-user';
+      userMsg.innerHTML = `<div class="msg-bubble">${msg}</div>`;
+      chatContainer.appendChild(userMsg);
+
+      // Xóa ô nhập
+      const inputEl = document.getElementById('chat-input');
+      if (inputEl) inputEl.value = '';
+
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+
+      // 2. Giả lập phản hồi AI tự động
+      setTimeout(() => {
+        const aiMsg = document.createElement('div');
+        aiMsg.className = 'chat-msg msg-ai';
+        let reply = "";
+        const lower = msg.toLowerCase();
+
+        if (lower.includes('video') || lower.includes('dựng') || lower.includes('tạo')) {
+          reply = "🎬 <strong>Trợ lý AI:</strong> Đã ghi nhận yêu cầu tạo video bài giảng đa phương thức! Hệ thống sẽ tự động phối hợp phân cảnh, hình ảnh slide và giọng đọc đồng bộ.";
+        } else if (lower.includes('sơ đồ') || lower.includes('nhánh') || lower.includes('mindmap')) {
+          reply = "🧠 <strong>Trợ lý AI:</strong> Sơ đồ tư duy đa gốc hiện đang hiển thị theo cấu trúc mọc từ trên xuống. Bạn có thể tự do kéo di chuyển các gốc học liệu trên bảng vẽ.";
+        } else if (lower.includes('nhịp') || lower.includes('wpm') || lower.includes('tốc độ')) {
+          reply = "⚡ <strong>Trợ lý AI:</strong> Đã ghi nhận điều chỉnh nhịp độ đọc. Bạn có thể nhấn 'Cập Nhật Tham Số' ở trên để tái phân bổ ngân sách từ.";
+        } else {
+          reply = `🤖 <strong>Trợ lý AI:</strong> Đã tiếp nhận yêu cầu: <em>"${msg}"</em>. Giao diện prompt đã sẵn sàng chuyển tiếp tới mô hình LLM để thực thi!`;
+        }
+
+        aiMsg.innerHTML = `
+          <div class="msg-avatar">🤖</div>
+          <div class="msg-bubble">${reply}</div>
+        `;
+        chatContainer.appendChild(aiMsg);
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+      }, 450);
+    }
+
+    function sendQuickPrompt(promptText) {
+      sendChatMessage(promptText);
+    }
+
+    document.getElementById('btn-chat-send')?.addEventListener('click', () => sendChatMessage());
+    document.getElementById('chat-input')?.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendChatMessage();
+      }
+    });
 
     // NẠP DỰ ÁN VÀO KHÔNG GIAN WORKSPACE
     function loadProjectIntoWorkspace(projId) {
@@ -1843,6 +2321,7 @@
 
       renderSourcesList();
       renderMindmap();
+      initMindmapPanZoom();
       renderTimeline();
       updateTuningPanel();
 
@@ -2604,17 +3083,8 @@
       const wpm = parseInt(document.getElementById('slider-wpm')?.value || 140);
       document.getElementById('val-duration').textContent = `${Math.floor(v / 60)} phút ${v % 60 ? v % 60 + 's' : '00s'} (${v}s)`;
 
-      // Tính lại ngân sách từ và nhịp ước tính
-      const targetWords = Math.round((v / 60) * wpm);
-      const wordsEl = document.getElementById('tuning-calc-words');
-      if (wordsEl) wordsEl.textContent = `${targetWords} từ`;
-
-      const numScenes = Math.max(5, Math.min(30, Math.round(v / 60)));
-      const scenesEl = document.getElementById('tuning-calc-scenes');
-      if (scenesEl) scenesEl.textContent = `${numScenes} cảnh`;
-
-      const durEl = document.getElementById('tuning-calc-scene-dur');
-      if (durEl) durEl.textContent = `~${Math.round(v / numScenes)}s / cảnh`;
+      // Cập nhật giá trị hiển thị thời lượng
+      activeProject.duration_s = v;
     });
 
     document.getElementById('slider-wpm')?.addEventListener('input', (e) => {
@@ -2622,9 +3092,7 @@
       const dur = parseInt(document.getElementById('slider-duration')?.value || 300);
       document.getElementById('val-wpm').textContent = `${wpm} từ/phút`;
 
-      const targetWords = Math.round((dur / 60) * wpm);
-      const wordsEl = document.getElementById('tuning-calc-words');
-      if (wordsEl) wordsEl.textContent = `${targetWords} từ`;
+      activeProject.wpm = wpm;
     });
 
     // HEALTH CHECK LOCAL STUDIO SERVER
