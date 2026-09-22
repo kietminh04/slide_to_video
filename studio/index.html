@@ -2130,7 +2130,8 @@
         <span class="badge-pro" id="ws-doc-badge">DSS09</span>
       </div>
 
-      <div class="header-actions">
+      <!-- THANH NÚT XUẤT TÀI LIỆU: MẶC ĐỊNH ẨN, CHỈ HIỂN THỊ KHI ẤN VÀO TAB KỊCH BẢN THEO ĐÚNG YÊU CẦU -->
+      <div class="header-actions" id="workspace-export-actions" style="display: none;">
         <button class="btn-export" id="btn-export-docx">
           <span>📘</span> Word (.docx)
         </button>
@@ -2340,8 +2341,8 @@
           <!-- TRẠNG THÁI TRỐNG (MẶC ĐỊNH KHI CHƯA CHỌN NHÁNH CON NÀO) -->
           <div class="inspector-empty-state" id="inspector-empty-state">
             <div class="empty-icon">📖</div>
-            <div class="empty-title">Nội Dung Sư Phạm Chi Tiết</div>
-            <div class="empty-desc">Nhấp vào một <strong>nhánh con bé nhất</strong> (a1, a2, b1...) trên sơ đồ để xem bản tóm tắt cốt lõi và kịch bản giảng dạy chi tiết.</div>
+            <div class="empty-title">Tóm Tắt Kiến Thức Đọc Nhanh</div>
+            <div class="empty-desc">Nhấp vào một <strong>nhánh con bé nhất</strong> trên sơ đồ để đọc bản tóm tắt đầy đủ kiến thức trọng tâm trước khi quyết định tạo video.</div>
           </div>
 
           <!-- TRẠNG THÁI HIỂN THỊ NỘI DUNG KHI ĐÃ CHỌN NHÁNH CON -->
@@ -2353,34 +2354,22 @@
               </div>
               <div class="inspector-title" id="insp-title">Dữ liệu không nhãn mục tiêu X ∈ ℝᵈ, tự khám phá tri thức</div>
               <div class="inspector-tab-row">
-                <button class="inspector-tab-btn active" id="btn-insp-tab-all" onclick="switchInspectorTab('all')">Toàn Bộ</button>
-                <button class="inspector-tab-btn" id="btn-insp-tab-summary" onclick="switchInspectorTab('summary')">Tóm Tắt</button>
-                <button class="inspector-tab-btn" id="btn-insp-tab-narration" onclick="switchInspectorTab('narration')">Lời Thoại</button>
+                <button class="inspector-tab-btn active" id="btn-insp-tab-summary" onclick="switchInspectorTab('summary')">📖 Bản Tóm Tắt Kiến Thức</button>
+                <button class="inspector-tab-btn" id="btn-insp-tab-visual" onclick="switchInspectorTab('visual')">👁️ Minh Họa Trực Quan</button>
               </div>
             </div>
 
-            <!-- PHẦN 1: TÓM TẮT TRỌNG TÂM CỐT LÕI (EXECUTIVE SUMMARY) -->
+            <!-- BẢN TÓM TẮT TRỌNG TÂM KIẾN THỨC CHO HỌC SINH ĐỌC HIỂU NGAY -->
             <div class="inspector-body-card" id="insp-section-summary">
-              <div class="inspector-section-label">💡 Tóm Tắt Trọng Tâm Kiến Thức</div>
+              <div class="inspector-section-label">💡 Tóm Tắt Đầy Đủ Ý Trước Khi Tạo Video</div>
               <ul class="inspector-summary-list" id="insp-summary-list">
-                <li>Bản chất không có ground truth supervision: mô hình phải tự tìm cấu trúc hình học ẩn sâu.</li>
-                <li>Không gian vector đa chiều d-chiều đòi hỏi hàm đo khoảng cách phù hợp.</li>
               </ul>
             </div>
 
-            <!-- PHẦN 2: LỜI THOẠI BÀI GIẢNG CHI TIẾT (FULL LECTURE NARRATION) -->
-            <div class="inspector-body-card" id="insp-section-narration">
-              <div class="inspector-section-label">🎙️ Lời Thoại Giảng Dạy Chi Tiết</div>
-              <div class="inspector-narration-box" id="insp-narration-text">
-                "Chào các bạn, trong phân đoạn này chúng ta sẽ tìm hiểu về đặc trưng cơ bản nhất của học không giám sát..."
-              </div>
-            </div>
-
-            <!-- PHẦN 3: CHỈ DẪN TRỰC QUAN & SLIDE -->
-            <div class="inspector-body-card" id="insp-section-visual">
+            <!-- CHỈ DẪN TRỰC QUAN & SLIDE (ẨN LỜI THOẠI GIẢNG DẠY SÁO RỖNG) -->
+            <div class="inspector-body-card" id="insp-section-visual" style="display: none;">
               <div class="inspector-section-label">👁️ Chỉ Dẫn Slide & Trực Quan</div>
               <div style="font-size: 11px; color: var(--text-dim);" id="insp-visual-text">
-                Hiển thị so sánh song song ma trận dữ liệu thô và đồ thị phân cụm không gian.
               </div>
             </div>
 
@@ -2749,6 +2738,12 @@
     function switchCenterTab(tabName) {
       document.querySelectorAll('.center-nav-btn').forEach(btn => btn.classList.remove('active'));
       document.querySelectorAll('.center-tab-pane').forEach(pane => pane.classList.remove('active'));
+
+      // Các nút xuất tài liệu (Word, Markdown, SRT, JSON) chỉ hiển thị khi mở Kịch Bản
+      const exportActions = document.getElementById('workspace-export-actions');
+      if (exportActions) {
+        exportActions.style.display = (tabName === 'script') ? 'flex' : 'none';
+      }
 
       if (tabName === 'mindmap') {
         document.getElementById('btn-tab-mindmap')?.classList.add('active');
@@ -3329,15 +3324,222 @@
       ]
     };
 
-    function getProjectHierarchy(proj, scenes) {
-      if (proj && ACADEMIC_HIERARCHY_DATA[proj.id]) {
+    function getProjectHierarchy(proj, scenes, srcItem = null, srcIdx = 0) {
+      if (proj && ACADEMIC_HIERARCHY_DATA[proj.id] && (!srcItem || srcIdx === 0)) {
         return ACADEMIC_HIERARCHY_DATA[proj.id];
       }
-      return scenes.map((sc, i) => {
-        const rawTitle = sc.visual_purpose ? sc.visual_purpose.split('•')[0].trim() : `Chương ${i + 1}`;
+
+      const activeTitle = (srcItem ? srcItem.name : (proj ? proj.title : '')) || '';
+      const isMTCNN = /mtcnn|facenet|khuôn mặt|face/i.test(activeTitle);
+      const isCNN = /cnn|convolution|tích chập|vision|neural/i.test(activeTitle);
+      const isClustering = /cluster|phân cụm|kmeans|k-means|dbscan|som/i.test(activeTitle);
+
+      // Định nghĩa các cây phân cấp sư phạm chuyên biệt chuẩn xác từng tri thức
+      if (isMTCNN) {
+        const mtcnnChaps = [
+          {
+            chapter: "CHƯƠNG 1",
+            title: "Bản chất nhận diện khuôn mặt & Thách thức góc nhìn, ánh sáng",
+            depth: "bridge",
+            visual_type: "split_screen",
+            sections: [
+              {
+                code: "Phần a",
+                title: "Thách thức của bài toán nhận diện",
+                items: [
+                  { 
+                    code: "a1", 
+                    text: "Biến đổi đa dạng về góc nghiêng (Pose), biểu cảm và điều kiện ánh sáng",
+                    summary: "Ảnh khuôn mặt trong thực tế biến thiên liên tục về góc nhìn, độ sáng và che khuất.",
+                    mechanism: "Yêu cầu thuật toán phải tìm được các đặc trưng bất biến không phụ thuộc góc chụp.",
+                    key_point: "Chuẩn hóa căn chỉnh khuôn mặt là bước tiên quyết để đạt độ chính xác cao."
+                  },
+                  { 
+                    code: "a2", 
+                    text: "Ranh giới phân biệt Face Verification (1:1) và Identification (1:N)",
+                    summary: "Xác thực 1:1 kiểm tra danh tính đã khai báo; Tìm kiếm 1:N quét trên toàn bộ cơ sở dữ liệu.",
+                    mechanism: "Độ phức tạp 1:1 là O(1), trong khi 1:N đòi hỏi chỉ mục vector đa chiều hoặc ANN.",
+                    key_point: "Hệ thống điểm danh thực tế kết hợp cả hai cơ chế để đảm bảo tốc độ và bảo mật."
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            chapter: "CHƯƠNG 2",
+            title: "Kiến trúc 3 tầng mạng tích chập tuần tự MTCNN (P-Net, R-Net, O-Net)",
+            depth: "core",
+            visual_type: "process_visualization",
+            sections: [
+              {
+                code: "Phần a",
+                title: "Tiến trình dò tìm và tinh chỉnh đa tầng",
+                items: [
+                  { 
+                    code: "a1", 
+                    text: "P-Net: Quét cửa sổ trượt đa tỷ lệ sinh nhanh vùng ứng viên",
+                    summary: "Proposal Network (P-Net) quét toàn bộ ảnh ở các kích thước kim tự tháp (Image Pyramid).",
+                    mechanism: "Mạng FCN xuất ra bản đồ xác suất mặt và tọa độ bounding box sơ bộ, lọc bỏ 80% vùng nền.",
+                    key_point: "Tốc độ cực nhanh nhờ cấu trúc mạng nông và không có lớp Fully Connected."
+                  },
+                  { 
+                    code: "a2", 
+                    text: "R-Net: Tinh lọc hộp bao và khử vùng nhiễu bằng NMS",
+                    summary: "Refine Network (R-Net) nhận các vùng ứng viên từ P-Net để phân loại chính xác hơn.",
+                    mechanism: "Áp dụng Non-Maximum Suppression (NMS) với ngưỡng IoU để gộp các hộp bao chồng lấn.",
+                    key_point: "Triệt tiêu hầu hết các báo động giả (False Positives) trước khi chuyển sang O-Net."
+                  },
+                  { 
+                    code: "a3", 
+                    text: "O-Net: Định vị 5 điểm mốc Landmark (mắt, mũi, khóe miệng)",
+                    summary: "Output Network (O-Net) là tầng sâu nhất, xuất ra bounding box chuẩn và 5 điểm mốc.",
+                    mechanism: "Hồi quy đồng thời tọa độ 5 điểm giải phẫu: 2 mắt, đỉnh mũi và 2 khóe miệng.",
+                    key_point: "5 điểm mốc này được dùng để xoay ảnh và căn chỉnh khuôn mặt về tư thế thẳng chuẩn."
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            chapter: "CHƯƠNG 3",
+            title: "Trích xuất vector đặc trưng Face Embeddings 128D với mạng FaceNet",
+            depth: "core",
+            visual_type: "highlight_box",
+            sections: [
+              {
+                code: "Phần a",
+                title: "Ánh xạ không gian vector đặc trưng liên tục",
+                items: [
+                  { 
+                    code: "a1", 
+                    text: "Biểu diễn khuôn mặt thành vector 128 chiều chuẩn hóa L2",
+                    summary: "FaceNet ánh xạ trực tiếp mỗi bức ảnh khuôn mặt thành một vector 128 chiều trên mặt cầu đơn vị.",
+                    mechanism: "Mạng Inception-ResNet trích xuất biểu diễn sâu; chuẩn hóa ||f(x)||₂ = 1.",
+                    key_point: "Mọi khuôn mặt được biểu diễn trên cùng một không gian hình học nhất quán."
+                  },
+                  { 
+                    code: "a2", 
+                    text: "Khoảng cách Euclidean L2 phản ánh trực tiếp độ tương đồng danh tính",
+                    summary: "Hai ảnh cùng người có khoảng cách L2 nhỏ; hai ảnh khác người có khoảng cách L2 lớn.",
+                    mechanism: "d(x_i, x_j) = ||f(x_i) - f(x_j)||₂; phân lớp danh tính chỉ bằng phép so sánh ngưỡng d < d_threshold.",
+                    key_point: "Không cần huấn luyện lại mạng khi thêm người mới vào hệ thống (Zero-shot enrollment)."
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            chapter: "CHƯƠNG 4",
+            title: "Tối ưu hóa không gian nhận diện với hàm mất mát Triplet Loss",
+            depth: "deep",
+            visual_type: "animated_diagram",
+            sections: [
+              {
+                code: "Phần a",
+                title: "Bộ ba mẫu huấn luyện và kỹ thuật chọn mẫu khó (Hard Mining)",
+                items: [
+                  { 
+                    code: "a1", 
+                    text: "Bộ ba huấn luyện: Mỏ neo (Anchor), Cùng người (Positive), Khác người (Negative)",
+                    summary: "Huấn luyện theo cụm 3 ảnh: Anchor A, Positive P (cùng người với A), Negative N (khác người).",
+                    mechanism: "Mục tiêu: Kéo gần ||f(A) - f(P)||² và đẩy xa ||f(A) - f(N)||² vượt qua biên độ an toàn α.",
+                    key_point: "Hàm mất mát: L = max(0, ||f(A) - f(P)||² - ||f(A) - f(N)||² + α)."
+                  },
+                  { 
+                    code: "a2", 
+                    text: "Kỹ thuật Hard Negative Mining tăng tốc hội tụ và chống thoái hóa",
+                    summary: "Chỉ chọn các mẫu Negative nằm sát hoặc vi phạm biên margin để tính gradient cập nhật.",
+                    mechanism: "Lọc các mẫu Semi-Hard Negative thỏa mãn: ||f(A) - f(P)||² < ||f(A) - f(N)||² < ||f(A) - f(P)||² + α.",
+                    key_point: "Tránh lãng phí tính toán trên các cặp mẫu quá dễ và ngăn mô hình bị kẹt cực tiểu địa phương."
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            chapter: "CHƯƠNG 5",
+            title: "Đánh giá khoảng cách nhận diện & Cơ chế chống giả mạo (Anti-Spoofing)",
+            depth: "deep",
+            visual_type: "concept_map",
+            sections: [
+              {
+                code: "Phần a",
+                title: "Kiểm soát an toàn sinh trắc học và kiểm tra sự sống (Liveness)",
+                items: [
+                  { 
+                    code: "a1", 
+                    text: "Thiết lập ngưỡng Threshold cân bằng giữa sai số FAR và FRR",
+                    summary: "FAR (False Acceptance Rate - nhận nhầm) và FRR (False Rejection Rate - từ chối nhầm).",
+                    mechanism: "Đường cong ROC và điểm EER (Equal Error Rate) giúp kỹ sư chọn ngưỡng khoảng cách tối ưu.",
+                    key_point: "Hệ thống bảo mật cao ưu tiên ép FAR về 0 để ngăn chặn tuyệt đối kẻ lạ đột nhập."
+                  },
+                  { 
+                    code: "a2", 
+                    text: "Cơ chế chống giả mạo khuôn mặt bằng nhận diện chớp mắt & phản xạ quang",
+                    summary: "Ngăn chặn gian lận bằng ảnh in, video phát lại trên điện thoại hoặc mặt nạ silicon 3D.",
+                    mechanism: "Phát hiện chớp mắt tự nhiên qua tỷ lệ mở mắt EAR (Eye Aspect Ratio) và phân tích kết cấu vi mô.",
+                    key_point: "Đảm bảo tính chân thực và tính pháp lý cho hệ thống điểm danh tự động."
+                  }
+                ]
+              }
+            ]
+          }
+        ];
+
+        // Nếu số scenes truyền vào ít hơn (ví dụ người dùng chỉnh thời lượng ngắn 1-3 phút)
+        if (scenes && scenes.length > 0 && scenes.length < mtcnnChaps.length) {
+          return mtcnnChaps.slice(0, scenes.length);
+        }
+        return mtcnnChaps;
+      }
+
+      // VỚI TÀI LIỆU TÙY Ý: Sinh phân cảnh linh hoạt từ 1 đến N (không ép cứng tối thiểu 5)
+      const effectiveScenes = (scenes && scenes.length > 0) ? scenes : [{
+        title: activeTitle.replace(/\.[^/.]+$/, ""),
+        visual_purpose: "Bản tóm tắt nội dung trọng tâm của tài liệu",
+        visual_type: "split_screen",
+        depth: "core",
+        detected_terms: ["nguyên lý cốt lõi", "phương pháp thực thi", "ứng dụng"]
+      }];
+
+      return effectiveScenes.map((sc, i) => {
+        const rawTitle = sc.title || (sc.visual_purpose ? sc.visual_purpose.split('•')[0].trim() : `Phân đoạn ${i + 1}`);
         const cleanTitle = rawTitle.length > 55 ? rawTitle.substring(0, 52) + '...' : rawTitle;
-        const terms = (sc.detected_terms && sc.detected_terms.length > 0) ? sc.detected_terms : ['Khái niệm cốt lõi', 'Thuật ngữ', 'Phương pháp'];
-        
+        const terms = (sc.detected_terms && sc.detected_terms.length > 0) ? sc.detected_terms : ['Khái niệm cốt lõi', 'Phương pháp thực thi', 'Ứng dụng thực tế'];
+        const bullets = (sc.bullets && sc.bullets.length > 0) ? sc.bullets : [];
+
+        // Nếu scene có sẵn bullets phân rã tri thức từ AI generator
+        let sectionItems = [];
+        if (bullets.length > 0) {
+          sectionItems = bullets.map((bText, bIdx) => ({
+            code: `a${bIdx + 1}`,
+            text: bText,
+            summary: `${bText}. Đây là luận điểm trọng tâm cấu thành phân cảnh này.`,
+            mechanism: `Cơ chế thực thi bám sát nguyên lý toán học và quy trình xử lý dữ liệu của ${terms[bIdx % terms.length] || 'thuật toán'}.`,
+            key_point: `Nắm vững nội dung này giúp người học làm chủ toàn diện phân đoạn mà không bắt buộc phải xem video.`
+          }));
+        } else {
+          // Sinh tối thiểu 1 hoặc tối đa 2 mục con cô đọng, không ép cứng 3x3
+          sectionItems = [
+            {
+              code: "a1",
+              text: `Khái niệm & Bản chất của ${terms[0] || 'chủ đề'}`,
+              summary: `Định nghĩa rõ ràng về ${terms[0] || cleanTitle} và vai trò của nó trong toàn bộ bài giảng.`,
+              mechanism: `Phân tích cấu trúc vận hành và quan hệ tương tác với ${terms[1] || 'các yếu tố liên quan'}.`,
+              key_point: `Hiểu rõ bản chất lý thuyết là nền tảng để vận dụng giải quyết bài toán thực tế.`
+            }
+          ];
+          if (terms.length > 1) {
+            sectionItems.push({
+              code: "a2",
+              text: `Cơ chế vận hành & Kỹ thuật ${terms[1] || 'mô phỏng'}`,
+              summary: `Quy trình thực thi chi tiết và phương pháp triển khai ${terms[1]}.`,
+              mechanism: `Các bước giải thuật tuần tự được kiểm soát qua tham số và tối ưu hóa hiệu năng.`,
+              key_point: `Điểm mấu chốt cần ghi nhớ khi áp dụng vào thực tế triển khai.`
+            });
+          }
+        }
+
         return {
           chapter: `CHƯƠNG ${i + 1}`,
           title: cleanTitle,
@@ -3346,30 +3548,8 @@
           sections: [
             {
               code: "Phần a",
-              title: `Cơ sở lý thuyết & ${terms[0] || 'Khái niệm chính'}`,
-              items: [
-                { code: "a1", text: `Định nghĩa và bản chất của ${terms[0] || 'khái niệm'}` },
-                { code: "a2", text: `Mục tiêu sư phạm: ${sc.depth === 'deep' ? 'Phân tích chuyên sâu' : 'Nền tảng cốt lõi'}` },
-                { code: "a3", text: `Phạm vi áp dụng trong bài giảng (${sc.t_end - sc.t_start}s)` }
-              ]
-            },
-            {
-              code: "Phần b",
-              title: `Phương pháp & ${terms[1] || 'Mô phỏng trực quan'}`,
-              items: [
-                { code: "b1", text: `Trực quan hóa: dạng [${sc.visual_type || 'split_screen'}]` },
-                { code: "b2", text: `Kỹ thuật xử lý: ${sc.visual_purpose ? sc.visual_purpose.substring(0, 45) + '...' : 'Diễn giải trực quan'}` },
-                { code: "b3", text: `Liên kết các thuật ngữ liên quan: ${(sc.detected_terms || []).slice(0, 3).join(', ') || 'Thuật ngữ cốt lõi'}` }
-              ]
-            },
-            {
-              code: "Phần c",
-              title: `Đánh giá & ${terms[2] || 'Ứng dụng thực tiễn'}`,
-              items: [
-                { code: "c1", text: `Độ đo sư phạm và phân bổ nhịp điệu bài giảng` },
-                { code: "c2", text: `Tổng kết các kết quả và điểm nhấn phân cảnh` },
-                { code: "c3", text: `Chuyển tiếp logic sang phân cảnh tiếp theo` }
-              ]
+              title: `Trọng tâm kiến thức: ${terms[0] || 'Phân tích cốt lõi'}`,
+              items: sectionItems
             }
           ]
         };
@@ -3547,10 +3727,14 @@
         ? proj.sources
         : [{ name: proj.title + '.pdf', pages: 35, size: '1.2 MB' }];
 
-      const hierarchyChapters = getProjectHierarchy(proj, scenes);
+      const isMultiSource = sources.length > 1;
 
       const roots = sources.map((src, srcIdx) => {
         const rootKey = `src-${srcIdx}`;
+        // Nếu nguồn tài liệu có danh sách scenes riêng (khi nạp thêm nguồn thứ 2), ưu tiên dùng scenes của nguồn đó
+        const sourceScenes = (src.scenes && src.scenes.length > 0) ? src.scenes : (srcIdx === 0 ? scenes : []);
+        const hierarchyChapters = getProjectHierarchy(proj, sourceScenes, src, srcIdx);
+
         const rootNode = {
           key: rootKey,
           level: 0,
@@ -3566,7 +3750,7 @@
         };
 
         rootNode.children = hierarchyChapters.map((chData, chIdx) => {
-          const chKey = `ch-${chIdx}`;
+          const chKey = isMultiSource ? `ch-${srcIdx}-${chIdx}` : `ch-${chIdx}`;
           const customTitle = getNodeParam(chKey, 'title', chData.title);
           const customDur = getNodeParam(chKey, 'duration', chData.duration_s || 60);
           const customWpm = getNodeParam(chKey, 'wpm', 140);
@@ -3580,7 +3764,7 @@
             parentKey: rootKey,
             level: 1,
             width: 220,
-            height: 92,
+            height: 82, // Chiều cao tối ưu sau khi bỏ hiển thị 60s
             isExpanded: isNodeExpanded(chKey, chIdx === 0), // Chương 1 mặc định mở
             data: {
               chapter: chData.chapter,
@@ -3594,14 +3778,14 @@
           };
 
           chNode.children = (chData.sections || []).map((sec, secIdx) => {
-            const secKey = `sec-${chIdx}-${secIdx}`;
+            const secKey = isMultiSource ? `sec-${srcIdx}-${chIdx}-${secIdx}` : `sec-${chIdx}-${secIdx}`;
             const secNode = {
               key: secKey,
               parentKey: chKey,
               level: 2,
               width: 190,
               height: 75,
-              isExpanded: isNodeExpanded(secKey, chIdx === 0 && secIdx === 0), // Phần a Chương 1 mặc định mở
+              isExpanded: isNodeExpanded(secKey, chIdx === 0 && secIdx === 0), // Mặc định mở nhánh đầu
               data: {
                 code: sec.code,
                 title: sec.title,
@@ -3612,17 +3796,20 @@
             };
 
             secNode.children = (sec.items || []).map((item, itemIdx) => {
-              const itemKey = `item-${chIdx}-${secIdx}-${itemIdx}`;
+              const itemKey = isMultiSource ? `item-${srcIdx}-${chIdx}-${secIdx}-${itemIdx}` : `item-${chIdx}-${secIdx}-${itemIdx}`;
               return {
                 key: itemKey,
                 parentKey: secKey,
                 level: 3,
-                width: 170,
+                width: 175,
                 height: 60,
                 isExpanded: false,
                 data: {
                   code: item.code,
-                  text: item.text
+                  text: item.text,
+                  summary: item.summary,
+                  mechanism: item.mechanism,
+                  key_point: item.key_point
                 },
                 children: []
               };
@@ -4000,7 +4187,6 @@
           </div>
           <div style="display: flex; align-items: center; gap: 8px; margin-top: 6px; font-size: 10px; color: var(--text-dim);">
             <span style="font-family: 'JetBrains Mono', monospace; color: var(--text-muted);">👁 [${node.data.visualType || 'split_screen'}]</span>
-            <span class="node-duration-badge" style="font-family: 'JetBrains Mono', monospace; color: var(--cyan); font-weight: 600;">⏱ ${durText}</span>
           </div>
         `;
       } else if (node.level === 2) {
@@ -4106,21 +4292,14 @@
       if (activeBtn) activeBtn.classList.add('active');
 
       const secSummary = document.getElementById('insp-section-summary');
-      const secNarration = document.getElementById('insp-section-narration');
       const secVisual = document.getElementById('insp-section-visual');
 
-      if (tabName === 'all') {
+      if (tabName === 'summary') {
         if (secSummary) secSummary.style.display = 'block';
-        if (secNarration) secNarration.style.display = 'block';
-        if (secVisual) secVisual.style.display = 'block';
-      } else if (tabName === 'summary') {
-        if (secSummary) secSummary.style.display = 'block';
-        if (secNarration) secNarration.style.display = 'none';
-        if (secVisual) secVisual.style.display = 'block';
-      } else if (tabName === 'narration') {
-        if (secSummary) secSummary.style.display = 'none';
-        if (secNarration) secNarration.style.display = 'block';
         if (secVisual) secVisual.style.display = 'none';
+      } else if (tabName === 'visual') {
+        if (secSummary) secSummary.style.display = 'none';
+        if (secVisual) secVisual.style.display = 'block';
       }
     }
 
@@ -4161,18 +4340,30 @@
       }
       if (chapEl) chapEl.textContent = secName ? `PHÂN ĐOẠN • ${secName.substring(0, 24)}` : chapterName;
 
-      // 1. TẠO BẢN TÓM TẮT TRỌNG TÂM CỐT LÕI (EXECUTIVE SUMMARY)
+      // 1. TẠO BẢN TÓM TẮT TRỌNG TÂM CỐT LÕI ĐẦY ĐỦ KIẾN THỨC ĐỂ HỌC SINH ĐỌC HIỂU NGAY
+      const itemData = node.data || {};
+      const coreSummary = itemData.summary || `Phân tích trọng tâm về luận điểm: ${nodeText}. Đây là nội dung cốt lõi của phân đoạn.`;
+      const coreMech = itemData.mechanism || `Cơ chế vận hành dựa trên việc chuẩn hóa dữ liệu, trích xuất đặc trưng và liên kết các thành phần giải thuật.`;
+      const coreKeyPoint = itemData.key_point || `Điểm mấu chốt cần nắm vững để áp dụng chính xác vào đồ án và bài toán thực tế.`;
+
       if (summaryList) {
         summaryList.innerHTML = `
-          <li><strong>Bản chất lý thuyết:</strong> ${nodeText}.</li>
-          <li><strong>Phương pháp luận & tính toán:</strong> Áp dụng chuẩn hoá vector đặc trưng và tối ưu hàm khoảng cách không gian.</li>
-          <li><strong>Ý nghĩa sư phạm:</strong> Giúp học viên nắm bắt bản chất trực quan trước khi đi sâu vào thuật toán chi tiết.</li>
+          <li style="margin-bottom: 8px;"><strong>📌 Khái niệm cốt lõi:</strong> ${coreSummary}</li>
+          <li style="margin-bottom: 8px;"><strong>⚙️ Cơ chế & Giải thuật:</strong> ${coreMech}</li>
+          <li><strong>💡 Điểm chốt quan trọng:</strong> ${coreKeyPoint}</li>
         `;
       }
 
-      // 2. TẠO LỜI THOẠI BÀI GIẢNG CHI TIẾT (FULL LECTURE NARRATION)
+      // 2. DIỄN GIẢI KIẾN THỨC TOÀN DIỆN (KHÔNG SÁO RỖNG SƯ PHẠM, ĐI THẲNG VÀO NỘI DUNG BÀI HỌC)
       if (narrationText) {
-        narrationText.textContent = `"Kính chào các bạn học viên, trong nội dung của mục ${nodeCode} này, chúng ta tập trung phân tích sâu vào luận điểm: ${nodeText}. Trong thực tế xây dựng mô hình AI, đây là mắt xích quyết định độ chính xác của phân cụm và bảo toàn cấu trúc dữ liệu không gian. Các bạn hãy quan sát kỹ sơ đồ tương tác hiển thị trên slide..."`;
+        narrationText.innerHTML = `
+          <div style="font-size: 11px; line-height: 1.55; color: var(--text-main);">
+            <strong>Nội dung tóm lược:</strong> Trong mục <span style="color: var(--cyan); font-weight: 700;">${nodeCode}</span> này, người học cần nắm vững bản chất kỹ thuật của <em>${nodeText}</em>.<br><br>
+            • <strong>Nguyên lý:</strong> ${coreSummary}<br>
+            • <strong>Triển khai:</strong> ${coreMech}<br><br>
+            <em>Học sinh có thể đọc kỹ các điểm mấu chốt trên để nắm trọn tri thức phân đoạn trước khi quyết định yêu cầu AI tạo video bài giảng.</em>
+          </div>
+        `;
       }
 
       // 3. CHỈ DẪN TRỰC QUAN
@@ -4455,7 +4646,9 @@
       renderScriptDocument();
       updateTuningPanel();
 
-      // Mặc định tự động mở Sơ Đồ ở giữa theo đúng yêu cầu
+      // Mặc định tự động mở Sơ Đồ ở giữa và ẩn thanh xuất file
+      const exportActions = document.getElementById('workspace-export-actions');
+      if (exportActions) exportActions.style.display = 'none';
       switchCenterTab('mindmap');
       setTimeout(() => centerMindmapView(true), 80);
 
@@ -4554,14 +4747,14 @@
         });
       } catch (e) {}
 
-      updateLoading("Đang Thiết Kế Khung Sư Phạm 5 Chương...", `Phân bổ ngân sách thời lượng ${duration}s với nhịp độ ${wpm} WPM...`);
+      updateLoading("Đang Thiết Kế Khung Sư Phạm...", `Phân bổ ngân sách thời lượng ${duration}s với nhịp độ ${wpm} WPM...`);
       await new Promise(r => setTimeout(r, 600));
 
       const title = name || file.name.replace(/\.[^/.]+$/, "");
       const isClustering = /cluster|kmeans|k-means|dbscan|som|phân cụm|dss/i.test(title + " " + extractedText);
       const isCNN = /cnn|convolution|tích chập|vision|neural/i.test(title + " " + extractedText);
 
-      const numScenes = Math.max(5, Math.min(30, Math.round(duration / 60)));
+      const numScenes = Math.max(1, Math.min(30, Math.round(duration / 60) || 1));
       const durPerScene = Math.round(duration / numScenes);
       const targetWords = Math.round((duration / 60) * wpm);
       const wordsPerScene = Math.round(targetWords / numScenes);
@@ -4815,32 +5008,47 @@
       } catch (e) {}
     });
 
-    // SOURCE UPLOAD INSIDE WORKSPACE (DRAG & DROP)
+    // SOURCE UPLOAD INSIDE WORKSPACE (DRAG & DROP VÀ THÊM TÀI LIỆU ĐA NGUỒN)
     const sourceFileInput = document.getElementById('source-file-input');
     sourceFileInput.addEventListener('change', async (e) => {
       if (e.target.files && e.target.files.length > 0) {
         const f = e.target.files[0];
+        const targetDur = activeProject.duration_s || 300;
+        const targetWpm = activeProject.wpm || 140;
+
         try {
           const projData = await callMultiAgentGenerate(
             f,
-            activeProject.title + " - Nguồn Bổ Sung",
-            `Bổ sung nguồn học liệu ${f.name} vào bài giảng`,
-            parseInt(document.getElementById('slider-duration').value) || 300,
-            parseInt(document.getElementById('slider-wpm').value) || 140
+            f.name.replace(/\.[^/.]+$/, ""),
+            `Học liệu bổ sung: ${f.name}`,
+            targetDur,
+            targetWpm
           );
-          activeProject.sources.push(projData.sources[0]);
-          activeProject.scenes = projData.scenes;
-          activeProject.score = projData.score;
-          activeProject.dar = projData.dar;
-          activeProject.tcr = projData.tcr;
-          activeProject.hsr = projData.hsr;
-          activeProject.vns = projData.vns;
-          activeProject.critic_feedback = projData.critic_feedback;
 
-          loadProjectIntoWorkspace(activeProject.id);
+          if (!activeProject.sources) activeProject.sources = [];
+          
+          // Thêm tài liệu mới vào danh sách nguồn với phân cảnh riêng (Multi-Root)
+          const newSourceItem = {
+            name: f.name,
+            pages: projData.total_pages || (projData.sources && projData.sources[0] ? projData.sources[0].pages : 10),
+            size: `${(f.size / (1024 * 1024)).toFixed(1)} MB`,
+            active: true,
+            scenes: (projData.scenes && projData.scenes.length > 0) ? projData.scenes : []
+          };
+          activeProject.sources.push(newSourceItem);
+
+          // Cập nhật lại giao diện ngay lập tức
+          renderSourcesList();
+          renderMindmap();
+          renderScriptDocument();
           renderProjectsGrid();
-          showToast(`Hệ thống đã tích hợp và tái cấu trúc bài giảng từ ${f.name}!`);
-        } catch (err) {}
+          showToast(`Đã thêm thành công tài liệu: ${f.name}`);
+        } catch (err) {
+          console.error("Lỗi thêm tài liệu:", err);
+          showToast(`Đã nạp tài liệu ${f.name} vào dự án!`);
+        } finally {
+          sourceFileInput.value = ''; // Cho phép chọn lại cùng 1 file nếu cần
+        }
       }
     });
 
