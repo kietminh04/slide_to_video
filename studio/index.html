@@ -739,9 +739,9 @@
       border: 1px solid var(--border-subtle);
       border-radius: var(--radius-sm);
       padding: 8px 10px;
-      cursor: pointer;
+      cursor: grab;
       user-select: none;
-      transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s, opacity 0.25s;
+      transition: transform 0.15s, box-shadow 0.15s, border-color 0.2s, opacity 0.25s;
       box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
       display: flex;
       flex-direction: column;
@@ -753,6 +753,22 @@
       border-color: var(--cyan);
       transform: translateY(-2px);
       box-shadow: 0 10px 24px rgba(0, 0, 0, 0.6), 0 0 16px rgba(56, 189, 248, 0.25);
+    }
+
+    .decision-node.is-dragging {
+      cursor: grabbing !important;
+      transform: scale(1.025) !important;
+      border-color: var(--cyan) !important;
+      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.85), 0 0 30px var(--cyan-glow) !important;
+      z-index: 100 !important;
+      transition: none !important;
+    }
+
+    .decision-node.is-subtree-child-dragging {
+      border-color: rgba(99, 102, 241, 0.7) !important;
+      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.7), 0 0 20px rgba(99, 102, 241, 0.4) !important;
+      z-index: 99 !important;
+      transition: none !important;
     }
 
     /* LEVEL 0: GỐC HỌC LIỆU */
@@ -3092,6 +3108,9 @@
       return roots;
     }
 
+    // Bộ nhớ lưu toạ độ người dùng tự di chuyển theo nhánh (Subtree Drag Deltas)
+    const nodeManualDeltas = {};
+
     function layoutDecisionTree(roots) {
       const gapX_base = 40;
       const deltaY = 160;
@@ -3102,7 +3121,7 @@
       });
 
       roots.forEach(root => {
-        positionNodeRecursive(root, runningRootLeft, 50, 0, gapX_base, deltaY);
+        positionNodeRecursive(root, runningRootLeft, 50, 0, gapX_base, deltaY, 0, 0);
         runningRootLeft += root.subtreeWidth + 120;
       });
     }
@@ -3124,10 +3143,14 @@
       return node.subtreeWidth;
     }
 
-    function positionNodeRecursive(node, leftBoundX, currentY, level, gapX, deltaY) {
+    function positionNodeRecursive(node, leftBoundX, currentY, level, gapX, deltaY, parentDeltaX = 0, parentDeltaY = 0) {
       const centerX = leftBoundX + node.subtreeWidth / 2;
-      node.x = centerX - node.width / 2;
-      node.y = currentY;
+      const myDelta = nodeManualDeltas[node.key] || { dx: 0, dy: 0 };
+      const totalDeltaX = parentDeltaX + myDelta.dx;
+      const totalDeltaY = parentDeltaY + myDelta.dy;
+
+      node.x = centerX - node.width / 2 + totalDeltaX;
+      node.y = currentY + totalDeltaY;
 
       if (!node.isExpanded || !node.children || node.children.length === 0) {
         return;
@@ -3149,7 +3172,7 @@
         }
         const jitterX = (node.children.length > 1) ? (idx % 2 === 0 ? -4 : 6) : 0;
 
-        positionNodeRecursive(child, runningChildLeft + jitterX, childBaseY + staggerY, level + 1, gapX * 0.85, deltaY);
+        positionNodeRecursive(child, runningChildLeft + jitterX, childBaseY + staggerY, level + 1, gapX * 0.85, deltaY, totalDeltaX, totalDeltaY);
         runningChildLeft += child.subtreeWidth + gapX;
       });
     }
@@ -3180,8 +3203,8 @@
       const minY = Math.min(...allNodes.map(n => n.y));
       const maxY = Math.max(...allNodes.map(n => n.y + n.height));
 
-      const worldWidth = Math.max(3800, maxX + 600);
-      const worldHeight = Math.max(2600, maxY + 600);
+      const worldWidth = Math.max(4800, maxX + 800);
+      const worldHeight = Math.max(3200, maxY + 800);
       world.style.minWidth = worldWidth + 'px';
       world.style.minHeight = worldHeight + 'px';
 
@@ -3199,11 +3222,16 @@
           node.children.forEach(child => {
             const cX = child.x + child.width / 2;
             const cY = child.y;
-            const midY = (pY + cY) / 2;
+            const deltaY = cY - pY;
+            const cpY1 = pY + Math.max(25, deltaY * 0.5);
+            const cpY2 = cY - Math.max(25, deltaY * 0.5);
 
             const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-            const d = `M ${pX} ${pY} C ${pX} ${midY}, ${cX} ${midY}, ${cX} ${cY}`;
+            const d = `M ${pX} ${pY} C ${pX} ${cpY1}, ${cX} ${cpY2}, ${cX} ${cY}`;
             path.setAttribute('d', d);
+            path.setAttribute('data-parent-key', node.key);
+            path.setAttribute('data-child-key', child.key);
+            path.setAttribute('id', `path-${node.key}-${child.key}`);
 
             const isChildEx = isNodeExcluded(child.key, [node.key, child.parentKey]);
             if (isChildEx) {
@@ -3235,6 +3263,12 @@
 
       world.appendChild(nodesContainer);
 
+      // Lưu bản đồ tra cứu node phục vụ kéo thả phân cấp
+      currentNodesMap = {};
+      allNodes.forEach(n => {
+        currentNodesMap[n.key] = n;
+      });
+
       // Cập nhật video preview title
       const videoTitle = document.getElementById('video-mock-title');
       if (videoTitle) videoTitle.textContent = activeProject.title;
@@ -3242,6 +3276,153 @@
       if (teleText && currentScenes.length > 0) {
         teleText.textContent = currentScenes[0].narration;
       }
+    }
+
+    let currentNodesMap = {};
+
+    // Thu thập tất cả các key thuộc nhánh con (descendants) đang hiển thị trên canvas
+    function getSubtreeKeys(rootKey) {
+      const keys = [];
+      function collect(k) {
+        if (!keys.includes(k)) {
+          keys.push(k);
+          const nodeObj = currentNodesMap[k];
+          if (nodeObj && nodeObj.children && nodeObj.isExpanded) {
+            nodeObj.children.forEach(c => collect(c.key));
+          }
+        }
+      }
+      collect(rootKey);
+      return keys;
+    }
+
+    // Cập nhật toạ độ tất cả các đường cong Bézier kết nối theo thời gian thực (60fps)
+    function updateConnectorPaths() {
+      const svg = document.querySelector('.mindmap-svg-canvas');
+      if (!svg) return;
+      const paths = svg.querySelectorAll('path[data-parent-key]');
+      paths.forEach(path => {
+        const pKey = path.getAttribute('data-parent-key');
+        const cKey = path.getAttribute('data-child-key');
+        const pEl = document.getElementById(`node-${pKey}`);
+        const cEl = document.getElementById(`node-${cKey}`);
+        if (pEl && cEl) {
+          const pLeft = parseFloat(pEl.style.left) || pEl.offsetLeft;
+          const pTop = parseFloat(pEl.style.top) || pEl.offsetTop;
+          const cLeft = parseFloat(cEl.style.left) || cEl.offsetLeft;
+          const cTop = parseFloat(cEl.style.top) || cEl.offsetTop;
+
+          const pX = pLeft + pEl.offsetWidth / 2;
+          const pY = pTop + pEl.offsetHeight;
+          const cX = cLeft + cEl.offsetWidth / 2;
+          const cY = cTop;
+
+          const deltaY = cY - pY;
+          const cpY1 = pY + Math.max(25, deltaY * 0.5);
+          const cpY2 = cY - Math.max(25, deltaY * 0.5);
+
+          path.setAttribute('d', `M ${pX} ${pY} C ${pX} ${cpY1}, ${cX} ${cpY2}, ${cX} ${cY}`);
+        }
+      });
+    }
+
+    // Cơ chế Kéo Thả Phân Cấp: Di chuyển nhánh to thì các nhánh con di chuyển theo (Hierarchical Subtree Drag)
+    function initNodeSubtreeDrag(card, node) {
+      card.addEventListener('mousedown', (e) => {
+        // Bỏ qua các nút thao tác chuyên biệt (X, bút chì, badge chỉnh)
+        if (e.target.closest('.node-corner-x') || 
+            e.target.closest('.node-corner-edit') || 
+            e.target.closest('.node-duration-badge')) {
+          return;
+        }
+
+        e.stopPropagation(); // Ngăn sự kiện drag của bàn vẽ canvas (Pan)
+        e.preventDefault();
+
+        card._dragMoved = false;
+        let startClientX = e.clientX;
+        let startClientY = e.clientY;
+
+        const subtreeKeys = getSubtreeKeys(node.key);
+        const dragItems = subtreeKeys.map(k => {
+          const el = document.getElementById(`node-${k}`);
+          return {
+            key: k,
+            el: el,
+            startLeft: el ? (parseFloat(el.style.left) || el.offsetLeft) : 0,
+            startTop: el ? (parseFloat(el.style.top) || el.offsetTop) : 0
+          };
+        }).filter(item => item.el !== null);
+
+        if (dragItems.length === 0) return;
+
+        // Giới hạn an toàn không kéo lọt ra ngoài canvas âm
+        const minStartLeft = Math.min(...dragItems.map(i => i.startLeft));
+        const minStartTop = Math.min(...dragItems.map(i => i.startTop));
+
+        card.classList.add('is-dragging');
+        dragItems.forEach(item => {
+          if (item.key !== node.key) item.el.classList.add('is-subtree-child-dragging');
+        });
+        document.body.style.cursor = 'grabbing';
+
+        function onMouseMove(ev) {
+          const deltaScreenX = ev.clientX - startClientX;
+          const deltaScreenY = ev.clientY - startClientY;
+
+          if (Math.abs(deltaScreenX) > 3 || Math.abs(deltaScreenY) > 3) {
+            card._dragMoved = true;
+          }
+
+          let dx = deltaScreenX / zoomScale;
+          let dy = deltaScreenY / zoomScale;
+
+          if (minStartLeft + dx < 20) dx = 20 - minStartLeft;
+          if (minStartTop + dy < 20) dy = 20 - minStartTop;
+
+          dragItems.forEach(item => {
+            item.el.style.left = `${item.startLeft + dx}px`;
+            item.el.style.top = `${item.startTop + dy}px`;
+          });
+
+          // Cập nhật tất cả các đường cong Bézier trong thời gian thực
+          updateConnectorPaths();
+        }
+
+        function onMouseUp(ev) {
+          window.removeEventListener('mousemove', onMouseMove);
+          window.removeEventListener('mouseup', onMouseUp);
+
+          card.classList.remove('is-dragging');
+          dragItems.forEach(item => {
+            item.el.classList.remove('is-subtree-child-dragging');
+          });
+          document.body.style.cursor = '';
+
+          if (card._dragMoved) {
+            const deltaScreenX = ev.clientX - startClientX;
+            const deltaScreenY = ev.clientY - startClientY;
+            let dx = deltaScreenX / zoomScale;
+            let dy = deltaScreenY / zoomScale;
+            if (minStartLeft + dx < 20) dx = 20 - minStartLeft;
+            if (minStartTop + dy < 20) dy = 20 - minStartTop;
+
+            if (!nodeManualDeltas[node.key]) {
+              nodeManualDeltas[node.key] = { dx: 0, dy: 0 };
+            }
+            nodeManualDeltas[node.key].dx += dx;
+            nodeManualDeltas[node.key].dy += dy;
+
+            node.x += dx;
+            node.y += dy;
+
+            setTimeout(() => { card._dragMoved = false; }, 100);
+          }
+        }
+
+        window.addEventListener('mousemove', onMouseMove);
+        window.addEventListener('mouseup', onMouseUp);
+      });
     }
 
     function createDecisionNodeElement(node) {
@@ -3286,7 +3467,7 @@
       // Nội dung theo từng cấp độ
       if (node.level === 0) {
         card.innerHTML += `
-          <div class="node-drag-badge">⋮⋮ Kéo di chuyển gốc</div>
+          <div class="node-drag-badge">⋮⋮ KÉO DI CHUYỂN CẢ CÂY (MAIN)</div>
           <div style="font-size: 22px; text-align: center; margin-bottom: 2px;">📄</div>
           <div class="node-title-text" style="font-size: 13.5px; font-weight: 800; color: var(--text-main); text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding: 0 20px;">
             ${node.data.title}
@@ -3295,37 +3476,6 @@
             ${node.data.pages} trang • ${node.data.chapterCount} chương
           </div>
         `;
-
-        // Kéo di chuyển gốc
-        let isDragging = false;
-        let startClientX = 0;
-        let startClientY = 0;
-        let origX = 0;
-        let origY = 0;
-
-        card.addEventListener('mousedown', (e) => {
-          if (e.target.closest('.node-corner-x') || e.target.closest('.node-corner-edit')) return;
-          e.stopPropagation();
-          isDragging = true;
-          startClientX = e.clientX;
-          startClientY = e.clientY;
-          origX = node.x;
-          origY = node.y;
-        });
-
-        window.addEventListener('mousemove', (e) => {
-          if (!isDragging) return;
-          const dx = (e.clientX - startClientX) / zoomScale;
-          const dy = (e.clientY - startClientY) / zoomScale;
-          node.x = origX + dx;
-          node.y = origY + dy;
-          card.style.left = `${node.x}px`;
-          card.style.top = `${node.y}px`;
-        });
-
-        window.addEventListener('mouseup', () => {
-          if (isDragging) isDragging = false;
-        });
       } else if (node.level === 1) {
         const hasChildren = node.children && node.children.length > 0;
         const expandLabel = hasChildren ? (node.isExpanded ? `▼ ${node.children.length}` : `▶ ${node.children.length}`) : '';
@@ -3372,8 +3522,15 @@
         `;
       }
 
-      // Click vào thân card để bật / thu gọn nhánh con
+      // Kích hoạt cơ chế kéo thả theo nhánh cho mọi thẻ node
+      initNodeSubtreeDrag(card, node);
+
+      // Click vào thân card để bật / thu gọn nhánh con (bỏ qua nếu vừa kéo chuột)
       card.addEventListener('click', (e) => {
+        if (card._dragMoved) {
+          card._dragMoved = false;
+          return;
+        }
         if (e.target.closest('.node-corner-x') || e.target.closest('.node-corner-edit') || e.target.closest('.node-duration-badge')) return;
         if (node.children && node.children.length > 0) {
           setNodeExpanded(node.key, !node.isExpanded);
