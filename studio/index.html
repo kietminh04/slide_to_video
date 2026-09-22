@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CLSG Studio Pro - CVAT Projects & NotebookLM Multimodal Engine</title>
+  <title>CLSG Studio Pro - Hệ Thống Sinh Kịch Bản Sư Phạm Đa Phương Thức</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -183,7 +183,7 @@
     }
 
     /* =========================================================================
-       VIEW 1: CVAT PROJECTS DASHBOARD (GRID VIEW)
+       VIEW 1: PROJECTS DASHBOARD (GRID VIEW)
        ========================================================================= */
     #view-projects {
       flex: 1;
@@ -199,17 +199,24 @@
     .dashboard-hero {
       display: flex;
       justify-content: space-between;
-      align-items: flex-end;
-      padding-bottom: 20px;
+      align-items: center;
+      padding-bottom: 24px;
       border-bottom: 1px solid var(--border-subtle);
+      gap: 24px;
+      flex-wrap: wrap;
+    }
+
+    .dashboard-title-group {
+      flex: 1;
+      min-width: 320px;
     }
 
     .dashboard-title-group h1 {
-      font-size: 26px;
+      font-size: 24px;
       font-weight: 800;
-      letter-spacing: -0.5px;
+      letter-spacing: -0.4px;
       margin-bottom: 6px;
-      background: linear-gradient(135deg, #ffffff, #94a3b8);
+      background: linear-gradient(135deg, #ffffff, #cbd5e1);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
     }
@@ -217,59 +224,37 @@
     .dashboard-title-group p {
       font-size: 13px;
       color: var(--text-muted);
+      line-height: 1.5;
     }
 
-    .dashboard-stats {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .stat-pill {
-      background: rgba(15, 23, 42, 0.8);
-      border: 1px solid var(--border-subtle);
-      padding: 6px 12px;
-      border-radius: 30px;
-      font-size: 12px;
-      color: var(--text-muted);
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .stat-pill strong {
-      color: var(--cyan);
-      font-family: 'JetBrains Mono', monospace;
-    }
-
-    .search-filter-bar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 16px;
+    .dashboard-search-wrap {
+      min-width: 320px;
+      max-width: 440px;
+      width: 100%;
     }
 
     .search-input-wrap {
       position: relative;
-      flex: 1;
-      max-width: 480px;
+      width: 100%;
     }
 
     .search-input-wrap input {
       width: 100%;
-      background: rgba(15, 23, 42, 0.8);
+      background: rgba(15, 23, 42, 0.85);
       border: 1px solid var(--border-subtle);
       border-radius: var(--radius-sm);
-      padding: 10px 14px 10px 38px;
+      padding: 11px 14px 11px 38px;
       color: var(--text-main);
-      font-size: 13px;
+      font-size: 13.5px;
       font-family: inherit;
+      transition: all 0.2s ease;
     }
 
     .search-input-wrap input:focus {
       outline: none;
-      border-color: var(--primary);
-      box-shadow: 0 0 12px var(--primary-glow);
+      border-color: var(--cyan);
+      box-shadow: 0 0 16px rgba(56, 189, 248, 0.25);
+      background: rgba(15, 23, 42, 0.95);
     }
 
     .search-input-wrap span {
@@ -281,27 +266,26 @@
       font-size: 14px;
     }
 
-    /* CVAT GRID CARDS */
+    /* GRID CARDS */
     .projects-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
       gap: 22px;
     }
 
-    /* 1. THE DEFAULT "+" CREATE CARD (CVAT STYLE) */
+    /* 1. THE DEFAULT "+" CREATE CARD (DẤU + ĐẶT CHUẨN TÂM) */
     .card-project-create {
       background: rgba(15, 23, 42, 0.4);
-      border: 2px dashed rgba(99, 102, 241, 0.4);
+      border: 2px dashed rgba(99, 102, 241, 0.35);
       border-radius: var(--radius-md);
-      min-height: 270px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
+      min-height: 290px;
+      height: 100%;
       cursor: pointer;
       transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       position: relative;
       overflow: hidden;
+      box-sizing: border-box;
+      padding: 24px;
     }
 
     .card-project-create:hover {
@@ -312,39 +296,55 @@
     }
 
     .create-plus-circle {
-      width: 68px;
-      height: 68px;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 72px;
+      height: 72px;
       border-radius: 50%;
       background: rgba(99, 102, 241, 0.15);
-      border: 1px solid rgba(99, 102, 241, 0.35);
+      border: 1.5px solid rgba(99, 102, 241, 0.4);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 32px;
+      font-size: 40px;
+      font-weight: 300;
       color: var(--cyan);
-      margin-bottom: 16px;
-      transition: all 0.3s;
+      transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+      line-height: 1;
+      pointer-events: none;
     }
 
     .card-project-create:hover .create-plus-circle {
       background: var(--cyan);
       color: #080c14;
-      transform: scale(1.1) rotate(90deg);
-      box-shadow: 0 0 20px var(--cyan);
+      transform: translate(-50%, -50%) scale(1.1) rotate(90deg);
+      box-shadow: 0 0 24px var(--cyan);
+    }
+
+    .create-card-text-group {
+      position: absolute;
+      bottom: 20px;
+      left: 16px;
+      right: 16px;
+      text-align: center;
+      pointer-events: none;
     }
 
     .create-card-title {
       font-size: 16px;
       font-weight: 700;
       color: var(--text-main);
-      margin-bottom: 6px;
+      margin-bottom: 4px;
     }
 
     .create-card-sub {
-      font-size: 12px;
+      font-size: 11.5px;
       color: var(--text-muted);
       text-align: center;
-      max-width: 220px;
+      max-width: 240px;
+      margin: 0 auto;
       line-height: 1.4;
     }
 
@@ -490,7 +490,7 @@
     }
 
     /* =========================================================================
-       VIEW 2: NOTEBOOK LM WORKSPACE (SOURCES + TIMELINE + CRITIC)
+       VIEW 2: MULTIMODAL WORKSPACE (SOURCES + TIMELINE + CRITIC)
        ========================================================================= */
     #view-workspace {
       display: none;
@@ -551,7 +551,7 @@
       overflow: hidden;
     }
 
-    /* PANE 1: NOTEBOOK LM SOURCES */
+    /* PANE 1: MULTIMODAL SOURCES */
     .pane-sources {
       border-right: 1px solid var(--border-subtle);
       background: rgba(10, 15, 26, 0.6);
@@ -603,8 +603,8 @@
       color: var(--text-dim);
     }
 
-    /* NOTEBOOK LM DRAG & DROP ZONE */
-    .notebook-drop-zone {
+    /* SOURCES DRAG & DROP ZONE */
+    .source-drop-zone {
       border: 2px dashed rgba(56, 189, 248, 0.35);
       border-radius: var(--radius-sm);
       background: rgba(56, 189, 248, 0.04);
@@ -614,7 +614,7 @@
       transition: all 0.2s;
     }
 
-    .notebook-drop-zone:hover {
+    .source-drop-zone:hover {
       border-color: var(--cyan);
       background: rgba(56, 189, 248, 0.09);
       box-shadow: 0 0 20px rgba(56, 189, 248, 0.15);
@@ -832,7 +832,7 @@
     }
 
     /* =========================================================================
-       MODAL: CREATE NEW PROJECT (CVAT POPUP)
+       MODAL: CREATE NEW PROJECT
        ========================================================================= */
     .modal-backdrop {
       position: fixed;
@@ -936,7 +936,7 @@
       to { transform: rotate(360deg); }
     }
 
-    .notebook-drop-zone.dragover {
+    .source-drop-zone.dragover {
       border-color: var(--cyan) !important;
       background: rgba(56, 189, 248, 0.12) !important;
       box-shadow: 0 0 25px rgba(56, 189, 248, 0.35) !important;
@@ -957,15 +957,9 @@
     <div class="brand-group" id="btn-brand-home">
       <div class="brand-logo">C</div>
       <div class="brand-title">
-        CLSG Studio
-        <span class="badge-pro">CVAT & NotebookLM v2.0</span>
+        CLSG Studio Pro
+        <span class="badge-pro">CLSG ENGINE v2.0</span>
       </div>
-    </div>
-
-    <!-- CVAT-STYLE NAVIGATION TABS -->
-    <div class="nav-tabs-group">
-      <button class="nav-tab-btn active" id="tab-nav-projects">📁 Dự Án (Projects)</button>
-      <button class="nav-tab-btn" id="tab-nav-workspace">⚡ Không Gian Bài Giảng</button>
     </div>
 
     <div class="header-actions">
@@ -979,29 +973,19 @@
   </header>
 
   <!-- =========================================================================
-       VIEW 1: CVAT PROJECTS DASHBOARD
+       VIEW 1: PROJECTS DASHBOARD
        ========================================================================= -->
   <div id="view-projects">
     <div class="dashboard-hero">
       <div class="dashboard-title-group">
-        <h1>Quản Lý Dự Án Bài Giảng MOOC</h1>
-        <p>Kiến trúc đa phương thức kết hợp phong cách quản trị dự án CVAT và quản lý nguồn học liệu NotebookLM</p>
+        <h1>Hệ Thống Sinh Kịch Bản Bài Giảng Ràng Buộc Sư Phạm (CLSG)</h1>
+        <p>Constrained Lecture Script Generation • Tự động hóa kịch bản sư phạm đa phương thức từ slide</p>
       </div>
-      <div class="dashboard-stats">
-        <div class="stat-pill">Dự án: <strong id="stat-project-count">2</strong></div>
-        <div class="stat-pill">Chunks trích xuất: <strong>45</strong></div>
-        <div class="stat-pill">Nhịp độ chuẩn: <strong>140 WPM</strong></div>
-        <div class="stat-pill">Kho từ vựng LPM: <strong>6.766 terms</strong></div>
-      </div>
-    </div>
-
-    <div class="search-filter-bar">
-      <div class="search-input-wrap">
-        <span>🔍</span>
-        <input type="text" id="project-search" placeholder="Tìm kiếm dự án bài giảng theo tên, slide, thuật ngữ...">
-      </div>
-      <div style="font-size: 12px; color: var(--text-dim);">
-        Hiển thị: <strong>Tất cả dự án</strong>
+      <div class="dashboard-search-wrap">
+        <div class="search-input-wrap">
+          <span>🔍</span>
+          <input type="text" id="project-search" placeholder="Tìm kiếm dự án theo tên bài giảng...">
+        </div>
       </div>
     </div>
 
@@ -1012,7 +996,7 @@
   </div>
 
   <!-- =========================================================================
-       VIEW 2: NOTEBOOK LM WORKSPACE
+       VIEW 2: MULTIMODAL WORKSPACE
        ========================================================================= -->
   <div id="view-workspace">
     <!-- TOPBAR -->
@@ -1051,20 +1035,20 @@
     <!-- 3-PANE WORKSPACE BODY -->
     <div class="workspace-body">
 
-      <!-- PANE 1: NOTEBOOK LM SOURCES -->
+      <!-- PANE 1: MULTIMODAL SOURCES -->
       <aside class="pane-sources">
         <div class="pane-header">
           <span>Nguồn Học Liệu (Sources)</span>
           <span style="color: var(--cyan); font-size: 11px;" id="source-active-count">1 nguồn</span>
         </div>
 
-        <!-- SOURCES LIST (NOTEBOOK LM STYLE) -->
+        <!-- SOURCES LIST -->
         <div id="sources-list" style="display: flex; flex-direction: column; gap: 10px;">
           <!-- Items will be injected dynamically -->
         </div>
 
         <!-- DROP ZONE TO ADD MORE SOURCES -->
-        <label class="notebook-drop-zone" id="notebook-drop-zone" for="source-file-input">
+        <label class="source-drop-zone" id="source-drop-zone" for="source-file-input">
           <div style="font-size: 24px; margin-bottom: 4px;">📂</div>
           <div style="font-size: 12px; font-weight: 700; color: var(--text-main);">+ Thêm Nguồn Học Liệu</div>
           <div style="font-size: 11px; color: var(--text-dim); margin-top: 4px;">Kéo thả hoặc bấm để nạp thêm .pdf, .pptx, .docx</div>
@@ -1176,7 +1160,7 @@
   </div>
 
   <!-- =========================================================================
-       MODAL: CREATE NEW PROJECT (CVAT POPUP)
+       MODAL: CREATE NEW PROJECT
        ========================================================================= -->
   <div class="modal-backdrop" id="modal-create-project">
     <div class="modal-content">
@@ -1186,8 +1170,11 @@
       </div>
 
       <div>
-        <label class="form-label" for="input-proj-name">Tên dự án bài giảng</label>
+        <label class="form-label" for="input-proj-name">
+          Tên dự án bài giảng <span style="color: var(--rose); font-weight: 700;">* (Bắt buộc, không trùng)</span>
+        </label>
         <input type="text" class="form-input" id="input-proj-name" placeholder="VD: Phân Tích Dữ Liệu Lớn & Chuỗi Thời Gian...">
+        <div id="error-proj-name" style="display: none; color: var(--rose); font-size: 11.5px; font-weight: 600; margin-top: 6px;"></div>
       </div>
 
       <div>
@@ -1196,8 +1183,8 @@
       </div>
 
       <div>
-        <label class="form-label">Chọn tệp slide nguồn ban đầu (NotebookLM Source)</label>
-        <label class="notebook-drop-zone" for="modal-file-input" style="display: block;">
+        <label class="form-label">Chọn tệp slide bài giảng ban đầu <span style="color: var(--rose);">*</span></label>
+        <label class="source-drop-zone" for="modal-file-input" style="display: block;">
           <div style="font-size: 28px; margin-bottom: 6px;">📑</div>
           <div style="font-size: 12px; font-weight: 700; color: var(--text-main);">Kéo thả file slide hoặc bấm để duyệt</div>
           <div style="font-size: 11px; color: var(--text-dim); margin-top: 4px;">Hỗ trợ .pdf, .pptx, .docx, .txt</div>
@@ -1395,48 +1382,42 @@
     let activeProject = defaultProjects[currentProjectId];
     let currentScenes = JSON.parse(JSON.stringify(activeProject.scenes));
 
-    // ĐIỀU HƯỚNG VIEW (CVAT PROJECTS vs WORKSPACE)
+    // ĐIỀU HƯỚNG VIEW (PROJECTS vs WORKSPACE)
     const viewProjects = document.getElementById('view-projects');
     const viewWorkspace = document.getElementById('view-workspace');
-    const tabNavProjects = document.getElementById('tab-nav-projects');
-    const tabNavWorkspace = document.getElementById('tab-nav-workspace');
 
     function switchView(viewName) {
       if (viewName === 'projects') {
         viewProjects.style.display = 'flex';
         viewWorkspace.style.display = 'none';
-        tabNavProjects.classList.add('active');
-        tabNavWorkspace.classList.remove('active');
         renderProjectsGrid();
         window.scrollTo({ top: 0, behavior: 'smooth' });
       } else {
         viewProjects.style.display = 'none';
         viewWorkspace.style.display = 'flex';
-        tabNavProjects.classList.remove('active');
-        tabNavWorkspace.classList.add('active');
         loadProjectIntoWorkspace(currentProjectId);
       }
     }
 
-    tabNavProjects.addEventListener('click', () => switchView('projects'));
-    tabNavWorkspace.addEventListener('click', () => switchView('workspace'));
     document.getElementById('btn-brand-home').addEventListener('click', () => switchView('projects'));
     document.getElementById('btn-back-dashboard').addEventListener('click', () => switchView('projects'));
 
-    // RENDER PROJECTS GRID (CVAT STYLE WITH CENTER '+' CARD FIRST)
+    // RENDER PROJECTS GRID (VỚI DẤU '+' TẠI TÂM)
     function renderProjectsGrid(filterTerm = '') {
       const container = document.getElementById('projects-grid-container');
       container.innerHTML = '';
 
-      // 1. THE DEFAULT "+" CREATE CARD (CVAT STYLE)
+      // 1. THE DEFAULT "+" CREATE CARD
       const createCard = document.createElement('div');
       createCard.className = 'card-project-create';
       createCard.id = 'btn-create-project-card';
       createCard.title = 'Bấm vào đây để tạo dự án bài giảng mới';
       createCard.innerHTML = `
         <div class="create-plus-circle">+</div>
-        <div class="create-card-title">Tạo Dự Án Mới</div>
-        <div class="create-card-sub">Nạp slide bài giảng (.pdf, .pptx, .docx) và tạo kịch bản sư phạm tự động</div>
+        <div class="create-card-text-group">
+          <div class="create-card-title">Tạo Dự Án Mới</div>
+          <div class="create-card-sub">Nạp slide bài giảng (.pdf, .pptx, .docx)<br>và tạo kịch bản sư phạm tự động</div>
+        </div>
       `;
       createCard.addEventListener('click', openCreateModal);
       container.appendChild(createCard);
@@ -1472,7 +1453,7 @@
             <div class="project-name">${proj.title}</div>
             <div class="project-desc">${proj.desc}</div>
             <div class="project-sources-badge">
-              <span>📑</span> ${proj.sources?.length || 1} Nguồn NotebookLM: ${sourceName}
+              <span>📑</span> ${proj.sources?.length || 1} Nguồn học liệu: ${sourceName}
             </div>
             <div class="project-meta-grid">
               <div class="meta-item">Thời lượng: <strong>${Math.floor((proj.duration_s || 300) / 60)}:${String((proj.duration_s || 300) % 60).padStart(2, '0')} (${proj.duration_s || 300}s)</strong></div>
@@ -1534,7 +1515,7 @@
       showToast(`Đã mở dự án: ${activeProject.title}`);
     }
 
-    // RENDER NOTEBOOK LM SOURCES
+    // RENDER MULTIMODAL SOURCES
     function renderSourcesList() {
       const container = document.getElementById('sources-list');
       container.innerHTML = '';
@@ -1779,15 +1760,37 @@
     const modalFileInput = document.getElementById('modal-file-input');
     const modalFileName = document.getElementById('modal-file-name');
 
+    const inputProjName = document.getElementById('input-proj-name');
+    const errorProjName = document.getElementById('error-proj-name');
+
+    function showErrorProjName(msg) {
+      if (!errorProjName) return;
+      errorProjName.textContent = msg;
+      errorProjName.style.display = 'block';
+      inputProjName.style.borderColor = 'var(--rose)';
+      inputProjName.focus();
+    }
+
+    function clearErrorProjName() {
+      if (!errorProjName) return;
+      errorProjName.textContent = '';
+      errorProjName.style.display = 'none';
+      inputProjName.style.borderColor = 'var(--border-subtle)';
+    }
+
+    inputProjName.addEventListener('input', clearErrorProjName);
+
     function openCreateModal() {
+      clearErrorProjName();
       modalCreate.style.display = 'flex';
-      document.getElementById('input-proj-name').focus();
+      setTimeout(() => inputProjName.focus(), 50);
     }
 
     function closeCreateModal() {
       modalCreate.style.display = 'none';
-      document.getElementById('input-proj-name').value = '';
+      inputProjName.value = '';
       document.getElementById('input-proj-desc').value = '';
+      clearErrorProjName();
       modalFileName.style.display = 'none';
       modalFileInput.value = '';
     }
@@ -1804,21 +1807,50 @@
         const file = e.target.files[0];
         modalFileName.style.display = 'block';
         modalFileName.textContent = `📄 Đã nạp nguồn: ${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
-        if (!document.getElementById('input-proj-name').value) {
-          document.getElementById('input-proj-name').value = file.name.replace(/\.[^/.]+$/, "");
+        
+        // Tự động gợi ý tên không trùng nếu ô tên chưa nhập
+        if (!inputProjName.value.trim()) {
+          let baseName = file.name.replace(/\.[^/.]+$/, "");
+          let candidate = baseName;
+          let counter = 1;
+          const existingTitles = Object.values(defaultProjects).map(p => (p.title || '').trim().toLowerCase());
+          while (existingTitles.includes(candidate.toLowerCase())) {
+            counter++;
+            candidate = `${baseName} (Bản ${counter})`;
+          }
+          inputProjName.value = candidate;
+          clearErrorProjName();
         }
       }
     });
 
     // SUBMIT CREATE PROJECT (REAL MULTI-AGENT GENERATION)
     btnSubmitCreate.addEventListener('click', async () => {
+      clearErrorProjName();
+      const rawName = inputProjName.value.trim();
+
+      // RÀNG BUỘC 1: Tên dự án bắt buộc
+      if (!rawName) {
+        showErrorProjName("⚠️ Tên dự án là BẮT BUỘC! Vui lòng nhập tên cho bài giảng.");
+        return;
+      }
+
+      // RÀNG BUỘC 2: Tên dự án tuyệt đối không được trùng (không phân biệt hoa/thường)
+      const isDuplicate = Object.values(defaultProjects).some(
+        p => (p.title || '').trim().toLowerCase() === rawName.toLowerCase()
+      );
+      if (isDuplicate) {
+        showErrorProjName(`⚠️ Tên dự án "${rawName}" đã tồn tại! Vui lòng đặt tên khác hoặc thêm số phiên bản để tránh trùng lặp.`);
+        return;
+      }
+
       const file = modalFileInput.files[0];
       if (!file) {
         alert("Vui lòng chọn hoặc kéo thả 1 file slide (.pdf, .pptx, .docx, .txt) để hệ thống Multi-Agent bóc tách!");
         return;
       }
 
-      const name = document.getElementById('input-proj-name').value.trim() || file.name.replace(/\.[^/.]+$/, "");
+      const name = rawName;
       const desc = document.getElementById('input-proj-desc').value.trim() || "Tài liệu bài giảng trực tuyến bóc tách tự động";
 
       const dur = parseInt(document.getElementById('slider-duration')?.value) || 300;
@@ -1836,7 +1868,7 @@
       } catch (e) {}
     });
 
-    // SOURCE UPLOAD INSIDE WORKSPACE (NOTEBOOK LM DRAG & DROP)
+    // SOURCE UPLOAD INSIDE WORKSPACE (DRAG & DROP)
     const sourceFileInput = document.getElementById('source-file-input');
     sourceFileInput.addEventListener('change', async (e) => {
       if (e.target.files && e.target.files.length > 0) {
@@ -1860,7 +1892,7 @@
 
           loadProjectIntoWorkspace(activeProject.id);
           renderProjectsGrid();
-          showToast(`NotebookLM đã tích hợp và tái cấu trúc bài giảng từ ${f.name}!`);
+          showToast(`Hệ thống đã tích hợp và tái cấu trúc bài giảng từ ${f.name}!`);
         } catch (err) {}
       }
     });
@@ -1950,7 +1982,7 @@
       });
     }
 
-    setupDropZone('notebook-drop-zone', 'source-file-input');
+    setupDropZone('source-drop-zone', 'source-file-input');
 
     // TIMELINE RENDER & TTS
     function formatTime(sec) {
@@ -2276,7 +2308,7 @@
     checkServerHealth();
     setInterval(checkServerHealth, 5000);
 
-    // INITIALIZE CVAT PROJECTS DASHBOARD
+    // INITIALIZE PROJECTS DASHBOARD
     renderProjectsGrid();
     switchView('projects');
   </script>
