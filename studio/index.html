@@ -504,6 +504,47 @@
       opacity: 1;
       transform: translateY(-10px);
     }
+
+    /* TTS AUDIO CONTROLS & HIGHLIGHT */
+    .btn-speak-scene {
+      background: rgba(56, 189, 248, 0.1);
+      border: 1px solid rgba(56, 189, 248, 0.25);
+      color: var(--cyan);
+      padding: 5px 10px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      width: fit-content;
+      margin-top: 8px;
+    }
+
+    .btn-speak-scene:hover {
+      background: rgba(56, 189, 248, 0.2);
+      border-color: var(--cyan);
+      transform: translateY(-1px);
+    }
+
+    .scene-row.is-speaking {
+      border-color: var(--cyan) !important;
+      box-shadow: 0 0 30px rgba(56, 189, 248, 0.3) !important;
+      background: rgba(15, 23, 42, 0.98) !important;
+      transform: scale(1.01);
+    }
+
+    .scene-row.is-speaking .time-range {
+      color: var(--emerald);
+      animation: pulse 1.5s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.6; }
+    }
   </style>
 </head>
 <body>
@@ -518,6 +559,12 @@
       </div>
     </div>
     <div class="header-actions">
+      <button class="btn-primary" id="btn-play-all" style="background: linear-gradient(135deg, var(--emerald), #059669); margin-right: 4px;">
+        <span id="play-all-icon">🔊</span> <span id="play-all-text">Nghe Toàn Bộ</span>
+      </button>
+      <button class="btn-export" id="btn-stop-speech" style="display: none; border-color: rgba(244, 63, 94, 0.4); color: var(--rose);">
+        <span>⏹️</span> Dừng
+      </button>
       <button class="btn-export" id="btn-export-md">
         <span>📄</span> Markdown (.md)
       </button>
@@ -815,6 +862,9 @@
             <div class="duration-tag">${dur}s • ${scene.id}</div>
             <span class="depth-tag depth-${scene.depth}">${scene.depth}</span>
             <div class="chunk-source-tag">Nguồn: ${scene.source_id}</div>
+            <button class="btn-speak-scene" data-index="${index}" id="btn-speak-${index}" title="Nghe thử phân cảnh này">
+              <span>🔊</span> Nghe câu này
+            </button>
           </div>
 
           <!-- Col 2: Narration -->
@@ -847,6 +897,14 @@
           const words = text.trim() ? text.trim().split(/\s+/).length : 0;
           document.getElementById(`word-count-${idx}`).textContent = words;
           recalculateMetrics();
+        });
+      });
+
+      // Bind click listeners for scene speak buttons
+      document.querySelectorAll('.btn-speak-scene').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const idx = parseInt(btn.getAttribute('data-index'));
+          playSingleScene(idx);
         });
       });
     }
@@ -1021,6 +1079,124 @@
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
     }
+
+    // ==========================================
+    // WEB SPEECH SYNTHESIS ENGINE (TTS)
+    // ==========================================
+    const synth = window.speechSynthesis;
+    let currentSpeakingIndex = -1;
+    let isPlayingAll = false;
+    let vietnameseVoice = null;
+
+    function initVoices() {
+      if (!synth) return;
+      const voices = synth.getVoices();
+      vietnameseVoice = voices.find(v => v.lang === 'vi-VN' || v.lang.startsWith('vi')) || null;
+    }
+
+    if (synth) {
+      if (synth.onvoiceschanged !== undefined) {
+        synth.onvoiceschanged = initVoices;
+      }
+      initVoices();
+    }
+
+    function stopAllSpeech() {
+      if (synth) synth.cancel();
+      isPlayingAll = false;
+      currentSpeakingIndex = -1;
+      clearSpeakingHighlights();
+      document.getElementById('play-all-icon').textContent = '🔊';
+      document.getElementById('play-all-text').textContent = 'Nghe Toàn Bộ';
+      document.getElementById('btn-stop-speech').style.display = 'none';
+    }
+
+    function clearSpeakingHighlights() {
+      document.querySelectorAll('.scene-row').forEach(row => {
+        row.classList.remove('is-speaking');
+      });
+      document.querySelectorAll('.btn-speak-scene').forEach(btn => {
+        btn.innerHTML = `<span>🔊</span> Nghe câu này`;
+      });
+    }
+
+    function playSingleScene(index) {
+      if (!synth) {
+        showToast('Trình duyệt của bạn không hỗ trợ Web Speech API.');
+        return;
+      }
+
+      if (currentSpeakingIndex === index && synth.speaking) {
+        stopAllSpeech();
+        return;
+      }
+
+      if (synth.speaking) {
+        synth.cancel();
+      }
+      clearSpeakingHighlights();
+      currentSpeakingIndex = index;
+
+      const scene = currentScenes[index];
+      const card = document.getElementById(`scene-card-${index}`);
+      if (card) {
+        card.classList.add('is-speaking');
+        card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+
+      const speakBtn = document.getElementById(`btn-speak-${index}`);
+      if (speakBtn) speakBtn.innerHTML = `<span>⏹️</span> Dừng`;
+      document.getElementById('btn-stop-speech').style.display = 'flex';
+
+      const utter = new SpeechSynthesisUtterance(scene.narration);
+      utter.lang = 'vi-VN';
+      if (vietnameseVoice) utter.voice = vietnameseVoice;
+
+      // Đồng bộ tốc độ đọc theo slider WPM (140 WPM ~ rate 1.0)
+      const wpm = parseInt(document.getElementById('slider-wpm').value) || 140;
+      utter.rate = Math.max(0.75, Math.min(1.4, wpm / 140));
+      utter.pitch = 1.0;
+
+      utter.onend = () => {
+        clearSpeakingHighlights();
+        if (isPlayingAll) {
+          if (index + 1 < currentScenes.length) {
+            setTimeout(() => playSingleScene(index + 1), 400);
+          } else {
+            stopAllSpeech();
+            showToast('Đã phát xong toàn bộ bài giảng!');
+          }
+        } else {
+          stopAllSpeech();
+        }
+      };
+
+      utter.onerror = () => {
+        stopAllSpeech();
+      };
+
+      synth.speak(utter);
+    }
+
+    // Nút Nghe Toàn Bộ Bài Giảng
+    document.getElementById('btn-play-all').addEventListener('click', () => {
+      if (isPlayingAll && synth.speaking) {
+        stopAllSpeech();
+        return;
+      }
+      isPlayingAll = true;
+      document.getElementById('play-all-icon').textContent = '⏸️';
+      document.getElementById('play-all-text').textContent = 'Tạm Dừng';
+      document.getElementById('btn-stop-speech').style.display = 'flex';
+      playSingleScene(0);
+      showToast('Đang phát giọng đọc bài giảng sư phạm...');
+    });
+
+    // Nút Dừng
+    document.getElementById('btn-stop-speech').addEventListener('click', () => {
+      stopAllSpeech();
+      showToast('Đã dừng phát âm thanh.');
+    });
 
     // Initialize
     renderTimeline();
