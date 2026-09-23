@@ -8585,10 +8585,6 @@ QUY TẮC:
 
       try {
         const cfg = LLMClient.getConfig();
-        const endpoint = `${cfg.baseUrl.replace(/\/+$/, '')}/chat/completions`;
-        const headers = { 'Content-Type': 'application/json' };
-        if (cfg.apiKey) headers['Authorization'] = `Bearer ${cfg.apiKey}`;
-
         // Đưa ngữ cảnh ngắn hạn (Sliding window 6 tin nhắn gần nhất) vào prompt
         const rollingHistory = clsgChatSessionHistory.slice(-6);
         const payloadMessages = [
@@ -8604,11 +8600,38 @@ QUY TẮC:
           temperature: 0.6
         };
 
-        const res = await fetch(endpoint, {
-          method: 'POST',
-          headers,
-          body: JSON.stringify(payload)
-        });
+        let res = null;
+
+        // 1. Thử gọi qua server proxy (nếu đang chạy trên local http://127.0.0.1:8765 có sẵn .env)
+        try {
+          const serverUrl = (window.location.origin.startsWith('http') && !window.location.origin.includes('file:'))
+            ? `${window.location.origin}/api/llm/chat`
+            : 'http://127.0.0.1:8765/api/llm/chat';
+          const proxyPayload = { ...payload, apiKey: cfg.apiKey || '', baseUrl: cfg.baseUrl || '', provider: cfg.provider || 'openai' };
+          res = await fetch(serverUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(proxyPayload)
+          });
+        } catch (e) {
+          // Bỏ qua nếu server proxy không có (ví dụ đang mở trên Vercel)
+        }
+
+        // 2. Nếu server proxy không phản hồi, thử gọi trực tiếp endpoint (OpenAI / Gemini)
+        if (!res || !res.ok) {
+          try {
+            const endpoint = `${cfg.baseUrl.replace(/\/+$/, '')}/chat/completions`;
+            const headers = { 'Content-Type': 'application/json' };
+            if (cfg.apiKey) headers['Authorization'] = `Bearer ${cfg.apiKey}`;
+            res = await fetch(endpoint, {
+              method: 'POST',
+              headers,
+              body: JSON.stringify(payload)
+            });
+          } catch (e) {
+            // Sẽ rơi xuống khối fallback cục bộ bên dưới
+          }
+        }
 
         if (res.ok) {
           const data = await res.json();
