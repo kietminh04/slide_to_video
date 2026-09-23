@@ -3475,18 +3475,18 @@
         </select>
       </div>
 
-      <!-- API KEY INPUT (TÙY CHỌN: CHO PHÉP NHẬP KHÓA KHI CẦN LIVE LLM) -->
+      <!-- API KEY INPUT (TÙY CHỌN: DÀNH CHO NGƯỜI DÙNG NHẬP KEY RIÊNG) -->
       <div style="margin-bottom: 14px;" id="wrapper-cfg-api-key">
         <label class="form-label" for="cfg-api-key" style="display: flex; justify-content: space-between; align-items: center;">
-          <span>Khóa Truy Cập (API Key)</span>
-          <span style="color: #34d399; font-size: 11px; font-weight: 500;">Lưu an toàn tại trình duyệt</span>
+          <span>Khóa Truy Cập Riêng (Tùy chọn)</span>
+          <span style="color: #34d399; font-size: 11px; font-weight: 600;">🛡️ Mặc định đã có khóa hệ thống</span>
         </label>
         <div style="position: relative;">
-          <input type="password" class="form-input" id="cfg-api-key" placeholder="Nhập sk-... (OpenAI) hoặc AQ... / AIza... (Gemini)" style="padding-right: 42px; font-family: 'JetBrains Mono', monospace; font-size: 12px;">
+          <input type="password" class="form-input" id="cfg-api-key" placeholder="Để trống để dùng khóa mặc định hệ thống (hoặc dán key riêng sk-... / AIza...)" style="padding-right: 42px; font-family: 'JetBrains Mono', monospace; font-size: 12px;">
           <button type="button" id="btn-toggle-cfg-key" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--text-dim); cursor: pointer; font-size: 14px;" title="Ẩn/Hiện khóa API">👁️</button>
         </div>
         <div style="font-size: 10.5px; color: var(--text-dim); margin-top: 4px; line-height: 1.4;">
-          * Nếu để trống hoặc offline, hệ thống tự động kích hoạt <strong>Bộ Tạo Sư Phạm Cục Bộ CIKM</strong> (Miễn phí 100%, 0 Token, không bị lỗi mạng).
+          * <strong>Khuyên dùng để trống:</strong> Hệ thống tự động sử dụng khóa Google Gemini đã cấu hình sẵn trên máy chủ (hoàn toàn miễn phí, bảo mật). Bạn chỉ cần dán khóa vào đây nếu muốn dùng hạn mức tài khoản cá nhân.
         </div>
       </div>
 
@@ -6768,7 +6768,7 @@
       // ===== AUTO-SUMMARIZE: Tự động gọi LLM khi có API key =====
       // Nếu node chưa có tóm tắt AI thực sự → auto-trigger LLM ngay khi chọn node
       const _cfg = LLMClient.getConfig();
-      const hasLLM = !!_cfg.apiKey;
+      const hasLLM = true; // Luôn sẵn sàng vì có khóa mặc định trên máy chủ
       const isRawSummary = !itemData.summary
         || /trích xuất từ trang|nội dung trích|the methods described|estimation and elimination|introduction to time|colorado|springer|copyright/i.test(itemData.summary || '')
         || /trích xuất từ trang|nội dung trích|the methods described/i.test(itemData.mechanism || '')
@@ -7303,14 +7303,13 @@
     const LLMClient = {
       STORAGE_KEY: 'clsg_ai_config',
       CACHE_PREFIX: 'clsg_ai_cache_',
-      DEFAULT_KEY: 'AQ.Ab8RN6Iiy_lvpeUOc_0fG385dl88DQQWYdtbHsHuIuAaGR6zag',
-
+      
       getConfig() {
         try {
           const saved = JSON.parse(localStorage.getItem(this.STORAGE_KEY) || '{}');
           // MẶC ĐỊNH SỐ 1: GOOGLE GEMINI (VÌ HOÀN TOÀN MIỄN PHÍ)
           let provider = (saved.provider === 'openai') ? 'openai' : 'gemini_local';
-          let apiKey = saved.apiKey || (provider === 'gemini_local' ? this.DEFAULT_KEY : '');
+          let apiKey = saved.apiKey || '';
           let baseUrl = saved.baseUrl || '';
           let model = saved.model;
 
@@ -7341,7 +7340,7 @@
             provider: 'gemini_local',
             baseUrl: 'https://generativelanguage.googleapis.com/v1beta/openai',
             model: 'gemini-2.5-flash',
-            apiKey: 'AQ.Ab8RN6Iiy_lvpeUOc_0fG385dl88DQQWYdtbHsHuIuAaGR6zag',
+            apiKey: '',
             outputLang: 'vi'
           };
         }
@@ -7425,10 +7424,10 @@ Trả về JSON với 5 trường sau (mỗi trường TỐI THIỂU 2-3 câu, c
 
       async ping(customCfg = null) {
         const cfg = customCfg || this.getConfig();
-        const apiKey = cfg.apiKey || (cfg.provider === 'gemini_local' ? this.DEFAULT_KEY : '');
+        const customKey = cfg.apiKey || '';
         const tStart = performance.now();
 
-        // 1. Thử ping qua serverless proxy
+        // 1. Luôn ping qua Serverless Backend (để dùng key hệ thống an toàn nếu ô key trống)
         try {
           const serverUrl = (window.location.origin.startsWith('http') && !window.location.origin.includes('file:'))
             ? `${window.location.origin}/api/llm/ping`
@@ -7436,44 +7435,46 @@ Trả về JSON với 5 trường sau (mỗi trường TỐI THIỂU 2-3 câu, c
           const res = await fetch(serverUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ provider: cfg.provider, apiKey: apiKey, model: cfg.model })
+            body: JSON.stringify({ provider: cfg.provider, apiKey: customKey, model: cfg.model })
           });
           if (res.ok) {
             const data = await res.json();
-            return { data, latency: data.latency || Math.round(performance.now() - tStart) };
+            return {
+              data,
+              latency: data.latency || Math.round(performance.now() - tStart),
+              isSystemKey: data.isSystemKey
+            };
           }
         } catch (e) {
           console.warn('[LLMClient] Server proxy ping không phản hồi, thử gọi trực tiếp...');
         }
 
-        // 2. Gọi trực tiếp endpoint của Provider kèm Authorization Header đầy đủ
-        const endpoint = `${cfg.baseUrl.replace(/\/+$/, '')}/chat/completions`;
-        const payload = {
-          model: cfg.model,
-          messages: [{ role: 'user', content: 'Ping' }],
-          max_tokens: 2
-        };
-
-        const headers = { 'Content-Type': 'application/json' };
-        if (apiKey) {
-          headers['Authorization'] = `Bearer ${apiKey}`;
+        // 2. Fallback trực tiếp chỉ khi người dùng ĐÃ NHẬP KEY RIÊNG
+        if (customKey) {
+          const endpoint = `${cfg.baseUrl.replace(/\/+$/, '')}/chat/completions`;
+          const payload = {
+            model: cfg.model,
+            messages: [{ role: 'user', content: 'Ping' }],
+            max_tokens: 2
+          };
+          const res = await fetch(endpoint, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${customKey}`
+            },
+            body: JSON.stringify(payload)
+          });
+          const latency = Math.round(performance.now() - tStart);
+          if (!res.ok) {
+            const errText = await res.text();
+            throw new Error(`HTTP ${res.status}: ${errText.slice(0, 150)}`);
+          }
+          const data = await res.json();
+          return { data, latency, isSystemKey: false };
         }
 
-        const res = await fetch(endpoint, {
-          method: 'POST',
-          headers: headers,
-          body: JSON.stringify(payload)
-        });
-
-        const latency = Math.round(performance.now() - tStart);
-
-        if (!res.ok) {
-          const errText = await res.text();
-          throw new Error(`HTTP ${res.status}: ${errText.slice(0, 150)}`);
-        }
-
-        const data = await res.json();
-        return { data, latency };
+        throw new Error('Không thể kết nối tới máy chủ AI.');
       },
 
       async generateNarration({ title, depth, duration, wpm, visualDesc, sections, notes }) {
@@ -8353,6 +8354,15 @@ OUTPUT FORMAT: Return ONLY a valid JSON string (no markdown backticks, no explan
         } catch (e) {}
       }
     };
+
+    // AUTO-PURGE: Xóa cache tóm tắt cũ & dọn dẹp key máy chủ nếu lỡ lưu vào localStorage
+    try {
+      const savedCfg = JSON.parse(localStorage.getItem('clsg_ai_config') || '{}');
+      if (savedCfg.apiKey && (savedCfg.apiKey.startsWith('AQ.Ab8RN6') || savedCfg.apiKey.includes('AQ.Ab8'))) {
+        delete savedCfg.apiKey;
+        localStorage.setItem('clsg_ai_config', JSON.stringify(savedCfg));
+      }
+    } catch(e) {}
 
     // AUTO-PURGE: Xóa cache tóm tắt cũ khi load trang để luôn dùng prompt mới nhất
     try {
@@ -11428,7 +11438,8 @@ ${tableRows}
       if (cfgBaseUrl) cfgBaseUrl.value = cfg.baseUrl || PROVIDER_BASE_URLS[currentProvider];
       const keyInput = document.getElementById('cfg-api-key');
       if (keyInput) {
-        keyInput.value = cfg.apiKey || (currentProvider === 'gemini_local' ? LLMClient.DEFAULT_KEY : '');
+        // Chỉ hiện nếu người dùng tự nhập key riêng, TUYỆT ĐỐI không hiện key hệ thống
+        keyInput.value = cfg.apiKey || '';
       }
       const cfgOutputLang = document.getElementById('cfg-output-lang');
       if (cfgOutputLang) cfgOutputLang.value = cfg.outputLang || 'vi';
@@ -11492,15 +11503,15 @@ ${tableRows}
       const provider = radioProvGemini?.checked ? 'gemini_local' : 'openai';
       const baseUrl = cfgBaseUrl?.value.trim() || 'https://api.openai.com/v1';
       const model = cfgModelSelect?.value || 'gpt-4o-mini';
-      const inputKey = document.getElementById('cfg-api-key')?.value.trim() || '';
-      const apiKey = inputKey || (provider === 'gemini_local' ? LLMClient.DEFAULT_KEY : '');
+      const apiKey = document.getElementById('cfg-api-key')?.value.trim() || '';
 
       try {
         const res = await LLMClient.ping({ provider, baseUrl, model, apiKey });
         cfgPingStatus.style.background = 'rgba(16, 185, 129, 0.15)';
         cfgPingStatus.style.color = '#34d399';
         cfgPingStatus.style.border = '1px solid rgba(16, 185, 129, 0.3)';
-        cfgPingStatus.innerHTML = `✅ Kết nối thành công! Phản hồi từ <strong>${model}</strong> trong ${res.latency}ms.`;
+        const sourceLabel = apiKey ? 'Khóa cá nhân' : 'Khóa hệ thống (Máy chủ)';
+        cfgPingStatus.innerHTML = `✅ Kết nối thành công! Phản hồi từ <strong>${model}</strong> [${sourceLabel}] trong ${res.latency}ms.`;
       } catch (err) {
         cfgPingStatus.style.background = 'rgba(244, 63, 94, 0.15)';
         cfgPingStatus.style.color = '#f87171';

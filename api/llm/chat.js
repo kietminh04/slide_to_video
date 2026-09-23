@@ -48,8 +48,8 @@ module.exports = async (req, res) => {
     const forwardPayload = {
       model: model,
       messages: body.messages || [],
-      max_tokens: body.max_tokens || 500,
-      temperature: body.temperature || 0.6
+      max_tokens: body.max_tokens || 1200,
+      temperature: body.temperature || 0.5
     };
 
     const targetUrl = `${baseUrl.replace(/\/+$/, '')}/chat/completions`;
