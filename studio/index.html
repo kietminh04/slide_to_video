@@ -3077,6 +3077,46 @@
 
       <!-- PANE 3: CHIA ĐÔI 2 NỬA (NỬA TRÊN: NỘI DUNG TÓM TẮT/CHI TIẾT KHI ẤN NHÁNH CON BÉ NHẤT, NỬA DƯỚI: KHUNG CHAT AI) -->
       <aside class="pane-tuning" id="pane-tuning">
+        <!-- CẤU HÌNH CHUNG Ở CỘT PHẢI (LUÔN HIỂN THỊ Ở CẢ SƠ ĐỒ & KỊCH BẢN) -->
+        <div style="padding: 10px 12px 8px; border-bottom: 1px solid var(--border-subtle); background: rgba(15, 23, 42, 0.7); flex-shrink: 0;">
+          <div style="font-size: 11px; font-weight: 700; color: var(--text-main); margin-bottom: 8px; display: flex; align-items: center; gap: 6px;">
+            <span>⚙️</span> Cấu Hình Chung
+          </div>
+          <!-- Thời gian tổng -->
+          <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 6px;">
+            <span style="font-size: 10px; color: var(--text-muted); font-weight: 600; min-width: 50px;">⏱️ Tổng:</span>
+            <input type="number" class="gcfg-input" id="gcfg-total-minutes-right" min="1" max="180" value="5" style="width: 48px;" onchange="syncGlobalMinutesFromRight()">
+            <span style="font-size: 10px; color: var(--text-dim);">phút</span>
+            <span style="font-size: 10px; color: var(--cyan); font-family: 'JetBrains Mono', monospace; margin-left: auto;" id="gcfg-total-sec-right">300s</span>
+          </div>
+          <!-- Giọng đọc -->
+          <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 6px;">
+            <span style="font-size: 10px; color: var(--text-muted); font-weight: 600; min-width: 50px;">🎙️ Giọng:</span>
+            <select class="gcfg-select" id="gcfg-voice-right" style="flex: 1; font-size: 10px;" onchange="syncGlobalVoiceFromRight()">
+              <option value="quynh_anh">Quỳnh Anh (Nữ Bắc)</option>
+              <option value="nam_an">Nam An (Nam Bắc)</option>
+              <option value="mai_phuong">Mai Phương (Nữ Nam)</option>
+              <option value="minh_quang">Minh Quang (Nam Nam)</option>
+              <option value="jenny_en">Jenny (US English)</option>
+              <option value="guy_en">Guy (UK English)</option>
+            </select>
+          </div>
+          <!-- Tốc độ đọc -->
+          <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 6px;">
+            <span style="font-size: 10px; color: var(--text-muted); font-weight: 600; min-width: 50px;">⚡ Tốc độ:</span>
+            <select class="gcfg-select" id="gcfg-speed-right" style="flex: 1; font-size: 10px;" onchange="syncGlobalSpeedFromRight()">
+              <option value="0.85">0.85x Chậm (~120 WPM)</option>
+              <option value="1.0" selected>1.0x Chuẩn (~140 WPM)</option>
+              <option value="1.2">1.2x Nhanh (~165 WPM)</option>
+              <option value="1.35">1.35x Rất nhanh (~190 WPM)</option>
+            </select>
+          </div>
+          <!-- Badge khóa -->
+          <div style="display: flex; align-items: center; gap: 6px;">
+            <span class="gcfg-lock-badge" style="font-size: 9.5px;">🔒 <span id="gcfg-lock-count-right">0</span> nhánh khóa</span>
+          </div>
+        </div>
+
         <!-- NỬA TRÊN: CONTENT INSPECTOR (CHỈ KÍCH HOẠT VÀ HIỂN THỊ KHI ẤN VÀO NHÁNH CON BÉ NHẤT TRÊN SƠ ĐỒ) -->
         <div class="content-inspector-section" id="content-inspector-section">
           <!-- TRẠNG THÁI TRỐNG (MẶC ĐỊNH KHI CHƯA CHỌN NHÁNH CON NÀO) -->
@@ -3797,6 +3837,12 @@
       const totalSec = totalMinutes * 60;
       activeProject.duration_s = totalSec;
 
+      // Đồng bộ cột phải
+      const gcfgMinR = document.getElementById('gcfg-total-minutes-right');
+      if (gcfgMinR) gcfgMinR.value = totalMinutes;
+      const gcfgSecR = document.getElementById('gcfg-total-sec-right');
+      if (gcfgSecR) gcfgSecR.textContent = totalSec + 's';
+
       // Cập nhật slider cũ nếu có
       const sDur = document.getElementById('slider-duration');
       if (sDur) { sDur.value = totalSec; sDur.max = Math.max(sDur.max, totalSec); }
@@ -3840,23 +3886,58 @@
       showToast(`⚡ Tốc độ đọc: ${sel.options[sel.selectedIndex].text}`);
     }
 
-    function updateLockedBadge() {
+    // ĐỒNG BỘ CẤU HÌNH CHUNG: CỘT PHẢI <-> CỘT GIỮA
+    function syncGlobalMinutesFromRight() {
+      const rightInput = document.getElementById('gcfg-total-minutes-right');
+      const centerInput = document.getElementById('gcfg-total-minutes');
+      if (rightInput && centerInput) centerInput.value = rightInput.value;
+      const secEl = document.getElementById('gcfg-total-sec-right');
+      if (secEl && rightInput) secEl.textContent = (parseInt(rightInput.value) * 60) + 's';
+      applyGlobalDuration();
+    }
+    function syncGlobalVoiceFromRight() {
+      const rightSel = document.getElementById('gcfg-voice-right');
+      const centerSel = document.getElementById('gcfg-voice');
+      if (rightSel && centerSel) centerSel.value = rightSel.value;
+      applyGlobalVoice();
+    }
+    function syncGlobalSpeedFromRight() {
+      const rightSel = document.getElementById('gcfg-speed-right');
+      const centerSel = document.getElementById('gcfg-speed');
+      if (rightSel && centerSel) centerSel.value = rightSel.value;
+      applyGlobalSpeed();
+    }
+
+        function updateLockedBadge() {
       const count = Object.keys(nodeCustomParams).filter(k => nodeCustomParams[k]?.isLocked).length;
       const el = document.getElementById('gcfg-lock-count');
       if (el) el.textContent = count;
+      const elR = document.getElementById('gcfg-lock-count-right');
+      if (elR) elR.textContent = count;
     }
 
     function syncGlobalConfigFromProject() {
       if (!activeProject) return;
       const totalSec = activeProject.duration_s || 300;
-      const gcfgMin = document.getElementById('gcfg-total-minutes');
-      if (gcfgMin) gcfgMin.value = Math.round(totalSec / 60);
+      const totalMin = Math.round(totalSec / 60);
 
+      // Đồng bộ cột giữa
+      const gcfgMin = document.getElementById('gcfg-total-minutes');
+      if (gcfgMin) gcfgMin.value = totalMin;
       const gcfgVoice = document.getElementById('gcfg-voice');
       if (gcfgVoice && activeProject.voice) gcfgVoice.value = activeProject.voice;
-
       const gcfgSpeed = document.getElementById('gcfg-speed');
       if (gcfgSpeed && activeProject.speechRate) gcfgSpeed.value = String(activeProject.speechRate);
+
+      // Đồng bộ cột phải
+      const gcfgMinR = document.getElementById('gcfg-total-minutes-right');
+      if (gcfgMinR) gcfgMinR.value = totalMin;
+      const gcfgSecR = document.getElementById('gcfg-total-sec-right');
+      if (gcfgSecR) gcfgSecR.textContent = totalSec + 's';
+      const gcfgVoiceR = document.getElementById('gcfg-voice-right');
+      if (gcfgVoiceR && activeProject.voice) gcfgVoiceR.value = activeProject.voice;
+      const gcfgSpeedR = document.getElementById('gcfg-speed-right');
+      if (gcfgSpeedR && activeProject.speechRate) gcfgSpeedR.value = String(activeProject.speechRate);
 
       updateLockedBadge();
     }
@@ -5864,7 +5945,7 @@
           <div style="font-size: 12.5px; font-weight: 800; color: #fff; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding: 0 4px;">
             ${node.data.title}
           </div>
-          <div style="font-size: 10px; color: var(--cyan); font-family: 'JetBrains Mono', monospace; margin-top: 4px; display: flex; align-items: center; justify-content: space-between; padding-right: 26px;">
+          <div style="font-size: 10px; color: var(--cyan); font-family: 'JetBrains Mono', monospace; margin-top: 4px; display: flex; align-items: center; justify-content: space-between; padding: 0 26px;">
             <span class="node-duration-badge" title="Tổng thời lượng tài liệu (bấm để xem/chỉnh)">⏱️ ${node.data.duration || 0}s</span>
             <span style="color: var(--text-dim); font-size: 9.5px;">${node.data.pages} trang • ${node.data.chapterCount} ch</span>
           </div>
@@ -5881,7 +5962,7 @@
           <div class="node-title-text" style="font-size: 11.5px; font-weight: 700; color: #fff; line-height: 1.35; max-height: 34px; overflow: hidden; padding-right: 20px;">
             ${node.data.title}
           </div>
-          <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 6px; font-size: 10px; color: var(--text-dim); padding-right: 26px;">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 6px; font-size: 10px; color: var(--text-dim); padding: 0 26px;">
             <span class="node-duration-badge" title="Tổng thời lượng chương (bấm để xem/chỉnh)">⏱️ ${node.data.duration || 0}s</span>
             <span style="font-family: 'JetBrains Mono', monospace; color: var(--text-muted); font-size: 9.5px;">👁 [${node.data.visualType || 'split_screen'}]</span>
           </div>
@@ -5898,7 +5979,7 @@
           <div class="node-title-text" style="font-size: 11px; font-weight: 600; color: var(--text-main); line-height: 1.3; max-height: 32px; overflow: hidden; padding-right: 20px;">
             ${node.data.title}
           </div>
-          <div style="display: flex; align-items: center; justify-content: flex-start; margin-top: 4px;">
+          <div style="display: flex; align-items: center; justify-content: flex-end; margin-top: 4px; padding: 0 26px;">
             <span class="node-duration-badge" title="Tổng thời lượng phần này (bấm để xem/chỉnh)">⏱️ ${node.data.duration || 0}s</span>
           </div>
         `;
@@ -5910,7 +5991,7 @@
               ${node.data.text}
             </span>
           </div>
-          <div style="display: flex; align-items: center; justify-content: flex-start; margin-top: 4px;">
+          <div style="display: flex; align-items: center; justify-content: flex-end; margin-top: 4px; padding: 0 26px;">
             <span class="node-duration-badge" title="Thời lượng nhánh này (bấm để chỉnh)">⏱️ ${node.data.duration || 30}s</span>
           </div>
         `;
