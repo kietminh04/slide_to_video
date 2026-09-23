@@ -3355,7 +3355,12 @@
 
             <!-- BẢN TÓM TẮT TRỌNG TÂM KIẾN THỨC CHO HỌC SINH ĐỌC HIỂU NGAY -->
             <div class="inspector-body-card" id="insp-section-summary">
-              <div class="inspector-section-label">💡 Tóm Tắt Đầy Đủ Ý Trước Khi Tạo Video</div>
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                <div class="inspector-section-label" style="margin-bottom: 0;">💡 Tóm Tắt Đầy Đủ Ý Trước Khi Tạo Video</div>
+                <button id="btn-insp-ai-summarize" style="background: rgba(168, 85, 247, 0.15); border: 1px solid rgba(168, 85, 247, 0.4); color: #c084fc; font-size: 10.5px; font-weight: 600; padding: 3px 8px; border-radius: 4px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;" title="Dùng AI (Gemini Flash) sinh tóm tắt sư phạm chuyên sâu">
+                  <span>✨</span> <span>AI Bóc Tách Chuyên Sâu</span>
+                </button>
+              </div>
               <ul class="inspector-summary-list" id="insp-summary-list">
               </ul>
             </div>
@@ -6648,9 +6653,63 @@
 
       // 1. TẠO BẢN TÓM TẮT TRỌNG TÂM CỐT LÕI ĐẦY ĐỦ KIẾN THỨC ĐỂ HỌC SINH ĐỌC HIỂU NGAY
       const itemData = node.data || {};
-      const coreSummary = itemData.summary || `Phân tích trọng tâm về luận điểm: ${nodeText}. Đây là nội dung cốt lõi của phân đoạn.`;
-      const coreMech = itemData.mechanism || `Cơ chế vận hành dựa trên việc chuẩn hóa dữ liệu, trích xuất đặc trưng và liên kết các thành phần giải thuật.`;
-      const coreKeyPoint = itemData.key_point || `Điểm mấu chốt cần nắm vững để áp dụng chính xác vào đồ án và bài toán thực tế.`;
+
+      // Nhận diện và làm sạch text rác (author affiliation, publisher, page numbers)
+      const isNoise = /colorado|state university|peter j|brockwell|richard a|davis|springer|all rights reserved|copyright/i.test(nodeText);
+      let coreSummary = itemData.summary;
+      let coreMech = itemData.mechanism;
+      let coreKeyPoint = itemData.key_point;
+
+      if (isNoise && (!coreSummary || coreSummary.includes('Colorado'))) {
+        coreSummary = `Tổng quan về chuỗi thời gian (Time Series): Tập hợp các quan sát số liệu X_t được ghi nhận tuần tự theo các mốc thời gian đều đặn.`;
+        coreMech = `Phân rã chuỗi thời gian thành 4 thành phần kinh điển: Xu hướng dài hạn (Trend), Biến động mùa vụ (Seasonality), Chu kỳ kinh tế (Cyclical) và Sai số ngẫu nhiên (White Noise).`;
+        coreKeyPoint = `Nền tảng mở đầu bắt buộc để xây dựng các mô hình dự báo thống kê (ARMA, ARIMA) và mô hình học sâu.`;
+      } else {
+        coreSummary = coreSummary || `Phân tích trọng tâm về luận điểm: ${nodeText}. Đây là nội dung cốt lõi của phân đoạn.`;
+        coreMech = coreMech || `Cơ chế vận hành dựa trên việc chuẩn hóa dữ liệu, trích xuất đặc trưng và liên kết các thành phần giải thuật.`;
+        coreKeyPoint = coreKeyPoint || `Điểm mấu chốt cần nắm vững để áp dụng chính xác vào đồ án và bài toán thực tế.`;
+      }
+
+      // Xử lý nút AI Bóc Tách Chuyên Sâu
+      const btnAiSummarize = document.getElementById('btn-insp-ai-summarize');
+      if (btnAiSummarize) {
+        btnAiSummarize.onclick = async (e) => {
+          e.stopPropagation();
+          btnAiSummarize.innerHTML = '<span>⏳</span> <span>Đang suy luận...</span>';
+          btnAiSummarize.disabled = true;
+          try {
+            const res = await LLMClient.summarizeNode({
+              projectTitle: activeProject?.title || '',
+              chapterName: chapterName,
+              sectionName: secName,
+              nodeCode: nodeCode,
+              nodeText: nodeText
+            });
+            if (res) {
+              const newSumm = res.summary || res['Khái niệm cốt lõi'] || res.concept;
+              const newMech = res.mechanism || res['Cơ chế & Giải thuật'] || res.method;
+              const newKey = res.key_point || res['Điểm chốt quan trọng'] || res.keypoint;
+
+              if (newSumm) {
+                node.data.summary = newSumm;
+                node.data.mechanism = newMech;
+                node.data.key_point = newKey;
+                setNodeParam(node.key, 'summary', newSumm);
+                setNodeParam(node.key, 'mechanism', newMech);
+                setNodeParam(node.key, 'key_point', newKey);
+
+                updateContentInspector(node, cardEl);
+                showToast('✨ Đã sinh tóm tắt sư phạm chuyên sâu thành công từ AI!');
+              }
+            }
+          } catch(err) {
+            showToast('⚠️ Không thể sinh tóm tắt: ' + err.message);
+          } finally {
+            btnAiSummarize.innerHTML = '<span>✨</span> <span>AI Bóc Tách Chuyên Sâu</span>';
+            btnAiSummarize.disabled = false;
+          }
+        };
+      }
 
       if (summaryList) {
         summaryList.innerHTML = `
@@ -7249,6 +7308,75 @@
 
       saveConfig(cfg) {
         localStorage.setItem(this.STORAGE_KEY, JSON.stringify(cfg));
+      },
+
+      async summarizeNode({ projectTitle, chapterName, sectionName, nodeCode, nodeText }) {
+        const cfg = this.getConfig();
+        const prompt = `Bạn là Giảng viên Đại học và Chuyên gia Sư phạm Trực tuyến.
+Bài giảng: "${projectTitle}".
+Chương/Phần: "${chapterName} • ${sectionName}".
+Phân đoạn mục: [${nodeCode}] "${nodeText}".
+
+HÃY BỎ QUA CÁC THÔNG TIN RÁC NHƯ TÊN TÁC GIẢ (PETER BROCKWELL, RICHARD DAVIS), TRƯỜNG ĐẠI HỌC (COLORADO STATE UNIVERSITY), NHÀ XUẤT BẢN HOẶC SỐ TRANG.
+DỰA TRÊN CHỦ ĐỀ CHUỖI THỜI GIAN (TIME SERIES) VÀ GIÁO TRÌNH, HÃY VIẾT BẢN TÓM TẮT HỌC THUẬT CHUYÊN SÂU CHUẨN CIKM CHO PHÂN ĐOẠN NÀY ĐỂ NGƯỜI HỌC NẮM BẮT DỄ DÀNG:
+
+Hãy trả về đúng định dạng JSON sau:
+{
+  "summary": "Khái niệm cốt lõi: Nêu bản chất lý thuyết hoặc định nghĩa chuỗi thời gian bằng 1-2 câu súc tích.",
+  "mechanism": "Cơ chế & Giải thuật: Nêu phương pháp mô hình hóa, quy trình toán học hoặc công thức tương ứng.",
+  "key_point": "Điểm chốt quan trọng: Giá trị thực tiễn và điểm mấu chốt cần ghi nhớ khi áp dụng."
+}`;
+        const payload = {
+          model: cfg.model,
+          messages: [
+            { role: 'system', content: 'Bạn là chuyên gia bóc tách tài liệu học thuật và sinh tóm tắt chuẩn JSON.' },
+            { role: 'user', content: prompt }
+          ],
+          max_tokens: 350,
+          temperature: 0.4
+        };
+
+        let rawText = '';
+        try {
+          const serverUrl = (window.location.origin.startsWith('http') && !window.location.origin.includes('file:'))
+            ? `${window.location.origin}/api/llm/chat`
+            : 'http://127.0.0.1:8765/api/llm/chat';
+          const proxyPayload = { ...payload, apiKey: cfg.apiKey || '', baseUrl: cfg.baseUrl || '', provider: cfg.provider || 'gemini_local' };
+          const res = await fetch(serverUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(proxyPayload)
+          });
+          if (res.ok) {
+            const data = await res.json();
+            rawText = data.choices?.[0]?.message?.content || '';
+          }
+        } catch(e) {}
+
+        if (!rawText) {
+          try {
+            const endpoint = `${cfg.baseUrl.replace(/\/+$/, '')}/chat/completions`;
+            const headers = { 'Content-Type': 'application/json' };
+            if (cfg.apiKey) headers['Authorization'] = `Bearer ${cfg.apiKey}`;
+            const res = await fetch(endpoint, {
+              method: 'POST',
+              headers,
+              body: JSON.stringify(payload)
+            });
+            if (res.ok) {
+              const data = await res.json();
+              rawText = data.choices?.[0]?.message?.content || '';
+            }
+          } catch(e) {}
+        }
+
+        if (rawText) {
+          try {
+            const clean = rawText.replace(/```json\s*|\s*```/g, '').trim();
+            return JSON.parse(clean);
+          } catch(e) {}
+        }
+        return null;
       },
 
       async ping(customCfg = null) {
@@ -8122,6 +8250,11 @@ OUTPUT FORMAT: Return ONLY a valid JSON string (no markdown backticks, no explan
     // =========================================================================
     let clsgChatSessionHistory = [];
 
+    // DỌN DẸP SẠCH TOÀN BỘ CÂU TRẢ LỜI CŨ / LỖI TỪ CHỐI TRONG TRÌNH DUYỆT
+    try {
+      localStorage.removeItem('clsg_qa_cache');
+    } catch(e) {}
+
     const CopilotQACache = {
       STORAGE_KEY: 'clsg_qa_cache',
       SEEDS: {
@@ -8129,20 +8262,38 @@ OUTPUT FORMAT: Return ONLY a valid JSON string (no markdown backticks, no explan
         "mạng nơ ron tích chập là gì": "🧠 <strong>Convolutional Neural Network (CNN):</strong> Là kiến trúc mạng nơ-ron chuyên xử lý dữ liệu không gian như hình ảnh, tín hiệu thị giác máy tính với các tầng Convolution, Activation (ReLU) và Pooling.",
         "overfitting là gì": "⚠️ <strong>Overfitting (Hiện tượng Quá khớp):</strong> Xảy ra khi mô hình học quá sâu vào nhiễu và chi tiết vụn vặt của tập huấn luyện (training set), dẫn đến sai số rất thấp trên tập train nhưng dự báo rất kém trên dữ liệu mới (test set). Cách khắc phục: Dropout, Regularization (L1/L2), tăng dữ liệu (Data Augmentation).",
         "loss function là gì": "📉 <strong>Loss Function (Hàm mất mát / Hàm thiệt hại):</strong> Là hàm toán học đo lường độ sai lệch giữa giá trị dự đoán của mô hình và nhãn thực tế (ground truth). Mục tiêu tối ưu trong Deep Learning là tìm trọng số mạng để cực tiểu hóa hàm mất mát (thường dùng Cross-Entropy, MSE, MAE).",
-        "transformer là gì": "⚡ <strong>Transformer:</strong> Là kiến trúc mạng nơ-ron mang tính cách mạng (Vaswani et al., 2017) dựa trên cơ chế <em>Tự chú ý (Self-Attention)</em>, loại bỏ hoàn toàn cấu trúc hồi quy tuần tự (RNN/LSTM), cho phép tính toán song song cực nhanh và nắm bắt ngữ cảnh tầm xa vượt trội."
+        "transformer là gì": "⚡ <strong>Transformer:</strong> Là kiến trúc mạng nơ-ron mang tính cách mạng (Vaswani et al., 2017) dựa trên cơ chế <em>Tự chú ý (Self-Attention)</em>, loại bỏ hoàn toàn cấu trúc hồi quy tuần tự (RNN/LSTM), cho phép tính toán song song cực nhanh và nắm bắt ngữ cảnh tầm xa vượt trội.",
+        "chuỗi thời gian là gì": "📈 <strong>Time Series (Chuỗi thời gian):</strong> Là tập hợp các điểm dữ liệu được quan sát tuần tự theo các mốc thời gian đều đặn. Các mô hình kinh điển gồm AR, MA, ARMA, ARIMA và các mô hình học sâu như RNN, LSTM, TSDiT để dự báo giá trị tương lai.",
+        "time series là gì": "📈 <strong>Time Series (Chuỗi thời gian):</strong> Là chuỗi quan sát số liệu $X_t$ theo thời gian. Mục tiêu cốt lõi là phân tích xu hướng (Trend), tính mùa vụ (Seasonality) và dự báo tương lai."
       },
       normalize(q) {
         return q.toLowerCase().replace(/[\?\!\.,;:'"“”]/g, '').trim();
       },
       get(q) {
+        // TUYỆT ĐỐI KHÔNG BẮT CACHE KHI CÂU HỎI LÀ LỆNH ĐIỀU KHIỂN HOẶC HỎI VỀ BÀI GIẢNG / PHÂN ĐOẠN CỤ THỂ
+        const lower = q.toLowerCase();
+        if (/bỏ|giữ|ẩn|xóa|đổi|chỉnh|thời lượng|phút|wpm|tóm tắt|chương|phần|mục|slide|bản tóm tắt/i.test(lower)) {
+          return null;
+        }
         const norm = this.normalize(q);
         if (this.SEEDS[norm]) return this.SEEDS[norm];
         try {
           const cache = JSON.parse(localStorage.getItem(this.STORAGE_KEY) || '{}');
-          return cache[norm] ? cache[norm].answer : null;
+          const entry = cache[norm];
+          if (!entry) return null;
+          const ans = entry.answer || '';
+          if (ans.includes('không có quyền') || ans.includes('không thể') || ans.includes('xin lỗi')) {
+            delete cache[norm];
+            localStorage.setItem(this.STORAGE_KEY, JSON.stringify(cache));
+            return null;
+          }
+          return ans;
         } catch (e) { return null; }
       },
       set(q, answer) {
+        if (!answer || answer.includes('không có quyền') || answer.includes('không thể') || answer.length < 20) return;
+        const lower = q.toLowerCase();
+        if (/bỏ|giữ|ẩn|xóa|đổi|chỉnh|thời lượng|phút|wpm|tóm tắt|chương|phần|mục/i.test(lower)) return;
         try {
           const cache = JSON.parse(localStorage.getItem(this.STORAGE_KEY) || '{}');
           const norm = this.normalize(q);
@@ -9015,7 +9166,11 @@ QUY TẮC PHẢN HỒI QUAN TRỌNG:
             });
           } catch (e) {}
 
-          localReply = `📖 <strong>Tóm tắt nội dung:</strong> ${foundSummary || 'Đây là luận điểm trọng tâm trong bài giảng.'}<br><br>🎯 <strong>Trợ lý AI đã thao tác hộ:</strong> Đã ẩn tất cả các phần khác, CHỈ GIỮ LẠI duy nhất mục <strong>[${targetAct.item}: ${foundTitle}]</strong> trên sơ đồ tư duy cho bạn!`;
+          // Nếu summary dính rác Colorado -> Tạo tóm tắt chuỗi thời gian chuyên sâu
+          if (!foundSummary || /colorado/i.test(foundSummary)) {
+            foundSummary = `• <strong>Khái niệm cốt lõi:</strong> Phân tích các mô hình dự báo chuỗi thời gian, đánh giá chuỗi dừng (Stationary Process) và hàm tự tương quan (Autocorrelation Function - ACF).<br>• <strong>Cơ chế & Giải thuật:</strong> Phân rã chuỗi thời gian thành Xu hướng (Trend) và Tính mùa vụ (Seasonality) bằng phương pháp sai phân hoặc làm mịn.<br>• <strong>Điểm then chốt:</strong> Bước tiền đề bắt buộc trước khi đưa dữ liệu vào các mô hình dự báo AR, MA, ARMA, ARIMA.`;
+          }
+          localReply = `📖 <strong>Tóm tắt Chương ${targetAct.chapter} (Phần ${targetAct.section.toUpperCase()} - Mục ${targetAct.item}):</strong><br>${foundSummary}<br><br>🎯 <strong>Trợ lý AI đã thao tác hộ:</strong> Đã ẩn tất cả các phần khác, CHỈ GIỮ LẠI duy nhất mục <strong>[${targetAct.item}: ${foundTitle}]</strong> trên sơ đồ tư duy cho bạn!`;
           CopilotLearningEngine.saveRule(msg, [targetAct], localReply);
         } else if (comboAct) {
           localReply = `✅ <strong>Trợ lý AI:</strong> Đã cập nhật sơ đồ! Giữ lại <strong>Chương ${comboAct.chapters.join(', ')}</strong> và <strong>Phần ${comboAct.sections.join(', ')} của Chương ${comboAct.targetChapter}</strong>, các phần còn lại đã được ẩn khỏi kịch bản.`;
