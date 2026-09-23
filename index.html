@@ -2943,7 +2943,7 @@
         <span class="ws-title" id="ws-current-title">Phân Cụm Dữ Liệu (Clustering Analysis)</span>
         <button class="btn-ws-delete-project" id="btn-ws-open-ai-config" title="Cấu hình mô hình AI & API Key" style="border-color: rgba(56, 189, 248, 0.3); color: var(--cyan); margin-left: 6px; display: inline-flex; align-items: center; gap: 6px;">
           <span style="display:inline-block; width:7px; height:7px; border-radius:50%; background:#10b981; box-shadow: 0 0 6px #10b981;"></span>
-          <span>⚙️ Cấu Hình AI</span>
+          <span id="lbl-active-ai-badge">⚙️ AI: gemini-2.5-flash</span>
         </button>
         <button class="btn-ws-delete-project" id="btn-ws-delete-project" title="Xóa vĩnh viễn dự án này">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -7434,7 +7434,8 @@ OUTPUT FORMAT: Return ONLY a valid JSON string (no markdown backticks, no explan
         renderScriptDocument();
         renderTimeline();
         if (res && res.isLiveAI) {
-          showToast("✨ Đã sinh lời thoại AI cho phân cảnh!");
+          const mName = LLMClient.getConfig().model || 'Live AI';
+          showToast(`✨ Đã sinh lời thoại AI cho phân cảnh từ [${mName}]!`);
         } else {
           showToast("⚡ Đã sinh kịch bản sư phạm chuyên sâu cho phân cảnh (Bộ sinh CIKM Cục Bộ)!");
         }
@@ -7596,7 +7597,8 @@ OUTPUT FORMAT: Return ONLY a valid JSON string (no markdown backticks, no explan
       renderScriptDocument();
       renderTimeline();
       if (liveCount > 0) {
-        showToast(`🎉 Đã hoàn tất viết kịch bản cho ${chKeys.length} phân cảnh (${liveCount} qua Live AI, ${localCount} qua CIKM Engine)!`);
+        const mName = LLMClient.getConfig().model || 'Live AI';
+        showToast(`🎉 Đã hoàn tất viết kịch bản cho ${chKeys.length} phân cảnh (${liveCount} qua Live AI [${mName}], ${localCount} qua CIKM Engine)!`);
       } else {
         showToast(`🎉 Đã hoàn tất viết kịch bản chi tiết cho toàn bộ ${chKeys.length} phân cảnh!`);
       }
@@ -10860,6 +10862,16 @@ ${tableRows}
       }
     }
 
+    function updateAiBadge() {
+      const badge = document.getElementById('lbl-active-ai-badge');
+      if (!badge) return;
+      const cfg = LLMClient.getConfig();
+      badge.textContent = `⚙️ AI: ${cfg.model || 'gemini-2.5-flash'}`;
+    }
+
+    // Khởi tạo nhãn model trên nút header
+    setTimeout(updateAiBadge, 100);
+
     function openAiConfigModal() {
       const cfg = LLMClient.getConfig();
       const currentProvider = (cfg.provider === 'gemini_local') ? 'gemini_local' : 'openai';
@@ -10986,8 +10998,9 @@ ${tableRows}
       const outputLang = document.getElementById('cfg-output-lang')?.value || 'vi';
 
       LLMClient.saveConfig({ provider, baseUrl, model, apiKey, outputLang });
+      updateAiBadge();
       closeAiConfigModal();
-      showToast('Đã lưu cấu hình AI thành công!');
+      showToast(`Đã lưu cấu hình: Đang kích hoạt [${model}]!`);
     });
 
     // SCRIPT TOOLBAR: AI VIẾT TOÀN BỘ
