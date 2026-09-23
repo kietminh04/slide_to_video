@@ -3842,9 +3842,12 @@
       });
     }, 200);
 
-    // QUẢN LÝ TRẠNG THÁI HIỆN TẠI
+    // QUẢN LÝ TRẠNG THÁI HIỆN TẠI (GIỮ NGUYÊN DỰ ÁN ĐANG LÀM VIỆC KHI RELOAD)
     const initialAvailableIds = Object.keys(defaultProjects);
-    let currentProjectId = initialAvailableIds.includes("cnn_intro") ? "cnn_intro" : (initialAvailableIds[0] || null);
+    const savedActiveProjId = localStorage.getItem('clsg_active_project_id');
+    let currentProjectId = (savedActiveProjId && defaultProjects[savedActiveProjId])
+      ? savedActiveProjId
+      : (initialAvailableIds.includes("cnn_intro") ? "cnn_intro" : (initialAvailableIds[0] || null));
     let activeProject = currentProjectId ? defaultProjects[currentProjectId] : null;
     let currentScenes = (activeProject && activeProject.scenes) ? JSON.parse(JSON.stringify(activeProject.scenes)) : [];
 
@@ -3908,6 +3911,9 @@
     const viewWorkspace = document.getElementById('view-workspace');
 
     function switchView(viewName) {
+      try {
+        localStorage.setItem('clsg_active_view', viewName);
+      } catch (e) {}
       if (viewName === 'projects') {
         viewProjects.style.display = 'flex';
         viewWorkspace.style.display = 'none';
@@ -4015,6 +4021,9 @@
 
     // CHUYỂN ĐỔI TAB Ở Ô GIỮA (SƠ ĐỒ TƯ DUY, KỊCH BẢN, VIDEO)
     function switchCenterTab(tabName) {
+      try {
+        localStorage.setItem('clsg_active_tab', tabName);
+      } catch (e) {}
       document.querySelectorAll('.center-nav-btn').forEach(btn => btn.classList.remove('active'));
       document.querySelectorAll('.center-tab-pane').forEach(pane => pane.classList.remove('active'));
 
@@ -6608,6 +6617,11 @@
 
     function selectLeafNodeForContent(node, cardEl) {
       selectedLeafNode = node;
+      try {
+        if (node && node.key) {
+          localStorage.setItem('clsg_active_leaf_key', node.key);
+        }
+      } catch (e) {}
 
       // Đảm bảo ô tóm tắt hiển thị lại nếu trước đó bị ẩn hoặc thu gọn
       showInspector();
@@ -9328,11 +9342,28 @@ QUY TẮC PHẢN HỒI QUAN TRỌNG:
       updateTuningPanel();
       if (typeof onProjectOpened === 'function') onProjectOpened();
 
-      // Mặc định tự động mở Sơ Đồ ở giữa và ẩn thanh xuất file
+      try {
+        localStorage.setItem('clsg_active_project_id', projId);
+        localStorage.setItem('clsg_active_view', 'workspace');
+      } catch (e) {}
+
+      // Khôi phục Tab trước đó của người dùng (Mindmap / Kịch Bản / Video)
+      const savedTab = localStorage.getItem('clsg_active_tab') || 'mindmap';
       const exportActions = document.getElementById('workspace-export-actions');
-      if (exportActions) exportActions.style.display = 'none';
-      switchCenterTab('mindmap');
-      setTimeout(() => centerMindmapView(true), 80);
+      if (exportActions) exportActions.style.display = (savedTab === 'script') ? 'flex' : 'none';
+      switchCenterTab(savedTab);
+
+      // Khôi phục phân đoạn (node) đang xem dở
+      const savedLeafKey = localStorage.getItem('clsg_active_leaf_key');
+      if (savedLeafKey && currentNodesMap[savedLeafKey]) {
+        const leafNode = currentNodesMap[savedLeafKey];
+        const card = document.getElementById(`node-${savedLeafKey}`);
+        setTimeout(() => {
+          if (leafNode) selectLeafNodeForContent(leafNode, card);
+        }, 150);
+      } else {
+        setTimeout(() => centerMindmapView(true), 80);
+      }
 
       showToast(`Đã mở dự án: ${activeProject.title}`);
     }
@@ -11617,9 +11648,14 @@ ${tableRows}
     checkServerHealth();
     setInterval(checkServerHealth, 5000);
 
-    // INITIALIZE PROJECTS DASHBOARD
+    // INITIALIZE PROJECTS DASHBOARD & KHÔI PHỤC VIEW ĐANG LÀM VIỆC (KHÔNG BỊ QUAY VỀ TRANG ĐẦU)
     renderProjectsGrid();
-    switchView('projects');
+    const savedActiveView = localStorage.getItem('clsg_active_view') || 'projects';
+    if (savedActiveView === 'workspace' && currentProjectId && defaultProjects[currentProjectId]) {
+      switchView('workspace');
+    } else {
+      switchView('projects');
+    }
   </script>
 </body>
 </html>
