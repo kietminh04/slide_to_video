@@ -184,46 +184,198 @@ def generate_studio_project(
         "Hiểu sâu về các nguyên lý cấu trúc này sẽ tạo tiền đề vững chắc cho việc tiếp cận các kiến trúc mạng và giải thuật mở rộng phức tạp hơn."
     ]
 
-    # Nhận diện chủ đề chuyên biệt nếu tài liệu dạng ảnh/scan (như MTCNN, FaceNet, Deep Learning)
+    # Nhận diện chính xác từng chủ đề chuyên biệt theo nội dung thực tế của slide
     doc_title_lower = doc_title.lower()
-    is_mtcnn_facenet = ("mtcnn" in doc_title_lower or "facenet" in doc_title_lower or "khuôn mặt" in doc_title_lower or "face" in doc_title_lower)
-    is_clustering = ("phân cụm" in doc_title_lower or "cluster" in doc_title_lower or "k-means" in doc_title_lower or "dbscan" in doc_title_lower or "som" in doc_title_lower)
+    
+    # 1. Phân biệt rõ ràng Face Anti-Spoofing (chống giả mạo)
+    is_anti_spoofing = bool(re.search(r"anti-spoofing|chống giả mạo|spoof|liveness|fas\b", doc_title_lower))
 
-    mtcnn_topics = [
+    # 2. Phân biệt MTCNN Phần 1 (Face Detection: P-Net, R-Net, O-Net)
+    is_mtcnn_p1 = (not is_anti_spoofing and "mtcnn" in doc_title_lower and 
+                   ("phần 1" in doc_title_lower or "p1" in doc_title_lower or "detection" in doc_title_lower or "phần 2" not in doc_title_lower))
+
+    # 3. Phân biệt MTCNN Phần 2 (Face Recognition & Inference: FaceNet, facenet-pytorch, Embeddings)
+    is_mtcnn_p2 = (not is_anti_spoofing and ("facenet" in doc_title_lower or "mtcnn" in doc_title_lower) and 
+                   ("phần 2" in doc_title_lower or "p2" in doc_title_lower or "triplet" in doc_title_lower or "inference" in doc_title_lower) and 
+                   "phần 1" not in doc_title_lower)
+
+    # 4. Phân cụm & CNN
+    is_clustering = (not is_anti_spoofing and not is_mtcnn_p1 and not is_mtcnn_p2 and 
+                     bool(re.search(r"cluster|phân cụm|k-means|dbscan|som", doc_title_lower)))
+    is_cnn = (not is_anti_spoofing and not is_mtcnn_p1 and not is_mtcnn_p2 and not is_clustering and 
+              bool(re.search(r"cnn|convolution|tích chập", doc_title_lower)))
+
+    anti_spoofing_topics = [
         {
-            "title": "Bản chất bài toán nhận diện khuôn mặt & Thách thức góc nhìn, ánh sáng",
-            "terms": ["nhận diện khuôn mặt", "biến đổi ánh sáng", "góc nghiêng mặt", "định chuẩn vị trí"],
+            "title": "Bản chất bài toán Face Anti-Spoofing & Rủi ro bảo mật sinh trắc",
+            "terms": ["Face Anti-Spoofing", "FAS", "bảo mật sinh trắc", "eKYC", "xác thực danh tính"],
             "v_type": "split_screen",
-            "v_purpose": "So sánh thách thức nhận diện giữa ảnh chuẩn studio và ảnh đời thực",
-            "bullets": ["Phát hiện vùng mặt trong ảnh phức tạp", "Chuẩn hóa góc xoay và ánh sáng", "Ranh giới bài toán Verification vs Identification"]
+            "v_purpose": "So sánh giữa khuôn mặt thật người dùng và các hình thức tấn công giả mạo qua camera",
+            "bullets": [
+                "Bùng nổ của nhận diện khuôn mặt trên smartphone, ngân hàng số và eKYC",
+                "Rủi ro lừa máy tính: Kẻ gian dùng ảnh in hoặc video phát lại để qua mặt hệ thống",
+                "Vị trí và vai trò sống còn của bước FAS trước khi đưa vào Face Recognition"
+            ]
         },
         {
-            "title": "Kiến trúc mạng tích chập đa nhiệm MTCNN (P-Net, R-Net, O-Net)",
-            "terms": ["MTCNN", "Proposal Network P-Net", "Refine Network R-Net", "Output Network O-Net"],
+            "title": "Các phương thức tấn công giả mạo (2D Print/Replay Attack & 3D Mask)",
+            "terms": ["Replay Attack", "Print Attack", "tấn công 2D", "mặt nạ 3D", "tấn công giả mạo"],
             "v_type": "process_visualization",
-            "v_purpose": "Mô phỏng 3 tầng mạng tuần tự thu hẹp vùng ứng viên và tinh chỉnh tọa độ",
-            "bullets": ["P-Net sinh ứng viên nhanh bằng sliding window", "R-Net lọc bỏ vùng nhiễu với NMS", "O-Net định vị 5 điểm mốc Landmark (mắt, mũi, miệng)"]
+            "v_purpose": "Mô phỏng các kịch bản tấn công: Ảnh in 1:1, phát lại video màn hình và mặt nạ silicon",
+            "bullets": [
+                "2D Attacks: Tấn công phát lại qua màn hình (Replay) và in ảnh giấy tỉ lệ 1:1 (Print Attack)",
+                "Kỹ thuật bẻ cong giấy hoặc khoét mắt để đánh lừa thuật toán phát hiện chuyển động",
+                "3D Attacks: Tấn công tinh vi bằng mặt nạ silicon 3D, tượng sáp hoặc robot mô phỏng"
+            ]
         },
         {
-            "title": "Trích xuất vector đặc trưng Face Embeddings 128D với mạng FaceNet",
-            "terms": ["FaceNet", "Face Embedding", "không gian Euclidean 128D", "Inception-ResNet"],
+            "title": "Phương pháp nhận diện tĩnh truyền thống (Local Binary Pattern - LBP)",
+            "terms": ["Local Binary Pattern", "LBP", "kết cấu vi mô", "SVM", "sọc viền Moiré"],
             "v_type": "highlight_box",
-            "v_purpose": "Minh họa ánh xạ ảnh khuôn mặt thành vector 128 chiều trên hình cầu đơn vị",
-            "bullets": ["Ánh xạ không gian vector đặc trưng liên tục", "Khoảng cách L2 thể hiện độ tương đồng danh tính", "Bảo toàn bất biến với biến đổi biểu cảm"]
+            "v_purpose": "Phân tích ma trận kết cấu vi mô LBP và ranh giới phân loại Live/Spoof bằng SVM",
+            "bullets": [
+                "Bản chất LBP: So sánh cường độ sáng pixel trung tâm với 8 pixel lân cận trong vùng 3x3",
+                "Khác biệt quang học: Ảnh in và màn hình có sọc viền Moiré, phản quang và méo dải màu",
+                "Đóng gói vector đặc trưng kết cấu và phân loại nhị phân người thật / giả mạo"
+            ]
         },
         {
-            "title": "Tối ưu hóa không gian nhận diện với hàm mất mát Triplet Loss",
-            "terms": ["Triplet Loss", "Anchor", "Positive", "Negative", "Hard Negative Mining"],
+            "title": "Phương pháp nhận diện động (Eye Blink Detection & Chuyển động tự nhiên)",
+            "terms": ["Eye Blink Detection", "tính sống động Liveness", "tỷ lệ EAR", "chớp mắt tự nhiên"],
             "v_type": "animated_diagram",
-            "v_purpose": "Biểu đồ động kéo gần Anchor-Positive và đẩy xa Negative vượt ngưỡng Margin alpha",
-            "bullets": ["Bộ ba mẫu huấn luyện: Mỏ neo, Cùng người, Khác người", "Điều kiện tối ưu: ||f(A) - f(P)||² + α < ||f(A) - f(N)||²", "Kỹ thuật Hard Negative Mining tăng tốc hội tụ"]
+            "v_purpose": "Biểu đồ động đo tỷ lệ mở mắt Eye Aspect Ratio (EAR) bắt khoảnh khắc chớp mắt",
+            "bullets": [
+                "Đặc tính sinh lý: Người bình thường nháy mắt 15-30 lần/phút với thời gian sụp mí ~250ms",
+                "Camera 30fps bắt chính xác chuỗi khung hình mắt nhắm mở qua tỷ lệ EAR",
+                "Ưu và nhược điểm: Độ chính xác cao nhưng đòi hỏi đầu vào video và người dùng phải cử động"
+            ]
         },
         {
-            "title": "Đánh giá khoảng cách nhận diện thực tế & Chống giả mạo (Anti-Spoofing)",
-            "terms": ["ngưỡng phân lớp Threshold", "khoảng cách Euclidean", "FAR", "FRR", "chống giả mạo"],
+            "title": "Bộ chỉ số đánh giá (APCER, BPCER, ACER) & Deep Learning FAS",
+            "terms": ["APCER", "BPCER", "ACER", "Pseudo Depth Map", "Domain Generalization"],
             "v_type": "concept_map",
-            "v_purpose": "Sơ đồ luồng xác thực thời gian thực và kiểm tra tính sống động Liveness",
-            "bullets": ["Thiết lập ngưỡng khoảng cách cân bằng FAR và FRR", "Xác thực danh tính 1:1 và tìm kiếm 1:N siêu tốc", "Cơ chế chống giả mạo bằng phát hiện chớp mắt"]
+            "v_purpose": "Sơ đồ kiến trúc Deep Learning FAS kết hợp bản đồ độ sâu Pseudo Depth Maps",
+            "bullets": [
+                "Bộ chỉ số chuẩn ISO: APCER (tấn công lọt lưới), BPCER (từ chối người thật) và ACER trung bình",
+                "Pixel-wise Supervision: Huấn luyện mạng CNN dự đoán bản đồ độ sâu Pseudo Depth Map cho mặt thật",
+                "Domain Generalization: Thách thức lớn khi mô hình đối mặt với thiết bị camera và cách tấn công mới"
+            ]
+        }
+    ]
+
+    mtcnn_p1_topics = [
+        {
+            "title": "Tổng quan kiến trúc MTCNN & Bài toán Face Detection",
+            "terms": ["MTCNN", "Face Detection", "Multi-task", "Cascaded Network"],
+            "v_type": "split_screen",
+            "v_purpose": "Minh họa luồng phân giải: Phát hiện mặt (Detection) trước, Định danh (Recognition) sau",
+            "bullets": [
+                "Phân định 2 giai đoạn cốt lõi: Face Detection và Face Verification",
+                "Kiến trúc thác tuần hoàn 3 tầng (Cascaded): P-Net -> R-Net -> O-Net",
+                "Xử lý đa nhiệm: Đồng thời dự đoán xác suất có mặt, tọa độ bounding box và điểm landmark"
+            ]
+        },
+        {
+            "title": "Stage 1: Mạng P-Net (Proposal Network) & Cấu trúc Image Pyramid",
+            "terms": ["P-Net", "Proposal Network", "Image Pyramid", "sliding window"],
+            "v_type": "process_visualization",
+            "v_purpose": "Mô phỏng kim tự tháp ảnh đa tỷ lệ và cửa sổ trượt 12x12 sinh nhanh vùng ứng viên",
+            "bullets": [
+                "Xây dựng Image Pyramid: Thu nhỏ ảnh gốc thành nhiều tỷ lệ để phát hiện khuôn mặt mọi kích cỡ",
+                "Mạng tích chập hoàn toàn (FCN) 12x12 quét song song, trích xuất hàng loạt bounding box ứng viên",
+                "Tốc độ cực cao, lọc bỏ nhanh chóng hơn 80% vùng nền không chứa khuôn mặt"
+            ]
+        },
+        {
+            "title": "Stage 2: Mạng R-Net (Refine Network) & Khử trùng lặp NMS",
+            "terms": ["R-Net", "Refine Network", "NMS", "Bounding Box Regression"],
+            "v_type": "highlight_box",
+            "v_purpose": "Minh họa bước tinh lọc kích thước 24x24 và thuật toán Non-Maximum Suppression",
+            "bullets": [
+                "Chuẩn hóa các vùng ứng viên từ P-Net về kích thước 24x24 và đưa qua mạng phân loại sâu hơn",
+                "Áp dụng Non-Maximum Suppression (NMS) với ngưỡng IoU để gộp các hộp bao chồng chéo",
+                "Hiệu chỉnh tọa độ bounding box (Bounding Box Regression) giúp ôm sát khuôn mặt hơn"
+            ]
+        },
+        {
+            "title": "Stage 3: Mạng O-Net (Output Network) & Định vị 5 Facial Landmarks",
+            "terms": ["O-Net", "Output Network", "Facial Landmarks", "căn chỉnh khuôn mặt"],
+            "v_type": "animated_diagram",
+            "v_purpose": "Mô phỏng mạng 48x48 xuất tọa độ chuẩn xác và 5 điểm mốc giải phẫu (mắt, mũi, miệng)",
+            "bullets": [
+                "Tầng sâu nhất với đầu vào 48x48, đưa ra quyết định phân loại khuôn mặt có độ tin cậy cao nhất",
+                "Định vị chuẩn xác 5 điểm mốc Facial Landmarks: 2 mắt, đỉnh mũi và 2 khóe miệng",
+                "5 điểm landmark là dữ liệu đầu vào bắt buộc để thực hiện xoay và căn chỉnh khuôn mặt cho FaceNet"
+            ]
+        },
+        {
+            "title": "Đánh giá hiệu năng thực tế & Ứng dụng tích hợp trong hệ thống",
+            "terms": ["hiệu năng MTCNN", "tốc độ FPS", "Edge Device", "pipeline thời gian thực"],
+            "v_type": "concept_map",
+            "v_purpose": "Đồ thị đối chiếu tốc độ xử lý FPS và độ chính xác của MTCNN trên thiết bị biên",
+            "bullets": [
+                "Cân bằng tốc độ FPS và độ chính xác trên thiết bị biên Edge Device và camera giám sát",
+                "MTCNN chạy ổn định ở tốc độ cao nhờ cấu trúc tuần tự 3 tầng lọc dần vùng nền",
+                "Kết nối đầu ra MTCNN với các mạng trích xuất đặc trưng sâu FaceNet/ArcFace hoàn chỉnh"
+            ]
+        }
+    ]
+
+    mtcnn_p2_topics = [
+        {
+            "title": "Chuẩn bị môi trường & Thư viện facenet-pytorch trong thực tế",
+            "terms": ["facenet-pytorch", "Inception-ResnetV1", "PyTorch", "môi trường thực thi"],
+            "v_type": "split_screen",
+            "v_purpose": "Sơ đồ kiến trúc môi trường thực thi: PyTorch, facenet-pytorch và OpenCV",
+            "bullets": [
+                "Thiết lập môi trường Python, PyTorch và cài đặt thư viện chuyên dụng facenet-pytorch",
+                "Sử dụng mô hình Inception-ResnetV1 đã được tiền huấn luyện (pretrained) trên tập VGGFace2",
+                "Khởi tạo luồng xử lý ảnh từ webcam/video bằng OpenCV"
+            ]
+        },
+        {
+            "title": "Quy trình căn chỉnh khuôn mặt (Face Alignment) & Cắt vùng quan tâm",
+            "terms": ["Face Alignment", "Crop", "căn chỉnh tọa độ", "chuẩn hóa đầu vào"],
+            "v_type": "process_visualization",
+            "v_purpose": "Mô phỏng phép xoay Affine dựa trên 2 mắt đưa khuôn mặt về tư thế thẳng đứng chuẩn",
+            "bullets": [
+                "Sử dụng 5 điểm landmarks từ MTCNN để tính toán góc xoay giữa 2 mắt",
+                "Thực hiện biến đổi Affine Transformation để xoay khuôn mặt về phương thẳng đứng chuẩn",
+                "Cắt vùng mặt (Crop) và co giãn về kích thước chuẩn 160x160 trước khi nạp vào FaceNet"
+            ]
+        },
+        {
+            "title": "Trích xuất vector đặc trưng Face Embeddings 512D với FaceNet",
+            "terms": ["Face Embeddings", "512D", "chuẩn hóa L2", "vector đặc trưng"],
+            "v_type": "highlight_box",
+            "v_purpose": "Minh họa vector đặc trưng 512 chiều chuẩn hóa L2 trên siêu mặt cầu đơn vị",
+            "bullets": [
+                "Mỗi khuôn mặt được mạng Inception-Resnet biến đổi thành một vector 512 chiều duy nhất",
+                "Chuẩn hóa L2: ||f(x)|| = 1, đưa toàn bộ vector đặc trưng lên mặt cầu đơn vị",
+                "Tính chất bảo toàn: Hai ảnh cùng người có khoảng cách L2 rất nhỏ, khác người có khoảng cách lớn"
+            ]
+        },
+        {
+            "title": "Phân loại danh tính bằng khoảng cách Euclidean & Ngưỡng Threshold",
+            "terms": ["khoảng cách Euclidean", "Threshold", "FaceList", "nhận diện danh tính"],
+            "v_type": "animated_diagram",
+            "v_purpose": "Mô phỏng so khớp vector khoảng cách Euclidean với FaceList và gắn nhãn Unknown",
+            "bullets": [
+                "Tính khoảng cách L2 giữa vector khuôn mặt cần nhận diện với cơ sở dữ liệu FaceList đã lưu",
+                "Chọn danh tính có khoảng cách nhỏ nhất (min_score tương tự thuật toán k-NN với k=1)",
+                "Thiết lập ngưỡng Threshold an toàn: Nếu khoảng cách vượt ngưỡng, gán nhãn Unknown (người lạ)"
+            ]
+        },
+        {
+            "title": "Đánh giá hạn chế thực tế & Nhu cầu kết hợp Liveness Detection",
+            "terms": ["hạn chế thực tế", "Liveness Detection", "điều kiện ánh sáng", "hệ thống hoàn chỉnh"],
+            "v_type": "concept_map",
+            "v_purpose": "Phân tích các lỗ hổng thực tế: Thiếu Face Alignment, ánh sáng yếu và nguy cơ bị tấn công giả mạo",
+            "bullets": [
+                "Ảnh hưởng của điều kiện ánh sáng yếu và góc chụp quá nghiêng làm lệch vector Embeddings",
+                "Hạn chế sống còn: MTCNN + FaceNet nguyên bản KHÔNG có khả năng phân biệt người thật và ảnh chụp",
+                "Kết luận: Cần tích hợp mô-đun Face Anti-Spoofing (Liveness) để tạo thành hệ thống điểm danh an toàn"
+            ]
         }
     ]
 
@@ -242,8 +394,22 @@ def generate_studio_project(
         scene_custom_title = None
         scene_bullets = []
 
-        if is_mtcnn_facenet:
-            preset = mtcnn_topics[idx % len(mtcnn_topics)]
+        if is_anti_spoofing:
+            preset = anti_spoofing_topics[idx % len(anti_spoofing_topics)]
+            scene_custom_title = preset["title"]
+            matched_terms = preset["terms"]
+            v_type = preset["v_type"]
+            v_purpose = preset["v_purpose"]
+            scene_bullets = preset["bullets"]
+        elif is_mtcnn_p1:
+            preset = mtcnn_p1_topics[idx % len(mtcnn_p1_topics)]
+            scene_custom_title = preset["title"]
+            matched_terms = preset["terms"]
+            v_type = preset["v_type"]
+            v_purpose = preset["v_purpose"]
+            scene_bullets = preset["bullets"]
+        elif is_mtcnn_p2:
+            preset = mtcnn_p2_topics[idx % len(mtcnn_p2_topics)]
             scene_custom_title = preset["title"]
             matched_terms = preset["terms"]
             v_type = preset["v_type"]

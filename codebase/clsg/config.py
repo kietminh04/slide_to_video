@@ -12,8 +12,8 @@ class Settings(BaseSettings):
 
     model_config = {"env_prefix": "CLSG_", "env_file": ".env", "extra": "ignore"}
 
-    # === Tên model theo vai trò ===
-    model_generator: str = "gpt-4o"
+    # === Tên model theo vai trò (Ưu tiên gpt-4o-mini tiết kiệm 30x token) ===
+    model_generator: str = "gpt-4o-mini"
     model_judge: str = "gpt-4o-mini"
     model_cheap: str = "gpt-4o-mini"
 

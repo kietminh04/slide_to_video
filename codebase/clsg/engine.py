@@ -32,19 +32,26 @@ from codebase.clsg.schemas import (
 from codebase.clsg.style import apply_style
 
 
-def _compute_timeline(script: Script, wpm: int = 140) -> Script:
-    """Tính est_s từ số từ và phân bổ thời gian liên tục."""
-    wps = wpm / 60.0
+def _compute_timeline(script: Script, wpm: int = 140, target_duration_s: float | None = None) -> Script:
+    """Tính thời lượng chuẩn hóa sử dụng ProsodyPlanner và ActiveRescaler."""
+    from codebase.clsg.guard import ActiveRescaler
+    from codebase.clsg.prosody import ProsodyPlanner
+
+    if target_duration_s and target_duration_s > 0:
+        script, _ = ActiveRescaler.auto_rescale(script, target_duration_s=target_duration_s, base_wpm=wpm)
+        return script
+
+    planner = ProsodyPlanner(wpm=wpm)
     t = 0.0
 
     for scene in script.scenes:
         scene.t_start = round(t, 2)
         scene_duration = 0.0
         for beat in scene.beats:
-            word_count = len(beat.display_text.split())
-            beat_duration = word_count / wps
-            beat.est_s = round(beat_duration, 2)
-            scene_duration += beat_duration
+            res = planner.plan(beat.display_text, custom_wpm=wpm)
+            beat.est_s = res.calibrated_duration_s
+            beat.tts_text = res.marked_text
+            scene_duration += res.calibrated_duration_s
         scene.t_end = round(t + scene_duration, 2)
         t = scene.t_end
 
@@ -139,7 +146,7 @@ def run_pipeline(
 
     # === 7. Áp dụng Style Pack & Phân bổ thời gian ===
     script = apply_style(script, style_pack, llm, settings)
-    script = _compute_timeline(script, wpm=settings.wpm)
+    script = _compute_timeline(script, wpm=settings.wpm, target_duration_s=script.meta.duration_s)
 
     return script
 

@@ -10,25 +10,33 @@ import re
 from pathlib import Path
 from typing import Literal
 
+from codebase.clsg.purifier import purifier
 from codebase.clsg.schemas import Chunk
 
 
 def extract(path: Path) -> list[Chunk]:
-    """Trích xuất tài liệu thành danh sách Chunk phân cấp."""
+    """Trích xuất tài liệu thành danh sách Chunk phân cấp và làm sạch bằng ContentPurifier."""
     suffix = path.suffix.lower()
 
     if suffix == ".pptx":
-        return _extract_pptx(path)
+        chunks = _extract_pptx(path)
     elif suffix == ".pdf":
-        return _extract_pdf(path)
+        chunks = _extract_pdf(path)
     elif suffix in (".txt", ".md"):
-        return _extract_txt(path)
+        chunks = _extract_txt(path)
     elif suffix == ".docx":
-        return _extract_docx(path)
+        chunks = _extract_docx(path)
+    else:
+        raise NotImplementedError(
+            f"Chưa hỗ trợ định dạng {suffix}. Hỗ trợ: .pptx, .pdf, .docx, .txt, .md"
+        )
 
-    raise NotImplementedError(
-        f"Chưa hỗ trợ định dạng {suffix}. Hỗ trợ: .pptx, .pdf, .docx, .txt, .md"
-    )
+    # Làm sạch toàn bộ nội dung chunk bằng ContentPurifier 3 tầng
+    for c in chunks:
+        if c.text and c.kind == "text":
+            c.text = purifier.clean_single_text(c.text)
+
+    return chunks
 
 
 def _extract_pptx(path: Path) -> list[Chunk]:
@@ -118,8 +126,53 @@ def _extract_pptx(path: Path) -> list[Chunk]:
     return chunks
 
 
+_ocr_engine_cached = None
+
+def _get_win_ocr_engine():
+    global _ocr_engine_cached
+    if _ocr_engine_cached is None:
+        try:
+            import winrt.windows.media.ocr as ocr
+            import winrt.windows.globalization as glob
+            _ocr_engine_cached = ocr.OcrEngine.try_create_from_user_profile_languages()
+            if not _ocr_engine_cached:
+                _ocr_engine_cached = ocr.OcrEngine.try_create_from_language(glob.Language('en-US'))
+        except Exception:
+            _ocr_engine_cached = False
+    return _ocr_engine_cached
+
+def _ocr_fitz_page(page) -> str:
+    engine = _get_win_ocr_engine()
+    if not engine:
+        return ""
+    import asyncio
+    import os
+    import tempfile
+    import winrt.windows.graphics.imaging as imaging
+    import winrt.windows.storage as storage
+
+    async def _run_ocr():
+        with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp:
+            tmp_path = tmp.name
+        try:
+            pix = page.get_pixmap(dpi=110)
+            pix.save(tmp_path)
+            file = await storage.StorageFile.get_file_from_path_async(os.path.abspath(tmp_path))
+            stream = await file.open_async(storage.FileAccessMode.READ)
+            decoder = await imaging.BitmapDecoder.create_async(stream)
+            bitmap = await decoder.get_software_bitmap_async()
+            res = await engine.recognize_async(bitmap)
+            return res.text
+        finally:
+            try:
+                os.remove(tmp_path)
+            except Exception:
+                pass
+
+    return asyncio.run(_run_ocr())
+
 def _extract_pdf(path: Path) -> list[Chunk]:
-    """Trích xuất tài liệu PDF theo từng trang sử dụng PyMuPDF / fitz."""
+    """Trích xuất tài liệu PDF theo từng trang sử dụng PyMuPDF / fitz, tự động OCR nếu trang scan/vector."""
     import fitz  # PyMuPDF
 
     doc = fitz.open(str(path))
@@ -128,13 +181,26 @@ def _extract_pdf(path: Path) -> list[Chunk]:
     for page_idx, page in enumerate(doc, start=1):
         chapter_id = f"ch{page_idx}"
         text = page.get_text("text").strip()
-        needs_human = len(text) < 30
+        needs_human = False
+
+        if len(text) < 30:
+            # Tự động gọi Windows Media OCR siêu tốc trích xuất văn bản từ ảnh hoặc bản vẽ vector
+            try:
+                ocr_text = _ocr_fitz_page(page)
+                if ocr_text and len(ocr_text.strip()) > 10:
+                    text = ocr_text.strip()
+            except Exception:
+                pass
+
+        if not text:
+            text = f"[Trang PDF {page_idx}: Đồ họa hoặc bảng vẽ]"
+            needs_human = True
 
         chunks.append(
             Chunk(
                 id=f"c_{chapter_id}_01",
                 chapter=chapter_id,
-                text=text if text else f"[Trang PDF {page_idx}: Đồ họa hoặc bảng vẽ]",
+                text=text,
                 page=page_idx,
                 kind="text",
                 needs_human=needs_human

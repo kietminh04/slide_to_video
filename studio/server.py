@@ -197,6 +197,74 @@ class StudioHandler(BaseHTTPRequestHandler):
                 self._send_json({"error": str(e)}, status=500)
                 return
 
+        if url_path == "/api/llm/ping":
+            try:
+                import time
+                import urllib.request
+                settings = get_settings()
+                if not settings.openai_api_key:
+                    self._send_json({"error": "Chưa cấu hình OPENAI_API_KEY trong .env"}, status=400)
+                    return
+                t0 = time.time()
+                payload = json.dumps({
+                    "model": settings.model_cheap or "gpt-4o-mini",
+                    "messages": [{"role": "user", "content": "Ping"}],
+                    "max_tokens": 2
+                }).encode("utf-8")
+                base_url = (settings.openai_base_url or "https://api.openai.com/v1").rstrip("/")
+                req = urllib.request.Request(
+                    f"{base_url}/chat/completions",
+                    data=payload,
+                    headers={
+                        "Content-Type": "application/json",
+                        "Authorization": f"Bearer {settings.openai_api_key}"
+                    },
+                    method="POST"
+                )
+                with urllib.request.urlopen(req, timeout=12) as resp:
+                    resp_data = json.loads(resp.read().decode("utf-8"))
+                    latency = round((time.time() - t0) * 1000)
+                    self._send_json({"status": "ok", "latency": latency, "provider": "OpenAI Official"})
+                    return
+            except Exception as e:
+                self._send_json({"error": str(e)}, status=500)
+                return
+
+        if url_path == "/api/llm/chat":
+            try:
+                import urllib.request
+                settings = get_settings()
+                req_json = json.loads(body) if body else {}
+                client_key = req_json.get("apiKey") or settings.openai_api_key
+                client_base = req_json.get("baseUrl") or settings.openai_base_url or "https://api.openai.com/v1"
+                
+                # Bỏ các trường metadata client trước khi chuyển tiếp sang API LLM
+                forward_body = {k: v for k, v in req_json.items() if k not in ["apiKey", "baseUrl", "provider"]}
+                
+                if not client_key:
+                    self._send_json({"error": "Chưa cấu hình API Key. Hãy nhập API Key trong Cấu Hình AI hoặc file .env"}, status=400)
+                    return
+                    
+                base_url = client_base.rstrip("/")
+                headers = {
+                    "Content-Type": "application/json",
+                    "Authorization": f"Bearer {client_key}"
+                }
+                
+                req = urllib.request.Request(
+                    f"{base_url}/chat/completions",
+                    data=json.dumps(forward_body).encode("utf-8"),
+                    headers=headers,
+                    method="POST"
+                )
+                with urllib.request.urlopen(req, timeout=60) as resp:
+                    resp_data = json.loads(resp.read().decode("utf-8"))
+                    self._send_json(resp_data)
+                    return
+            except Exception as e:
+                self._send_json({"error": str(e)}, status=500)
+                return
+
         self.send_error(404, "Endpoint Not Found")
 
 
