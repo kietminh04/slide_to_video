@@ -685,7 +685,130 @@
       box-shadow: 0 0 20px rgba(56, 189, 248, 0.15);
     }
 
-    /* PANE 2: CENTER PANE WITH NOTEBOOK-STYLE TABS */
+    /* GLOBAL CONFIG BAR (XUYÊN SUỐT CẢ SƠ ĐỒ & KỊCH BẢN) */
+    .global-config-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 6px 16px;
+      background: rgba(15, 23, 42, 0.85);
+      border-bottom: 1px solid var(--border-subtle);
+      flex-wrap: wrap;
+      min-height: 36px;
+    }
+    .gcfg-group {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+    .gcfg-group label {
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    .gcfg-input {
+      background: #080c14;
+      border: 1px solid var(--border-accent);
+      color: var(--cyan);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 6px;
+      border-radius: 4px;
+      width: 55px;
+      text-align: center;
+    }
+    .gcfg-select {
+      background: #080c14;
+      border: 1px solid var(--border-accent);
+      color: var(--text-main);
+      font-size: 10.5px;
+      padding: 3px 6px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .gcfg-lock-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      background: rgba(245, 158, 11, 0.12);
+      border: 1px solid rgba(245, 158, 11, 0.35);
+      color: var(--amber);
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 4px;
+      cursor: default;
+    }
+    .gcfg-divider {
+      width: 1px;
+      height: 18px;
+      background: var(--border-subtle);
+      margin: 0 2px;
+    }
+
+    /* NÚT KHOÁ NHÁNH TRÊN NODE */
+    .node-corner-lock {
+      position: absolute;
+      bottom: 6px;
+      left: 6px;
+      width: 20px;
+      height: 20px;
+      border-radius: 4px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: var(--text-dim);
+      font-size: 11px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      z-index: 5;
+    }
+    .node-corner-lock:hover {
+      background: rgba(245, 158, 11, 0.2);
+      border-color: var(--amber);
+      color: var(--amber);
+    }
+    .node-corner-lock.is-locked {
+      background: rgba(245, 158, 11, 0.25);
+      border-color: var(--amber);
+      color: var(--amber);
+      box-shadow: 0 0 6px rgba(245, 158, 11, 0.3);
+    }
+
+    /* BỘ CHỌN NGÔN NGỮ */
+    .lang-switcher-row {
+      display: flex;
+      gap: 0;
+      border-radius: 6px;
+      overflow: hidden;
+      border: 1px solid var(--border-accent);
+      margin-top: 8px;
+    }
+    .lang-btn {
+      flex: 1;
+      background: rgba(15, 23, 42, 0.7);
+      border: none;
+      color: var(--text-dim);
+      font-size: 10.5px;
+      font-weight: 600;
+      padding: 5px 4px;
+      cursor: pointer;
+      transition: all 0.15s;
+      text-align: center;
+    }
+    .lang-btn:hover { background: rgba(56, 189, 248, 0.08); color: var(--text-main); }
+    .lang-btn.active {
+      background: rgba(56, 189, 248, 0.18);
+      color: var(--cyan);
+      font-weight: 700;
+      box-shadow: inset 0 -2px 0 var(--cyan);
+    }
+
+        /* PANE 2: CENTER PANE WITH NOTEBOOK-STYLE TABS */
     .pane-center {
       display: flex;
       flex-direction: column;
@@ -2717,6 +2840,17 @@
           <input type="file" id="source-file-input" accept=".pptx,.pdf,.docx,.txt" style="display: none;">
         </label>
 
+        <!-- BỘ CHỌN NGÔN NGỮ KỊCH BẢN -->
+        <div style="margin-top: 6px;">
+          <div style="font-size: 10px; font-weight: 600; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Ngôn Ngữ Kịch Bản</div>
+          <div class="lang-switcher-row" id="lang-switcher-row">
+            <button class="lang-btn active" data-lang="vi" onclick="setScriptLanguage('vi')">🇻🇳 Tiếng Việt</button>
+            <button class="lang-btn" data-lang="en" onclick="setScriptLanguage('en')">🇬🇧 English</button>
+            <button class="lang-btn" data-lang="bilingual" onclick="setScriptLanguage('bilingual')">🌐 Song Ngữ</button>
+          </div>
+          <div style="font-size: 9.5px; color: var(--text-dim); margin-top: 3px; line-height: 1.4;">Giữ nguyên thuật ngữ chuyên môn gốc (ARIMA, DTW,...)</div>
+        </div>
+
         <!-- DƯỚI ĐÓ LÀ DANH SÁCH CÁC TÀI LIỆU ĐÃ UP VÀO -->
         <div style="font-size: 11px; font-weight: 700; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 4px;">
           Tài Liệu Đã Nạp
@@ -2751,6 +2885,41 @@
             <span class="btn-gen-text">Sinh Kịch Bản (Các Phần Đã Chọn)</span>
             <span class="btn-gen-badge" id="btn-gen-count-badge">0 mục</span>
           </button>
+        </div>
+
+        <!-- THANH CẤU HÌNH CHUNG (GLOBAL CONFIG BAR) -->
+        <div class="global-config-bar" id="global-config-bar">
+          <div class="gcfg-group">
+            <label>⏱️ Tổng:</label>
+            <input type="number" class="gcfg-input" id="gcfg-total-minutes" min="1" max="180" value="5" title="Thời gian tổng (phút)" onchange="applyGlobalDuration()">
+            <span style="font-size: 10px; color: var(--text-dim);">phút</span>
+          </div>
+          <div class="gcfg-divider"></div>
+          <div class="gcfg-group">
+            <label>🎙️</label>
+            <select class="gcfg-select" id="gcfg-voice" title="Giọng đọc" onchange="applyGlobalVoice()">
+              <option value="quynh_anh">Quỳnh Anh (Nữ Bắc)</option>
+              <option value="nam_an">Nam An (Nam Bắc)</option>
+              <option value="mai_phuong">Mai Phương (Nữ Nam)</option>
+              <option value="minh_quang">Minh Quang (Nam Nam)</option>
+              <option value="jenny_en">Jenny (US English)</option>
+              <option value="guy_en">Guy (UK English)</option>
+            </select>
+          </div>
+          <div class="gcfg-divider"></div>
+          <div class="gcfg-group">
+            <label>⚡ Tốc độ:</label>
+            <select class="gcfg-select" id="gcfg-speed" title="Tốc độ đọc" onchange="applyGlobalSpeed()">
+              <option value="0.85">0.85x Chậm (~120 WPM)</option>
+              <option value="1.0" selected>1.0x Chuẩn (~140 WPM)</option>
+              <option value="1.2">1.2x Nhanh (~165 WPM)</option>
+              <option value="1.35">1.35x Rất nhanh (~190 WPM)</option>
+            </select>
+          </div>
+          <div class="gcfg-divider"></div>
+          <div class="gcfg-group">
+            <span class="gcfg-lock-badge" id="gcfg-lock-badge" title="Số nhánh đang bị khóa thời lượng (không bị ảnh hưởng khi chỉnh tổng)">🔒 <span id="gcfg-lock-count">0</span> khóa</span>
+          </div>
         </div>
 
         <!-- TAB 1: SƠ ĐỒ TƯ DUY (PAN & ZOOM, TOP-DOWN, ĐA GỐC ĐỘC LẬP TỪNG TỆP) -->
@@ -3516,6 +3685,12 @@
         exportActions.style.display = (tabName === 'script') ? 'flex' : 'none';
       }
 
+      // ẨN TÓM TẮT KIẾN THỨC KHI MỞ KỊCH BẢN / VIDEO, CHỈ ĐỂ CHATBOT AI CHIẾM TRỌN
+      const inspectorSection = document.getElementById('content-inspector-section');
+      if (inspectorSection) {
+        inspectorSection.style.display = (tabName === 'mindmap') ? '' : 'none';
+      }
+
       if (tabName === 'mindmap') {
         document.getElementById('btn-tab-mindmap')?.classList.add('active');
         document.getElementById('tab-content-mindmap')?.classList.add('active');
@@ -3612,7 +3787,114 @@
       });
     }
 
-    document.getElementById('btn-tab-mindmap')?.addEventListener('click', () => switchCenterTab('mindmap'));
+    // =========================================================================
+    // GLOBAL CONFIG BAR FUNCTIONS (THỜI GIAN TỔNG 2 CHIỀU, GIỌNG ĐỌC, TỐC ĐỘ, KHÓA)
+    // =========================================================================
+    function applyGlobalDuration() {
+      const input = document.getElementById('gcfg-total-minutes');
+      if (!input || !activeProject) return;
+      const totalMinutes = Math.max(1, parseInt(input.value) || 5);
+      const totalSec = totalMinutes * 60;
+      activeProject.duration_s = totalSec;
+
+      // Cập nhật slider cũ nếu có
+      const sDur = document.getElementById('slider-duration');
+      if (sDur) { sDur.value = totalSec; sDur.max = Math.max(sDur.max, totalSec); }
+      const vDur = document.getElementById('val-duration');
+      if (vDur) vDur.textContent = `${totalMinutes} phút (${totalSec}s)`;
+
+      // Phân bổ xuống tất cả roots -> chapters theo tỷ lệ (skip locked)
+      Object.values(currentNodesMap).forEach(node => {
+        if (node.level === 0 && node.children && node.children.length > 0) {
+          if (node.data) node.data.duration = totalSec;
+          setNodeParam(node.key, 'duration', totalSec);
+          distributeDurationDown(node, totalSec);
+        }
+      });
+
+      renderMindmap();
+      if (document.getElementById('tab-content-script')?.classList.contains('active')) {
+        renderScriptDocument();
+      }
+      showToast(`⏱️ Thời gian tổng: ${totalMinutes} phút (${totalSec}s)`);
+    }
+
+    function applyGlobalVoice() {
+      const sel = document.getElementById('gcfg-voice');
+      if (!sel || !activeProject) return;
+      activeProject.voice = sel.value;
+      showToast(`🎙️ Giọng đọc: ${sel.options[sel.selectedIndex].text}`);
+    }
+
+    function applyGlobalSpeed() {
+      const sel = document.getElementById('gcfg-speed');
+      if (!sel || !activeProject) return;
+      const speedMap = { '0.85': 120, '1.0': 140, '1.2': 165, '1.35': 190 };
+      const wpm = speedMap[sel.value] || 140;
+      activeProject.wpm = wpm;
+      activeProject.speechRate = parseFloat(sel.value);
+      const sWpm = document.getElementById('slider-wpm');
+      if (sWpm) sWpm.value = wpm;
+      const vWpm = document.getElementById('val-wpm');
+      if (vWpm) vWpm.textContent = `${wpm} WPM`;
+      showToast(`⚡ Tốc độ đọc: ${sel.options[sel.selectedIndex].text}`);
+    }
+
+    function updateLockedBadge() {
+      const count = Object.keys(nodeCustomParams).filter(k => nodeCustomParams[k]?.isLocked).length;
+      const el = document.getElementById('gcfg-lock-count');
+      if (el) el.textContent = count;
+    }
+
+    function syncGlobalConfigFromProject() {
+      if (!activeProject) return;
+      const totalSec = activeProject.duration_s || 300;
+      const gcfgMin = document.getElementById('gcfg-total-minutes');
+      if (gcfgMin) gcfgMin.value = Math.round(totalSec / 60);
+
+      const gcfgVoice = document.getElementById('gcfg-voice');
+      if (gcfgVoice && activeProject.voice) gcfgVoice.value = activeProject.voice;
+
+      const gcfgSpeed = document.getElementById('gcfg-speed');
+      if (gcfgSpeed && activeProject.speechRate) gcfgSpeed.value = String(activeProject.speechRate);
+
+      updateLockedBadge();
+    }
+
+    // =========================================================================
+    // LANGUAGE SWITCHER (BỘ CHỌN NGÔN NGỮ KỊCH BẢN ANH-VIỆT-SONG NGỮ)
+    // =========================================================================
+    function setScriptLanguage(lang) {
+      if (!activeProject) return;
+      activeProject.scriptLanguage = lang;
+
+      // Cập nhật outputLang trong LLMClient config
+      const cfg = LLMClient.getConfig();
+      if (lang === 'bilingual') {
+        cfg.outputLang = 'vi'; // base Việt + thuật ngữ Anh
+      } else {
+        cfg.outputLang = lang;
+      }
+      LLMClient.saveConfig(cfg);
+
+      // Cập nhật UI buttons
+      document.querySelectorAll('#lang-switcher-row .lang-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.lang === lang);
+      });
+
+      showToast(`🌐 Ngôn ngữ kịch bản: ${lang === 'vi' ? 'Tiếng Việt' : lang === 'en' ? 'English' : 'Song Ngữ Anh-Việt'}`);
+    }
+
+    // Tải lại Global Config khi mở project (gọi từ openProject)
+    function onProjectOpened() {
+      syncGlobalConfigFromProject();
+      const lang = activeProject?.scriptLanguage || 'vi';
+      document.querySelectorAll('#lang-switcher-row .lang-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.lang === lang);
+      });
+    }
+
+        document.getElementById('btn-tab-mindmap')?.addEventListener('click', () => switchCenterTab('mindmap'));
     document.getElementById('btn-tab-script')?.addEventListener('click', () => switchCenterTab('script'));
     document.getElementById('btn-tab-video')?.addEventListener('click', () => switchCenterTab('video'));
 
@@ -4833,34 +5115,39 @@
       const children = parentNode.children;
       const N = children.length;
       const oldDurs = children.map(c => (c.data && c.data.duration) ? c.data.duration : 30);
-      const sumOld = oldDurs.reduce((a, b) => a + b, 0);
 
-      const allEqual = oldDurs.every(d => d === oldDurs[0]);
-      const newDurs = [];
+      // TÁCH NHÁNH KHÓA VÀ NHÁNH TỰ DO
+      const lockedDur = children.reduce((acc, c, i) => acc + (getNodeParam(c.key, 'isLocked', false) ? oldDurs[i] : 0), 0);
+      const freeIndices = children.map((c, i) => i).filter(i => !getNodeParam(children[i].key, 'isLocked', false));
+      const freeDurs = freeIndices.map(i => oldDurs[i]);
+      const sumFree = freeDurs.reduce((a, b) => a + b, 0);
+      const availableForFree = Math.max(0, totalDur - lockedDur);
 
-      if (allEqual || sumOld === 0) {
-        // CHIA ĐỀU TUYỆT ĐỐI (ví dụ: 100s / 2 = 50s mỗi bên; 90s / 3 = 30s)
-        const base = Math.floor(totalDur / N);
-        const rem = totalDur % N;
-        for (let i = 0; i < N; i++) {
-          newDurs.push(base + (i < rem ? 1 : 0));
-        }
-      } else {
-        // CHIA THEO TỶ LỆ CỦA CÁC NHÁNH BÉ
-        let currentSum = 0;
-        for (let i = 0; i < N; i++) {
-          if (i === N - 1) {
-            newDurs.push(Math.max(5, totalDur - currentSum));
-          } else {
-            const share = Math.max(5, Math.round((oldDurs[i] / sumOld) * totalDur));
-            newDurs.push(share);
-            currentSum += share;
-          }
+      const newDurs = [...oldDurs]; // Giữ nguyên locked
+
+      if (freeIndices.length > 0 && availableForFree > 0) {
+        const allFreeEqual = freeDurs.every(d => d === freeDurs[0]);
+        if (allFreeEqual || sumFree === 0) {
+          const base = Math.floor(availableForFree / freeIndices.length);
+          const rem = availableForFree % freeIndices.length;
+          freeIndices.forEach((fi, j) => { newDurs[fi] = Math.max(5, base + (j < rem ? 1 : 0)); });
+        } else {
+          let currentSum = 0;
+          freeIndices.forEach((fi, j) => {
+            if (j === freeIndices.length - 1) {
+              newDurs[fi] = Math.max(5, availableForFree - currentSum);
+            } else {
+              const share = Math.max(5, Math.round((freeDurs[j] / sumFree) * availableForFree));
+              newDurs[fi] = share;
+              currentSum += share;
+            }
+          });
         }
       }
 
       // Đệ quy áp dụng xuống từng nhánh con
       children.forEach((child, idx) => {
+        if (getNodeParam(child.key, 'isLocked', false)) return; // Skip locked
         const childDur = newDurs[idx];
         setNodeParam(child.key, 'duration', childDur);
         if (child.data) child.data.duration = childDur;
@@ -5454,6 +5741,7 @@
         // Bỏ qua các nút thao tác chuyên biệt (X, bút chì, badge chỉnh)
         if (e.target.closest('.node-corner-x') || 
             e.target.closest('.node-corner-edit') || 
+            e.target.closest('.node-corner-lock') ||
             e.target.closest('.node-duration-badge')) {
           return;
         }
@@ -5642,8 +5930,16 @@
       btnEdit.title = 'Mở terminal tinh chỉnh thời lượng, tham số & ghi chú riêng cho nhánh này';
       btnEdit.innerHTML = '✎';
 
+      const btnLock = document.createElement('button');
+      btnLock.className = 'node-corner-lock' + (getNodeParam(node.key, 'isLocked', false) ? ' is-locked' : '');
+      btnLock.title = getNodeParam(node.key, 'isLocked', false)
+        ? 'Đã khóa: Thời lượng nhánh này cố định, không bị ảnh hưởng khi chỉnh tổng'
+        : 'Khóa thời lượng nhánh này (cố định khi chỉnh tổng)';
+      btnLock.innerHTML = getNodeParam(node.key, 'isLocked', false) ? '🔒' : '🔓';
+
       card.appendChild(btnX);
       card.appendChild(btnEdit);
+      card.appendChild(btnLock);
 
       // Kích hoạt kéo thả theo nhánh cho mọi thẻ node
       initNodeSubtreeDrag(card, node);
@@ -5663,7 +5959,23 @@
           return;
         }
 
-        // B. Nhấn nút Edit ✎ hoặc Badge thời lượng -> Mở Terminal ở góc dưới (Image 2)
+        // B1. Nhấn nút Lock 🔓/🔒 -> Toggle khóa nhánh
+        const hitLock = e.target.closest('.node-corner-lock');
+        if (hitLock) {
+          e.stopPropagation();
+          const isLocked = !getNodeParam(node.key, 'isLocked', false);
+          setNodeParam(node.key, 'isLocked', isLocked);
+          hitLock.innerHTML = isLocked ? '🔒' : '🔓';
+          hitLock.className = 'node-corner-lock' + (isLocked ? ' is-locked' : '');
+          hitLock.title = isLocked
+            ? 'Đã khóa: Thời lượng nhánh này cố định, không bị ảnh hưởng khi chỉnh tổng'
+            : 'Khóa thời lượng nhánh này (cố định khi chỉnh tổng)';
+          updateLockedBadge();
+          showToast(isLocked ? `🔒 Đã khóa nhánh: ${node.data.title || node.key}` : `🔓 Đã mở khóa nhánh: ${node.data.title || node.key}`);
+          return;
+        }
+
+        // B2. Nhấn nút Edit ✎ hoặc Badge thời lượng -> Mở Terminal ở góc dưới (Image 2)
         const hitEdit = e.target.closest('.node-corner-edit') || e.target.closest('.node-duration-badge');
         if (hitEdit) {
           e.stopPropagation();
@@ -6430,9 +6742,15 @@
         })).join('\n');
 
         const outputLang = cfg.outputLang || 'vi';
-        const langInstruction = outputLang === 'en'
-          ? `Write the narration script in ENGLISH. Use natural, engaging academic English suitable for a university lecture. Keep technical terms precise.`
-          : `Viết lời giảng bài bằng TIẾNG VIỆT tự nhiên, cuốn hút, giàu tính sư phạm.`;
+        const scriptLang = activeProject?.scriptLanguage || outputLang;
+        let langInstruction = '';
+        if (scriptLang === 'en') {
+          langInstruction = `Write the narration script in ENGLISH. Use natural, engaging academic English suitable for a university lecture. Keep technical terms precise.`;
+        } else if (scriptLang === 'bilingual') {
+          langInstruction = `Viết lời giảng bài bằng TIẾNG VIỆT tự nhiên, giàu tính sư phạm. Giữ nguyên 100% thuật ngữ chuyên môn tiếng Anh gốc (tên riêng, công thức, viết tắt) trong ngoặc đơn. Ở cuối mỗi phân đoạn, viết thêm 1 câu tóm tắt tiếng Anh ngắn gọn in nghiêng.`;
+        } else {
+          langInstruction = `Viết lời giảng bài bằng TIẾNG VIỆT tự nhiên, cuốn hút, giàu tính sư phạm. Giữ nguyên 100% thuật ngữ chuyên môn tiếng Anh gốc (ARIMA, Cross-validation, Dynamic Time Warping, tên tác giả...) — TUYỆT ĐỐI không dịch thô thiển.`;
+        }
         const exampleSegment = outputLang === 'en'
           ? `[b1] Welcome to the section on Dynamic Time Warping. DTW is an optimal algorithm used to measure the similarity between two time series... (write 60-75 words, explain the mechanism, mathematical formula, algorithm and how it works in depth).\n   [b2] Next, let us examine the keyframe-based approach... (write 60-75 words).`
           : `[b1] Chào mừng các bạn đến với phần phương pháp Dynamic Time Warping. DTW là giải thuật tối ưu dùng để đo lường mức độ tương đồng giữa hai chuỗi thời gian... (viết đủ 60-75 từ, giải thích sâu sắc cơ chế, công thức toán học, thuật toán và cách vận hành).\n   [b2] Tiếp theo, chúng ta cùng nghiên cứu phương pháp sử dụng keyframe... (viết đủ 60-75 từ).`;
@@ -7247,6 +7565,7 @@ OUTPUT FORMAT: Return ONLY a valid JSON string (no markdown backticks, no explan
       initLayoutResizers();
       renderScriptDocument();
       updateTuningPanel();
+      if (typeof onProjectOpened === 'function') onProjectOpened();
 
       // Mặc định tự động mở Sơ Đồ ở giữa và ẩn thanh xuất file
       const exportActions = document.getElementById('workspace-export-actions');
@@ -9142,27 +9461,54 @@ OUTPUT FORMAT: Return ONLY a valid JSON string (no markdown backticks, no explan
     });
 
     document.getElementById('btn-export-docx').addEventListener('click', async () => {
-      const filename = `Kich_Ban_${activeProject.id}.docx`;
+      const filename = `Kich_Ban_${activeProject.id}.doc`;
 
+      // 100% CLIENT-SIDE: Tạo Word dạng HTML Document (mở được bằng MS Word, LibreOffice, Google Docs)
       try {
-        const res = await fetch(`${API_BASE}/api/export/docx`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ scenes: currentScenes, doc_id: currentProjectId, filename: filename })
+        let tableRows = '';
+        currentScenes.forEach((s, idx) => {
+          const timeStr = `${formatTime(s.t_start)} - ${formatTime(s.t_end)}`;
+          const narr = (s.narration || '').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br/>');
+          const visual = s.visual_type || 'highlight_box';
+          const vPurpose = (s.visual_purpose || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+          tableRows += `<tr>
+            <td style="padding:6px;border:1px solid #ddd;font-family:'Courier New',monospace;font-size:11px;white-space:nowrap;">${timeStr}</td>
+            <td style="padding:6px;border:1px solid #ddd;"><b>${s.id || 'CH.' + (idx+1)}</b> (${s.depth || 'core'})</td>
+            <td style="padding:6px;border:1px solid #ddd;font-size:12px;line-height:1.6;">${narr}</td>
+            <td style="padding:6px;border:1px solid #ddd;font-size:11px;color:#555;"><b>[${visual}]</b><br/>${vPurpose}</td>
+          </tr>`;
         });
-        if (res.ok) {
-          const blob = await res.blob();
-          const url = window.URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = filename;
-          a.click();
-          showToast(`Đã tải tài liệu Word: ${filename}`);
-          return;
-        }
-      } catch (err) {}
 
-      showToast(`Đang tải tài liệu Word...`);
+        const htmlContent = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
+<head><meta charset="utf-8"><title>${activeProject.title}</title>
+<style>body{font-family:Calibri,Arial,sans-serif;margin:40px;color:#222;}
+h1{color:#0a4c8a;border-bottom:3px solid #0a4c8a;padding-bottom:8px;font-size:22px;}
+h2{color:#555;font-size:14px;font-weight:normal;margin-top:-8px;}
+table{border-collapse:collapse;width:100%;margin-top:20px;}
+th{background:#0a4c8a;color:#fff;padding:8px;border:1px solid #0a4c8a;font-size:12px;text-align:left;}
+</style></head><body>
+<h1>KỊCH BẢN PHÂN CẢNH: ${activeProject.title}</h1>
+<h2>Thời lượng: ${document.getElementById('slider-duration')?.value || 300}s | Tốc độ: ${activeProject.wpm || 140} WPM | Số cảnh: ${currentScenes.length}</h2>
+<table>
+<tr><th>Thời gian</th><th>Cảnh</th><th>Lời giảng sư phạm</th><th>Chỉ dẫn thị giác</th></tr>
+${tableRows}
+</table>
+</body></html>`;
+
+        const blob = new Blob(['\ufeff' + htmlContent], { type: 'application/msword' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        showToast(`Đã tải tài liệu Word: ${filename}`);
+      } catch (err) {
+        console.error('Lỗi xuất Word:', err);
+        showToast('Lỗi khi tạo file Word. Xem Console để biết chi tiết.');
+      }
     });
 
     document.getElementById('btn-export-srt').addEventListener('click', () => {
