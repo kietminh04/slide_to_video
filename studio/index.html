@@ -3291,10 +3291,11 @@
               </div>
             </div>
             <div class="chat-suggestions">
-              <div style="font-size: 10.5px; color: var(--text-dim); margin-bottom: 3px;">Gợi ý câu lệnh nhanh:</div>
-              <button class="chat-pill-btn" onclick="sendQuickPrompt('🎬 Yêu cầu tạo video bài giảng 5 phút chuẩn MOOC')">🎬 Tạo video 5 phút</button>
-              <button class="chat-pill-btn" onclick="sendQuickPrompt('🧠 Tự động phân nhánh sơ đồ tư duy chi tiết hơn')">🧠 Phân nhánh sơ đồ</button>
-              <button class="chat-pill-btn" onclick="sendQuickPrompt('⚡ Tăng nhịp độ giảng dạy lên 150 từ/phút')">⚡ Tăng nhịp độ 150 WPM</button>
+              <div style="font-size: 10.5px; color: var(--text-dim); margin-bottom: 3px;">Gợi ý câu lệnh nhanh cho người mới:</div>
+              <button class="chat-pill-btn" onclick="sendQuickPrompt('📖 Tóm tắt toàn bộ bài giảng này và nêu các luận điểm cốt lõi')">📖 Tóm tắt bài giảng</button>
+              <button class="chat-pill-btn" onclick="sendQuickPrompt('🎙️ Đọc thử lời giảng kịch bản của Chương 1')">🎙️ Đọc thử Chương 1</button>
+              <button class="chat-pill-btn" onclick="sendQuickPrompt('🎯 Chỉ giữ lại các chương cốt lõi nhất, ẩn các phần phụ')">🎯 Giữ phần cốt lõi</button>
+              <button class="chat-pill-btn" onclick="sendQuickPrompt('⏱️ Cân đối tổng thời lượng bài giảng về đúng 10 phút')">⏱️ Cân đối 10 phút</button>
             </div>
           </div>
 
@@ -8451,6 +8452,72 @@ OUTPUT FORMAT: Return ONLY a valid JSON string (no markdown backticks, no explan
         return true;
       },
 
+      keepOnlyTarget(act) {
+        const targetChapNum = parseInt(act.chapter) || 1;
+        const targetSec = (act.section || '').toLowerCase().replace(/phần\s*/gi, '').trim();
+        const targetItem = (act.item || '').toLowerCase().trim();
+
+        const chapters = getAllChaptersInfo();
+        const targetCh = chapters.find(c => c.num === targetChapNum);
+        if (!targetCh) return false;
+
+        let focusedKey = targetCh.key;
+
+        chapters.forEach(ch => {
+          if (ch.num !== targetChapNum) {
+            excludedNodes.add(ch.key);
+          } else {
+            excludedNodes.delete(ch.key);
+            const chNode = currentNodesMap[ch.key];
+            if (chNode && chNode.children) {
+              chNode.isExpanded = true;
+              chNode.children.forEach((secNode, sIdx) => {
+                const secCode = (secNode.data?.code || '').toLowerCase().replace(/phần\s*/gi, '').trim();
+                const secLetter = String.fromCharCode(97 + sIdx); // 'a', 'b', 'c', 'd'
+                const secMatch = !targetSec || (targetSec === secCode) || (targetSec === secLetter) || (targetSec === String(sIdx + 1));
+
+                if (!secMatch) {
+                  excludedNodes.add(secNode.key);
+                } else {
+                  excludedNodes.delete(secNode.key);
+                  secNode.isExpanded = true;
+                  focusedKey = secNode.key;
+                  if (secNode.children) {
+                    secNode.children.forEach((itNode) => {
+                      const itCode = (itNode.data?.code || '').toLowerCase().trim();
+                      const itText = (itNode.data?.title || itNode.data?.text || '').toLowerCase();
+                      const itMatch = !targetItem || (itCode === targetItem) || itText.includes(targetItem);
+                      if (!itMatch) {
+                        excludedNodes.add(itNode.key);
+                      } else {
+                        excludedNodes.delete(itNode.key);
+                        focusedKey = itNode.key;
+                      }
+                    });
+                  }
+                }
+              });
+            }
+          }
+        });
+
+        this.refresh();
+        this.focusNode(focusedKey);
+        return true;
+      },
+
+      speakNarration(text) {
+        if (!('speechSynthesis' in window) || !text) return false;
+        window.speechSynthesis.cancel();
+        const clean = text.replace(/<[^>]*>/g, '').replace(/\[P\d+\]/g, '').trim();
+        const utter = new SpeechSynthesisUtterance(clean);
+        utter.rate = 1.0;
+        utter.lang = /[àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđ]/i.test(clean) ? 'vi-VN' : 'en-US';
+        window.speechSynthesis.speak(utter);
+        showToast('🔊 Đang đọc thử lời giảng...');
+        return true;
+      },
+
       refresh() {
         renderMindmap();
         renderScriptDocument();
@@ -8481,6 +8548,8 @@ OUTPUT FORMAT: Return ONLY a valid JSON string (no markdown backticks, no explan
           else if (type === 'toggle_pane_sources') didSomething = this.togglePaneSources(act.show) || didSomething;
           else if (type === 'fullscreen_mindmap') didSomething = this.fullscreenMindmap() || didSomething;
           else if (type === 'keep_chapters_and_sections') didSomething = this.keepChaptersAndSections(act.chapters || [], act.targetChapter, act.sections || []) || didSomething;
+          else if (type === 'keep_only_target') didSomething = this.keepOnlyTarget(act) || didSomething;
+          else if (type === 'speak_narration') didSomething = this.speakNarration(act.text || act.narration) || didSomething;
         });
         if (didSomething) {
           showToast('🤖 AI Copilot: Đã thực thi thao tác giao diện!');
@@ -8488,6 +8557,40 @@ OUTPUT FORMAT: Return ONLY a valid JSON string (no markdown backticks, no explan
         return didSomething;
       }
     };
+
+    // TRÌNH PHÁT GIỌNG ĐỌC AI (WEB SPEECH API) TRỰC TIẾP TRONG KHUNG CHAT
+    function playVoiceNarration(btn) {
+      if (!('speechSynthesis' in window)) {
+        showToast('Trình duyệt không hỗ trợ phát âm thanh Web Speech.');
+        return;
+      }
+      const bubble = btn.closest('.msg-bubble');
+      if (!bubble) return;
+
+      if (window.speechSynthesis.speaking) {
+        window.speechSynthesis.cancel();
+        btn.innerHTML = '<span>🔊</span> <span>Nghe đọc</span>';
+        return;
+      }
+
+      const clone = bubble.cloneNode(true);
+      clone.querySelectorAll('button').forEach(b => b.remove());
+      const rawText = clone.textContent.replace(/\[P\d+\]/g, '').trim();
+
+      const utter = new SpeechSynthesisUtterance(rawText);
+      utter.rate = 1.0;
+      utter.pitch = 1.0;
+
+      const isVi = /[àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđ]/i.test(rawText);
+      utter.lang = isVi ? 'vi-VN' : 'en-US';
+
+      btn.innerHTML = '<span>⏹️</span> <span>Dừng đọc</span>';
+      utter.onend = () => { btn.innerHTML = '<span>🔊</span> <span>Nghe đọc</span>'; };
+      utter.onerror = () => { btn.innerHTML = '<span>🔊</span> <span>Nghe đọc</span>'; };
+
+      window.speechSynthesis.speak(utter);
+      showToast('🔊 Đang đọc văn bản...');
+    }
 
     // HEURISTIC REGEX PARSER: Nhận diện tức thì không cần đợi API
     function parseLocalCopilotCommand(msg) {
@@ -8498,6 +8601,19 @@ OUTPUT FORMAT: Return ONLY a valid JSON string (no markdown backticks, no explan
       const learned = CopilotLearningEngine.match(msg);
       if (learned && Array.isArray(learned.actions) && learned.actions.length > 0) {
         return learned.actions;
+      }
+
+      // 00. Câu lệnh lọc sâu tới từng mục/lá: "bản tóm tắt của chương 1, phần d, a1... bỏ hết chỉ giữ lại mình phần đó"
+      const mSingleTarget = msg.match(/(?:bản\s*tóm\s*tắt\s*(?:của)?\s*)?chương\s*(\d+).*?phần\s*([a-z0-9]+).*?([a-z]\d+).*(?:bỏ\s*hết|chỉ\s*giữ|chỉ\s*lấy|để\s*lại\s*mình)/i) ||
+                            msg.match(/(?:bỏ\s*hết|chỉ\s*giữ|chỉ\s*lấy).*?chương\s*(\d+).*?phần\s*([a-z0-9]+).*?([a-z]\d+)/i);
+      if (mSingleTarget) {
+        actions.push({
+          type: 'keep_only_target',
+          chapter: parseInt(mSingleTarget[1]),
+          section: mSingleTarget[2],
+          item: mSingleTarget[3]
+        });
+        return actions;
       }
 
       // 0a. Câu lệnh phức hợp: "à thôi, để lại chương 4 với phần a b của chương 1 đi"
@@ -8662,51 +8778,94 @@ OUTPUT FORMAT: Return ONLY a valid JSON string (no markdown backticks, no explan
 
       const bubbleEl = aiMsg.querySelector('.msg-bubble');
 
-      // TẬP HỢP NGỮ CẢNH CÁC CHƯƠNG HIỆN TẠI
-      const chapters = getAllChaptersInfo();
-      const chaptersSummary = chapters.map(c => 
-        `- Chương ${c.num}: "${c.title}" | Thời lượng: ${c.duration}s | Trạng thái: ${c.isExcluded ? 'ĐÃ ẨN' : 'ĐANG DÙNG'} | Khóa: ${c.isLocked ? '🔒 Đã khóa' : '🔓 Tự do'}`
-      ).join('\n');
+      // XÂY DỰNG TOÀN BỘ KHO TRI THỨC BÀI GIẢNG ĐA PHƯƠNG THỨC CHO AI COPILOT
+      function buildFullLectureContext() {
+        if (!activeProject) return '(Chưa có dự án bài giảng nào đang mở)';
+        const roots = buildDecisionTree(activeProject, currentScenes);
+        let out = `BÀI GIẢNG: "${activeProject.title}" (Tổng thời lượng: ${activeProject.duration_s || 300}s)\n`;
+        out += `MÔ TẢ: ${activeProject.desc || 'Không có mô tả'}\n\n`;
+        out += `TOÀN BỘ CẤU TRÚC PHÂN CẢNH, NHÁNH, LÁ VÀ KỊCH BẢN CHI TIẾT:\n`;
 
-      const systemPrompt = `Bạn là Trợ lý AI Điều Khiển Giao Diện CLSG Studio (HUST AI Copilot).
-Người dùng là giảng viên đang thiết kế bài giảng. Bạn có quyền trực tiếp điều khiển giao diện UI thông qua các lệnh JSON.
+        roots.forEach((root) => {
+          (root.children || []).forEach((chNode, cIdx) => {
+            const chNum = cIdx + 1;
+            const chTitle = chNode.data?.title || `Chương ${chNum}`;
+            const chEx = isNodeExcluded(chNode.key);
+            const chNarration = (currentScenes[cIdx]?.narration) || getNodeParam(chNode.key, 'narration', '');
 
-DỮ LIỆU BÀI GIẢNG HIỆN TẠI:
-- Tên: "${activeProject ? activeProject.title : ''}"
-- Tổng thời lượng đang dùng: ${activeProject ? activeProject.duration_s : 0}s (${Math.round((activeProject?.duration_s || 0)/60)} phút).
-- Danh sách các chương:
-${chaptersSummary || '(Chưa có chương)'}
+            out += `\n[CHƯƠNG ${chNum}]: "${chTitle}" (Thời lượng: ${chNode.data?.duration || 60}s | Trạng thái: ${chEx ? 'ĐÃ ẨN' : 'ĐANG DÙNG'})\n`;
+            if (chNarration) {
+              out += `  • Kịch bản tổng quan: "${chNarration.slice(0, 300)}..."\n`;
+            }
 
-DANH MỤC LỆNH BẠN CÓ THỂ ĐIỀU KHIỂN:
-- "keep_chapters_and_sections": {"type": "keep_chapters_and_sections", "chapters": [4], "targetChapter": 1, "sections": ["a", "b"]} (giữ chương 4 và chỉ giữ phần a, b của chương 1)
-- "set_only_chapters": {"type": "set_only_chapters", "chapters": [3, 5]} (chỉ giữ các chương này, ẩn các chương còn lại)
-- "exclude_chapters": {"type": "exclude_chapters", "chapters": [1, 2, 4]} (ẩn các chương này)
-- "include_chapters": {"type": "include_chapters", "chapters": [3, 5]} (bật lại chương này)
-- "focus_chapter": {"type": "focus_chapter", "chapter": 3} (lia camera tới chương và làm phát sáng viền)
-- "open_editor": {"type": "open_editor", "chapter": 3} (mở ngăn kéo terminal chỉnh sửa)
-- "switch_tab": {"type": "switch_tab", "tab": "mindmap" | "script" | "video"}
-- "set_chapter_duration": {"type": "set_chapter_duration", "chapter": 3, "seconds": 1200}
-- "set_total_minutes": {"type": "set_total_minutes", "minutes": 40}
-- "lock_chapter": {"type": "lock_chapter", "chapter": 3, "locked": true}
-- "center_view": {"type": "center_view"}
+            (chNode.children || []).forEach((secNode, sIdx) => {
+              const secCode = secNode.data?.code || `Phần ${String.fromCharCode(97 + sIdx)}`;
+              const secTitle = secNode.data?.title || '';
+              const secEx = isNodeExcluded(secNode.key, [chNode.key]);
+              out += `  - [${secCode}]: "${secTitle}" (Trạng thái: ${secEx ? 'ẨN' : 'HIỆN'})\n`;
 
-QUY TẮC:
-1. Nếu người dùng ra lệnh điều chỉnh sơ đồ / giao diện:
-   - Hãy suy luận các thông số hợp lý (ví dụ "chương 3 nhiều hơn chương 5 một chút" -> Ch3: 1200s, Ch5: 900s).
-   - Trả lời thân thiện, ngắn gọn (1-2 câu) bằng tiếng Việt.
-   - BẮT BUỘC kẹp khối lệnh JSON ở cuối:
+              (secNode.children || []).forEach((itNode, iIdx) => {
+                const itCode = itNode.data?.code || `item${iIdx+1}`;
+                const itTitle = itNode.data?.title || '';
+                const itSummary = itNode.data?.summary || '';
+                const itMech = itNode.data?.mechanism || '';
+                const itKey = itNode.data?.key_point || '';
+                const itNarr = itNode.data?.narration || '';
+                const itEx = isNodeExcluded(itNode.key, [chNode.key, secNode.key]);
+
+                out += `      * Mục [${itCode}]: "${itTitle}" | Tóm tắt: ${itSummary || itTitle}`;
+                if (itMech) out += ` | Cơ chế: ${itMech}`;
+                if (itKey) out += ` | Điểm then chốt: ${itKey}`;
+                if (itNarr) out += ` | Lời thoại chi tiết: "${itNarr}"`;
+                out += ` (Trạng thái: ${itEx ? 'ẨN' : 'HIỆN'})\n`;
+              });
+            });
+          });
+        });
+        return out;
+      }
+
+      const fullLectureKnowledge = buildFullLectureContext();
+
+      const systemPrompt = `Bạn là SIÊU TRỢ LÝ AI & TRỢ GIẢNG ĐA NĂNG CỦA HỆ THỐNG CLSG STUDIO (HUST AI COPILOT).
+BẠN CÓ TOÀN QUYỀN TRUY CẬP VÀO 100% NỘI DUNG CHI TIẾT CỦA BÀI GIẢNG!
+Người dùng là giảng viên hoặc học viên (newbie). Bạn phải thân thiện, thông thái, tận tâm: đọc hộ, tóm tắt hộ, giải thích hộ kiến thức và TRỰC TIẾP ĐIỀU KHIỂN GIAO DIỆN HỘ người dùng.
+
+KHO TRI THỨC TOÀN BỘ BÀI GIẢNG HIỆN TẠI (ĐÃ TRÍCH XUẤT 100% CHI TIẾT TỪNG NHÁNH LÁ):
+${fullLectureKnowledge}
+
+DANH MỤC CÁC LỆNH ĐIỀU KHIỂN GIAO DIỆN BẠN CÓ THỂ RA LỆNH:
+1. "keep_only_target": {"type": "keep_only_target", "chapter": 1, "section": "d", "item": "a1"}
+   -> Ẩn toàn bộ các chương/phần khác, CHỈ GIỮ LẠI duy nhất mục được yêu cầu (ví dụ chương 1 phần d mục a1).
+2. "keep_chapters_and_sections": {"type": "keep_chapters_and_sections", "chapters": [4], "targetChapter": 1, "sections": ["a", "b"]}
+   -> Giữ chương 4 và chỉ giữ phần a, b của chương 1.
+3. "set_only_chapters": {"type": "set_only_chapters", "chapters": [2, 3]} (chỉ giữ lại các chương này)
+4. "exclude_chapters": {"type": "exclude_chapters", "chapters": [1]} (ẩn chương 1)
+5. "include_chapters": {"type": "include_chapters", "chapters": [1]} (bật lại chương 1)
+6. "focus_chapter": {"type": "focus_chapter", "chapter": 1} (lia camera tới chương và phát sáng viền)
+7. "open_editor": {"type": "open_editor", "chapter": 1} (mở bảng chỉnh sửa chi tiết)
+8. "set_total_minutes": {"type": "set_total_minutes", "minutes": 10} (đặt thời lượng tổng)
+9. "set_chapter_duration": {"type": "set_chapter_duration", "chapter": 1, "seconds": 180}
+10. "switch_tab": {"type": "switch_tab", "tab": "mindmap" | "script" | "video"}
+11. "speak_narration": {"type": "speak_narration", "text": "Lời thoại cần đọc to..."} (phát âm thanh đọc lời giảng)
+
+QUY TẮC PHẢN HỒI QUAN TRỌNG:
+1. ĐỌC HỘ & TÓM TẮT HỘ:
+   - Khi người dùng hỏi về bất kỳ nội dung nào (ví dụ: "bản tóm tắt của chương 1 phần d a1 là gì?", "đọc hộ tôi phân đoạn..."):
+   - BẮT BUỘC ĐỌC THẲNG NỘI DUNG VÀ TRẢ LỜI ĐẦY ĐỦ, giải thích cặn kẽ, rõ ràng, sư phạm cho newbie.
+   - TUYỆT ĐỐI KHÔNG BAO GIỜ NÓI "tôi không có quyền truy cập", vì bạn ĐANG NẮM GIỮ 100% TRI THỨC BÀI GIẢNG Ở TRÊN!
+2. ĐIỀU KHIỂN HỘ (ACTION COPILOT):
+   - Nếu người dùng có yêu cầu thao tác (ví dụ: "với bỏ hết chỉ giữ lại mình phần đó thôi", "chỉ giữ chương 2", "chỉnh 10 phút"):
+   - Hãy trả lời xác nhận thân thiện + KÈM KHỐI JSON LỆNH Ở CUỐI:
 \`\`\`json
 {
   "actions": [
-    {"type": "set_only_chapters", "chapters": [3, 5]},
-    {"type": "set_chapter_duration", "chapter": 3, "seconds": 1200},
-    {"type": "set_chapter_duration", "chapter": 5, "seconds": 900},
-    {"type": "focus_chapter", "chapter": 3}
+    {"type": "keep_only_target", "chapter": 1, "section": "d", "item": "a1"}
   ]
 }
 \`\`\`
-2. Nếu người dùng chỉ hỏi đáp thông thường (không điều khiển giao diện):
-   - Trả lời súc tích, chuyên nghiệp (dưới 4 câu) và KHÔNG kèm khối JSON.`;
+3. Nếu chỉ hỏi đáp kiến thức thuần túy (không điều khiển giao diện):
+   - Trả lời đầy đủ, thân thiện, và KHÔNG kèm khối JSON.`;
 
       try {
         const cfg = LLMClient.getConfig();
@@ -8786,7 +8945,8 @@ QUY TẮC:
 
           bubbleEl.style.opacity = '1';
           bubbleEl.style.fontStyle = 'normal';
-          bubbleEl.innerHTML = cleanReply.replace(/\n/g, '<br>');
+          bubbleEl.innerHTML = cleanReply.replace(/\n/g, '<br>') + 
+            `<div style="margin-top:8px;"><button class="chat-pill-btn" onclick="playVoiceNarration(this)" style="font-size:11px; padding:2px 8px; border-color:rgba(56,189,248,0.3); color:var(--cyan); cursor:pointer;">🔊 Nghe đọc</button></div>`;
           chatContainer.scrollTop = chatContainer.scrollHeight;
 
           // Lưu vào lịch sử phiên
@@ -8827,7 +8987,37 @@ QUY TẮC:
         const srcAct = localActions.find(a => a.type === 'toggle_pane_sources');
         const fsAct = localActions.find(a => a.type === 'fullscreen_mindmap');
 
-        if (comboAct) {
+        const targetAct = localActions.find(a => a.type === 'keep_only_target');
+        if (targetAct) {
+          // Tìm tóm tắt thực tế của target item
+          let foundTitle = `Chương ${targetAct.chapter} - Phần ${targetAct.section} - Mục ${targetAct.item}`;
+          let foundSummary = "";
+          try {
+            const roots = buildDecisionTree(activeProject, currentScenes);
+            roots.forEach(root => {
+              (root.children || []).forEach((ch, cIdx) => {
+                if (cIdx + 1 === targetAct.chapter) {
+                  (ch.children || []).forEach((sec, sIdx) => {
+                    const sCode = (sec.data?.code || '').toLowerCase();
+                    const sLetter = String.fromCharCode(97 + sIdx);
+                    if (sCode.includes(targetAct.section) || sLetter === targetAct.section) {
+                      (sec.children || []).forEach((it) => {
+                        const iCode = (it.data?.code || '').toLowerCase();
+                        if (iCode === targetAct.item || iCode.includes(targetAct.item)) {
+                          foundTitle = it.data?.title || foundTitle;
+                          foundSummary = it.data?.summary || it.data?.narration || it.data?.mechanism || '';
+                        }
+                      });
+                    }
+                  });
+                }
+              });
+            });
+          } catch (e) {}
+
+          localReply = `📖 <strong>Tóm tắt nội dung:</strong> ${foundSummary || 'Đây là luận điểm trọng tâm trong bài giảng.'}<br><br>🎯 <strong>Trợ lý AI đã thao tác hộ:</strong> Đã ẩn tất cả các phần khác, CHỈ GIỮ LẠI duy nhất mục <strong>[${targetAct.item}: ${foundTitle}]</strong> trên sơ đồ tư duy cho bạn!`;
+          CopilotLearningEngine.saveRule(msg, [targetAct], localReply);
+        } else if (comboAct) {
           localReply = `✅ <strong>Trợ lý AI:</strong> Đã cập nhật sơ đồ! Giữ lại <strong>Chương ${comboAct.chapters.join(', ')}</strong> và <strong>Phần ${comboAct.sections.join(', ')} của Chương ${comboAct.targetChapter}</strong>, các phần còn lại đã được ẩn khỏi kịch bản.`;
           CopilotLearningEngine.saveRule(msg, [comboAct], localReply);
         } else if (onlyAct) {
@@ -8865,7 +9055,8 @@ QUY TẮC:
 
       bubbleEl.style.opacity = '1';
       bubbleEl.style.fontStyle = 'normal';
-      bubbleEl.innerHTML = localReply;
+      bubbleEl.innerHTML = localReply + 
+        `<div style="margin-top:8px;"><button class="chat-pill-btn" onclick="playVoiceNarration(this)" style="font-size:11px; padding:2px 8px; border-color:rgba(56,189,248,0.3); color:var(--cyan); cursor:pointer;">🔊 Nghe đọc</button></div>`;
       chatContainer.scrollTop = chatContainer.scrollHeight;
 
       clsgChatSessionHistory.push({ role: 'user', content: msg });
