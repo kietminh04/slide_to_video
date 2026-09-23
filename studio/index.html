@@ -5576,9 +5576,9 @@
           <div style="font-size: 12.5px; font-weight: 800; color: #fff; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding: 0 4px;">
             ${node.data.title}
           </div>
-          <div style="font-size: 11px; color: var(--cyan); text-align: center; font-family: 'JetBrains Mono', monospace; margin-top: 3px; display: flex; align-items: center; justify-content: center; gap: 6px;">
-            <span>${node.data.pages} trang • ${node.data.chapterCount} chương</span>
+          <div style="font-size: 10px; color: var(--cyan); font-family: 'JetBrains Mono', monospace; margin-top: 4px; display: flex; align-items: center; justify-content: space-between; padding-right: 26px;">
             <span class="node-duration-badge" title="Tổng thời lượng tài liệu (bấm để xem/chỉnh)">⏱️ ${node.data.duration || 0}s</span>
+            <span style="color: var(--text-dim); font-size: 9.5px;">${node.data.pages} trang • ${node.data.chapterCount} ch</span>
           </div>
         `;
       } else if (node.level === 1) {
@@ -5593,9 +5593,9 @@
           <div class="node-title-text" style="font-size: 11.5px; font-weight: 700; color: #fff; line-height: 1.35; max-height: 34px; overflow: hidden; padding-right: 20px;">
             ${node.data.title}
           </div>
-          <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 6px; font-size: 10px; color: var(--text-dim);">
-            <span style="font-family: 'JetBrains Mono', monospace; color: var(--text-muted);">👁 [${node.data.visualType || 'split_screen'}]</span>
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 6px; font-size: 10px; color: var(--text-dim); padding-right: 26px;">
             <span class="node-duration-badge" title="Tổng thời lượng chương (bấm để xem/chỉnh)">⏱️ ${node.data.duration || 0}s</span>
+            <span style="font-family: 'JetBrains Mono', monospace; color: var(--text-muted); font-size: 9.5px;">👁 [${node.data.visualType || 'split_screen'}]</span>
           </div>
         `;
       } else if (node.level === 2) {
@@ -5610,7 +5610,7 @@
           <div class="node-title-text" style="font-size: 11px; font-weight: 600; color: var(--text-main); line-height: 1.3; max-height: 32px; overflow: hidden; padding-right: 20px;">
             ${node.data.title}
           </div>
-          <div style="display: flex; align-items: center; justify-content: flex-end; margin-top: 4px;">
+          <div style="display: flex; align-items: center; justify-content: flex-start; margin-top: 4px;">
             <span class="node-duration-badge" title="Tổng thời lượng phần này (bấm để xem/chỉnh)">⏱️ ${node.data.duration || 0}s</span>
           </div>
         `;
@@ -5622,7 +5622,7 @@
               ${node.data.text}
             </span>
           </div>
-          <div style="display: flex; align-items: center; justify-content: flex-end; margin-top: 4px;">
+          <div style="display: flex; align-items: center; justify-content: flex-start; margin-top: 4px;">
             <span class="node-duration-badge" title="Thời lượng nhánh này (bấm để chỉnh)">⏱️ ${node.data.duration || 30}s</span>
           </div>
         `;
