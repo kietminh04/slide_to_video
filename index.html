@@ -7991,6 +7991,82 @@ OUTPUT FORMAT: Return ONLY a valid JSON string (no markdown backticks, no explan
       return chapters;
     }
 
+        // =========================================================================
+    // HỆ THỐNG TRÍ NHỚ HỎI-ĐÁP (Q&A CACHE - ZERO TOKEN) & HỌC BỔ SUNG (FEW-SHOT)
+    // =========================================================================
+    let clsgChatSessionHistory = [];
+
+    const CopilotQACache = {
+      STORAGE_KEY: 'clsg_qa_cache',
+      SEEDS: {
+        "cnn là gì": "🧠 <strong>Convolutional Neural Network (CNN / Mạng nơ-ron tích chập):</strong> Là kiến trúc mạng nơ-ron chuyên dụng cho dữ liệu dạng lưới (đặc biệt là hình ảnh và video). Cơ chế cốt lõi gồm các tầng <em>Tích chập (Convolution)</em> để trích xuất đặc trưng không gian (cạnh, góc, kết cấu) và tầng <em>Gộp mẫu (Pooling)</em> để giảm chiều dữ liệu.",
+        "mạng nơ ron tích chập là gì": "🧠 <strong>Convolutional Neural Network (CNN):</strong> Là kiến trúc mạng nơ-ron chuyên xử lý dữ liệu không gian như hình ảnh, tín hiệu thị giác máy tính với các tầng Convolution, Activation (ReLU) và Pooling.",
+        "overfitting là gì": "⚠️ <strong>Overfitting (Hiện tượng Quá khớp):</strong> Xảy ra khi mô hình học quá sâu vào nhiễu và chi tiết vụn vặt của tập huấn luyện (training set), dẫn đến sai số rất thấp trên tập train nhưng dự báo rất kém trên dữ liệu mới (test set). Cách khắc phục: Dropout, Regularization (L1/L2), tăng dữ liệu (Data Augmentation).",
+        "loss function là gì": "📉 <strong>Loss Function (Hàm mất mát / Hàm thiệt hại):</strong> Là hàm toán học đo lường độ sai lệch giữa giá trị dự đoán của mô hình và nhãn thực tế (ground truth). Mục tiêu tối ưu trong Deep Learning là tìm trọng số mạng để cực tiểu hóa hàm mất mát (thường dùng Cross-Entropy, MSE, MAE).",
+        "transformer là gì": "⚡ <strong>Transformer:</strong> Là kiến trúc mạng nơ-ron mang tính cách mạng (Vaswani et al., 2017) dựa trên cơ chế <em>Tự chú ý (Self-Attention)</em>, loại bỏ hoàn toàn cấu trúc hồi quy tuần tự (RNN/LSTM), cho phép tính toán song song cực nhanh và nắm bắt ngữ cảnh tầm xa vượt trội."
+      },
+      normalize(q) {
+        return q.toLowerCase().replace(/[\?\!\.,;:'"“”]/g, '').trim();
+      },
+      get(q) {
+        const norm = this.normalize(q);
+        if (this.SEEDS[norm]) return this.SEEDS[norm];
+        try {
+          const cache = JSON.parse(localStorage.getItem(this.STORAGE_KEY) || '{}');
+          return cache[norm] ? cache[norm].answer : null;
+        } catch (e) { return null; }
+      },
+      set(q, answer) {
+        try {
+          const cache = JSON.parse(localStorage.getItem(this.STORAGE_KEY) || '{}');
+          const norm = this.normalize(q);
+          cache[norm] = { answer, timestamp: Date.now() };
+          localStorage.setItem(this.STORAGE_KEY, JSON.stringify(cache));
+        } catch (e) {}
+      }
+    };
+
+    const CopilotLearningEngine = {
+      STORAGE_KEY: 'clsg_learned_copilot_rules',
+      getRules() {
+        try {
+          return JSON.parse(localStorage.getItem(this.STORAGE_KEY) || '[]');
+        } catch (e) { return []; }
+      },
+      saveRule(rawQuery, actions, responseText) {
+        try {
+          const rules = this.getRules();
+          const norm = rawQuery.toLowerCase().trim();
+          const existing = rules.find(r => r.query === norm);
+          if (!existing) {
+            rules.push({
+              query: norm,
+              actions: actions,
+              responseText: responseText,
+              timestamp: Date.now(),
+              count: 1
+            });
+            localStorage.setItem(this.STORAGE_KEY, JSON.stringify(rules.slice(-100)));
+          } else {
+            existing.count = (existing.count || 1) + 1;
+            existing.actions = actions;
+            localStorage.setItem(this.STORAGE_KEY, JSON.stringify(rules));
+          }
+        } catch (e) {}
+      },
+      match(msg) {
+        const rules = this.getRules();
+        const norm = msg.toLowerCase().trim();
+        const hit = rules.find(r => r.query === norm);
+        if (hit) {
+          hit.count = (hit.count || 1) + 1;
+          localStorage.setItem(this.STORAGE_KEY, JSON.stringify(rules));
+          return hit;
+        }
+        return null;
+      }
+    };
+
     // CỖ MÁY THỰC THI TẤT ĐỊNH (DETERMINISTIC COPILOT UI ENGINE)
     const CopilotEngine = {
       switchTab(tabName) {
@@ -8190,8 +8266,63 @@ OUTPUT FORMAT: Return ONLY a valid JSON string (no markdown backticks, no explan
         return true;
       },
 
-      fullscreenMindmap() {
+            fullscreenMindmap() {
         fullscreenMindmap();
+        return true;
+      },
+
+      keepChaptersAndSections(keepChaps, targetChapNum, sectionIdentifiers) {
+        const chapters = getAllChaptersInfo();
+        const keepChSet = new Set(keepChaps.map(n => parseInt(n)));
+        const targetCh = chapters.find(c => c.num === parseInt(targetChapNum));
+
+        chapters.forEach(ch => {
+          if (keepChSet.has(ch.num)) {
+            excludedNodes.delete(ch.key);
+            const chNode = currentNodesMap[ch.key];
+            if (chNode && chNode.children) {
+              function unexcludeAll(node) {
+                excludedNodes.delete(node.key);
+                if (node.children) node.children.forEach(unexcludeAll);
+              }
+              chNode.children.forEach(unexcludeAll);
+            }
+          } else if (targetCh && ch.num === targetCh.num) {
+            excludedNodes.delete(ch.key);
+            const chNode = currentNodesMap[ch.key];
+            if (chNode && chNode.children) {
+              const secSet = new Set(sectionIdentifiers.map(s => String(s).toLowerCase()));
+              chNode.children.forEach((secNode, idx) => {
+                const secCode = (secNode.data?.code || '').toLowerCase();
+                const secTitle = (secNode.data?.title || secNode.data?.text || '').toLowerCase();
+                const secNumStr = String(idx + 1);
+                const secLetter = String.fromCharCode(97 + idx); // 0 -> 'a', 1 -> 'b'
+
+                const matches = secSet.has(secNumStr) ||
+                                secSet.has(secLetter) ||
+                                secSet.has(secCode) ||
+                                Array.from(secSet).some(s => secTitle.includes(s));
+
+                if (matches) {
+                  excludedNodes.delete(secNode.key);
+                  if (secNode.children) {
+                    function unexcludeAll(n) {
+                      excludedNodes.delete(n.key);
+                      if (n.children) n.children.forEach(unexcludeAll);
+                    }
+                    secNode.children.forEach(unexcludeAll);
+                  }
+                } else {
+                  excludedNodes.add(secNode.key);
+                }
+              });
+            }
+          } else {
+            excludedNodes.add(ch.key);
+          }
+        });
+
+        this.refresh();
         return true;
       },
 
@@ -8224,6 +8355,7 @@ OUTPUT FORMAT: Return ONLY a valid JSON string (no markdown backticks, no explan
           else if (type === 'toggle_pane_tuning') didSomething = this.togglePaneTuning(act.show) || didSomething;
           else if (type === 'toggle_pane_sources') didSomething = this.togglePaneSources(act.show) || didSomething;
           else if (type === 'fullscreen_mindmap') didSomething = this.fullscreenMindmap() || didSomething;
+          else if (type === 'keep_chapters_and_sections') didSomething = this.keepChaptersAndSections(act.chapters || [], act.targetChapter, act.sections || []) || didSomething;
         });
         if (didSomething) {
           showToast('🤖 AI Copilot: Đã thực thi thao tác giao diện!');
@@ -8236,6 +8368,37 @@ OUTPUT FORMAT: Return ONLY a valid JSON string (no markdown backticks, no explan
     function parseLocalCopilotCommand(msg) {
       const actions = [];
       const lower = msg.toLowerCase();
+
+      // Check tri thức đã học trước (Learned Rules)
+      const learned = CopilotLearningEngine.match(msg);
+      if (learned && Array.isArray(learned.actions) && learned.actions.length > 0) {
+        return learned.actions;
+      }
+
+      // 0a. Câu lệnh phức hợp: "à thôi, để lại chương 4 với phần a b của chương 1 đi"
+      const cleanMsg = msg.replace(/^(?:à\s*thôi|thôi|đổi\s*lại)\s*,?\s*/i, '').trim();
+      const mCombo = cleanMsg.match(/(?:chỉ\s*)?(?:để\s*lại|giữ\s*(?:lại)?|lấy)\s*(?:chương|phần)?\s*([0-9\s,\bvà]+)\s*(?:với|và|kèm|cùng)\s*phần\s*([^c]+?)\s*của\s*chương\s*(\d+)/i);
+      if (mCombo) {
+        const keepChaps = (mCombo[1].match(/\b\d+\b/g) || []).map(n => parseInt(n));
+        const targetCh = parseInt(mCombo[3]);
+        const rawSecs = mCombo[2].toLowerCase();
+        const secs = [];
+        rawSecs.split(/[\s,]+/).forEach(s => {
+          s = s.trim();
+          if (s && !['và', 'va', 'voi', 'với', 'kèm', 'cùng', 'của'].includes(s)) {
+            secs.push(s);
+          }
+        });
+        if (keepChaps.length > 0 && targetCh && secs.length > 0) {
+          actions.push({
+            type: 'keep_chapters_and_sections',
+            chapters: keepChaps,
+            targetChapter: targetCh,
+            sections: secs
+          });
+          return actions;
+        }
+      }
 
       // 0. Bỏ hết tất cả trừ / chỉ để lại / chỉ giữ lại chương X (Ví dụ: "bỏ hết tất cả trừ chương 3")
       const mExcept = msg.match(/(?:bỏ|loại\s*bỏ|xóa)\s+(?:(?:hết|tất\s*cả|mọi\s*(?:thứ|chương)|toàn\s*bộ)\s*)*(?:(?:chỉ\s*)?(?:trừ|giữ\s*lại|để\s*lại|chừa\s*lại)|ngoại\s*trừ)\s*(?:các\s*)?(?:chương|phần)?\s*([0-9\s,\bvà]+)/i);
@@ -8343,7 +8506,26 @@ OUTPUT FORMAT: Return ONLY a valid JSON string (no markdown backticks, no explan
 
       chatContainer.scrollTop = chatContainer.scrollHeight;
 
-      // 2. Tạo bubble đang suy nghĩ cho AI
+      // 2. KIỂM TRA TRÍ NHỚ HỎI ĐÁP (Q&A CACHE - 0 TOKEN, 0MS)
+      const cachedAnswer = CopilotQACache.get(msg);
+      if (cachedAnswer) {
+        const aiMsg = document.createElement('div');
+        aiMsg.className = 'chat-msg msg-ai';
+        aiMsg.innerHTML = `
+          <div class="msg-avatar">🤖</div>
+          <div class="msg-bubble">
+            <div style="font-size: 10px; color: var(--cyan); margin-bottom: 5px; font-weight: 600;">⚡ Trả lời từ Trí Nhớ AI (0 token, tức thì):</div>
+            ${cachedAnswer}
+          </div>
+        `;
+        chatContainer.appendChild(aiMsg);
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+        clsgChatSessionHistory.push({ role: 'user', content: msg });
+        clsgChatSessionHistory.push({ role: 'assistant', content: cachedAnswer });
+        return;
+      }
+
+      // 3. Tạo bubble đang suy nghĩ cho AI
       const aiMsg = document.createElement('div');
       aiMsg.className = 'chat-msg msg-ai';
       aiMsg.innerHTML = `
@@ -8371,6 +8553,7 @@ DỮ LIỆU BÀI GIẢNG HIỆN TẠI:
 ${chaptersSummary || '(Chưa có chương)'}
 
 DANH MỤC LỆNH BẠN CÓ THỂ ĐIỀU KHIỂN:
+- "keep_chapters_and_sections": {"type": "keep_chapters_and_sections", "chapters": [4], "targetChapter": 1, "sections": ["a", "b"]} (giữ chương 4 và chỉ giữ phần a, b của chương 1)
 - "set_only_chapters": {"type": "set_only_chapters", "chapters": [3, 5]} (chỉ giữ các chương này, ẩn các chương còn lại)
 - "exclude_chapters": {"type": "exclude_chapters", "chapters": [1, 2, 4]} (ẩn các chương này)
 - "include_chapters": {"type": "include_chapters", "chapters": [3, 5]} (bật lại chương này)
@@ -8406,12 +8589,17 @@ QUY TẮC:
         const headers = { 'Content-Type': 'application/json' };
         if (cfg.apiKey) headers['Authorization'] = `Bearer ${cfg.apiKey}`;
 
+        // Đưa ngữ cảnh ngắn hạn (Sliding window 6 tin nhắn gần nhất) vào prompt
+        const rollingHistory = clsgChatSessionHistory.slice(-6);
+        const payloadMessages = [
+          { role: 'system', content: systemPrompt },
+          ...rollingHistory,
+          { role: 'user', content: msg }
+        ];
+
         const payload = {
           model: cfg.model,
-          messages: [
-            { role: 'system', content: systemPrompt },
-            { role: 'user', content: msg }
-          ],
+          messages: payloadMessages,
           max_tokens: 450,
           temperature: 0.6
         };
@@ -8452,6 +8640,22 @@ QUY TẮC:
           bubbleEl.style.fontStyle = 'normal';
           bubbleEl.innerHTML = cleanReply.replace(/\n/g, '<br>');
           chatContainer.scrollTop = chatContainer.scrollHeight;
+
+          // Lưu vào lịch sử phiên
+          clsgChatSessionHistory.push({ role: 'user', content: msg });
+          clsgChatSessionHistory.push({ role: 'assistant', content: cleanReply });
+
+          // Tự động học bổ sung mẫu lệnh mới hoặc cache câu hỏi tri thức
+          if (jsonMatch) {
+            try {
+              const parsed = JSON.parse(jsonMatch[1]);
+              if (parsed && parsed.actions && parsed.actions.length > 0) {
+                CopilotLearningEngine.saveRule(msg, parsed.actions, cleanReply);
+              }
+            } catch (e) {}
+          } else if (cleanReply.length > 30) {
+            CopilotQACache.set(msg, cleanReply);
+          }
           return;
         }
       } catch (err) {
@@ -8463,6 +8667,7 @@ QUY TẮC:
       let localReply = "";
       if (localActions.length > 0) {
         CopilotEngine.executeBatch(localActions);
+        const comboAct = localActions.find(a => a.type === 'keep_chapters_and_sections');
         const onlyAct = localActions.find(a => a.type === 'set_only_chapters');
         const exAct = localActions.find(a => a.type === 'exclude_chapters');
         const focAct = localActions.find(a => a.type === 'focus_chapter');
@@ -8474,8 +8679,12 @@ QUY TẮC:
         const srcAct = localActions.find(a => a.type === 'toggle_pane_sources');
         const fsAct = localActions.find(a => a.type === 'fullscreen_mindmap');
 
-        if (onlyAct) {
+        if (comboAct) {
+          localReply = `✅ <strong>Trợ lý AI:</strong> Đã cập nhật sơ đồ! Giữ lại <strong>Chương ${comboAct.chapters.join(', ')}</strong> và <strong>Phần ${comboAct.sections.join(', ')} của Chương ${comboAct.targetChapter}</strong>, các phần còn lại đã được ẩn khỏi kịch bản.`;
+          CopilotLearningEngine.saveRule(msg, [comboAct], localReply);
+        } else if (onlyAct) {
           localReply = `✅ <strong>Trợ lý AI:</strong> Đã cập nhật sơ đồ! Chỉ giữ lại <strong>Chương ${onlyAct.chapters.join(', ')}</strong>, các chương còn lại đã được ẩn khỏi kịch bản.`;
+          CopilotLearningEngine.saveRule(msg, [onlyAct], localReply);
         } else if (exAct) {
           localReply = `✅ <strong>Trợ lý AI:</strong> Đã ẩn <strong>Chương ${exAct.chapters.join(', ')}</strong> khỏi kịch bản và tự động cập nhật lại thời lượng tổng!`;
         } else if (inspAct) {
@@ -8510,6 +8719,9 @@ QUY TẮC:
       bubbleEl.style.fontStyle = 'normal';
       bubbleEl.innerHTML = localReply;
       chatContainer.scrollTop = chatContainer.scrollHeight;
+
+      clsgChatSessionHistory.push({ role: 'user', content: msg });
+      clsgChatSessionHistory.push({ role: 'assistant', content: localReply });
     }
 
     function sendQuickPrompt(promptText) {
