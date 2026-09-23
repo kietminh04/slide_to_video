@@ -3088,6 +3088,9 @@
             <button class="mindmap-ctrl-btn" id="btn-zoom-out" title="Thu nhỏ (hoặc lăn chuột xuống)">➖</button>
             <span class="mindmap-zoom-label" id="label-zoom">85%</span>
             <button class="mindmap-ctrl-btn" id="btn-zoom-reset" title="Đặt lại góc nhìn">⟲ Căn Giữa</button>
+            <button class="mindmap-ctrl-btn" id="btn-ai-refactor-mindmap" style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.4), rgba(168, 85, 247, 0.4)); border: 1px solid rgba(168, 85, 247, 0.7); color: #fff; font-weight: 700; padding: 0 14px; gap: 6px; display: flex; align-items: center;" title="Dùng Gemini AI phân tích lại toàn bộ bài giảng và tái tạo sơ đồ tư duy chuẩn sư phạm">
+              <span>✨</span> AI Tái Cấu Trúc Sơ Đồ & Tóm Tắt (LLM)
+            </button>
           </div>
 
           <!-- CANVAS VIEWPORT (HỖ TRỢ LĂN CHUỘT PHÓNG TO/THU NHỎ VÀ KÉO DI CHUYỂN NHƯ CVAT) -->
@@ -7621,44 +7624,54 @@ Hãy viết lời giảng sư phạm hoàn chỉnh theo từng phân đoạn [m�
         const cfg = this.getConfig();
         if (!rawText || rawText.trim().length < 50) return null;
 
-        // Giới hạn text gửi lên AI (khoảng 14.000 ký tự đầu để phản hồi siêu tốc ~1-2s và bảo toàn token)
-        const textSample = rawText.trim().slice(0, 14000);
+        // Trích chọn lọc mẫu văn bản giàu ngữ nghĩa nhất từ đầu, giữa và các đề mục
+        const textSample = rawText.trim().slice(0, 18000);
 
-        const systemPrompt = `You are a pedagogical expert and MOOC CIKM multimodal curriculum structure specialist.
-Task: Analyze the raw content of an academic document / slide deck and extract a standard pedagogical lecture structure.
+        const systemPrompt = `Bạn là Chuyên gia Sư phạm Đại học và Giảng viên cấp cao ngành Toán - Tin và Khoa học Dữ liệu.
+NHIỆM VỤ: Đọc toàn bộ nội dung tài liệu / bài giảng được cung cấp và thiết kế một CẤU TRÚC SƠ ĐỒ BÀI GIẢNG SƯ PHẠM ĐẲNG CẤP, CHUẨN MỰC.
 
-NOISE FILTERING & STRUCTURE RULES (MANDATORY):
-1. THOROUGH NOISE FILTERING: Ignore all chart axis labels (e.g., "training error (%)", "std", "epoch"), fragmented table data, arXiv header/footer, author/affiliation info.
-2. CHAPTER STRUCTURE: Extract 3 to 5 major Chapters with strong pedagogical logic flow (e.g., Background/Problem -> Core Architecture/Mechanism -> Algorithm/Technical Details -> Experiments/Applications).
-3. SECTIONS & ITEMS: Each chapter has 1-2 Sections, each section has 2-3 Items (sub-topics).
-4. ITEM CONTENT (Items):
-   - "code": identifier code like "a1", "a2", "b1"...
-   - "text": Concise topic name (under 80 characters). Use the ORIGINAL LANGUAGE of the document (if English doc, keep English names).
-   - "duration": default 30 (seconds).
-   - "summary": Core concept summary (1-2 concise sentences, in the document's original language).
-   - "mechanism": Mechanism, mathematical principle, network architecture or specific operation method.
-   - "key_point": Key takeaway the learner must remember.
+QUY TẮC BÓC TÁCH & ĐẶT TÊN SƯ PHẠM (BẮT BUỘC):
+1. LỌC BỎ 100% RÁC: Tuyệt đối không để sót số trang bị cắt cụt (như "18 Chapter 1...", "Definition 1.4.4 Let x 1..."), tên tác giả (Peter Brockwell, Richard Davis), trường đại học, nhà xuất bản, copyright.
+2. CẤU TRÚC 3 ĐẾN 5 CHƯƠNG RÕ RÀNG: Mỗi chương đại diện cho một phân đoạn tri thức lớn theo luồng sư phạm mạch lạc (Bối cảnh/Định nghĩa -> Mô hình toán học -> Phương pháp ước lượng & thuật toán -> Đánh giá & Ứng dụng thực tiễn).
+3. TIÊU ĐỀ CHƯƠNG CHUẨN TIẾNG VIỆT HOẶC SONG NGỮ HỌC THUẬT:
+   Ví dụ bài giảng Time Series:
+   - "Chương 1: Tổng Quan & Khái Niệm Cốt Lõi Chuỗi Thời Gian"
+   - "Chương 2: Mô Hình Dừng & Hàm Tự Tương Quan (ACF / PACF)"
+   - "Chương 3: Kỹ Thuật Ước Lượng & Khử Xu Hướng, Tính Mùa Vụ"
+   - "Chương 4: Các Mô Hình Tuyến Tính Cốt Lõi (AR, MA, ARMA, ARIMA)"
+   - "Chương 5: Đánh Giá Dự Báo & Ứng Dụng Thực Tế"
+4. MỖI CHƯƠNG GỒM:
+   - 1-2 Phân đoạn (Sections): Tiêu đề ngắn gọn, rõ ràng ("Phần a: Bản chất lý thuyết", "Phần b: Cơ chế tính toán").
+   - 2-3 Mục con (Items): Tên mục gãy gọn, học thuật (dưới 70 ký tự).
+5. TỪNG MỤC CON PHẢI CÓ ĐỦ BẢN TÓM TẮT SÂU SẮC 5 MỤC (TUYỆT ĐỐI KHÔNG ĐƯỢC VIẾT "Nội dung trích xuất từ trang..."):
+   - "summary": Khái niệm cốt lõi (2-3 câu phân tích sâu bản chất toán học).
+   - "mechanism": Cơ chế vận hành, quy trình thuật toán hoặc công thức cốt lõi.
+   - "key_point": Điểm then chốt cần ghi nhớ khi áp dụng.
+   - "details": Liệt kê các định lý, tính chất hoặc các bước chi tiết.
+   - "examples": Ví dụ minh họa thực tiễn.
 
-OUTPUT FORMAT: Return ONLY a valid JSON string (no markdown backticks, no explanation outside JSON):
+ĐỊNH DẠNG ĐẦU RA: Trả về duy nhất JSON hợp lệ (không giải thích thêm):
 {
   "chapters": [
     {
-      "chapter": "CHAPTER 1",
-      "title": "Chapter name",
+      "chapter": "CHƯƠNG 1",
+      "title": "Tên chương chuẩn sư phạm",
       "depth": "bridge",
       "visual_type": "split_screen",
       "sections": [
         {
-          "code": "Section a",
-          "title": "Section name",
+          "code": "Phần a",
+          "title": "Tên phân đoạn",
           "items": [
             {
               "code": "a1",
-              "text": "Topic name",
+              "text": "Tên mục kiến thức",
               "duration": 30,
-              "summary": "Core concept summary...",
-              "mechanism": "Operating mechanism...",
-              "key_point": "Key takeaway..."
+              "summary": "Khái niệm cốt lõi đầy đủ...",
+              "mechanism": "Cơ chế và giải thuật toán học...",
+              "key_point": "Điểm then chốt cần nắm...",
+              "details": "Chi tiết các thành phần...",
+              "examples": "Ví dụ và ứng dụng thực tiễn..."
             }
           ]
         }
@@ -7667,32 +7680,33 @@ OUTPUT FORMAT: Return ONLY a valid JSON string (no markdown backticks, no explan
   ]
 }`;
 
-        const userPrompt = `Tên tài liệu: ${fileName || 'Tài liệu học tập'}\n\nNội dung văn bản trích xuất từ tài liệu:\n\n${textSample}`;
+        const userPrompt = `Tên tài liệu: ${fileName || 'Tài liệu học tập'}\n\nNội dung bài giảng trích xuất:\n\n${textSample}`;
 
         const payload = {
-          model: cfg.model || 'gpt-4o-mini',
+          model: cfg.model || 'gemini-2.5-flash',
           messages: [
             { role: 'system', content: systemPrompt },
             { role: 'user', content: userPrompt }
           ],
-          response_format: { type: "json_object" },
-          temperature: 0.3
+          max_tokens: 3500,
+          temperature: 0.35,
+          provider: cfg.provider || 'gemini_local',
+          apiKey: cfg.apiKey || ''
         };
 
+        // ƯU TIÊN SỐ 1 TUYỆT ĐỐI: GỌI QUA SERVERLESS PROXY /api/llm/chat (BẢO MẬT & DÙNG SẴN KEY HỆ THỐNG)
         let res = null;
-        if (cfg.provider === 'openai') {
-          try {
-            const serverUrl = window.location.origin.startsWith('http')
-              ? `${window.location.origin}/api/llm/chat`
-              : 'http://127.0.0.1:8765/api/llm/chat';
-            res = await fetch(serverUrl, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(payload)
-            });
-          } catch (e) {
-            console.warn('[LLMClient] Server proxy không khả dụng, thử fallback trực tiếp...');
-          }
+        try {
+          const serverUrl = (window.location.origin.startsWith('http') && !window.location.origin.includes('file:'))
+            ? `${window.location.origin}/api/llm/chat`
+            : 'http://127.0.0.1:8765/api/llm/chat';
+          res = await fetch(serverUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+        } catch (e) {
+          console.warn('[LLMClient] Server proxy không phản hồi, thử gọi trực tiếp...');
         }
 
         if (!res || !res.ok) {
@@ -8932,6 +8946,11 @@ OUTPUT FORMAT: Return ONLY a valid JSON string (no markdown backticks, no explan
         actions.push({ type: 'switch_tab', tab: 'mindmap' });
       } else if (lower.includes('sang video') || lower.includes('dựng video') || lower.includes('tab video')) {
         actions.push({ type: 'switch_tab', tab: 'video' });
+      }
+
+      // 6.5. Tái cấu trúc toàn bộ sơ đồ bằng LLM
+      if (lower.includes('tái cấu trúc') || lower.includes('chuẩn hóa sơ đồ') || lower.includes('làm lại sơ đồ') || lower.includes('sinh lại sơ đồ') || lower.includes('sơ đồ dở')) {
+        refactorCurrentMindmapWithAI();
       }
 
       // 7. Căn giữa
@@ -11647,6 +11666,80 @@ ${tableRows}
 
     checkServerHealth();
     setInterval(checkServerHealth, 5000);
+
+        // HÀM TÁI CẤU TRÚC TOÀN BỘ SƠ ĐỒ BẰNG GEMINI AI (LLM CHUYÊN SÂU)
+    async function refactorCurrentMindmapWithAI() {
+      if (!activeProject) {
+        showToast('⚠️ Vui lòng mở một dự án bài giảng để tái cấu trúc!');
+        return;
+      }
+
+      const btn = document.getElementById('btn-ai-refactor-mindmap');
+      const originalHtml = btn ? btn.innerHTML : '<span>✨</span> AI Tái Cấu Trúc Sơ Đồ';
+      if (btn) {
+        btn.innerHTML = '<span>⏳</span> <span>Gemini AI Đang Phân Tích...</span>';
+        btn.disabled = true;
+      }
+
+      showLoading(
+        "✨ Gemini AI Đang Tái Cấu Trúc Toàn Bộ Sơ Đồ...",
+        "Đang dùng mô hình học thuật để làm sạch 100% rác OCR, thiết kế lại cấu trúc 3-5 Chương chuẩn sư phạm và viết tóm tắt chuyên sâu từng mục..."
+      );
+
+      try {
+        // Thu thập toàn bộ tri thức hiện có của bài giảng
+        let textCorpus = `TÊN BÀI GIẢNG: ${activeProject.title}\n`;
+        textCorpus += `MÔ TẢ: ${activeProject.desc || ''}\n\n`;
+
+        // Lấy toàn bộ các đề mục và trích đoạn từ các scenes hiện tại
+        (currentScenes || []).forEach((sc, idx) => {
+          textCorpus += `[Phân đoạn ${idx + 1}]: ${sc.title || ''}\n`;
+          (sc.sections || []).forEach(sec => {
+            textCorpus += `  - ${sec.title || ''}\n`;
+            (sec.items || []).forEach(it => {
+              textCorpus += `    * ${it.text || ''}: ${it.summary || ''} (Cơ chế: ${it.mechanism || ''})\n`;
+            });
+          });
+        });
+
+        // Gọi LLM phân tích và tái tạo cấu trúc chuẩn
+        const aiResult = await LLMClient.extractDocumentOutlineWithAI(textCorpus, activeProject.title);
+        if (aiResult && aiResult.chapters && aiResult.chapters.length > 0) {
+          activeProject.scenes = aiResult.chapters;
+          currentScenes = JSON.parse(JSON.stringify(activeProject.scenes));
+
+          // Cập nhật lại toàn bộ giao diện
+          renderMindmap();
+          renderScriptDocument();
+          updateTuningPanel();
+
+          // Lưu vào local cache và Neon Cloud
+          try {
+            const userProjects = JSON.parse(localStorage.getItem('clsg_user_projects') || '{}');
+            userProjects[activeProject.id] = activeProject;
+            localStorage.setItem('clsg_user_projects', JSON.stringify(userProjects));
+          } catch(e) {}
+
+          CloudDB.save(activeProject.id, activeProject);
+
+          centerMindmapView(true);
+          showToast('🎉 Đã dùng Gemini AI tái cấu trúc toàn bộ sơ đồ bài giảng thành công!');
+        } else {
+          throw new Error('LLM không thể sinh cấu trúc phù hợp.');
+        }
+      } catch (err) {
+        console.error("Lỗi AI tái cấu trúc:", err);
+        showToast('⚠️ Không thể tái cấu trúc: ' + err.message);
+      } finally {
+        hideLoading();
+        if (btn) {
+          btn.innerHTML = originalHtml;
+          btn.disabled = false;
+        }
+      }
+    }
+
+    document.getElementById('btn-ai-refactor-mindmap')?.addEventListener('click', refactorCurrentMindmapWithAI);
 
     // INITIALIZE PROJECTS DASHBOARD & KHÔI PHỤC VIEW ĐANG LÀM VIỆC (KHÔNG BỊ QUAY VỀ TRANG ĐẦU)
     renderProjectsGrid();
