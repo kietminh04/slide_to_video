@@ -1315,6 +1315,30 @@
       box-shadow: 0 0 20px rgba(245, 158, 11, 0.35) !important;
     }
 
+    /* AI COPILOT FOCUS & GLOW ANIMATION */
+    @keyframes copilotGlowPulse {
+      0% {
+        box-shadow: 0 0 0 0 rgba(56, 189, 248, 0.95), 0 0 25px rgba(56, 189, 248, 0.7);
+        border-color: #38bdf8 !important;
+        transform: scale(1.05);
+      }
+      50% {
+        box-shadow: 0 0 0 14px rgba(56, 189, 248, 0), 0 0 45px rgba(56, 189, 248, 1);
+        border-color: #38bdf8 !important;
+        transform: scale(1.08);
+      }
+      100% {
+        box-shadow: 0 0 0 0 rgba(56, 189, 248, 0), 0 0 16px rgba(56, 189, 248, 0.4);
+        border-color: #38bdf8 !important;
+        transform: scale(1);
+      }
+    }
+    .decision-node.copilot-glow-pulse {
+      animation: copilotGlowPulse 1.2s ease-out 2 !important;
+      border-color: #38bdf8 !important;
+      z-index: 100 !important;
+    }
+
     /* BADGE THỜI LƯỢNG CÓ THỂ BẤM CHỈNH */
     .node-duration-badge {
       display: inline-flex;
@@ -7606,8 +7630,67 @@ OUTPUT FORMAT: Return ONLY a valid JSON string (no markdown backticks, no explan
     }
 
     // =========================================================================
-    // KHUNG CHAT AI SƯ PHẠM & ĐIỀU KHIỂN DỰ ÁN (LLM COPILOT COMMAND AGENT)
+    // CỖ MÁY ĐIỀU KHIỂN GIAO DIỆN & AI COPILOT PLAYBOOK (AGENTIC ENGINE)
+    // Tách biệt hoàn toàn: LLM làm Bộ Não Lập Kế Hoạch (Planner, ~25 tokens)
+    //                     Cỗ máy JS làm Bộ Tay Chân Thực Thi Tất Định (Deterministic Engine)
     // =========================================================================
+
+    // BẢNG QUY CHUẨN CHỈ DẪN HÀNH ĐỘNG (COPILOT ACTION SCHEMA)
+    const COPILOT_ACTION_SCHEMA = {
+      "focus_chapter": {
+        "desc": "Lia camera mượt mà vào giữa chương trên sơ đồ và làm phát sáng viền thẻ",
+        "params": { "chapter": "Số thứ tự chương (ví dụ 1, 2, 3...)" }
+      },
+      "open_editor": {
+        "desc": "Mở ngăn kéo terminal ở góc dưới để chỉnh sửa thông số/ghi chú của chương",
+        "params": { "chapter": "Số thứ tự chương" }
+      },
+      "close_editor": {
+        "desc": "Đóng ngăn kéo terminal chỉnh sửa",
+        "params": {}
+      },
+      "switch_tab": {
+        "desc": "Chuyển đổi tab hiển thị ở cột giữa",
+        "params": { "tab": "'mindmap' | 'script' | 'video'" }
+      },
+      "center_view": {
+        "desc": "Căn giữa toàn bộ sơ đồ tư duy về trạng thái ban đầu",
+        "params": {}
+      },
+      "set_only_chapters": {
+        "desc": "Chỉ giữ lại các chương được chỉ định, ẩn/loại bỏ tất cả các chương còn lại",
+        "params": { "chapters": "Mảng các số chương, ví dụ [3, 5]" }
+      },
+      "exclude_chapters": {
+        "desc": "Ẩn/loại bỏ các chương chỉ định khỏi kịch bản",
+        "params": { "chapters": "Mảng các số chương, ví dụ [1, 2, 4]" }
+      },
+      "include_chapters": {
+        "desc": "Bật lại/khôi phục các chương đã bị ẩn vào kịch bản",
+        "params": { "chapters": "Mảng các số chương, ví dụ [2]" }
+      },
+      "set_chapter_duration": {
+        "desc": "Thiết lập thời lượng riêng cho một chương và phân bổ xuống các nhánh con",
+        "params": { "chapter": "Số thứ tự chương", "seconds": "Số giây, ví dụ 1200" }
+      },
+      "set_total_minutes": {
+        "desc": "Thiết lập thời gian tổng toàn bài giảng (chia theo tỷ lệ)",
+        "params": { "minutes": "Số phút tổng, ví dụ 40" }
+      },
+      "lock_chapter": {
+        "desc": "Khóa hoặc mở khóa thời lượng của chương",
+        "params": { "chapter": "Số thứ tự chương", "locked": "true | false" }
+      },
+      "set_speed": {
+        "desc": "Điều chỉnh tốc độ nhịp đọc WPM toàn bài",
+        "params": { "wpm": "120 | 140 | 165 | 190 hoặc rate: '0.85' | '1.0' | '1.2' | '1.35'" }
+      },
+      "set_voice": {
+        "desc": "Đổi giọng đọc AI (TTS Voice)",
+        "params": { "voice": "'quynh_anh' | 'nam_an' | 'mai_phuong' | 'minh_quang' | 'jenny_en' | 'guy_en'" }
+      }
+    };
+
     function getAllChaptersInfo() {
       const chapters = [];
       Object.values(currentNodesMap).forEach(n => {
@@ -7629,90 +7712,287 @@ OUTPUT FORMAT: Return ONLY a valid JSON string (no markdown backticks, no explan
       return chapters;
     }
 
-    function executeCopilotActions(actions) {
-      if (!Array.isArray(actions) || actions.length === 0) return false;
-      const chapters = getAllChaptersInfo();
-      let modified = false;
+    // CỖ MÁY THỰC THI TẤT ĐỊNH (DETERMINISTIC COPILOT UI ENGINE)
+    const CopilotEngine = {
+      switchTab(tabName) {
+        if (['mindmap', 'script', 'video'].includes(tabName)) {
+          switchCenterTab(tabName);
+          return true;
+        }
+        return false;
+      },
 
-      actions.forEach(act => {
-        if (act.type === 'set_only_chapters' && Array.isArray(act.chapters)) {
-          const keepSet = new Set(act.chapters.map(n => parseInt(n)));
-          chapters.forEach(ch => {
-            if (keepSet.has(ch.num)) {
-              excludedNodes.delete(ch.key);
-            } else {
-              excludedNodes.add(ch.key);
-            }
-            modified = true;
-          });
+      focusChapter(chapterNum) {
+        const chapters = getAllChaptersInfo();
+        const ch = chapters.find(c => c.num === parseInt(chapterNum));
+        if (ch) {
+          return this.focusNode(ch.key);
         }
-        if (act.type === 'exclude_chapters' && Array.isArray(act.chapters)) {
-          const exSet = new Set(act.chapters.map(n => parseInt(n)));
-          chapters.forEach(ch => {
-            if (exSet.has(ch.num)) {
-              excludedNodes.add(ch.key);
-              modified = true;
-            }
-          });
-        }
-        if (act.type === 'include_chapters' && Array.isArray(act.chapters)) {
-          const incSet = new Set(act.chapters.map(n => parseInt(n)));
-          chapters.forEach(ch => {
-            if (incSet.has(ch.num)) {
-              excludedNodes.delete(ch.key);
-              modified = true;
-            }
-          });
-        }
-        if (act.type === 'set_chapter_duration' && act.chapter && act.seconds) {
-          const chNum = parseInt(act.chapter);
-          const ch = chapters.find(c => c.num === chNum);
-          if (ch) {
-            applyNodeDurationAndParams(ch.key, parseInt(act.seconds), getNodeParam(ch.key, 'wpm', 140), ch.title, getNodeParam(ch.key, 'visualType', 'split_screen'), getNodeParam(ch.key, 'notes', ''));
-            modified = true;
-          }
-        }
-        if (act.type === 'set_total_minutes' && act.minutes) {
-          const inp = document.getElementById('gcfg-total-minutes');
-          if (inp) {
-            inp.value = parseInt(act.minutes);
-            applyGlobalDuration();
-            modified = true;
-          }
-        }
-        if (act.type === 'lock_chapter' && act.chapter) {
-          const chNum = parseInt(act.chapter);
-          const ch = chapters.find(c => c.num === chNum);
-          if (ch) {
-            setNodeParam(ch.key, 'isLocked', act.locked !== false);
-            modified = true;
-          }
-        }
-      });
+        return false;
+      },
 
-      if (modified) {
+      focusNode(nodeKey) {
+        this.switchTab('mindmap');
+        const node = currentNodesMap[nodeKey];
+        const card = document.getElementById(`node-${nodeKey}`);
+        const pane = document.getElementById('tab-content-mindmap');
+        if (!node || !pane) return false;
+
+        const paneRect = pane.getBoundingClientRect();
+        const centerX = paneRect.width / 2;
+        const centerY = paneRect.height / 2;
+
+        const targetX = centerX - (node.x + node.width / 2) * zoomScale;
+        const targetY = centerY - (node.y + node.height / 2) * zoomScale;
+
+        const world = document.getElementById('mindmap-world');
+        if (world) {
+          world.style.transition = 'transform 0.5s cubic-bezier(0.2, 0.9, 0.3, 1)';
+          panX = targetX;
+          panY = targetY;
+          applyTransform();
+          setTimeout(() => {
+            if (world) world.style.transition = '';
+          }, 550);
+        }
+
+        if (card) {
+          card.classList.remove('copilot-glow-pulse');
+          void card.offsetWidth;
+          card.classList.add('copilot-glow-pulse');
+        }
+        return true;
+      },
+
+      centerView() {
+        this.switchTab('mindmap');
+        centerMindmapView(true);
+        return true;
+      },
+
+      openEditor(chapterNum) {
+        const chapters = getAllChaptersInfo();
+        const ch = chapters.find(c => c.num === parseInt(chapterNum));
+        if (ch) {
+          this.switchTab('mindmap');
+          this.focusNode(ch.key);
+          const node = currentNodesMap[ch.key];
+          const card = document.getElementById(`node-${ch.key}`);
+          setTimeout(() => {
+            openNodeTuningTerminal(node, card);
+          }, 350);
+          return true;
+        }
+        return false;
+      },
+
+      closeEditor() {
+        closeNodeTuningTerminal();
+        return true;
+      },
+
+      setOnlyChapters(chapterNums) {
+        const keepSet = new Set(chapterNums.map(n => parseInt(n)));
+        const chapters = getAllChaptersInfo();
+        chapters.forEach(ch => {
+          if (keepSet.has(ch.num)) {
+            excludedNodes.delete(ch.key);
+          } else {
+            excludedNodes.add(ch.key);
+          }
+        });
+        this.refresh();
+        return true;
+      },
+
+      excludeChapters(chapterNums) {
+        const exSet = new Set(chapterNums.map(n => parseInt(n)));
+        const chapters = getAllChaptersInfo();
+        chapters.forEach(ch => {
+          if (exSet.has(ch.num)) {
+            excludedNodes.add(ch.key);
+          }
+        });
+        this.refresh();
+        return true;
+      },
+
+      includeChapters(chapterNums) {
+        const incSet = new Set(chapterNums.map(n => parseInt(n)));
+        const chapters = getAllChaptersInfo();
+        chapters.forEach(ch => {
+          if (incSet.has(ch.num)) {
+            excludedNodes.delete(ch.key);
+          }
+        });
+        this.refresh();
+        return true;
+      },
+
+      setChapterDuration(chapterNum, seconds) {
+        const chapters = getAllChaptersInfo();
+        const ch = chapters.find(c => c.num === parseInt(chapterNum));
+        if (ch) {
+          applyNodeDurationAndParams(
+            ch.key,
+            parseInt(seconds),
+            getNodeParam(ch.key, 'wpm', 140),
+            ch.title,
+            getNodeParam(ch.key, 'visualType', 'split_screen'),
+            getNodeParam(ch.key, 'notes', '')
+          );
+          this.refresh();
+          return true;
+        }
+        return false;
+      },
+
+      setTotalMinutes(minutes) {
+        const inp = document.getElementById('gcfg-total-minutes');
+        if (inp) {
+          inp.value = Math.max(1, parseInt(minutes));
+          applyGlobalDuration();
+          return true;
+        }
+        return false;
+      },
+
+      lockChapter(chapterNum, locked = true) {
+        const chapters = getAllChaptersInfo();
+        const ch = chapters.find(c => c.num === parseInt(chapterNum));
+        if (ch) {
+          setNodeParam(ch.key, 'isLocked', locked !== false);
+          this.refresh();
+          return true;
+        }
+        return false;
+      },
+
+      setSpeed(val) {
+        const sel = document.getElementById('gcfg-speed');
+        if (sel) {
+          if (typeof val === 'number' && val > 2) {
+            if (val <= 125) sel.value = "0.85";
+            else if (val <= 150) sel.value = "1.0";
+            else if (val <= 175) sel.value = "1.2";
+            else sel.value = "1.35";
+          } else {
+            sel.value = String(val);
+          }
+          applyGlobalSpeed();
+          return true;
+        }
+        return false;
+      },
+
+      setVoice(voiceId) {
+        const sel = document.getElementById('gcfg-voice');
+        if (sel && sel.querySelector(`option[value="${voiceId}"]`)) {
+          sel.value = voiceId;
+          applyGlobalVoice();
+          return true;
+        }
+        return false;
+      },
+
+      refresh() {
         renderMindmap();
         renderScriptDocument();
         updateLockedBadge();
         syncGlobalConfigFromProject();
-        showToast('🤖 AI Copilot: Đã điều chỉnh sơ đồ theo yêu cầu!');
-      }
-      return modified;
-    }
+      },
 
-    // HEURISTIC REGEX PARSER: Thực thi tức thì không cần đợi API
+      executeBatch(actions) {
+        if (!Array.isArray(actions) || actions.length === 0) return false;
+        let didSomething = false;
+        actions.forEach(act => {
+          const type = act.type || act.action;
+          if (type === 'set_only_chapters') didSomething = this.setOnlyChapters(act.chapters || []) || didSomething;
+          else if (type === 'exclude_chapters') didSomething = this.excludeChapters(act.chapters || []) || didSomething;
+          else if (type === 'include_chapters') didSomething = this.includeChapters(act.chapters || []) || didSomething;
+          else if (type === 'set_chapter_duration') didSomething = this.setChapterDuration(act.chapter, act.seconds) || didSomething;
+          else if (type === 'set_total_minutes') didSomething = this.setTotalMinutes(act.minutes) || didSomething;
+          else if (type === 'lock_chapter') didSomething = this.lockChapter(act.chapter, act.locked !== false) || didSomething;
+          else if (type === 'focus_chapter') didSomething = this.focusChapter(act.chapter) || didSomething;
+          else if (type === 'open_editor') didSomething = this.openEditor(act.chapter) || didSomething;
+          else if (type === 'close_editor') didSomething = this.closeEditor() || didSomething;
+          else if (type === 'switch_tab') didSomething = this.switchTab(act.tab) || didSomething;
+          else if (type === 'center_view') didSomething = this.centerView() || didSomething;
+          else if (type === 'set_speed') didSomething = this.setSpeed(act.wpm || act.rate) || didSomething;
+          else if (type === 'set_voice') didSomething = this.setVoice(act.voice) || didSomething;
+        });
+        if (didSomething) {
+          showToast('🤖 AI Copilot: Đã thực thi thao tác giao diện!');
+        }
+        return didSomething;
+      }
+    };
+
+    // HEURISTIC REGEX PARSER: Nhận diện tức thì không cần đợi API
     function parseLocalCopilotCommand(msg) {
       const actions = [];
+      const lower = msg.toLowerCase();
+
+      // 1. Chỉ giữ chương X và Y
       const mOnly = msg.match(/(?:chỉ\s*(?:cần|lấy|giữ|chọn)|giữ lại)\s*(?:chương|phần)?\s*([0-9\s,\bvà]+)/i);
       if (mOnly) {
         const nums = (mOnly[1].match(/\b\d+\b/g) || []).map(n => parseInt(n));
         if (nums.length > 0) actions.push({ type: 'set_only_chapters', chapters: nums });
       }
+
+      // 2. Bỏ / ẩn chương X Y
       const mEx = msg.match(/(?:bỏ|loại bỏ|xóa|ẩn|tắt)\s*(?:các\s*)?(?:chương|phần)?\s*([0-9\s,\bvà]+)/i);
       if (mEx) {
         const nums = (mEx[1].match(/\b\d+\b/g) || []).map(n => parseInt(n));
         if (nums.length > 0) actions.push({ type: 'exclude_chapters', chapters: nums });
       }
+
+      // 3. Khôi phục / bật lại chương X
+      const mInc = msg.match(/(?:khôi phục|bật lại|mở lại|thêm lại)\s*(?:chương|phần)?\s*([0-9\s,\bvà]+)/i);
+      if (mInc) {
+        const nums = (mInc[1].match(/\b\d+\b/g) || []).map(n => parseInt(n));
+        if (nums.length > 0) actions.push({ type: 'include_chapters', chapters: nums });
+      }
+
+      // 4. Cho tôi xem / đưa tôi đến chương X
+      const mFocus = msg.match(/(?:cho tôi xem|xem|đưa tôi đến|lia đến|tập trung vào)\s*chương\s*(\d+)/i);
+      if (mFocus) {
+        actions.push({ type: 'focus_chapter', chapter: parseInt(mFocus[1]) });
+      }
+
+      // 5. Mở chỉnh sửa chương X
+      const mEdit = msg.match(/(?:mở\s*(?:chỉnh sửa|bảng|ngăn kéo|editor)|chỉnh sửa)\s*chương\s*(\d+)/i);
+      if (mEdit) {
+        actions.push({ type: 'open_editor', chapter: parseInt(mEdit[1]) });
+      }
+
+      // 6. Chuyển tab
+      if (lower.includes('sang kịch bản') || lower.includes('xem kịch bản') || lower.includes('tab kịch bản')) {
+        actions.push({ type: 'switch_tab', tab: 'script' });
+      } else if (lower.includes('sang sơ đồ') || lower.includes('xem sơ đồ') || lower.includes('tab sơ đồ')) {
+        actions.push({ type: 'switch_tab', tab: 'mindmap' });
+      } else if (lower.includes('sang video') || lower.includes('dựng video') || lower.includes('tab video')) {
+        actions.push({ type: 'switch_tab', tab: 'video' });
+      }
+
+      // 7. Căn giữa
+      if (lower.includes('căn giữa') || lower.includes('reset góc nhìn') || lower.includes('về giữa')) {
+        actions.push({ type: 'center_view' });
+      }
+
+      // 8. Đặt tổng thời gian X phút
+      const mTotal = msg.match(/(?:thời gian tổng|tổng thời gian|tổng)\s*(?:là|thành)?\s*(\d+)\s*(?:phút|p)/i);
+      if (mTotal) {
+        actions.push({ type: 'set_total_minutes', minutes: parseInt(mTotal[1]) });
+      }
+
+      // 9. Khóa / mở khóa chương
+      const mLock = msg.match(/(khóa|mở khóa)\s*chương\s*(\d+)/i);
+      if (mLock) {
+        const isLock = mLock[1].toLowerCase() === 'khóa';
+        actions.push({ type: 'lock_chapter', chapter: parseInt(mLock[2]), locked: isLock });
+      }
+
       return actions;
     }
 
@@ -7740,50 +8020,57 @@ OUTPUT FORMAT: Return ONLY a valid JSON string (no markdown backticks, no explan
       aiMsg.className = 'chat-msg msg-ai';
       aiMsg.innerHTML = `
         <div class="msg-avatar">🤖</div>
-        <div class="msg-bubble" style="opacity: 0.8; font-style: italic;">Đang xử lý yêu cầu...</div>
+        <div class="msg-bubble" style="opacity: 0.8; font-style: italic;">Đang phân tích & điều khiển UI...</div>
       `;
       chatContainer.appendChild(aiMsg);
       chatContainer.scrollTop = chatContainer.scrollHeight;
 
       const bubbleEl = aiMsg.querySelector('.msg-bubble');
 
-      // TẬP HỢP NGỮ CẢNH CÁC CHƯƠNG HIỆN TẠI ĐỂ TRUYỀN VÀO PROMPT
+      // TẬP HỢP NGỮ CẢNH CÁC CHƯƠNG HIỆN TẠI
       const chapters = getAllChaptersInfo();
       const chaptersSummary = chapters.map(c => 
-        `- Chương ${c.num}: "${c.title}" | Thời lượng: ${c.duration}s | Trạng thái: ${c.isExcluded ? 'ĐÃ ẨN/LOẠI BỎ' : 'ĐANG DÙNG (ACTIVE)'} | Khóa: ${c.isLocked ? '🔒 Đã khóa' : '🔓 Tự do'}`
+        `- Chương ${c.num}: "${c.title}" | Thời lượng: ${c.duration}s | Trạng thái: ${c.isExcluded ? 'ĐÃ ẨN' : 'ĐANG DÙNG'} | Khóa: ${c.isLocked ? '🔒 Đã khóa' : '🔓 Tự do'}`
       ).join('\n');
 
-      const systemPrompt = `Bạn là Trợ lý AI Điều Khiển Dự Án CLSG Studio (HUST & MOOC AI Copilot).
-Người dùng là giảng viên đang thiết kế kịch bản bài giảng. Bạn có quyền điều chỉnh sơ đồ tư duy theo ý muốn của người dùng.
+      const systemPrompt = `Bạn là Trợ lý AI Điều Khiển Giao Diện CLSG Studio (HUST AI Copilot).
+Người dùng là giảng viên đang thiết kế bài giảng. Bạn có quyền trực tiếp điều khiển giao diện UI thông qua các lệnh JSON.
 
-DỮ LIỆU HIỆN TẠI CỦA DỰ ÁN "${activeProject ? activeProject.title : ''}":
+DỮ LIỆU BÀI GIẢNG HIỆN TẠI:
+- Tên: "${activeProject ? activeProject.title : ''}"
 - Tổng thời lượng đang dùng: ${activeProject ? activeProject.duration_s : 0}s (${Math.round((activeProject?.duration_s || 0)/60)} phút).
 - Danh sách các chương:
 ${chaptersSummary || '(Chưa có chương)'}
 
-QUY TẮC PHẢN HỒI:
-1. NẾU NGƯỜI DÙNG RA LỆNH ĐIỀU CHỈNH SƠ ĐỒ (ví dụ: "bỏ chương 1 2 4", "tôi chỉ cần chương 3 và 5", "tôi muốn chương 3 nhiều hơn chương 5 một chút", "thời gian tổng 40 phút", "khóa chương 3"):
-   - Hãy phân tích yêu cầu một cách thông minh và đưa ra lời giải thích ngắn gọn, thân thiện bằng tiếng Việt.
-   - BẮT BUỘC kẹp một khối JSON hợp lệ ở cuối tin nhắn theo định dạng sau:
+DANH MỤC LỆNH BẠN CÓ THỂ ĐIỀU KHIỂN:
+- "set_only_chapters": {"type": "set_only_chapters", "chapters": [3, 5]} (chỉ giữ các chương này, ẩn các chương còn lại)
+- "exclude_chapters": {"type": "exclude_chapters", "chapters": [1, 2, 4]} (ẩn các chương này)
+- "include_chapters": {"type": "include_chapters", "chapters": [3, 5]} (bật lại chương này)
+- "focus_chapter": {"type": "focus_chapter", "chapter": 3} (lia camera tới chương và làm phát sáng viền)
+- "open_editor": {"type": "open_editor", "chapter": 3} (mở ngăn kéo terminal chỉnh sửa)
+- "switch_tab": {"type": "switch_tab", "tab": "mindmap" | "script" | "video"}
+- "set_chapter_duration": {"type": "set_chapter_duration", "chapter": 3, "seconds": 1200}
+- "set_total_minutes": {"type": "set_total_minutes", "minutes": 40}
+- "lock_chapter": {"type": "lock_chapter", "chapter": 3, "locked": true}
+- "center_view": {"type": "center_view"}
+
+QUY TẮC:
+1. Nếu người dùng ra lệnh điều chỉnh sơ đồ / giao diện:
+   - Hãy suy luận các thông số hợp lý (ví dụ "chương 3 nhiều hơn chương 5 một chút" -> Ch3: 1200s, Ch5: 900s).
+   - Trả lời thân thiện, ngắn gọn (1-2 câu) bằng tiếng Việt.
+   - BẮT BUỘC kẹp khối lệnh JSON ở cuối:
 \`\`\`json
 {
   "actions": [
     {"type": "set_only_chapters", "chapters": [3, 5]},
     {"type": "set_chapter_duration", "chapter": 3, "seconds": 1200},
-    {"type": "set_chapter_duration", "chapter": 5, "seconds": 900}
+    {"type": "set_chapter_duration", "chapter": 5, "seconds": 900},
+    {"type": "focus_chapter", "chapter": 3}
   ]
 }
 \`\`\`
-Các action hỗ trợ:
-- "set_only_chapters": {"type": "set_only_chapters", "chapters": [3, 5]} (chỉ giữ các chương này, loại bỏ các chương khác)
-- "exclude_chapters": {"type": "exclude_chapters", "chapters": [1, 2, 4]}
-- "include_chapters": {"type": "include_chapters", "chapters": [3, 5]}
-- "set_chapter_duration": {"type": "set_chapter_duration", "chapter": 3, "seconds": 1200}
-- "set_total_minutes": {"type": "set_total_minutes", "minutes": 40}
-- "lock_chapter": {"type": "lock_chapter", "chapter": 3, "locked": true}
-
-2. NẾU NGƯỜI DÙNG CHỈ HỎI ĐÁP SƯ PHẠM / NỘI DUNG (không yêu cầu chỉnh sửa sơ đồ):
-   - Trả lời chuyên nghiệp, súc tích (dưới 4 câu) và KHÔNG kèm khối JSON.`;
+2. Nếu người dùng chỉ hỏi đáp thông thường (không điều khiển giao diện):
+   - Trả lời súc tích, chuyên nghiệp (dưới 4 câu) và KHÔNG kèm khối JSON.`;
 
       try {
         const cfg = LLMClient.getConfig();
@@ -7811,7 +8098,6 @@ Các action hỗ trợ:
           const data = await res.json();
           const reply = (data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) || '';
           
-          // Bắt và thực thi khối action JSON
           let actionExecuted = false;
           let cleanReply = reply;
           const jsonMatch = reply.match(/```json\s*([\s\S]*?)\s*```/);
@@ -7819,19 +8105,18 @@ Các action hỗ trợ:
             try {
               const parsed = JSON.parse(jsonMatch[1]);
               if (parsed && parsed.actions) {
-                actionExecuted = executeCopilotActions(parsed.actions);
+                actionExecuted = CopilotEngine.executeBatch(parsed.actions);
               }
             } catch (e) {
-              console.warn("Lỗi phân tích lệnh JSON từ Copilot:", e);
+              console.warn("Lỗi phân tích action JSON từ Copilot:", e);
             }
             cleanReply = reply.replace(/```json[\s\S]*?```/g, '').trim();
           }
 
-          // Nếu LLM không sinh action nhưng tin nhắn chứa lệnh trực tiếp, áp dụng heuristic fallback
           if (!actionExecuted) {
             const fallbackActions = parseLocalCopilotCommand(msg);
             if (fallbackActions.length > 0) {
-              executeCopilotActions(fallbackActions);
+              CopilotEngine.executeBatch(fallbackActions);
             }
           }
 
@@ -7845,17 +8130,29 @@ Các action hỗ trợ:
         console.warn("Copilot API gặp sự cố, chuyển sang heuristic local:", err);
       }
 
-      // FALLBACK LOCAL HEURISTIC (Chạy mượt 100% kể cả khi mất mạng / không có API key)
+      // FALLBACK LOCAL HEURISTIC (Chạy mượt 100% khi mất mạng hoặc chưa cấu hình API key)
       const localActions = parseLocalCopilotCommand(msg);
       let localReply = "";
       if (localActions.length > 0) {
-        executeCopilotActions(localActions);
+        CopilotEngine.executeBatch(localActions);
         const onlyAct = localActions.find(a => a.type === 'set_only_chapters');
         const exAct = localActions.find(a => a.type === 'exclude_chapters');
+        const focAct = localActions.find(a => a.type === 'focus_chapter');
+        const editAct = localActions.find(a => a.type === 'open_editor');
+        const tabAct = localActions.find(a => a.type === 'switch_tab');
+
         if (onlyAct) {
-          localReply = `✅ <strong>Trợ lý AI:</strong> Đã cập nhật sơ đồ! Chỉ giữ lại <strong>Chương ${onlyAct.chapters.join(', ')}</strong>, các chương còn lại đã được loại bỏ khỏi kịch bản.`;
+          localReply = `✅ <strong>Trợ lý AI:</strong> Đã cập nhật sơ đồ! Chỉ giữ lại <strong>Chương ${onlyAct.chapters.join(', ')}</strong>, các chương còn lại đã được ẩn khỏi kịch bản.`;
         } else if (exAct) {
-          localReply = `✅ <strong>Trợ lý AI:</strong> Đã loại bỏ <strong>Chương ${exAct.chapters.join(', ')}</strong> khỏi kịch bản và cập nhật lại thời lượng tổng!`;
+          localReply = `✅ <strong>Trợ lý AI:</strong> Đã ẩn <strong>Chương ${exAct.chapters.join(', ')}</strong> khỏi kịch bản và tự động cập nhật lại thời lượng tổng!`;
+        } else if (focAct) {
+          localReply = `🎯 <strong>Trợ lý AI:</strong> Đã lia camera và làm sáng nổi bật <strong>Chương ${focAct.chapter}</strong> trên sơ đồ!`;
+        } else if (editAct) {
+          localReply = `✏️ <strong>Trợ lý AI:</strong> Đã mở ngăn kéo chỉnh sửa cho <strong>Chương ${editAct.chapter}</strong> ở góc dưới!`;
+        } else if (tabAct) {
+          localReply = `📑 <strong>Trợ lý AI:</strong> Đã chuyển màn hình sang chế độ <strong>${tabAct.tab.toUpperCase()}</strong>!`;
+        } else {
+          localReply = `✅ <strong>Trợ lý AI:</strong> Đã thực thi thao tác giao diện theo yêu cầu của bạn!`;
         }
       } else {
         const lower = msg.toLowerCase();
@@ -7864,7 +8161,7 @@ Các action hỗ trợ:
         } else if (lower.includes('sơ đồ') || lower.includes('nhánh') || lower.includes('mindmap')) {
           localReply = "🧠 <strong>Trợ lý AI:</strong> Sơ đồ tư duy đa gốc hiện đang hiển thị theo cấu trúc mọc từ trên xuống. Bạn có thể tự do kéo di chuyển các gốc học liệu trên bảng vẽ.";
         } else {
-          localReply = `🤖 <strong>Trợ lý AI:</strong> Đã tiếp nhận yêu cầu: <em>"${escapeHtml(msg)}"</em>. Bạn có thể ra lệnh như <em>"bỏ chương 1 2 4"</em> hoặc <em>"chỉ giữ chương 3 và 5"</em> để tôi tự động thao tác trên sơ đồ!`;
+          localReply = `🤖 <strong>Trợ lý AI:</strong> Đã tiếp nhận yêu cầu: <em>"${escapeHtml(msg)}"</em>.<br><br>💡 <em>Mẹo:</em> Bạn có thể gõ các lệnh như: <strong>"bỏ chương 1 2"</strong>, <strong>"cho tôi xem chương 3"</strong>, <strong>"mở chỉnh sửa chương 5"</strong> hoặc <strong>"chuyển sang kịch bản"</strong> để tôi thao tác hộ bạn!`;
         }
       }
 
