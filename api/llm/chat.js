@@ -14,7 +14,7 @@ module.exports = async (req, res) => {
 
   try {
     const body = (typeof req.body === 'string') ? JSON.parse(req.body) : (req.body || {});
-    const envGemini = process.env.GEMINI_API_KEY;
+    const envGemini = process.env.GEMINI_API_KEY || 'AQ.Ab8RN6Iiy_lvpeUOc_0fG385dl88DQQWYdtbHsHuIuAaGR6zag';
     const envOpenai = process.env.OPENAI_API_KEY;
 
     let apiKey = body.apiKey || envGemini || envOpenai;

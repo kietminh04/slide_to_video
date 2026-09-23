@@ -6694,9 +6694,13 @@
                 node.data.summary = newSumm;
                 node.data.mechanism = newMech;
                 node.data.key_point = newKey;
+                node.data.details = res.details || '';
+                node.data.examples = res.examples || '';
                 setNodeParam(node.key, 'summary', newSumm);
                 setNodeParam(node.key, 'mechanism', newMech);
                 setNodeParam(node.key, 'key_point', newKey);
+                setNodeParam(node.key, 'details', res.details || '');
+                setNodeParam(node.key, 'examples', res.examples || '');
 
                 updateContentInspector(node, cardEl);
                 showToast('✨ Đã sinh tóm tắt sư phạm chuyên sâu thành công từ AI!');
@@ -6711,24 +6715,40 @@
         };
       }
 
+      const coreDetails = itemData.details || '';
+      const coreExamples = itemData.examples || '';
+
       if (summaryList) {
-        summaryList.innerHTML = `
+        let html = `
           <li style="margin-bottom: 8px;"><strong>📌 Khái niệm cốt lõi:</strong> ${coreSummary}</li>
           <li style="margin-bottom: 8px;"><strong>⚙️ Cơ chế & Giải thuật:</strong> ${coreMech}</li>
-          <li><strong>💡 Điểm chốt quan trọng:</strong> ${coreKeyPoint}</li>
-        `;
+          <li style="margin-bottom: 8px;"><strong>💡 Điểm then chốt:</strong> ${coreKeyPoint}</li>`;
+        if (coreDetails) {
+          html += `<li style="margin-bottom: 8px;"><strong>📋 Nội dung chi tiết:</strong> ${coreDetails}</li>`;
+        }
+        if (coreExamples) {
+          html += `<li><strong>🧪 Ví dụ & Ứng dụng:</strong> ${coreExamples}</li>`;
+        }
+        summaryList.innerHTML = html;
       }
 
       // 2. DIỄN GIẢI KIẾN THỨC TOÀN DIỆN (KHÔNG SÁO RỖNG SƯ PHẠM, ĐI THẲNG VÀO NỘI DUNG BÀI HỌC)
       if (narrationText) {
-        narrationText.innerHTML = `
-          <div style="font-size: 11px; line-height: 1.55; color: var(--text-main);">
-            <strong>Nội dung tóm lược:</strong> Trong mục <span style="color: var(--cyan); font-weight: 700;">${nodeCode}</span> này, người học cần nắm vững bản chất kỹ thuật của <em>${nodeText}</em>.<br><br>
-            • <strong>Nguyên lý:</strong> ${coreSummary}<br>
-            • <strong>Triển khai:</strong> ${coreMech}<br><br>
-            <em>Học sinh có thể đọc kỹ các điểm mấu chốt trên để nắm trọn tri thức phân đoạn trước khi quyết định yêu cầu AI tạo video bài giảng.</em>
-          </div>
-        `;
+        let narrHtml = `
+          <div style="font-size: 11px; line-height: 1.6; color: var(--text-main);">
+            <strong>📖 Diễn giải kiến thức:</strong> Trong mục <span style="color: var(--cyan); font-weight: 700;">${nodeCode}</span> — <em>${nodeText}</em>, người học cần nắm vững:<br><br>
+            • <strong>Bản chất:</strong> ${coreSummary}<br>
+            • <strong>Cách hoạt động:</strong> ${coreMech}<br>
+            • <strong>Lưu ý quan trọng:</strong> ${coreKeyPoint}<br>`;
+        if (coreDetails) {
+          narrHtml += `<br>• <strong>Chi tiết:</strong> ${coreDetails}<br>`;
+        }
+        if (coreExamples) {
+          narrHtml += `• <strong>Ví dụ:</strong> ${coreExamples}<br>`;
+        }
+        narrHtml += `<br><em style="color: var(--text-dim);">Nhấn nút ✨ AI Bóc Tách Chuyên Sâu để AI phân tích sâu hơn nữa.</em>
+          </div>`;
+        narrationText.innerHTML = narrHtml;
       }
 
       // 3. CHỈ DẪN TRỰC QUAN
@@ -6743,6 +6763,26 @@
         btnOpenTerm.onclick = () => {
           openNodeTuningTerminal(node, cardEl);
         };
+      }
+
+      // ===== AUTO-SUMMARIZE: Tự động gọi LLM khi có API key =====
+      // Nếu node chưa có tóm tắt AI thực sự → auto-trigger LLM ngay khi chọn node
+      const _cfg = LLMClient.getConfig();
+      const hasLLM = !!_cfg.apiKey;
+      const isRawSummary = !itemData.summary
+        || /trích xuất từ trang|nội dung trích|the methods described|estimation and elimination|introduction to time|colorado|springer|copyright/i.test(itemData.summary || '')
+        || /trích xuất từ trang|nội dung trích|the methods described/i.test(itemData.mechanism || '')
+        || (itemData.summary && itemData.summary.length < 60 && !itemData.details);
+
+      if (hasLLM && isRawSummary && btnAiSummarize && !btnAiSummarize.disabled) {
+        // Debounce: tránh gọi trùng khi click nhanh nhiều node
+        clearTimeout(window._autoSummarizeTimer);
+        window._autoSummarizeTimer = setTimeout(() => {
+          // Kiểm tra node hiện tại vẫn là node đã chọn
+          if (selectedLeafNode && selectedLeafNode.key === node.key) {
+            btnAiSummarize.click(); // Trigger cùng logic nút bấm
+          }
+        }, 300);
       }
     }
 
@@ -7263,13 +7303,14 @@
     const LLMClient = {
       STORAGE_KEY: 'clsg_ai_config',
       CACHE_PREFIX: 'clsg_ai_cache_',
+      DEFAULT_KEY: 'AQ.Ab8RN6Iiy_lvpeUOc_0fG385dl88DQQWYdtbHsHuIuAaGR6zag',
 
       getConfig() {
         try {
           const saved = JSON.parse(localStorage.getItem(this.STORAGE_KEY) || '{}');
           // MẶC ĐỊNH SỐ 1: GOOGLE GEMINI (VÌ HOÀN TOÀN MIỄN PHÍ)
           let provider = (saved.provider === 'openai') ? 'openai' : 'gemini_local';
-          let apiKey = saved.apiKey || '';
+          let apiKey = saved.apiKey || (provider === 'gemini_local' ? this.DEFAULT_KEY : '');
           let baseUrl = saved.baseUrl || '';
           let model = saved.model;
 
@@ -7300,7 +7341,7 @@
             provider: 'gemini_local',
             baseUrl: 'https://generativelanguage.googleapis.com/v1beta/openai',
             model: 'gemini-2.5-flash',
-            apiKey: '',
+            apiKey: 'AQ.Ab8RN6Iiy_lvpeUOc_0fG385dl88DQQWYdtbHsHuIuAaGR6zag',
             outputLang: 'vi'
           };
         }
@@ -7312,28 +7353,31 @@
 
       async summarizeNode({ projectTitle, chapterName, sectionName, nodeCode, nodeText }) {
         const cfg = this.getConfig();
-        const prompt = `Bạn là Giảng viên Đại học và Chuyên gia Sư phạm Trực tuyến.
+        const prompt = `Bạn là Giảng viên Đại học chuyên ngành Toán - Tin và Khoa học Dữ liệu.
 Bài giảng: "${projectTitle}".
 Chương/Phần: "${chapterName} • ${sectionName}".
-Phân đoạn mục: [${nodeCode}] "${nodeText}".
+Phân đoạn: [${nodeCode}] "${nodeText}".
 
-HÃY BỎ QUA CÁC THÔNG TIN RÁC NHƯ TÊN TÁC GIẢ (PETER BROCKWELL, RICHARD DAVIS), TRƯỜNG ĐẠI HỌC (COLORADO STATE UNIVERSITY), NHÀ XUẤT BẢN HOẶC SỐ TRANG.
-DỰA TRÊN CHỦ ĐỀ CHUỖI THỜI GIAN (TIME SERIES) VÀ GIÁO TRÌNH, HÃY VIẾT BẢN TÓM TẮT HỌC THUẬT CHUYÊN SÂU CHUẨN CIKM CHO PHÂN ĐOẠN NÀY ĐỂ NGƯỜI HỌC NẮM BẮT DỄ DÀNG:
+BỎ QUA thông tin rác (tên tác giả, trường đại học, nhà xuất bản, số trang, copyright).
 
-Hãy trả về đúng định dạng JSON sau:
+NHIỆM VỤ: Viết BẢN TÓM TẮT HỌC THUẬT CHUYÊN SÂU giúp người học nắm bắt TOÀN BỘ nội dung của phân đoạn này. Không viết qua loa cho có, mà phải ĐỦ CHI TIẾT để người đọc hiểu được bản chất mà KHÔNG CẦN mở giáo trình gốc.
+
+Trả về JSON với 5 trường sau (mỗi trường TỐI THIỂU 2-3 câu, càng chi tiết càng tốt):
 {
-  "summary": "Khái niệm cốt lõi: Nêu bản chất lý thuyết hoặc định nghĩa chuỗi thời gian bằng 1-2 câu súc tích.",
-  "mechanism": "Cơ chế & Giải thuật: Nêu phương pháp mô hình hóa, quy trình toán học hoặc công thức tương ứng.",
-  "key_point": "Điểm chốt quan trọng: Giá trị thực tiễn và điểm mấu chốt cần ghi nhớ khi áp dụng."
+  "summary": "KHÁI NIỆM CỐT LÕI: Giải thích rõ ràng bản chất lý thuyết, định nghĩa toán học chính thức, ý nghĩa trực quan của khái niệm. Nêu rõ phân đoạn này nằm ở đâu trong bức tranh tổng thể của bài giảng.",
+  "mechanism": "CƠ CHẾ & GIẢI THUẬT: Mô tả chi tiết quy trình, các bước thực hiện, công thức toán học cốt lõi (nếu có), cách biến đổi dữ liệu, input/output. Giải thích TẠI SAO phương pháp này hoạt động.",
+  "key_point": "ĐIỂM THEN CHỐT: Các lưu ý quan trọng khi áp dụng, điều kiện tiên quyết, giới hạn phương pháp, sai lầm thường gặp cần tránh, và mối liên hệ với các khái niệm khác trong bài.",
+  "details": "NỘI DUNG CHI TIẾT: Liệt kê và giải thích từng thành phần con, định lý, tính chất, hoặc trường hợp đặc biệt được đề cập trong phân đoạn. Nếu có bảng, biểu đồ, ví dụ minh họa thì mô tả nội dung của chúng.",
+  "examples": "VÍ DỤ & ỨNG DỤNG: Đưa ra ít nhất 1 ví dụ cụ thể minh họa khái niệm. Nêu các ứng dụng thực tế trong phân tích dữ liệu, tài chính, dự báo, hoặc kỹ thuật."
 }`;
         const payload = {
           model: cfg.model,
           messages: [
-            { role: 'system', content: 'Bạn là chuyên gia bóc tách tài liệu học thuật và sinh tóm tắt chuẩn JSON.' },
+            { role: 'system', content: 'Bạn là chuyên gia bóc tách tài liệu học thuật. Trả lời CHI TIẾT, ĐẦY ĐỦ, KHÔNG tóm tắt qua loa. Output chuẩn JSON.' },
             { role: 'user', content: prompt }
           ],
-          max_tokens: 350,
-          temperature: 0.4
+          max_tokens: 1200,
+          temperature: 0.35
         };
 
         let rawText = '';
@@ -7381,27 +7425,28 @@ Hãy trả về đúng định dạng JSON sau:
 
       async ping(customCfg = null) {
         const cfg = customCfg || this.getConfig();
+        const apiKey = cfg.apiKey || (cfg.provider === 'gemini_local' ? this.DEFAULT_KEY : '');
         const tStart = performance.now();
 
-        // Nếu là OpenAI, ưu tiên ping qua backend server (bảo mật tuyệt đối qua .env)
-        if (cfg.provider === 'openai') {
-          try {
-            const serverUrl = window.location.origin.startsWith('http')
-              ? `${window.location.origin}/api/llm/ping`
-              : 'http://127.0.0.1:8765/api/llm/ping';
-            const res = await fetch(serverUrl, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' }
-            });
-            if (res.ok) {
-              const data = await res.json();
-              return { data, latency: data.latency || Math.round(performance.now() - tStart) };
-            }
-          } catch (e) {
-            console.warn('[LLMClient] Server proxy không phản hồi, thử fallback trực tiếp...');
+        // 1. Thử ping qua serverless proxy
+        try {
+          const serverUrl = (window.location.origin.startsWith('http') && !window.location.origin.includes('file:'))
+            ? `${window.location.origin}/api/llm/ping`
+            : 'http://127.0.0.1:8765/api/llm/ping';
+          const res = await fetch(serverUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ provider: cfg.provider, apiKey: apiKey, model: cfg.model })
+          });
+          if (res.ok) {
+            const data = await res.json();
+            return { data, latency: data.latency || Math.round(performance.now() - tStart) };
           }
+        } catch (e) {
+          console.warn('[LLMClient] Server proxy ping không phản hồi, thử gọi trực tiếp...');
         }
 
+        // 2. Gọi trực tiếp endpoint của Provider kèm Authorization Header đầy đủ
         const endpoint = `${cfg.baseUrl.replace(/\/+$/, '')}/chat/completions`;
         const payload = {
           model: cfg.model,
@@ -7409,9 +7454,14 @@ Hãy trả về đúng định dạng JSON sau:
           max_tokens: 2
         };
 
+        const headers = { 'Content-Type': 'application/json' };
+        if (apiKey) {
+          headers['Authorization'] = `Bearer ${apiKey}`;
+        }
+
         const res = await fetch(endpoint, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: headers,
           body: JSON.stringify(payload)
         });
 
@@ -8272,7 +8322,8 @@ OUTPUT FORMAT: Return ONLY a valid JSON string (no markdown backticks, no explan
       get(q) {
         // TUYỆT ĐỐI KHÔNG BẮT CACHE KHI CÂU HỎI LÀ LỆNH ĐIỀU KHIỂN HOẶC HỎI VỀ BÀI GIẢNG / PHÂN ĐOẠN CỤ THỂ
         const lower = q.toLowerCase();
-        if (/bỏ|giữ|ẩn|xóa|đổi|chỉnh|thời lượng|phút|wpm|tóm tắt|chương|phần|mục|slide|bản tóm tắt/i.test(lower)) {
+        // TUYỆT ĐỐI KHÔNG CACHE: lệnh điều khiển, hỏi bài giảng, hỏi nội dung, hỏi giải thích
+        if (/bỏ|giữ|ẩn|xóa|đổi|chỉnh|thời lượng|phút|wpm|tóm tắt|chương|phần|mục|slide|bản tóm tắt|nội dung|giải thích|đọc hộ|chi tiết|phân đoạn|kiến thức|bài giảng|bản chất|công thức|ví dụ|cơ chế|tại sao|như thế nào|kể|liệt kê|trình bày|phân tích|so sánh/i.test(lower)) {
           return null;
         }
         const norm = this.normalize(q);
@@ -8302,6 +8353,24 @@ OUTPUT FORMAT: Return ONLY a valid JSON string (no markdown backticks, no explan
         } catch (e) {}
       }
     };
+
+    // AUTO-PURGE: Xóa cache tóm tắt cũ khi load trang để luôn dùng prompt mới nhất
+    try {
+      const qaCache = JSON.parse(localStorage.getItem('clsg_qa_cache') || '{}');
+      const now = Date.now();
+      const MAX_AGE = 3600000; // 1 giờ
+      let purged = 0;
+      for (const key of Object.keys(qaCache)) {
+        if (!qaCache[key].timestamp || (now - qaCache[key].timestamp > MAX_AGE)) {
+          delete qaCache[key];
+          purged++;
+        }
+      }
+      if (purged > 0) {
+        localStorage.setItem('clsg_qa_cache', JSON.stringify(qaCache));
+        console.log(`[Cache Purge] Đã xóa ${purged} mục cache cũ (>1h).`);
+      }
+    } catch(e) {}
 
     const CopilotLearningEngine = {
       STORAGE_KEY: 'clsg_learned_copilot_rules',
@@ -9031,8 +9100,8 @@ QUY TẮC PHẢN HỒI QUAN TRỌNG:
         const payload = {
           model: cfg.model,
           messages: payloadMessages,
-          max_tokens: 450,
-          temperature: 0.6
+          max_tokens: 1200,
+          temperature: 0.5
         };
 
         let res = null;
@@ -11358,7 +11427,9 @@ ${tableRows}
 
       if (cfgBaseUrl) cfgBaseUrl.value = cfg.baseUrl || PROVIDER_BASE_URLS[currentProvider];
       const keyInput = document.getElementById('cfg-api-key');
-      if (keyInput) keyInput.value = cfg.apiKey || '';
+      if (keyInput) {
+        keyInput.value = cfg.apiKey || (currentProvider === 'gemini_local' ? LLMClient.DEFAULT_KEY : '');
+      }
       const cfgOutputLang = document.getElementById('cfg-output-lang');
       if (cfgOutputLang) cfgOutputLang.value = cfg.outputLang || 'vi';
       if (cfgPingStatus) cfgPingStatus.style.display = 'none';
@@ -11421,9 +11492,11 @@ ${tableRows}
       const provider = radioProvGemini?.checked ? 'gemini_local' : 'openai';
       const baseUrl = cfgBaseUrl?.value.trim() || 'https://api.openai.com/v1';
       const model = cfgModelSelect?.value || 'gpt-4o-mini';
+      const inputKey = document.getElementById('cfg-api-key')?.value.trim() || '';
+      const apiKey = inputKey || (provider === 'gemini_local' ? LLMClient.DEFAULT_KEY : '');
 
       try {
-        const res = await LLMClient.ping({ provider, baseUrl, model });
+        const res = await LLMClient.ping({ provider, baseUrl, model, apiKey });
         cfgPingStatus.style.background = 'rgba(16, 185, 129, 0.15)';
         cfgPingStatus.style.color = '#34d399';
         cfgPingStatus.style.border = '1px solid rgba(16, 185, 129, 0.3)';

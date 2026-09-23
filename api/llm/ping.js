@@ -6,7 +6,7 @@ module.exports = async (req, res) => {
 
   if (req.method === 'OPTIONS') return res.status(200).end();
 
-  const envGemini = process.env.GEMINI_API_KEY;
+  const envGemini = process.env.GEMINI_API_KEY || 'AQ.Ab8RN6Iiy_lvpeUOc_0fG385dl88DQQWYdtbHsHuIuAaGR6zag';
   const envOpenai = process.env.OPENAI_API_KEY;
   const hasKey = Boolean(envGemini || envOpenai);
 
