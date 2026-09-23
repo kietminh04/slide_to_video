@@ -3468,7 +3468,7 @@
           <span style="color: #34d399; font-size: 11px; font-weight: 500;">Lưu an toàn tại trình duyệt</span>
         </label>
         <div style="position: relative;">
-          <input type="password" class="form-input" id="cfg-api-key" placeholder="Nhập sk-... (OpenAI) hoặc AIzaSy... (Gemini)" style="padding-right: 42px; font-family: 'JetBrains Mono', monospace; font-size: 12px;">
+          <input type="password" class="form-input" id="cfg-api-key" placeholder="Nhập sk-... (OpenAI) hoặc AQ... / AIza... (Gemini)" style="padding-right: 42px; font-family: 'JetBrains Mono', monospace; font-size: 12px;">
           <button type="button" id="btn-toggle-cfg-key" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--text-dim); cursor: pointer; font-size: 14px;" title="Ẩn/Hiện khóa API">👁️</button>
         </div>
         <div style="font-size: 10.5px; color: var(--text-dim); margin-top: 4px; line-height: 1.4;">
@@ -7091,12 +7091,12 @@
           let model = saved.model;
 
           // Tự động chuyển provider sang Gemini nếu phát hiện API key của Google (bắt đầu bằng AIza)
-          if (apiKey.startsWith('AIzaSy') || apiKey.startsWith('AIza')) {
+          if (apiKey.startsWith('AIzaSy') || apiKey.startsWith('AIza') || apiKey.startsWith('AQ.')) {
             provider = 'gemini_local';
           }
 
           if (provider === 'gemini_local') {
-            if (!model || model.startsWith('gpt')) model = 'gemini-2.0-flash';
+            if (!model || model.startsWith('gpt') || model.includes('1.5') || model.includes('2.0')) model = 'gemini-2.5-flash';
             if (!baseUrl || baseUrl.includes('openai.com')) {
               baseUrl = 'https://generativelanguage.googleapis.com/v1beta/openai';
             }
@@ -7116,7 +7116,7 @@
           return {
             provider: 'gemini_local',
             baseUrl: 'https://generativelanguage.googleapis.com/v1beta/openai',
-            model: 'gemini-2.0-flash',
+            model: 'gemini-2.5-flash',
             apiKey: '',
             outputLang: 'vi'
           };
@@ -10804,8 +10804,8 @@ ${tableRows}
 
     const PROVIDER_MODELS = {
       gemini_local: [
-        { value: 'gemini-2.0-flash', label: 'gemini-2.0-flash (Khuyên dùng: Miễn phí Google AI Studio, Siêu tốc)' },
-        { value: 'gemini-1.5-flash', label: 'gemini-1.5-flash (Miễn phí: 1 Triệu tokens ngữ cảnh)' }
+        { value: 'gemini-2.5-flash', label: 'gemini-2.5-flash (Khuyên dùng: Miễn phí Google AI Studio, Siêu tốc)' },
+        { value: 'gemini-flash-latest', label: 'gemini-flash-latest (Bản cập nhật mới nhất)' }
       ],
       openai: [
         { value: 'gpt-4o-mini', label: 'gpt-4o-mini (Siêu nhanh, tiết kiệm token)' },
@@ -10874,6 +10874,8 @@ ${tableRows}
       updateModelOptions(currentProvider, cfg.model);
 
       if (cfgBaseUrl) cfgBaseUrl.value = cfg.baseUrl || PROVIDER_BASE_URLS[currentProvider];
+      const keyInput = document.getElementById('cfg-api-key');
+      if (keyInput) keyInput.value = cfg.apiKey || '';
       const cfgOutputLang = document.getElementById('cfg-output-lang');
       if (cfgOutputLang) cfgOutputLang.value = cfg.outputLang || 'vi';
       if (cfgPingStatus) cfgPingStatus.style.display = 'none';
@@ -10896,7 +10898,7 @@ ${tableRows}
     radioProvGemini?.addEventListener('change', () => {
       if (radioProvGemini.checked) {
         updateProviderCardStyles('gemini_local');
-        updateModelOptions('gemini_local', 'gemini-2.0-flash');
+        updateModelOptions('gemini_local', 'gemini-2.5-flash');
         if (cfgBaseUrl) cfgBaseUrl.value = PROVIDER_BASE_URLS.gemini_local;
         if (cfgPingStatus) cfgPingStatus.style.display = 'none';
       }
@@ -10948,6 +10950,23 @@ ${tableRows}
         cfgPingStatus.style.color = '#f87171';
         cfgPingStatus.style.border = '1px solid rgba(244, 63, 94, 0.3)';
         cfgPingStatus.innerHTML = `❌ Lỗi kết nối: ${err.message}`;
+      }
+    });
+
+    // Tự động nhận diện Gemini vs OpenAI khi gõ/dán API Key
+    const cfgApiKeyInput = document.getElementById('cfg-api-key');
+    cfgApiKeyInput?.addEventListener('input', () => {
+      const val = cfgApiKeyInput.value.trim();
+      if (val.startsWith('AIza') || val.startsWith('AQ.')) {
+        if (radioProvGemini && !radioProvGemini.checked) {
+          radioProvGemini.checked = true;
+          radioProvGemini.dispatchEvent(new Event('change'));
+        }
+      } else if (val.startsWith('sk-')) {
+        if (radioProvOpenai && !radioProvOpenai.checked) {
+          radioProvOpenai.checked = true;
+          radioProvOpenai.dispatchEvent(new Event('change'));
+        }
       }
     });
 

@@ -27,7 +27,7 @@ module.exports = async (req, res) => {
     }
 
     if (!provider) {
-      if (apiKey.startsWith('AIzaSy') || apiKey.startsWith('AIza') || apiKey === envGemini) {
+      if (apiKey.startsWith('AIzaSy') || apiKey.startsWith('AIza') || apiKey.startsWith('AQ.') || apiKey === envGemini) {
         provider = 'gemini_local';
       } else {
         provider = 'openai';
@@ -37,9 +37,9 @@ module.exports = async (req, res) => {
     let baseUrl = body.baseUrl;
     let model = body.model;
 
-    if (provider === 'gemini_local' || apiKey.startsWith('AIza')) {
+    if (provider === 'gemini_local' || apiKey.startsWith('AIza') || apiKey.startsWith('AQ.')) {
       baseUrl = 'https://generativelanguage.googleapis.com/v1beta/openai';
-      if (!model || model.startsWith('gpt')) model = 'gemini-2.0-flash';
+      if (!model || model.startsWith('gpt') || model.includes('1.5') || model.includes('2.0')) model = 'gemini-2.5-flash';
     } else {
       baseUrl = baseUrl || 'https://api.openai.com/v1';
       if (!model || model.startsWith('gemini')) model = 'gpt-4o-mini';
