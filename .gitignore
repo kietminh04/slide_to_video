@@ -32,3 +32,5 @@ results/
 studio/uploads/
 *.docx
 
+# Node
+node_modules/

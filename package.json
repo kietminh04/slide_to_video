@@ -1,0 +1,12 @@
+{
+  "name": "slide-to-video",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Hệ thống sinh video bài giảng trực tuyến chuẩn CIKM",
+  "scripts": {
+    "test": "echo \"No test specified\""
+  },
+  "dependencies": {
+    "@neondatabase/serverless": "^0.10.4"
+  }
+}

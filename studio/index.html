@@ -2899,7 +2899,11 @@
       </div>
     </div>
 
-    <div class="header-actions">
+    <div class="header-actions" style="display: flex; align-items: center; gap: 10px;">
+      <div id="cloud-db-badge" style="padding: 5px 12px; border-radius: 9999px; font-size: 11px; display: inline-flex; align-items: center; gap: 6px; border: 1px solid rgba(255,255,255,0.12); background: rgba(0,0,0,0.25); font-weight: 500; color: var(--text-dim);">
+        <span style="display:inline-block; width:7px; height:7px; border-radius:50%; background:#10b981; box-shadow: 0 0 6px #10b981;"></span>
+        <span>☁️ Neon Cloud (Đang kết nối...)</span>
+      </div>
       <button class="btn-primary" id="btn-create-project-top">
         <span>➕</span> Tạo Dự Án Mới
       </button>
@@ -2944,6 +2948,10 @@
         <button class="btn-ws-delete-project" id="btn-ws-open-ai-config" title="Cấu hình mô hình AI & API Key" style="border-color: rgba(56, 189, 248, 0.3); color: var(--cyan); margin-left: 6px; display: inline-flex; align-items: center; gap: 6px;">
           <span style="display:inline-block; width:7px; height:7px; border-radius:50%; background:#10b981; box-shadow: 0 0 6px #10b981;"></span>
           <span id="lbl-active-ai-badge">⚙️ AI: gemini-2.5-flash</span>
+        </button>
+        <button class="btn-ws-delete-project" id="btn-cloud-sync" title="Lưu đồng bộ dự án lên Neon Cloud" style="border-color: rgba(16, 185, 129, 0.3); color: #34d399; margin-left: 6px; display: inline-flex; align-items: center; gap: 6px;">
+          <span id="cloud-sync-icon">☁️</span>
+          <span id="cloud-sync-text">Lưu Cloud</span>
         </button>
         <button class="btn-ws-delete-project" id="btn-ws-delete-project" title="Xóa vĩnh viễn dự án này">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -3706,6 +3714,111 @@
       }
     };
 
+    // =========================================================================
+    // CLOUD DATABASE SYNC (NEON SERVERLESS POSTGRES)
+    // =========================================================================
+    const CloudDB = {
+      isOnline: false,
+
+      async ping() {
+        try {
+          const res = await fetch('/api/projects?ping=true', { cache: 'no-store' });
+          if (res.ok) {
+            const data = await res.json();
+            this.isOnline = Boolean(data.connected);
+          } else {
+            this.isOnline = false;
+          }
+        } catch (e) {
+          this.isOnline = false;
+        }
+        this.updateBadge();
+        return this.isOnline;
+      },
+
+      updateBadge() {
+        const badge = document.getElementById('cloud-db-badge');
+        if (!badge) return;
+        if (this.isOnline) {
+          badge.style.display = 'inline-flex';
+          badge.innerHTML = `<span style="display:inline-block; width:7px; height:7px; border-radius:50%; background:#10b981; box-shadow: 0 0 6px #10b981;"></span> <span>☁️ Neon Cloud (Đã kết nối)</span>`;
+          badge.style.borderColor = 'rgba(16, 185, 129, 0.3)';
+          badge.style.color = '#34d399';
+        } else {
+          badge.style.display = 'inline-flex';
+          badge.innerHTML = `<span style="display:inline-block; width:7px; height:7px; border-radius:50%; background:#f59e0b;"></span> <span>💾 Local Storage (Cục bộ)</span>`;
+          badge.style.borderColor = 'rgba(245, 158, 11, 0.3)';
+          badge.style.color = '#fbbf24';
+        }
+      },
+
+      async loadAll() {
+        try {
+          const res = await fetch('/api/projects', { cache: 'no-store' });
+          if (res.ok) {
+            const list = await res.json();
+            if (Array.isArray(list)) {
+              let updated = false;
+              list.forEach(row => {
+                if (row.id && row.data) {
+                  defaultProjects[row.id] = row.data;
+                  updated = true;
+                }
+              });
+              if (updated && typeof renderProjectsGrid === 'function') {
+                renderProjectsGrid();
+              }
+            }
+          }
+        } catch (e) {
+          console.warn('[CloudDB] Không thể nạp dữ liệu từ Cloud:', e.message);
+        }
+      },
+
+      async save(project) {
+        if (!project || !project.id) return;
+        // 1. Lưu LocalStorage trước (Offline-first)
+        try {
+          const userProjects = JSON.parse(localStorage.getItem('clsg_user_projects') || '{}');
+          userProjects[project.id] = project;
+          localStorage.setItem('clsg_user_projects', JSON.stringify(userProjects));
+        } catch (e) {}
+
+        // 2. Đồng bộ lên Neon Cloud
+        try {
+          const res = await fetch('/api/projects', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              id: project.id,
+              title: project.title,
+              description: project.desc || '',
+              data: project
+            })
+          });
+          if (res.ok) {
+            this.isOnline = true;
+            this.updateBadge();
+            return true;
+          }
+        } catch (e) {
+          console.warn('[CloudDB] Lưu Cloud thất bại, đã giữ bản cục bộ:', e.message);
+        }
+        return false;
+      },
+
+      async delete(projectId) {
+        if (!projectId) return;
+        try {
+          await fetch(`/api/projects?id=${encodeURIComponent(projectId)}`, {
+            method: 'DELETE'
+          });
+        } catch (e) {
+          console.warn('[CloudDB] Xóa trên Cloud thất bại:', e.message);
+        }
+      }
+    };
+
     // ĐỒNG BỘ VÀ KHÔI PHỤC DỰ ÁN TỪ LOCALSTORAGE
     try {
       const deletedList = JSON.parse(localStorage.getItem('clsg_deleted_projects') || '[]');
@@ -3715,6 +3828,13 @@
       const userProjects = JSON.parse(localStorage.getItem('clsg_user_projects') || '{}');
       Object.assign(defaultProjects, userProjects);
     } catch (e) {}
+
+    // Khởi tạo kiểm tra kết nối Cloud Database
+    setTimeout(() => {
+      CloudDB.ping().then(online => {
+        if (online) CloudDB.loadAll();
+      });
+    }, 200);
 
     // QUẢN LÝ TRẠNG THÁI HIỆN TẠI
     const initialAvailableIds = Object.keys(defaultProjects);
@@ -3750,6 +3870,9 @@
         delete userProjects[projectId];
         localStorage.setItem('clsg_user_projects', JSON.stringify(userProjects));
       } catch (e) {}
+
+      // Xóa đồng bộ trên Neon Cloud Database
+      CloudDB.delete(projectId);
 
       // 2. Xóa khỏi bộ nhớ runtime
       delete defaultProjects[projectId];
@@ -10316,6 +10439,8 @@ QUY TẮC:
           userProjects[projData.id] = projData;
           localStorage.setItem('clsg_user_projects', JSON.stringify(userProjects));
         } catch (e) {}
+        // Tự động lưu lên Neon Cloud Database
+        CloudDB.save(projData);
         renderProjectsGrid();
         loadProjectIntoWorkspace(projData.id);
         switchView('workspace');
@@ -11000,6 +11125,34 @@ ${tableRows}
       updateAiBadge();
       closeAiConfigModal();
       showToast(`Đã lưu cấu hình: Đang kích hoạt [${model}]!`);
+    });
+
+    // NÚT LƯU ĐỒNG BỘ CLOUD (NEON POSTGRES)
+    document.getElementById('btn-cloud-sync')?.addEventListener('click', async () => {
+      if (!activeProject) return;
+      const textSpan = document.getElementById('cloud-sync-text');
+      const iconSpan = document.getElementById('cloud-sync-icon');
+      if (textSpan) textSpan.textContent = 'Đang lưu...';
+      if (iconSpan) iconSpan.textContent = '⏳';
+
+      const ok = await CloudDB.save(activeProject);
+      if (ok) {
+        if (textSpan) textSpan.textContent = 'Đã lưu Cloud';
+        if (iconSpan) iconSpan.textContent = '✅';
+        showToast(`☁️ Đã lưu dự án "${activeProject.title}" lên Neon Postgres thành công!`);
+        setTimeout(() => {
+          if (textSpan) textSpan.textContent = 'Lưu Cloud';
+          if (iconSpan) iconSpan.textContent = '☁️';
+        }, 2500);
+      } else {
+        if (textSpan) textSpan.textContent = 'Đã lưu Cục bộ';
+        if (iconSpan) iconSpan.textContent = '💾';
+        showToast(`💾 Đã lưu dự án an toàn trong bộ nhớ trình duyệt!`);
+        setTimeout(() => {
+          if (textSpan) textSpan.textContent = 'Lưu Cloud';
+          if (iconSpan) iconSpan.textContent = '☁️';
+        }, 2500);
+      }
     });
 
     // SCRIPT TOOLBAR: AI VIẾT TOÀN BỘ
