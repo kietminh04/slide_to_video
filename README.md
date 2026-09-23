@@ -55,9 +55,7 @@ Hệ thống kết hợp tinh hoa thiết kế của **CVAT Projects Dashboard**
 ├── studio/                   # Giao diện Studio Web (Zero-build SPA)
 │   ├── index.html            # Dark Glassmorphism Studio đầy đủ tính năng
 │   └── server.py             # Python HTTP Server đa luồng (CORS + PNA)
-├── docs/                     # Tài liệu nghiên cứu & phân tích
-│   ├── Luồng Hoạt Động.md     # Bản đặc tả kỹ thuật chi tiết & đối chuẩn
-│   └── Bài toán.md           # Đề bài & tiêu chuẩn MOOC
+├── index.html                # Trang chủ phục vụ triển khai Vercel (Zero-config)
 ├── vercel.json               # Cấu hình triển khai tự động lên Vercel
 ├── Dockerfile                # Đóng gói container Docker
 ├── pyproject.toml            # Quản lý dependencies (uv / pip)
@@ -97,13 +95,6 @@ Dự án đã tích hợp sẵn tệp cấu hình `vercel.json`. Bạn có thể
 4. Giữ nguyên toàn bộ cấu hình mặc định (Framework Preset: `Other`, Root Directory: `./`).
 5. Bấm **"Deploy"**.
 6. Sau 10–20 giây, trang web của bạn sẽ hoạt động trực tiếp tại địa chỉ: `https://slide-to-video-xxx.vercel.app`!
-
----
-
-## 📖 Tài Liệu Tham Khảo Chuyên Sâu
-
-Xem phân tích kiến trúc chi tiết, sơ đồ tuần tự và bảng ma trận đối chuẩn kỹ thuật với nhánh `thien` tại:  
-👉 **[Tài Liệu Luồng Hoạt Động & Kiến Trúc Hệ Thống](docs/Luồng%20Hoạt%20Động.md)**
 
 ---
 
