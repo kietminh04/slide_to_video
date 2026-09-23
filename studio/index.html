@@ -6074,13 +6074,15 @@
         let errorPct = target > 0 ? Math.abs(totalCalibrated - target) / target : 0;
         let adjustedWpm = baseWpm;
 
-        // Bù trừ động nếu lệch > 5%
+        // Bù trừ động chuẩn sư phạm (tối đa 1-3s coda pause, không bao giờ bơm khoảng nghỉ khống)
+        const hasSubstantialScript = totalSpeech >= (target * 0.4);
+
         if (errorPct > 0.05 && target > 0) {
           const ratio = totalCalibrated / target;
-          if (ratio < 0.95) {
-            // Thiếu thời lượng -> thêm khoảng lặng ngắm nhìn slide/sơ đồ cuối mỗi chương
+          if (ratio < 0.95 && hasSubstantialScript) {
+            // Thiếu nhẹ khi đã có lời thoại -> đệm tối đa 1s-3s ngắm nhìn slide cuối cảnh
             const gap = target - totalCalibrated;
-            const codaPerScene = Math.round((gap / items.length) * 10) / 10;
+            const codaPerScene = Math.min(3.0, Math.max(0, Math.round((gap / items.length) * 10) / 10));
             totalPause += codaPerScene * items.length;
             items.forEach(it => {
               it.codaPause = codaPerScene;
@@ -6104,13 +6106,15 @@
           }
         }
 
-        // Cập nhật timeline liên tục
+        // Cập nhật timeline liên tục chuẩn xác theo mục tiêu
+        const plannedPerScene = Math.max(30, Math.round(target / items.length));
         let t = 0;
         items.forEach(it => {
           it.startS = Math.round(t);
-          it.endS = Math.round(t + it.calibratedDuration);
+          const effectiveDur = hasSubstantialScript ? it.calibratedDuration : (it.duration || plannedPerScene);
+          it.endS = Math.round(t + effectiveDur);
           it.duration = it.endS - it.startS;
-          t += it.calibratedDuration;
+          t += effectiveDur;
         });
 
         const finalTotal = Math.round(t);
@@ -6946,12 +6950,13 @@ OUTPUT FORMAT: Return ONLY a valid JSON string (no markdown backticks, no explan
 
       if (titleEl) titleEl.textContent = activeProject.title;
       if (metaEl) {
+        const hasScript = rescaled.meta.totalSpeech >= (rescaled.meta.targetDuration * 0.4);
         metaEl.innerHTML = `
-          <div class="meta-stat-row">⏱️ Thời lượng: <strong>${totalM}p ${totalS < 10 ? '0' : ''}${totalS}s</strong> (${rescaled.meta.finalDuration}s)</div>
-          <div class="meta-stat-row">🗣️ Lời nói: <strong>${rescaled.meta.totalSpeech}s</strong></div>
-          <div class="meta-stat-row">⏸️ Khoảng nghỉ: <strong>${rescaled.meta.totalPause}s</strong></div>
+          <div class="meta-stat-row">⏱️ Mục tiêu: <strong>${totalM}p ${totalS < 10 ? '0' : ''}${totalS}s</strong> (${rescaled.meta.targetDuration}s)</div>
+          <div class="meta-stat-row">🗣️ Đã có: <strong>${Math.round(rescaled.meta.totalSpeech)}s</strong></div>
+          <div class="meta-stat-row">⏸️ Khoảng nghỉ: <strong>${Math.round(rescaled.meta.totalPause)}s</strong></div>
           <div class="meta-stat-row">🎬 <strong>${rescaled.items.length}</strong> phân cảnh</div>
-          <div class="meta-stat-row">📝 ~<strong>${totalWords}</strong> từ</div>
+          <div class="meta-stat-row">📝 ~<strong>${totalWords}</strong> từ ${hasScript ? '' : '<span style="color: #f59e0b; font-weight: 700;">(Chưa sinh đủ)</span>'}</div>
         `;
       }
       updateBtnGenCountBadge(rescaled.items.length, activeSources.length);
@@ -7597,7 +7602,7 @@ OUTPUT FORMAT: Return ONLY a valid JSON string (no markdown backticks, no explan
     async function buildChaptersFromPages(pdf, totalPages, fileName) {
       const chapters = [];
       const scanLimit = Math.min(totalPages, 50);
-      const groupSize = Math.max(1, Math.round(scanLimit / 5)); // Tự động gom thành khoảng 5 chương
+      const groupSize = Math.max(1, Math.round(scanLimit / 5)); // Gom thành đúng 5 chương chuẩn sư phạm
 
       for (let chIdx = 0; chIdx < 5; chIdx++) {
         const startP = chIdx * groupSize + 1;
@@ -7605,9 +7610,10 @@ OUTPUT FORMAT: Return ONLY a valid JSON string (no markdown backticks, no explan
         const endP = Math.min(totalPages, (chIdx + 1) * groupSize);
 
         let chTitle = "";
-        const sections = [];
+        const candidateItems = [];
 
-        for (let p = startP; p <= endP; p++) {
+        // Đọc chọn lọc từ trang đầu của phân đoạn
+        for (let p = startP; p <= endP && candidateItems.length < 3; p++) {
           try {
             const page = await pdf.getPage(p);
             const content = await page.getTextContent();
@@ -7616,7 +7622,7 @@ OUTPUT FORMAT: Return ONLY a valid JSON string (no markdown backticks, no explan
             (content.items || []).forEach(it => {
               if (it.str && it.str.trim()) {
                 curLine += (curLine ? " " : "") + it.str.trim();
-                if (curLine.length > 60 || it.hasEOL) {
+                if (curLine.length > 50 || it.hasEOL) {
                   lines.push(curLine);
                   curLine = "";
                 }
@@ -7629,48 +7635,45 @@ OUTPUT FORMAT: Return ONLY a valid JSON string (no markdown backticks, no explan
               chTitle = meaningfulLines[0].substring(0, 70);
             }
 
-            if (meaningfulLines.length > 1) {
-              const secItems = meaningfulLines.slice(1, 4).map((lineTxt, lIdx) => ({
-                code: `a${lIdx + 1}`,
-                text: lineTxt.substring(0, 80),
-                duration: 30,
-                summary: lineTxt,
-                mechanism: "Nội dung trích xuất từ trang " + p,
-                key_point: lineTxt.substring(0, 50)
-              }));
-
-              if (secItems.length > 0) {
-                sections.push({
-                  code: `Phần ${String.fromCharCode(97 + sections.length)}`,
-                  title: meaningfulLines[0].substring(0, 60) || `Trang ${p}`,
-                  items: secItems
-                });
+            meaningfulLines.slice(1, 3).forEach(txt => {
+              if (candidateItems.length < 3) {
+                candidateItems.push(txt.substring(0, 75));
               }
-            }
+            });
           } catch (e) {}
         }
 
         if (!chTitle) {
           const docBase = (fileName || 'Bài giảng').replace(/\.[^/.]+$/, "");
           const fallbacks = [
-            `Tổng quan & Cơ sở lý thuyết ${docBase}`,
-            `Cơ chế & Phương pháp giải quyết cốt lõi`,
-            `Thuật toán & Quy trình xử lý chi tiết`,
-            `Đánh giá tham số & Tối ưu hóa hệ thống`,
-            `Tổng kết & Định hướng ứng dụng thực tế`
+            `Tổng quan & Đặt vấn đề`,
+            `Cơ sở lý thuyết & Mô hình hóa`,
+            `Cơ chế thuật toán & Phương pháp tính`,
+            `Đánh giá thực nghiệm & Tham số`,
+            `Tổng kết & Định hướng ứng dụng`
           ];
-          chTitle = fallbacks[chIdx] || `Nội dung phần ${chIdx + 1}`;
+          chTitle = fallbacks[chIdx] || `Chương ${chIdx + 1}`;
         }
 
-        if (sections.length === 0) {
-          sections.push({
-            code: "Phần a",
-            title: chTitle,
-            items: [
-              { code: "a1", text: "Trọng tâm bài toán & khái niệm chính", duration: 30, summary: chTitle, mechanism: "", key_point: "" },
-              { code: "a2", text: "Quy trình phân tích & mô hình hóa", duration: 30, summary: chTitle, mechanism: "", key_point: "" }
-            ]
+        // Tạo ĐÚNG 1 Section với 2 đến 3 items cô đọng (mỗi item 30s)
+        const items = [];
+        if (candidateItems.length > 0) {
+          candidateItems.forEach((txt, idx) => {
+            items.push({
+              code: `a${idx + 1}`,
+              text: txt,
+              duration: 30,
+              summary: '',
+              mechanism: '',
+              key_point: '',
+              narration: '' // Để trống, người dùng tự ấn AI Viết Lời Thoại
+            });
           });
+        } else {
+          items.push(
+            { code: "a1", text: "Trọng tâm bài toán & khái niệm chính", duration: 30, summary: "", mechanism: "", key_point: "", narration: "" },
+            { code: "a2", text: "Cơ chế phân tích & mô hình hóa", duration: 30, summary: "", mechanism: "", key_point: "", narration: "" }
+          );
         }
 
         chapters.push({
@@ -7678,7 +7681,11 @@ OUTPUT FORMAT: Return ONLY a valid JSON string (no markdown backticks, no explan
           title: chTitle,
           depth: chIdx === 0 ? 'bridge' : (chIdx === 4 ? 'bridge' : 'core'),
           visual_type: chIdx % 2 === 0 ? 'split_screen' : 'process_visualization',
-          sections: sections
+          sections: [{
+            code: "Phần a",
+            title: chTitle,
+            items: items
+          }]
         });
       }
 
@@ -8264,50 +8271,48 @@ OUTPUT FORMAT: Return ONLY a valid JSON string (no markdown backticks, no explan
           updateLoading("Đã Bóc Tách Thành Công!", `Phát hiện ${structure.chapters.length} chương/phần bằng phương pháp [${structure.method}]...`);
           await new Promise(r => setTimeout(r, 400));
 
-          // Tự động đồng bộ các scenes trên Timeline và Kịch Bản khớp chính xác với các chapters do LLM trích xuất
-          let cumulativeTime = 0;
+          // ĐỒNG BỘ CHẶT CHẼ THEO THỜI LƯỢNG MỤC TIÊU NGƯỜI DÙNG CHỌN (mặc định 300s = 5 phút)
+          const totalDuration = duration || 300;
+          const numChaps = structure.chapters.length;
+          const chapBaseDur = Math.max(30, Math.round(totalDuration / Math.max(1, numChaps)));
+
+          let curTime = 0;
           const generatedScenes = structure.chapters.map((ch, idx) => {
-            let chapterDur = 0;
-            (ch.sections || []).forEach(sec => {
+            const tStart = curTime;
+            const isLast = (idx === numChaps - 1);
+            const tEnd = isLast ? totalDuration : (curTime + chapBaseDur);
+            const actualChapDur = tEnd - tStart;
+            curTime = tEnd;
+
+            // Cân chỉnh thời lượng các items con
+            const secList = ch.sections || [];
+            let totalSubItems = 0;
+            secList.forEach(s => totalSubItems += (s.items || []).length);
+            const subDur = Math.max(15, Math.round(actualChapDur / Math.max(1, totalSubItems)));
+
+            secList.forEach(sec => {
               (sec.items || []).forEach(it => {
-                chapterDur += (it.duration || 30);
+                it.duration = subDur;
+                it.narration = ''; // Không auto-gen
               });
             });
-            if (chapterDur <= 0) chapterDur = 60;
-
-            const tStart = cumulativeTime;
-            const tEnd = cumulativeTime + chapterDur;
-            cumulativeTime = tEnd;
-
-            const bullets = [];
-            (ch.sections || []).forEach(sec => {
-              (sec.items || []).forEach(it => {
-                if (it.text) bullets.push(it.text);
-                // Không auto-gen narration khi nạp tệp → tiết kiệm token
-                // Người dùng tự ấn "AI Viết Lời Thoại" sau khi cấu hình
-                it.narration = '';
-              });
-            });
-
-            const narration = '';
 
             return {
               id: `s_${idx + 1}`,
               chapter: `ch${idx + 1}`,
               title: ch.title,
-              depth: ch.depth || (idx === 0 ? 'bridge' : 'core'),
-              visual_type: ch.visual_type || 'split_screen',
+              depth: ch.depth || (idx === 0 ? 'bridge' : (isLast ? 'bridge' : 'core')),
+              visual_type: ch.visual_type || (idx % 2 === 0 ? 'split_screen' : 'process_visualization'),
               visual_purpose: ch.title,
               t_start: tStart,
               t_end: tEnd,
-              narration: narration,
-              sections: ch.sections || [],
-              bullets: bullets,
+              duration_s: actualChapDur,
+              narration: '',
+              sections: secList,
+              bullets: [],
               detected_terms: [ch.title.split(' ')[0], 'Thuật toán', 'Kiến trúc']
             };
           });
-
-          const totalDuration = cumulativeTime > 0 ? cumulativeTime : duration;
           const title = name || file.name.replace(/\.[^/.]+$/, "");
           const projId = 'proj_' + Date.now();
           const projData = {
