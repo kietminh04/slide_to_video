@@ -3849,13 +3849,29 @@
       if (vDur) vDur.textContent = `${totalMinutes} phút (${totalSec}s)`;
 
       // Phân bổ xuống tất cả roots -> chapters theo tỷ lệ (skip locked)
-      Object.values(currentNodesMap).forEach(node => {
-        if (node.level === 0 && node.children && node.children.length > 0) {
-          if (node.data) node.data.duration = totalSec;
-          setNodeParam(node.key, 'duration', totalSec);
-          distributeDurationDown(node, totalSec);
-        }
-      });
+      const roots = Object.values(currentNodesMap).filter(node => node.level === 0 && node.children && node.children.length > 0);
+      if (roots.length === 1) {
+        const root = roots[0];
+        if (root.data) root.data.duration = totalSec;
+        setNodeParam(root.key, 'duration', totalSec);
+        distributeDurationDown(root, totalSec);
+      } else if (roots.length > 1) {
+        const oldRootDurs = roots.map(r => (r.data && r.data.duration) ? r.data.duration : 300);
+        const sumOld = oldRootDurs.reduce((a, b) => a + b, 0);
+        let currSum = 0;
+        roots.forEach((root, idx) => {
+          let rootShare = totalSec;
+          if (idx === roots.length - 1) {
+            rootShare = Math.max(30, totalSec - currSum);
+          } else {
+            rootShare = Math.max(30, Math.round((oldRootDurs[idx] / Math.max(1, sumOld)) * totalSec));
+            currSum += rootShare;
+          }
+          if (root.data) root.data.duration = rootShare;
+          setNodeParam(root.key, 'duration', rootShare);
+          distributeDurationDown(root, rootShare);
+        });
+      }
 
       renderMindmap();
       if (document.getElementById('tab-content-script')?.classList.contains('active')) {
@@ -3938,7 +3954,24 @@
       const gcfgSpeedR = document.getElementById('gcfg-speed-right');
       if (gcfgSpeedR && activeProject.speechRate) gcfgSpeedR.value = String(activeProject.speechRate);
 
+      // Đồng bộ slider cũ nếu có
+      const sDur = document.getElementById('slider-duration');
+      if (sDur) { sDur.value = totalSec; sDur.max = Math.max(sDur.max, totalSec); }
+      const vDur = document.getElementById('val-duration');
+      if (vDur) vDur.textContent = `${totalMin} phút (${totalSec}s)`;
+
       updateLockedBadge();
+
+      // Lưu trạng thái vào localStorage nếu có ID
+      if (activeProject.id) {
+        try {
+          const userProjects = JSON.parse(localStorage.getItem('clsg_user_projects') || '{}');
+          if (userProjects[activeProject.id]) {
+            userProjects[activeProject.id].duration_s = totalSec;
+            localStorage.setItem('clsg_user_projects', JSON.stringify(userProjects));
+          }
+        } catch (e) {}
+      }
     }
 
     // =========================================================================
@@ -5262,6 +5295,14 @@
 
         current = parent;
       }
+
+      // ĐỒNG BỘ TỔNG THỜI LƯỢNG LÊN CẤU HÌNH DỰ ÁN KHI LÊN ĐẾN GỐC (BOTTOM-UP SYNC TO GLOBAL CONFIG)
+      const rootNodes = Object.values(currentNodesMap).filter(n => n.level === 0);
+      const totalSec = rootNodes.reduce((acc, r) => acc + ((r.data && r.data.duration) ? r.data.duration : 0), 0);
+      if (totalSec > 0 && activeProject) {
+        activeProject.duration_s = totalSec;
+        syncGlobalConfigFromProject();
+      }
     }
 
     function applyNodeDurationAndParams(targetKey, newDur, newWpm, newTitle, newVisual, newNotes) {
@@ -5589,6 +5630,13 @@
 
         return rootNode;
       });
+
+      // ĐỒNG BỘ TỔNG THỜI LƯỢNG TỪ CÁC GỐC LÊN DỰ ÁN & CẤU HÌNH CHUNG (BOTTOM-UP TO PROJECT)
+      const totalTreeDur = roots.reduce((acc, r) => acc + (r.data && r.data.duration ? r.data.duration : 0), 0);
+      if (totalTreeDur > 0 && activeProject) {
+        activeProject.duration_s = totalTreeDur;
+        syncGlobalConfigFromProject();
+      }
 
       return roots;
     }
@@ -6823,12 +6871,14 @@
         if (scriptLang === 'en') {
           langInstruction = `Write the narration script in ENGLISH. Use natural, engaging academic English suitable for a university lecture. Keep technical terms precise.`;
         } else {
-          langInstruction = `Viết lời giảng bài bằng TIẾNG VIỆT thuần Việt, tự nhiên, cuốn hút, giàu tính sư phạm.
-QUAN TRỌNG — QUY TẮC THUẬT NGỮ CHUYÊN NGÀNH:
-- Dịch thuật ngữ chuyên ngành sang tiếng Việt TRƯỚC, rồi mở ngoặc đơn ghi nguyên bản tiếng Anh ngay sau.
-- Ví dụ: "truy xuất (Retrieval)", "mạng nơ-ron tích chập (Convolutional Neural Network)", "chuỗi thời gian (Time Series)", "phương pháp cây quyết định (Decision Tree)", "xác thực chéo (Cross-validation)".
-- Tên riêng tác giả, viết tắt chuẩn quốc tế (ARIMA, DTW, LSTM, CNN) và công thức toán giữ nguyên KHÔNG dịch.
-- Giọng văn sư phạm đại học: nghiêm túc nhưng dễ hiểu, tránh sáo rỗng.`;
+          langInstruction = `Viết lời giảng bài bằng TIẾNG VIỆT tự nhiên, cuốn hút, chuẩn mực sư phạm đại học.
+QUY TẮC THUẬT NGỮ CHUYÊN NGÀNH & NGÔN NGỮ (BẮT BUỘC):
+1. DANH TỪ & THUẬT NGỮ KỸ THUẬT: GIỮ NGUYÊN TIẾNG ANH GỐC (không dịch gượng ép sang tiếng Việt).
+   - Ví dụ: overfitting, underfitting, loss function, gradient descent, backpropagation, convolution, transformer, attention mechanism, dataset, epoch, batch size, learning rate, feature map, cross-validation, retrieval, time series, clustering, decision tree.
+   - Các tên riêng, viết tắt chuẩn quốc tế và thuật toán giữ nguyên: ARIMA, DTW, CNN, LSTM, RNN, BERT, ReLU, K-Means, DBSCAN.
+2. ĐỘNG TỪ & HÀNH ĐỘNG: DÙNG TIẾNG VIỆT CHUẨN MỰC SƯ PHẠM.
+   - Dùng: "huấn luyện mô hình" (không nói "train model"), "dự đoán kết quả" (không nói "predict"), "trích xuất đặc trưng" (không nói "extract"), "tối ưu hóa" (không nói "optimize"), "đánh giá", "phân loại".
+3. Khung câu hoàn toàn bằng tiếng Việt gãy gọn, sư phạm, dễ hiểu; tuyệt đối không dùng tiếng Anh bồi vô tội vạ cho các từ thông thường.`;
         }
         const exampleSegment = outputLang === 'en'
           ? `[b1] Welcome to the section on Dynamic Time Warping. DTW is an optimal algorithm used to measure the similarity between two time series... (write 60-75 words, explain the mechanism, mathematical formula, algorithm and how it works in depth).\n   [b2] Next, let us examine the keyframe-based approach... (write 60-75 words).`
