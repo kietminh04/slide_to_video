@@ -2579,16 +2579,150 @@
     /* =========================================================================
        RIGHT PANE SPLIT: TOP HALF = CONTENT INSPECTOR, BOTTOM HALF = AI CHAT
        ========================================================================= */
-    .content-inspector-section {
-      flex: 1.1;
-      min-height: 220px;
+    /* Sleek Panel Toggle Buttons in Center Nav */
+    .workspace-view-toggles {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      margin-left: auto;
+    }
+    .btn-panel-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 9px;
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      color: var(--text-muted);
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      user-select: none;
+    }
+    .btn-panel-toggle:hover {
+      background: rgba(30, 41, 59, 0.8);
+      color: var(--text-main);
+      border-color: rgba(255, 255, 255, 0.15);
+    }
+    .btn-panel-toggle.active {
+      color: var(--cyan);
+      border-color: rgba(56, 189, 248, 0.35);
+      background: rgba(56, 189, 248, 0.08);
+    }
+    .btn-panel-toggle .icon {
+      font-size: 12px;
+      line-height: 1;
+    }
+
+    /* Inspector Header Bar & Collapsible State */
+    .inspector-section-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 6px 10px;
+      background: rgba(15, 23, 42, 0.85);
       border-bottom: 1px solid var(--border-subtle);
-      background: rgba(15, 23, 42, 0.4);
+      font-size: 11px;
+      user-select: none;
+      flex-shrink: 0;
+    }
+    .inspector-bar-left {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+    .inspector-bar-title {
+      font-size: 11px;
+      letter-spacing: 0.2px;
+    }
+    .inspector-node-pill {
+      font-size: 9.5px;
+      font-family: 'JetBrains Mono', monospace;
+      padding: 1px 6px;
+      background: rgba(56, 189, 248, 0.15);
+      border: 1px solid rgba(56, 189, 248, 0.4);
+      color: var(--cyan);
+      border-radius: 4px;
+      font-weight: 700;
+    }
+    .inspector-bar-actions {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .btn-insp-tool {
+      background: transparent;
+      border: 1px solid transparent;
+      color: var(--text-dim);
+      font-size: 10px;
+      font-weight: 600;
+      padding: 2px 7px;
+      border-radius: 4px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.15s ease;
+    }
+    .btn-insp-tool:hover {
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--text-main);
+      border-color: rgba(255, 255, 255, 0.12);
+    }
+    .btn-insp-tool.btn-insp-close:hover {
+      background: rgba(239, 68, 68, 0.2);
+      color: #fca5a5;
+      border-color: rgba(239, 68, 68, 0.4);
+    }
+
+    /* Content Inspector in new lower position */
+    .content-inspector-section {
+      flex: 1;
+      min-height: 160px;
+      max-height: 48%;
+      border-top: 1px solid var(--border-subtle);
+      border-bottom: none;
+      background: rgba(15, 23, 42, 0.45);
       display: flex;
       flex-direction: column;
       overflow-y: auto;
-      padding: 12px 14px;
-      gap: 8px;
+      padding: 0;
+      gap: 0;
+      transition: max-height 0.25s ease, min-height 0.25s ease, flex 0.25s ease;
+    }
+    .content-inspector-section .inspector-empty-state,
+    .content-inspector-section .inspector-content-card {
+      padding: 10px 12px;
+    }
+    .content-inspector-section.is-collapsed {
+      flex: 0 0 32px !important;
+      min-height: 32px !important;
+      max-height: 32px !important;
+      overflow: hidden !important;
+      padding: 0 !important;
+    }
+    .content-inspector-section.is-collapsed .inspector-empty-state,
+    .content-inspector-section.is-collapsed .inspector-content-card {
+      display: none !important;
+    }
+    .content-inspector-section.is-hidden {
+      display: none !important;
+    }
+
+    /* AI Chat Section in new upper position */
+    .ai-chat-section {
+      flex: 1.4;
+      min-height: 240px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      background: rgba(10, 15, 26, 0.7);
+      border: none;
+      border-radius: 0;
     }
 
     .inspector-empty-state {
@@ -2743,14 +2877,7 @@
       box-shadow: 0 0 16px rgba(56, 189, 248, 0.5), inset 0 0 10px rgba(56, 189, 248, 0.2) !important;
     }
 
-    .ai-chat-section {
-      flex: 1;
-      min-height: 200px;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-      background: rgba(10, 15, 26, 0.7);
-    }
+/* ai-chat-section styled in main layout */
 
   </style>
 </head>
@@ -3102,9 +3229,7 @@
       <aside class="pane-tuning" id="pane-tuning">
         <!-- CẤU HÌNH CHUNG Ở CỘT PHẢI (LUÔN HIỂN THỊ Ở CẢ SƠ ĐỒ & KỊCH BẢN) -->
         <div style="padding: 10px 12px 8px; border-bottom: 1px solid var(--border-subtle); background: rgba(15, 23, 42, 0.7); flex-shrink: 0;">
-          <div style="font-size: 11px; font-weight: 700; color: var(--text-main); margin-bottom: 8px; display: flex; align-items: center; gap: 6px;">
-            <span>⚙️</span> Cấu Hình Chung
-          </div>
+          <div style="font-size: 11px; font-weight: 700; color: var(--text-main); margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between;"><div style="display: flex; align-items: center; gap: 6px;"><span>⚙️</span> Cấu Hình Chung</div><button class="btn-insp-tool" onclick="togglePaneTuning()" title="Ẩn cột trợ lý AI để mở rộng sơ đồ" style="font-size: 10px; padding: 1px 6px;">Ẩn ✕</button></div>
           <!-- Thời gian tổng -->
           <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 6px;">
             <span style="font-size: 10px; color: var(--text-muted); font-weight: 600; min-width: 50px;">⏱️ Tổng:</span>
@@ -3140,8 +3265,64 @@
           </div>
         </div>
 
-        <!-- NỬA TRÊN: CONTENT INSPECTOR (CHỈ KÍCH HOẠT VÀ HIỂN THỊ KHI ẤN VÀO NHÁNH CON BÉ NHẤT TRÊN SƠ ĐỒ) -->
+        <!-- PHẦN TRÊN: KHUNG CHAT AI SƯ PHẠM (ĐƯỢC ĐẶT TRÊN Ô TÓM TẮT ĐỂ TIỆN THAO TÁC) -->
+        <div class="ai-chat-section">
+          <div class="ai-chat-header">
+            <div style="display: flex; align-items: center; gap: 7px; font-size: 12.5px; font-weight: 700; color: var(--text-main);">
+              <span>💬</span> Trợ Lý AI Bài Giảng
+            </div>
+            <span class="badge-pro" style="font-size: 9px; padding: 1px 6px;">CLSG LLM</span>
+          </div>
+
+          <!-- MESSAGES CONTAINER -->
+          <div class="ai-chat-messages" id="ai-chat-messages">
+            <div class="chat-msg msg-ai">
+              <div class="msg-avatar">🤖</div>
+              <div class="msg-bubble">
+                Chào bạn! Tôi là trợ lý AI sư phạm. Bạn có thể yêu cầu tạo video bài giảng, mở rộng nhánh sơ đồ tư duy hoặc tinh chỉnh kịch bản theo yêu cầu riêng.
+              </div>
+            </div>
+            <div class="chat-suggestions">
+              <div style="font-size: 10.5px; color: var(--text-dim); margin-bottom: 3px;">Gợi ý câu lệnh nhanh:</div>
+              <button class="chat-pill-btn" onclick="sendQuickPrompt('🎬 Yêu cầu tạo video bài giảng 5 phút chuẩn MOOC')">🎬 Tạo video 5 phút</button>
+              <button class="chat-pill-btn" onclick="sendQuickPrompt('🧠 Tự động phân nhánh sơ đồ tư duy chi tiết hơn')">🧠 Phân nhánh sơ đồ</button>
+              <button class="chat-pill-btn" onclick="sendQuickPrompt('⚡ Tăng nhịp độ giảng dạy lên 150 từ/phút')">⚡ Tăng nhịp độ 150 WPM</button>
+            </div>
+          </div>
+
+          <!-- NÚT PHỤC HỒI Ô TÓM TẮT NẾU ĐANG BỊ ẨN -->
+          <button class="chat-pill-btn" id="btn-restore-inspector" onclick="showInspector()" style="display: none; font-size: 10px; margin: 4px 12px 6px; border-color: rgba(56, 189, 248, 0.4); color: var(--cyan); align-self: flex-start; cursor: pointer;">
+            📖 Mở lại ô Tóm Tắt Kiến Thức
+          </button>
+
+          <!-- CHAT INPUT -->
+          <div class="ai-chat-input-row">
+            <textarea class="chat-input" id="chat-input" placeholder="Yêu cầu AI tạo video, chỉnh kịch bản..." rows="1"></textarea>
+            <button class="btn-chat-send" id="btn-chat-send" title="Gửi yêu cầu">
+              <span>➤</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- PHẦN DƯỚI: CONTENT INSPECTOR (TÓM TẮT KIẾN THỨC ĐỌC NHANH - CÓ NÚT THU GỌN / ẨN TRỰC TIẾP TRÊN SƠ ĐỒ) -->
         <div class="content-inspector-section" id="content-inspector-section">
+          <!-- THANH HEADER CỦA Ô TÓM TẮT CÓ NÚT THU GỌN VÀ ẨN -->
+          <div class="inspector-section-bar" id="inspector-section-bar">
+            <div class="inspector-bar-left">
+              <span class="inspector-bar-icon">📖</span>
+              <span class="inspector-bar-title" id="inspector-bar-title">Tóm Tắt Đọc Nhanh</span>
+              <span class="inspector-node-pill" id="insp-mini-badge" style="display: none;">a1</span>
+            </div>
+            <div class="inspector-bar-actions">
+              <button class="btn-insp-tool" id="btn-toggle-inspector" onclick="toggleInspectorCollapse()" title="Thu gọn / Mở rộng ô tóm tắt">
+                <span id="insp-toggle-icon">−</span> <span id="insp-toggle-text">Thu gọn</span>
+              </button>
+              <button class="btn-insp-tool btn-insp-close" id="btn-hide-inspector" onclick="hideInspector()" title="Ẩn hoàn toàn ô tóm tắt">
+                ✕
+              </button>
+            </div>
+          </div>
+
           <!-- TRẠNG THÁI TRỐNG (MẶC ĐỊNH KHI CHƯA CHỌN NHÁNH CON NÀO) -->
           <div class="inspector-empty-state" id="inspector-empty-state">
             <div class="empty-icon">📖</div>
@@ -3180,40 +3361,6 @@
             <!-- NÚT MỞ TERMINAL CHỈNH SỬA & GHI CHÚ NHANH -->
             <button class="btn-primary" id="btn-insp-open-terminal" style="padding: 7px; font-size: 11.5px; justify-content: center; margin-top: 2px;">
               <span>✎</span> Tinh Chỉnh & Ghi Chú Riêng Cho Nhánh Này
-            </button>
-          </div>
-        </div>
-
-        <!-- NỬA DƯỚI: KHUNG CHAT AI SƯ PHẠM (CLSG LLM) -->
-        <div class="ai-chat-section">
-          <div class="ai-chat-header">
-            <div style="display: flex; align-items: center; gap: 7px; font-size: 12.5px; font-weight: 700; color: var(--text-main);">
-              <span>💬</span> Trợ Lý AI Bài Giảng
-            </div>
-            <span class="badge-pro" style="font-size: 9px; padding: 1px 6px;">CLSG LLM</span>
-          </div>
-
-          <!-- MESSAGES CONTAINER -->
-          <div class="ai-chat-messages" id="ai-chat-messages">
-            <div class="chat-msg msg-ai">
-              <div class="msg-avatar">🤖</div>
-              <div class="msg-bubble">
-                Chào bạn! Tôi là trợ lý AI sư phạm. Bạn có thể yêu cầu tạo video bài giảng, mở rộng nhánh sơ đồ tư duy hoặc tinh chỉnh kịch bản theo yêu cầu riêng.
-              </div>
-            </div>
-            <div class="chat-suggestions">
-              <div style="font-size: 10.5px; color: var(--text-dim); margin-bottom: 3px;">Gợi ý câu lệnh nhanh:</div>
-              <button class="chat-pill-btn" onclick="sendQuickPrompt('🎬 Yêu cầu tạo video bài giảng 5 phút chuẩn MOOC')">🎬 Tạo video 5 phút</button>
-              <button class="chat-pill-btn" onclick="sendQuickPrompt('🧠 Tự động phân nhánh sơ đồ tư duy chi tiết hơn')">🧠 Phân nhánh sơ đồ</button>
-              <button class="chat-pill-btn" onclick="sendQuickPrompt('⚡ Tăng nhịp độ giảng dạy lên 150 từ/phút')">⚡ Tăng nhịp độ 150 WPM</button>
-            </div>
-          </div>
-
-          <!-- CHAT INPUT -->
-          <div class="ai-chat-input-row">
-            <textarea class="chat-input" id="chat-input" placeholder="Yêu cầu AI tạo video, chỉnh kịch bản..." rows="1"></textarea>
-            <button class="btn-chat-send" id="btn-chat-send" title="Gửi yêu cầu">
-              <span>➤</span>
             </button>
           </div>
         </div>
@@ -3751,7 +3898,11 @@
       // ẨN TÓM TẮT KIẾN THỨC KHI MỞ KỊCH BẢN / VIDEO, CHỈ ĐỂ CHATBOT AI CHIẾM TRỌN
       const inspectorSection = document.getElementById('content-inspector-section');
       if (inspectorSection) {
-        inspectorSection.style.display = (tabName === 'mindmap') ? '' : 'none';
+        if (tabName === 'mindmap') {
+          inspectorSection.style.display = (typeof isInspectorHidden !== 'undefined' && isInspectorHidden) ? 'none' : 'flex';
+        } else {
+          inspectorSection.style.display = 'none';
+        }
       }
 
       if (tabName === 'mindmap') {
@@ -6206,8 +6357,131 @@
       }
     }
 
+    // =========================================================================
+    // QUẢN LÝ ẨN / HIỆN GIAO DIỆN (UI TOGGLES TRÊN SƠ ĐỒ & KỊCH BẢN)
+    // =========================================================================
+    let isInspectorCollapsed = false;
+    let isInspectorHidden = false;
+    let isSourcesHidden = false;
+    let isTuningHidden = false;
+
+    function toggleInspectorCollapse() {
+      const el = document.getElementById('content-inspector-section');
+      if (!el) return;
+      isInspectorCollapsed = !isInspectorCollapsed;
+      const toggleIcon = document.getElementById('insp-toggle-icon');
+      const toggleText = document.getElementById('insp-toggle-text');
+      if (isInspectorCollapsed) {
+        el.classList.add('is-collapsed');
+        if (toggleIcon) toggleIcon.textContent = '▲';
+        if (toggleText) toggleText.textContent = 'Mở rộng';
+      } else {
+        el.classList.remove('is-collapsed');
+        if (toggleIcon) toggleIcon.textContent = '−';
+        if (toggleText) toggleText.textContent = 'Thu gọn';
+      }
+    }
+
+    function hideInspector() {
+      const el = document.getElementById('content-inspector-section');
+      if (!el) return;
+      isInspectorHidden = true;
+      el.classList.add('is-hidden');
+      el.style.display = 'none';
+      const restoreBtn = document.getElementById('btn-restore-inspector');
+      if (restoreBtn) restoreBtn.style.display = 'inline-flex';
+      const toggleBarBtn = document.getElementById('btn-toggle-inspector-bar');
+      if (toggleBarBtn) toggleBarBtn.classList.remove('active');
+      showToast('📖 Đã ẩn ô tóm tắt kiến thức!');
+    }
+
+    function showInspector() {
+      const el = document.getElementById('content-inspector-section');
+      if (!el) return;
+      isInspectorHidden = false;
+      isInspectorCollapsed = false;
+      el.classList.remove('is-hidden');
+      el.classList.remove('is-collapsed');
+      el.style.display = 'flex';
+      const toggleIcon = document.getElementById('insp-toggle-icon');
+      if (toggleIcon) toggleIcon.textContent = '−';
+      const toggleText = document.getElementById('insp-toggle-text');
+      if (toggleText) toggleText.textContent = 'Thu gọn';
+      const restoreBtn = document.getElementById('btn-restore-inspector');
+      if (restoreBtn) restoreBtn.style.display = 'none';
+      const toggleBarBtn = document.getElementById('btn-toggle-inspector-bar');
+      if (toggleBarBtn) toggleBarBtn.classList.add('active');
+    }
+
+    function toggleInspector() {
+      if (isInspectorHidden || isInspectorCollapsed) {
+        showInspector();
+      } else {
+        hideInspector();
+      }
+    }
+
+    function togglePaneSources(forceState) {
+      const pane = document.getElementById('pane-sources');
+      const resizer = document.getElementById('resizer-left');
+      const btn = document.getElementById('btn-toggle-sources');
+      if (!pane) return;
+      
+      if (typeof forceState === 'boolean') {
+        isSourcesHidden = !forceState;
+      } else {
+        isSourcesHidden = !isSourcesHidden;
+      }
+
+      if (isSourcesHidden) {
+        pane.style.display = 'none';
+        if (resizer) resizer.style.display = 'none';
+        if (btn) btn.classList.remove('active');
+        showToast('◧ Đã ẩn cột Nguồn tài liệu!');
+      } else {
+        pane.style.display = 'flex';
+        if (resizer) resizer.style.display = 'block';
+        if (btn) btn.classList.add('active');
+        showToast('◧ Đã hiển thị lại cột Nguồn tài liệu!');
+      }
+    }
+
+    function togglePaneTuning(forceState) {
+      const pane = document.getElementById('pane-tuning');
+      const resizer = document.getElementById('resizer-right');
+      const btn = document.getElementById('btn-toggle-tuning');
+      if (!pane) return;
+
+      if (typeof forceState === 'boolean') {
+        isTuningHidden = !forceState;
+      } else {
+        isTuningHidden = !isTuningHidden;
+      }
+
+      if (isTuningHidden) {
+        pane.style.display = 'none';
+        if (resizer) resizer.style.display = 'none';
+        if (btn) btn.classList.remove('active');
+        showToast('◨ Đã ẩn cột Trợ lý & Cấu hình!');
+      } else {
+        pane.style.display = 'flex';
+        if (resizer) resizer.style.display = 'block';
+        if (btn) btn.classList.add('active');
+        showToast('◨ Đã hiển thị lại cột Trợ lý & Cấu hình!');
+      }
+    }
+
+    function fullscreenMindmap() {
+      togglePaneSources(false);
+      togglePaneTuning(false);
+      showToast('🖥️ Đã mở rộng sơ đồ toàn màn hình!');
+    }
+
     function selectLeafNodeForContent(node, cardEl) {
       selectedLeafNode = node;
+
+      // Đảm bảo ô tóm tắt hiển thị lại nếu trước đó bị ẩn hoặc thu gọn
+      showInspector();
 
       // Đánh dấu viền sáng neon cho card đang được chọn
       document.querySelectorAll('.decision-node').forEach(el => el.classList.remove('is-active-leaf'));
@@ -6230,6 +6504,11 @@
 
       if (codeEl) codeEl.textContent = nodeCode;
       if (titleEl) titleEl.textContent = nodeText;
+      const miniBadge = document.getElementById('insp-mini-badge');
+      if (miniBadge) {
+        miniBadge.textContent = nodeCode;
+        miniBadge.style.display = 'inline-block';
+      }
 
       // Tìm thông tin phân cấp cha (Chương và Phần)
       let chapterName = 'BÀI GIẢNG ĐA PHƯƠNG THỨC';
@@ -7895,6 +8174,27 @@ OUTPUT FORMAT: Return ONLY a valid JSON string (no markdown backticks, no explan
         return false;
       },
 
+      toggleInspector(show) {
+        if (show === false) hideInspector();
+        else showInspector();
+        return true;
+      },
+
+      togglePaneTuning(show) {
+        togglePaneTuning(show);
+        return true;
+      },
+
+      togglePaneSources(show) {
+        togglePaneSources(show);
+        return true;
+      },
+
+      fullscreenMindmap() {
+        fullscreenMindmap();
+        return true;
+      },
+
       refresh() {
         renderMindmap();
         renderScriptDocument();
@@ -7920,6 +8220,10 @@ OUTPUT FORMAT: Return ONLY a valid JSON string (no markdown backticks, no explan
           else if (type === 'center_view') didSomething = this.centerView() || didSomething;
           else if (type === 'set_speed') didSomething = this.setSpeed(act.wpm || act.rate) || didSomething;
           else if (type === 'set_voice') didSomething = this.setVoice(act.voice) || didSomething;
+          else if (type === 'toggle_inspector') didSomething = this.toggleInspector(act.show) || didSomething;
+          else if (type === 'toggle_pane_tuning') didSomething = this.togglePaneTuning(act.show) || didSomething;
+          else if (type === 'toggle_pane_sources') didSomething = this.togglePaneSources(act.show) || didSomething;
+          else if (type === 'fullscreen_mindmap') didSomething = this.fullscreenMindmap() || didSomething;
         });
         if (didSomething) {
           showToast('🤖 AI Copilot: Đã thực thi thao tác giao diện!');
@@ -7933,16 +8237,23 @@ OUTPUT FORMAT: Return ONLY a valid JSON string (no markdown backticks, no explan
       const actions = [];
       const lower = msg.toLowerCase();
 
-      // 1. Chỉ giữ chương X và Y
-      const mOnly = msg.match(/(?:chỉ\s*(?:cần|lấy|giữ|chọn)|giữ lại)\s*(?:chương|phần)?\s*([0-9\s,\bvà]+)/i);
-      if (mOnly) {
+      // 0. Bỏ hết tất cả trừ / chỉ để lại / chỉ giữ lại chương X (Ví dụ: "bỏ hết tất cả trừ chương 3")
+      const mExcept = msg.match(/(?:bỏ|loại\s*bỏ|xóa)\s+(?:(?:hết|tất\s*cả|mọi\s*(?:thứ|chương)|toàn\s*bộ)\s*)*(?:(?:chỉ\s*)?(?:trừ|giữ\s*lại|để\s*lại|chừa\s*lại)|ngoại\s*trừ)\s*(?:các\s*)?(?:chương|phần)?\s*([0-9\s,\bvà]+)/i);
+      if (mExcept) {
+        const nums = (mExcept[1].match(/\b\d+\b/g) || []).map(n => parseInt(n));
+        if (nums.length > 0) actions.push({ type: 'set_only_chapters', chapters: nums });
+      }
+
+      // 1. Chỉ giữ / chỉ cần / chỉ lấy / giữ lại chương X
+      const mOnly = msg.match(/(?:chỉ\s*(?:cần|lấy|giữ(?:\s*lại)?|chọn|để\s*lại|chừa(?:\s*lại)?)|giữ\s*lại|chừa\s*lại)\s*(?:mỗi\s*|duy\s*nhất\s*)?(?:chương|phần)?\s*([0-9\s,\bvà]+)/i);
+      if (mOnly && !mExcept) {
         const nums = (mOnly[1].match(/\b\d+\b/g) || []).map(n => parseInt(n));
         if (nums.length > 0) actions.push({ type: 'set_only_chapters', chapters: nums });
       }
 
-      // 2. Bỏ / ẩn chương X Y
-      const mEx = msg.match(/(?:bỏ|loại bỏ|xóa|ẩn|tắt)\s*(?:các\s*)?(?:chương|phần)?\s*([0-9\s,\bvà]+)/i);
-      if (mEx) {
+      // 2. Bỏ / ẩn / loại bỏ chương X Y
+      const mEx = msg.match(/(?:bỏ|loại\s*bỏ|xóa|ẩn|tắt)\s*(?:các\s*)?(?:chương|phần)?\s*([0-9\s,\bvà]+)/i);
+      if (mEx && !mExcept) {
         const nums = (mEx[1].match(/\b\d+\b/g) || []).map(n => parseInt(n));
         if (nums.length > 0) actions.push({ type: 'exclude_chapters', chapters: nums });
       }
@@ -7991,6 +8302,23 @@ OUTPUT FORMAT: Return ONLY a valid JSON string (no markdown backticks, no explan
       if (mLock) {
         const isLock = mLock[1].toLowerCase() === 'khóa';
         actions.push({ type: 'lock_chapter', chapter: parseInt(mLock[2]), locked: isLock });
+      }
+
+      // 10. Lệnh ẩn / hiện giao diện trực tiếp trên Sơ đồ
+      if (lower.match(/(?:ẩn|thu\s*gọn|đóng)\s*(?:bản\s*)?tóm\s*tắt/)) {
+        actions.push({ type: 'toggle_inspector', show: false });
+      } else if (lower.match(/(?:hiện|mở|bật)\s*(?:bản\s*)?tóm\s*tắt/)) {
+        actions.push({ type: 'toggle_inspector', show: true });
+      } else if (lower.match(/(?:ẩn|đóng)\s*(?:cột|panel|thanh)?\s*(?:bên\s*)?phải/)) {
+        actions.push({ type: 'toggle_pane_tuning', show: false });
+      } else if (lower.match(/(?:hiện|mở|bật)\s*(?:cột|panel|thanh)?\s*(?:bên\s*)?phải/)) {
+        actions.push({ type: 'toggle_pane_tuning', show: true });
+      } else if (lower.match(/(?:ẩn|đóng)\s*(?:cột|panel|thanh)?\s*(?:bên\s*)?trái/)) {
+        actions.push({ type: 'toggle_pane_sources', show: false });
+      } else if (lower.match(/(?:hiện|mở|bật)\s*(?:cột|panel|thanh)?\s*(?:bên\s*)?trái/)) {
+        actions.push({ type: 'toggle_pane_sources', show: true });
+      } else if (lower.match(/toàn\s*màn\s*hình|mở\s*rộng\s*sơ\s*đồ/)) {
+        actions.push({ type: 'fullscreen_mindmap' });
       }
 
       return actions;
@@ -8141,10 +8469,23 @@ QUY TẮC:
         const editAct = localActions.find(a => a.type === 'open_editor');
         const tabAct = localActions.find(a => a.type === 'switch_tab');
 
+        const inspAct = localActions.find(a => a.type === 'toggle_inspector');
+        const tunAct = localActions.find(a => a.type === 'toggle_pane_tuning');
+        const srcAct = localActions.find(a => a.type === 'toggle_pane_sources');
+        const fsAct = localActions.find(a => a.type === 'fullscreen_mindmap');
+
         if (onlyAct) {
           localReply = `✅ <strong>Trợ lý AI:</strong> Đã cập nhật sơ đồ! Chỉ giữ lại <strong>Chương ${onlyAct.chapters.join(', ')}</strong>, các chương còn lại đã được ẩn khỏi kịch bản.`;
         } else if (exAct) {
           localReply = `✅ <strong>Trợ lý AI:</strong> Đã ẩn <strong>Chương ${exAct.chapters.join(', ')}</strong> khỏi kịch bản và tự động cập nhật lại thời lượng tổng!`;
+        } else if (inspAct) {
+          localReply = inspAct.show ? `📖 <strong>Trợ lý AI:</strong> Đã hiển thị lại ô Tóm Tắt Đọc Nhanh!` : `📖 <strong>Trợ lý AI:</strong> Đã thu gọn ô Tóm Tắt để bạn có thêm không gian trò chuyện!`;
+        } else if (tunAct) {
+          localReply = tunAct.show ? `◨ <strong>Trợ lý AI:</strong> Đã hiển thị lại cột Trợ lý!` : `◨ <strong>Trợ lý AI:</strong> Đã ẩn cột Trợ lý để bạn tập trung vào sơ đồ!`;
+        } else if (srcAct) {
+          localReply = srcAct.show ? `◧ <strong>Trợ lý AI:</strong> Đã hiển thị lại cột Tài liệu!` : `◧ <strong>Trợ lý AI:</strong> Đã ẩn cột Tài liệu!`;
+        } else if (fsAct) {
+          localReply = `🖥️ <strong>Trợ lý AI:</strong> Đã kích hoạt chế độ toàn màn hình cho Sơ Đồ Tư Duy!`;
         } else if (focAct) {
           localReply = `🎯 <strong>Trợ lý AI:</strong> Đã lia camera và làm sáng nổi bật <strong>Chương ${focAct.chapter}</strong> trên sơ đồ!`;
         } else if (editAct) {
