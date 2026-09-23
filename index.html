@@ -6295,7 +6295,12 @@
 
     // HÀM TỔNG HỢP / TRÍCH XUẤT LỜI GIẢNG CHI TIẾT THEO TỪNG PHÂN ĐOẠN CON
     function getSegmentNarration(it, chTitle = '') {
-      return synthesizeRichSegmentNarration(it, chTitle);
+      // KHÔNG TỰ ĐỘNG SINH LỜI THOẠI KHI MỚI NẠP TÀI LIỆU
+      // Chỉ trả về lời thoại nếu người dùng đã bấm "AI Viết Lời Thoại" hoặc "Viết Tất Cả"
+      if (it.narration && it.narration.trim().length > 0) {
+        return it.narration.trim();
+      }
+      return '';
     }
 
     // =========================================================================
@@ -6308,25 +6313,25 @@
       getConfig() {
         try {
           const saved = JSON.parse(localStorage.getItem(this.STORAGE_KEY) || '{}');
-          let provider = (saved.provider === 'gemini_local') ? 'gemini_local' : 'openai';
+          // MẶC ĐỊNH SỐ 1: GOOGLE GEMINI (VÌ HOÀN TOÀN MIỄN PHÍ)
+          let provider = (saved.provider === 'openai') ? 'openai' : 'gemini_local';
           let apiKey = saved.apiKey || '';
           let baseUrl = saved.baseUrl || '';
           let model = saved.model;
 
-          // Tự động nhận diện nếu API key bắt đầu bằng AIza (Google AI Studio Gemini)
-          if (apiKey.startsWith('AIzaSy')) {
+          // Tự động chuyển provider sang Gemini nếu phát hiện API key của Google (bắt đầu bằng AIza)
+          if (apiKey.startsWith('AIzaSy') || apiKey.startsWith('AIza')) {
             provider = 'gemini_local';
+          }
+
+          if (provider === 'gemini_local') {
+            if (!model || model.startsWith('gpt')) model = 'gemini-2.0-flash';
             if (!baseUrl || baseUrl.includes('openai.com')) {
               baseUrl = 'https://generativelanguage.googleapis.com/v1beta/openai';
             }
-          }
-
-          if (provider === 'openai') {
+          } else {
             if (!model || model.startsWith('gemini')) model = 'gpt-4o-mini';
             if (!baseUrl) baseUrl = 'https://api.openai.com/v1';
-          } else {
-            if (!model || !model.startsWith('gemini')) model = 'gemini-2.0-flash';
-            if (!baseUrl) baseUrl = 'https://generativelanguage.googleapis.com/v1beta/openai';
           }
 
           return {
@@ -6338,9 +6343,11 @@
           };
         } catch (e) {
           return {
-            provider: 'openai',
-            baseUrl: 'https://api.openai.com/v1',
-            model: 'gpt-4o-mini'
+            provider: 'gemini_local',
+            baseUrl: 'https://generativelanguage.googleapis.com/v1beta/openai',
+            model: 'gemini-2.0-flash',
+            apiKey: '',
+            outputLang: 'vi'
           };
         }
       },
@@ -6893,9 +6900,6 @@ OUTPUT FORMAT: Return ONLY a valid JSON string (no markdown backticks, no explan
           // Lấy lời giảng phù hợp và làm sạch bằng ContentPurifier
           const sceneMatch = sourceScenes[chIdx] || {};
           let narrationText = getNodeParam(chKey, 'narration', sceneMatch.narration || '');
-          if (!narrationText) {
-            narrationText = `Tiếp tục bài giảng, chúng ta cùng nghiên cứu trọng tâm kiến thức của ${customTitle}.`;
-          }
           narrationText = ContentPurifier.purify(narrationText);
 
           globalChapIdx++;
@@ -7013,22 +7017,46 @@ OUTPUT FORMAT: Return ONLY a valid JSON string (no markdown backticks, no explan
               itContentHtml = `<div class="script-segment-body">${itPlan.html}</div>`;
             }
 
-            segmentsHtml += `
-              <div class="script-segment-card" id="seg-card-${item.chKey}-${it.code}">
-                <div class="script-segment-header">
-                  <div class="script-segment-title-wrap">
-                    <span class="segment-code-badge">${it.code}</span>
-                    <span class="segment-title">${it.text}</span>
-                    <span class="segment-sec-tag">• ${sec.title}</span>
+            const isPending = !itNarr || itNarr.trim().length === 0;
+
+            if (isPending) {
+              segmentsHtml += `
+                <div class="script-segment-card pending" id="seg-card-${item.chKey}-${it.code}" style="border: 1px dashed rgba(99, 102, 241, 0.35); background: rgba(15, 23, 42, 0.45); border-radius: 8px; margin-bottom: 10px; padding: 12px 14px;">
+                  <div class="script-segment-header" style="margin-bottom: 6px;">
+                    <div class="script-segment-title-wrap">
+                      <span class="segment-code-badge" style="background: rgba(99, 102, 241, 0.2); color: #c7d2fe;">${it.code}</span>
+                      <span class="segment-title" style="font-weight: 700; color: #fff;">${it.text}</span>
+                      <span class="segment-sec-tag">• ${sec.title}</span>
+                    </div>
+                    <div class="script-segment-badges">
+                      <span class="segment-dur-badge">⏱️ ${itDur}s</span>
+                      <span class="segment-word-badge" style="background: rgba(148, 163, 184, 0.1); color: #94a3b8; border: 1px solid rgba(148, 163, 184, 0.2);">⏳ Chưa sinh lời thoại</span>
+                    </div>
                   </div>
-                  <div class="script-segment-badges">
-                    <span class="segment-dur-badge">⏱️ ${itDur}s</span>
-                    <span class="segment-word-badge">📝 ${itPlan.words} / ~${itTargetWords} từ</span>
+                  <div style="font-size: 12px; color: var(--text-muted); display: flex; align-items: center; justify-content: space-between; padding-top: 4px;">
+                    <span><em>Chưa có kịch bản cho phân đoạn này (~${itTargetWords} từ).</em></span>
+                    <span style="font-size: 11px; color: var(--cyan); font-weight: 600;">Bấm "✨ AI Viết Lời Thoại" ở trên để tạo ↗</span>
                   </div>
                 </div>
-                ${itContentHtml}
-              </div>
-            `;
+              `;
+            } else {
+              segmentsHtml += `
+                <div class="script-segment-card" id="seg-card-${item.chKey}-${it.code}">
+                  <div class="script-segment-header">
+                    <div class="script-segment-title-wrap">
+                      <span class="segment-code-badge">${it.code}</span>
+                      <span class="segment-title">${it.text}</span>
+                      <span class="segment-sec-tag">• ${sec.title}</span>
+                    </div>
+                    <div class="script-segment-badges">
+                      <span class="segment-dur-badge">⏱️ ${itDur}s</span>
+                      <span class="segment-word-badge">📝 ${itPlan.words} / ~${itTargetWords} từ</span>
+                    </div>
+                  </div>
+                  ${itContentHtml}
+                </div>
+              `;
+            }
           });
         });
 
@@ -8541,31 +8569,11 @@ OUTPUT FORMAT: Return ONLY a valid JSON string (no markdown backticks, no explan
         const sceneDur = (i === numScenes - 1) ? Math.max(30, Math.round(duration - curr_t)) : durPerScene;
         const sceneTargetWords = Math.round((sceneDur / 60) * wpm);
 
-        let narr = "";
-        if (i === 0) {
-          narr = `Chào mừng các bạn sinh viên đến với bài học hôm nay về chủ đề ${title}. Trong phân đoạn đầu tiên này, chúng ta tiếp cận bức tranh toàn cảnh về ${top.title}. Việc xây dựng góc nhìn hệ thống sẽ giúp các bạn tiếp thu các phần chuyên sâu một cách bài bản nhất.`;
-        } else if (i === numScenes - 1) {
-          narr = `Để kết thúc bài giảng về ${title}, chúng ta cùng nhìn lại các mốc kiến thức trọng tâm về ${top.title}. Nắm vững phương pháp này sẽ giúp các bạn tự tin triển khai các giải pháp chất lượng cao trong đồ án và công việc thực tế. Cảm ơn các bạn đã lắng nghe.`;
-        } else {
-          narr = `Tiếp tục với phân cảnh ${i + 1} về ${top.title}. Ở nội dung này, chúng ta đi sâu vào cơ chế vận hành chi tiết, phân tích mối liên hệ tương tác giữa các thuộc tính và cách thức hệ thống đưa ra quyết định xử lý. Trong thực tế triển khai, các kỹ sư cần đặc biệt chú trọng đến việc thiết lập thông số phù hợp để đảm bảo tính ổn định và hiệu năng tối đa cho toàn bộ giải pháp.`;
-        }
-
-        const expansions = [
-          " Phân tích này làm sáng tỏ mối liên hệ giữa lý thuyết toán học nền tảng và hiệu quả vận hành thực tế của thuật toán trên dữ liệu quy mô lớn.",
-          " Cơ chế này đóng vai trò quyết định trong việc nâng cao độ chính xác, giảm thiểu sai số và tối ưu hóa tài nguyên tính toán.",
-          " Việc kiểm chứng thực nghiệm trên các tập dữ liệu tiêu chuẩn cho thấy phương pháp đạt được sự cân bằng tối ưu giữa độ phức tạp và hiệu năng.",
-          " Hiểu sâu về cấu trúc này sẽ tạo tiền đề vững chắc cho việc tiếp cận các kiến trúc mạng và giải thuật mở rộng phức tạp hơn."
-        ];
-        let expIdx = i;
-        while (narr.trim().split(/\s+/).length < sceneTargetWords - 5) {
-          narr += expansions[expIdx % expansions.length];
-          expIdx++;
-        }
-
-        const actualWords = narr.trim().split(/\s+/).length;
-        const exactDur = Math.round((actualWords / wpm) * 60.0 * 10) / 10;
+        // KHÔNG TỰ ĐỘNG SINH LỜI THOẠI KHI NẠP SLIDE
+        // Tiết kiệm 100% token, để người dùng xem sơ đồ, lọc các chương rồi mới chủ động tạo
+        const narr = "";
         const tStart = Math.round(curr_t * 10) / 10;
-        const tEnd = Math.round((curr_t + exactDur) * 10) / 10;
+        const tEnd = Math.round((curr_t + sceneDur) * 10) / 10;
         curr_t = tEnd;
 
         scenes.push({
@@ -9233,19 +9241,19 @@ OUTPUT FORMAT: Return ONLY a valid JSON string (no markdown backticks, no explan
     const cfgPingStatus = document.getElementById('cfg-ping-status');
 
     const PROVIDER_MODELS = {
-      openai: [
-        { value: 'gpt-4o-mini', label: 'gpt-4o-mini (Khuyên dùng: Siêu nhanh, tiết kiệm 30x token)' },
-        { value: 'gpt-4o', label: 'gpt-4o (Đỉnh cao: Đa phương thức chuẩn CIKM)' }
-      ],
       gemini_local: [
-        { value: 'gemini-2.0-flash', label: 'gemini-2.0-flash (Cực nhanh qua Localhost:4981)' },
-        { value: 'gemini-2.0-flash-thinking', label: 'gemini-2.0-flash-thinking (Suy luận sâu qua Localhost:4981)' }
+        { value: 'gemini-2.0-flash', label: 'gemini-2.0-flash (Khuyên dùng: Miễn phí Google AI Studio, Siêu tốc)' },
+        { value: 'gemini-1.5-flash', label: 'gemini-1.5-flash (Miễn phí: 1 Triệu tokens ngữ cảnh)' }
+      ],
+      openai: [
+        { value: 'gpt-4o-mini', label: 'gpt-4o-mini (Siêu nhanh, tiết kiệm token)' },
+        { value: 'gpt-4o', label: 'gpt-4o (Đa phương thức chuẩn CIKM)' }
       ]
     };
 
     const PROVIDER_BASE_URLS = {
-      openai: 'https://api.openai.com/v1',
-      gemini_local: 'http://localhost:4981/v1'
+      gemini_local: 'https://generativelanguage.googleapis.com/v1beta/openai',
+      openai: 'https://api.openai.com/v1'
     };
 
     function updateModelOptions(provider, targetModel = null) {
