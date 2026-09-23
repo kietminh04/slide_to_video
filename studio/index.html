@@ -2846,9 +2846,8 @@
           <div class="lang-switcher-row" id="lang-switcher-row">
             <button class="lang-btn active" data-lang="vi" onclick="setScriptLanguage('vi')">🇻🇳 Tiếng Việt</button>
             <button class="lang-btn" data-lang="en" onclick="setScriptLanguage('en')">🇬🇧 English</button>
-            <button class="lang-btn" data-lang="bilingual" onclick="setScriptLanguage('bilingual')">🌐 Song Ngữ</button>
           </div>
-          <div style="font-size: 9.5px; color: var(--text-dim); margin-top: 3px; line-height: 1.4;">Giữ nguyên thuật ngữ chuyên môn gốc (ARIMA, DTW,...)</div>
+          <div style="font-size: 9.5px; color: var(--text-dim); margin-top: 3px; line-height: 1.4;">VN: thuần Việt + mở ngoặc thuật ngữ chuyên ngành</div>
         </div>
 
         <!-- DƯỚI ĐÓ LÀ DANH SÁCH CÁC TÀI LIỆU ĐÃ UP VÀO -->
@@ -3951,11 +3950,7 @@
 
       // Cập nhật outputLang trong LLMClient config
       const cfg = LLMClient.getConfig();
-      if (lang === 'bilingual') {
-        cfg.outputLang = 'vi'; // base Việt + thuật ngữ Anh
-      } else {
-        cfg.outputLang = lang;
-      }
+      cfg.outputLang = lang;
       LLMClient.saveConfig(cfg);
 
       // Cập nhật UI buttons
@@ -6827,10 +6822,13 @@
         let langInstruction = '';
         if (scriptLang === 'en') {
           langInstruction = `Write the narration script in ENGLISH. Use natural, engaging academic English suitable for a university lecture. Keep technical terms precise.`;
-        } else if (scriptLang === 'bilingual') {
-          langInstruction = `Viết lời giảng bài bằng TIẾNG VIỆT tự nhiên, giàu tính sư phạm. Giữ nguyên 100% thuật ngữ chuyên môn tiếng Anh gốc (tên riêng, công thức, viết tắt) trong ngoặc đơn. Ở cuối mỗi phân đoạn, viết thêm 1 câu tóm tắt tiếng Anh ngắn gọn in nghiêng.`;
         } else {
-          langInstruction = `Viết lời giảng bài bằng TIẾNG VIỆT tự nhiên, cuốn hút, giàu tính sư phạm. Giữ nguyên 100% thuật ngữ chuyên môn tiếng Anh gốc (ARIMA, Cross-validation, Dynamic Time Warping, tên tác giả...) — TUYỆT ĐỐI không dịch thô thiển.`;
+          langInstruction = `Viết lời giảng bài bằng TIẾNG VIỆT thuần Việt, tự nhiên, cuốn hút, giàu tính sư phạm.
+QUAN TRỌNG — QUY TẮC THUẬT NGỮ CHUYÊN NGÀNH:
+- Dịch thuật ngữ chuyên ngành sang tiếng Việt TRƯỚC, rồi mở ngoặc đơn ghi nguyên bản tiếng Anh ngay sau.
+- Ví dụ: "truy xuất (Retrieval)", "mạng nơ-ron tích chập (Convolutional Neural Network)", "chuỗi thời gian (Time Series)", "phương pháp cây quyết định (Decision Tree)", "xác thực chéo (Cross-validation)".
+- Tên riêng tác giả, viết tắt chuẩn quốc tế (ARIMA, DTW, LSTM, CNN) và công thức toán giữ nguyên KHÔNG dịch.
+- Giọng văn sư phạm đại học: nghiêm túc nhưng dễ hiểu, tránh sáo rỗng.`;
         }
         const exampleSegment = outputLang === 'en'
           ? `[b1] Welcome to the section on Dynamic Time Warping. DTW is an optimal algorithm used to measure the similarity between two time series... (write 60-75 words, explain the mechanism, mathematical formula, algorithm and how it works in depth).\n   [b2] Next, let us examine the keyframe-based approach... (write 60-75 words).`
