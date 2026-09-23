@@ -5272,7 +5272,10 @@
         const parent = currentNodesMap[current.parentKey];
         if (!parent) break;
 
-        const sumChildDur = (parent.children || []).reduce((acc, c) => acc + ((c.data && c.data.duration) ? c.data.duration : 30), 0);
+        const sumChildDur = (parent.children || []).reduce((acc, c) => {
+          const isEx = isNodeExcluded(c.key, [parent.key]);
+          return acc + (isEx ? 0 : ((c.data && c.data.duration) ? c.data.duration : 30));
+        }, 0);
         if (parent.data) parent.data.duration = sumChildDur;
         setNodeParam(parent.key, 'duration', sumChildDur);
 
@@ -5297,7 +5300,7 @@
       }
 
       // ĐỒNG BỘ TỔNG THỜI LƯỢNG LÊN CẤU HÌNH DỰ ÁN KHI LÊN ĐẾN GỐC (BOTTOM-UP SYNC TO GLOBAL CONFIG)
-      const rootNodes = Object.values(currentNodesMap).filter(n => n.level === 0);
+      const rootNodes = Object.values(currentNodesMap).filter(n => n.level === 0 && !isNodeExcluded(n.key));
       const totalSec = rootNodes.reduce((acc, r) => acc + ((r.data && r.data.duration) ? r.data.duration : 0), 0);
       if (totalSec > 0 && activeProject) {
         activeProject.duration_s = totalSec;
@@ -5592,7 +5595,10 @@
 
             // TÍNH THỜI LƯỢNG SECTION TỪ CÁC ITEMS (BOTTOM-UP)
             if (secNode.children.length > 0) {
-              const secTotalDur = secNode.children.reduce((sum, it) => sum + (it.data.duration || 30), 0);
+              const secTotalDur = secNode.children.reduce((sum, it) => {
+                const itEx = isNodeExcluded(it.key, [secKey, chKey, rootKey]);
+                return sum + (itEx ? 0 : (it.data.duration || 30));
+              }, 0);
               secNode.data.duration = secTotalDur;
               setNodeParam(secKey, 'duration', secTotalDur);
             } else {
@@ -5604,7 +5610,10 @@
 
           // TÍNH THỜI LƯỢNG CHAPTER TỪ CÁC SECTIONS (BOTTOM-UP)
           if (chNode.children.length > 0) {
-            const chTotalDur = chNode.children.reduce((sum, sec) => sum + (sec.data.duration || 30), 0);
+            const chTotalDur = chNode.children.reduce((sum, sec) => {
+              const secEx = isNodeExcluded(sec.key, [chKey, rootKey]);
+              return sum + (secEx ? 0 : (sec.data.duration || 30));
+            }, 0);
             chNode.data.duration = chTotalDur;
             chData.duration_s = chTotalDur;
             setNodeParam(chKey, 'duration', chTotalDur);
@@ -5620,8 +5629,12 @@
         });
 
         // TÍNH THỜI LƯỢNG ROOT NODE (TÀI LIỆU) TỪ CÁC CHAPTERS (BOTTOM-UP)
+        // QUAN TRỌNG: CHỈ CỘNG DỒN CÁC CHƯƠNG ĐANG ACTIVE (KHÔNG BỊ ẨN / LOẠI BỎ)
         if (rootNode.children.length > 0) {
-          const rootTotalDur = rootNode.children.reduce((sum, ch) => sum + (ch.data.duration || 30), 0);
+          const rootTotalDur = rootNode.children.reduce((sum, ch) => {
+            const chEx = isNodeExcluded(ch.key, [rootKey]);
+            return sum + (chEx ? 0 : (ch.data.duration || 30));
+          }, 0);
           rootNode.data.duration = rootTotalDur;
           setNodeParam(rootKey, 'duration', rootTotalDur);
         } else {
@@ -5632,7 +5645,11 @@
       });
 
       // ĐỒNG BỘ TỔNG THỜI LƯỢNG TỪ CÁC GỐC LÊN DỰ ÁN & CẤU HÌNH CHUNG (BOTTOM-UP TO PROJECT)
-      const totalTreeDur = roots.reduce((acc, r) => acc + (r.data && r.data.duration ? r.data.duration : 0), 0);
+      // CHỈ TÍNH CÁC TÀI LIỆU VÀ CHƯƠNG ĐANG THAM GIA KỊCH BẢN (KHÔNG BỊ LOẠI BỎ)
+      const totalTreeDur = roots.reduce((acc, r) => {
+        if (isNodeExcluded(r.key)) return acc;
+        return acc + (r.data && r.data.duration ? r.data.duration : 0);
+      }, 0);
       if (totalTreeDur > 0 && activeProject) {
         activeProject.duration_s = totalTreeDur;
         syncGlobalConfigFromProject();
@@ -5997,6 +6014,15 @@
         const hasChildren = node.children && node.children.length > 0;
         const expandLabel = hasChildren ? (node.isExpanded ? `▼ ${node.children.length}` : `▶ ${node.children.length}`) : '';
 
+        const visualLabels = {
+          'split_screen': { short: 'Song song', icon: '📺', full: 'So sánh song song (Split Screen)' },
+          'process_visualization': { short: 'Quy trình', icon: '🔄', full: 'Mô phỏng động quá trình (Process Animation)' },
+          'highlight_box': { short: 'Điểm nhấn', icon: '✨', full: 'Khoanh vùng điểm nhấn (Highlight Box)' },
+          'animated_diagram': { short: 'Sơ đồ', icon: '📊', full: 'Lưới sơ đồ tô-pô (Animated Diagram)' },
+          'concept_map': { short: 'Bản đồ', icon: '🗺️', full: 'Bản đồ khái niệm (Concept Map)' }
+        };
+        const visInfo = visualLabels[node.data.visualType] || { short: 'Trực quan', icon: '👁️', full: node.data.visualType || 'split_screen' };
+
         contentHtml = `
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; padding-right: 22px;">
             <span class="depth-tag depth-${node.data.depth || 'core'}">${node.data.chapter}</span>
@@ -6005,9 +6031,11 @@
           <div class="node-title-text" style="font-size: 11.5px; font-weight: 700; color: #fff; line-height: 1.35; max-height: 34px; overflow: hidden; padding-right: 20px;">
             ${node.data.title}
           </div>
-          <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 6px; font-size: 10px; color: var(--text-dim); padding: 0 26px;">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 6px; font-size: 10px; color: var(--text-dim); padding: 0 28px;">
             <span class="node-duration-badge" title="Tổng thời lượng chương (bấm để xem/chỉnh)">⏱️ ${node.data.duration || 0}s</span>
-            <span style="font-family: 'JetBrains Mono', monospace; color: var(--text-muted); font-size: 9.5px;">👁 [${node.data.visualType || 'split_screen'}]</span>
+            <span style="font-size: 9px; color: var(--text-muted); background: rgba(255,255,255,0.06); padding: 1px 5px; border-radius: 3px; display: inline-flex; align-items: center; gap: 3px;" title="Khuôn thị giác video: ${visInfo.full}">
+              <span>${visInfo.icon}</span> ${visInfo.short}
+            </span>
           </div>
         `;
       } else if (node.level === 2) {
@@ -7578,8 +7606,116 @@ OUTPUT FORMAT: Return ONLY a valid JSON string (no markdown backticks, no explan
     }
 
     // =========================================================================
-    // KHUNG CHAT AI SƯ PHẠM (LLM CHAT BOX)
+    // KHUNG CHAT AI SƯ PHẠM & ĐIỀU KHIỂN DỰ ÁN (LLM COPILOT COMMAND AGENT)
     // =========================================================================
+    function getAllChaptersInfo() {
+      const chapters = [];
+      Object.values(currentNodesMap).forEach(n => {
+        if (n.level === 1) {
+          const parts = n.key.split('-');
+          const idx = parseInt(parts[parts.length - 1]);
+          const num = !isNaN(idx) ? (idx + 1) : (chapters.length + 1);
+          chapters.push({
+            key: n.key,
+            num: num,
+            title: n.data?.title || `Chương ${num}`,
+            duration: n.data?.duration || 60,
+            isExcluded: isNodeExcluded(n.key),
+            isLocked: getNodeParam(n.key, 'isLocked', false)
+          });
+        }
+      });
+      chapters.sort((a, b) => a.num - b.num);
+      return chapters;
+    }
+
+    function executeCopilotActions(actions) {
+      if (!Array.isArray(actions) || actions.length === 0) return false;
+      const chapters = getAllChaptersInfo();
+      let modified = false;
+
+      actions.forEach(act => {
+        if (act.type === 'set_only_chapters' && Array.isArray(act.chapters)) {
+          const keepSet = new Set(act.chapters.map(n => parseInt(n)));
+          chapters.forEach(ch => {
+            if (keepSet.has(ch.num)) {
+              excludedNodes.delete(ch.key);
+            } else {
+              excludedNodes.add(ch.key);
+            }
+            modified = true;
+          });
+        }
+        if (act.type === 'exclude_chapters' && Array.isArray(act.chapters)) {
+          const exSet = new Set(act.chapters.map(n => parseInt(n)));
+          chapters.forEach(ch => {
+            if (exSet.has(ch.num)) {
+              excludedNodes.add(ch.key);
+              modified = true;
+            }
+          });
+        }
+        if (act.type === 'include_chapters' && Array.isArray(act.chapters)) {
+          const incSet = new Set(act.chapters.map(n => parseInt(n)));
+          chapters.forEach(ch => {
+            if (incSet.has(ch.num)) {
+              excludedNodes.delete(ch.key);
+              modified = true;
+            }
+          });
+        }
+        if (act.type === 'set_chapter_duration' && act.chapter && act.seconds) {
+          const chNum = parseInt(act.chapter);
+          const ch = chapters.find(c => c.num === chNum);
+          if (ch) {
+            applyNodeDurationAndParams(ch.key, parseInt(act.seconds), getNodeParam(ch.key, 'wpm', 140), ch.title, getNodeParam(ch.key, 'visualType', 'split_screen'), getNodeParam(ch.key, 'notes', ''));
+            modified = true;
+          }
+        }
+        if (act.type === 'set_total_minutes' && act.minutes) {
+          const inp = document.getElementById('gcfg-total-minutes');
+          if (inp) {
+            inp.value = parseInt(act.minutes);
+            applyGlobalDuration();
+            modified = true;
+          }
+        }
+        if (act.type === 'lock_chapter' && act.chapter) {
+          const chNum = parseInt(act.chapter);
+          const ch = chapters.find(c => c.num === chNum);
+          if (ch) {
+            setNodeParam(ch.key, 'isLocked', act.locked !== false);
+            modified = true;
+          }
+        }
+      });
+
+      if (modified) {
+        renderMindmap();
+        renderScriptDocument();
+        updateLockedBadge();
+        syncGlobalConfigFromProject();
+        showToast('🤖 AI Copilot: Đã điều chỉnh sơ đồ theo yêu cầu!');
+      }
+      return modified;
+    }
+
+    // HEURISTIC REGEX PARSER: Thực thi tức thì không cần đợi API
+    function parseLocalCopilotCommand(msg) {
+      const actions = [];
+      const mOnly = msg.match(/(?:chỉ\s*(?:cần|lấy|giữ|chọn)|giữ lại)\s*(?:chương|phần)?\s*([0-9\s,\bvà]+)/i);
+      if (mOnly) {
+        const nums = (mOnly[1].match(/\b\d+\b/g) || []).map(n => parseInt(n));
+        if (nums.length > 0) actions.push({ type: 'set_only_chapters', chapters: nums });
+      }
+      const mEx = msg.match(/(?:bỏ|loại bỏ|xóa|ẩn|tắt)\s*(?:các\s*)?(?:chương|phần)?\s*([0-9\s,\bvà]+)/i);
+      if (mEx) {
+        const nums = (mEx[1].match(/\b\d+\b/g) || []).map(n => parseInt(n));
+        if (nums.length > 0) actions.push({ type: 'exclude_chapters', chapters: nums });
+      }
+      return actions;
+    }
+
     async function sendChatMessage(text) {
       const msg = text || document.getElementById('chat-input')?.value.trim();
       if (!msg) return;
@@ -7604,12 +7740,50 @@ OUTPUT FORMAT: Return ONLY a valid JSON string (no markdown backticks, no explan
       aiMsg.className = 'chat-msg msg-ai';
       aiMsg.innerHTML = `
         <div class="msg-avatar">🤖</div>
-        <div class="msg-bubble" style="opacity: 0.8; font-style: italic;">Đang suy nghĩ...</div>
+        <div class="msg-bubble" style="opacity: 0.8; font-style: italic;">Đang xử lý yêu cầu...</div>
       `;
       chatContainer.appendChild(aiMsg);
       chatContainer.scrollTop = chatContainer.scrollHeight;
 
       const bubbleEl = aiMsg.querySelector('.msg-bubble');
+
+      // TẬP HỢP NGỮ CẢNH CÁC CHƯƠNG HIỆN TẠI ĐỂ TRUYỀN VÀO PROMPT
+      const chapters = getAllChaptersInfo();
+      const chaptersSummary = chapters.map(c => 
+        `- Chương ${c.num}: "${c.title}" | Thời lượng: ${c.duration}s | Trạng thái: ${c.isExcluded ? 'ĐÃ ẨN/LOẠI BỎ' : 'ĐANG DÙNG (ACTIVE)'} | Khóa: ${c.isLocked ? '🔒 Đã khóa' : '🔓 Tự do'}`
+      ).join('\n');
+
+      const systemPrompt = `Bạn là Trợ lý AI Điều Khiển Dự Án CLSG Studio (HUST & MOOC AI Copilot).
+Người dùng là giảng viên đang thiết kế kịch bản bài giảng. Bạn có quyền điều chỉnh sơ đồ tư duy theo ý muốn của người dùng.
+
+DỮ LIỆU HIỆN TẠI CỦA DỰ ÁN "${activeProject ? activeProject.title : ''}":
+- Tổng thời lượng đang dùng: ${activeProject ? activeProject.duration_s : 0}s (${Math.round((activeProject?.duration_s || 0)/60)} phút).
+- Danh sách các chương:
+${chaptersSummary || '(Chưa có chương)'}
+
+QUY TẮC PHẢN HỒI:
+1. NẾU NGƯỜI DÙNG RA LỆNH ĐIỀU CHỈNH SƠ ĐỒ (ví dụ: "bỏ chương 1 2 4", "tôi chỉ cần chương 3 và 5", "tôi muốn chương 3 nhiều hơn chương 5 một chút", "thời gian tổng 40 phút", "khóa chương 3"):
+   - Hãy phân tích yêu cầu một cách thông minh và đưa ra lời giải thích ngắn gọn, thân thiện bằng tiếng Việt.
+   - BẮT BUỘC kẹp một khối JSON hợp lệ ở cuối tin nhắn theo định dạng sau:
+\`\`\`json
+{
+  "actions": [
+    {"type": "set_only_chapters", "chapters": [3, 5]},
+    {"type": "set_chapter_duration", "chapter": 3, "seconds": 1200},
+    {"type": "set_chapter_duration", "chapter": 5, "seconds": 900}
+  ]
+}
+\`\`\`
+Các action hỗ trợ:
+- "set_only_chapters": {"type": "set_only_chapters", "chapters": [3, 5]} (chỉ giữ các chương này, loại bỏ các chương khác)
+- "exclude_chapters": {"type": "exclude_chapters", "chapters": [1, 2, 4]}
+- "include_chapters": {"type": "include_chapters", "chapters": [3, 5]}
+- "set_chapter_duration": {"type": "set_chapter_duration", "chapter": 3, "seconds": 1200}
+- "set_total_minutes": {"type": "set_total_minutes", "minutes": 40}
+- "lock_chapter": {"type": "lock_chapter", "chapter": 3, "locked": true}
+
+2. NẾU NGƯỜI DÙNG CHỈ HỎI ĐÁP SƯ PHẠM / NỘI DUNG (không yêu cầu chỉnh sửa sơ đồ):
+   - Trả lời chuyên nghiệp, súc tích (dưới 4 câu) và KHÔNG kèm khối JSON.`;
 
       try {
         const cfg = LLMClient.getConfig();
@@ -7620,14 +7794,11 @@ OUTPUT FORMAT: Return ONLY a valid JSON string (no markdown backticks, no explan
         const payload = {
           model: cfg.model,
           messages: [
-            {
-              role: 'system',
-              content: `Bạn là Trợ lý AI Sư Phạm của hệ thống CLSG (Đại học Bách Khoa Hà Nội). Hãy trả lời ngắn gọn, súc tích (dưới 4 câu), đúng trọng tâm câu hỏi về bài giảng, kịch bản hoặc phân cảnh đang thiết kế: "${activeProject ? activeProject.title : 'Bài giảng'}"`
-            },
+            { role: 'system', content: systemPrompt },
             { role: 'user', content: msg }
           ],
-          max_tokens: 200,
-          temperature: 0.7
+          max_tokens: 450,
+          temperature: 0.6
         };
 
         const res = await fetch(endpoint, {
@@ -7639,29 +7810,67 @@ OUTPUT FORMAT: Return ONLY a valid JSON string (no markdown backticks, no explan
         if (res.ok) {
           const data = await res.json();
           const reply = (data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) || '';
+          
+          // Bắt và thực thi khối action JSON
+          let actionExecuted = false;
+          let cleanReply = reply;
+          const jsonMatch = reply.match(/```json\s*([\s\S]*?)\s*```/);
+          if (jsonMatch) {
+            try {
+              const parsed = JSON.parse(jsonMatch[1]);
+              if (parsed && parsed.actions) {
+                actionExecuted = executeCopilotActions(parsed.actions);
+              }
+            } catch (e) {
+              console.warn("Lỗi phân tích lệnh JSON từ Copilot:", e);
+            }
+            cleanReply = reply.replace(/```json[\s\S]*?```/g, '').trim();
+          }
+
+          // Nếu LLM không sinh action nhưng tin nhắn chứa lệnh trực tiếp, áp dụng heuristic fallback
+          if (!actionExecuted) {
+            const fallbackActions = parseLocalCopilotCommand(msg);
+            if (fallbackActions.length > 0) {
+              executeCopilotActions(fallbackActions);
+            }
+          }
+
           bubbleEl.style.opacity = '1';
           bubbleEl.style.fontStyle = 'normal';
-          bubbleEl.innerHTML = reply.replace(/\n/g, '<br>');
+          bubbleEl.innerHTML = cleanReply.replace(/\n/g, '<br>');
           chatContainer.scrollTop = chatContainer.scrollHeight;
           return;
         }
-      } catch (err) {}
-
-      // Fallback thông minh nếu không có mạng / lỗi API
-      const lower = msg.toLowerCase();
-      let reply = "";
-      if (lower.includes('video') || lower.includes('dựng') || lower.includes('tạo')) {
-        reply = "🎬 <strong>Trợ lý AI:</strong> Đã ghi nhận yêu cầu tạo video bài giảng đa phương thức! Hệ thống sẽ tự động phối hợp phân cảnh, hình ảnh slide và giọng đọc đồng bộ.";
-      } else if (lower.includes('sơ đồ') || lower.includes('nhánh') || lower.includes('mindmap')) {
-        reply = "🧠 <strong>Trợ lý AI:</strong> Sơ đồ tư duy đa gốc hiện đang hiển thị theo cấu trúc mọc từ trên xuống. Bạn có thể tự do kéo di chuyển các gốc học liệu trên bảng vẽ.";
-      } else if (lower.includes('nhịp') || lower.includes('wpm') || lower.includes('tốc độ')) {
-        reply = "⚡ <strong>Trợ lý AI:</strong> Đã ghi nhận điều chỉnh nhịp độ đọc. Bạn có thể nhấn 'Cập Nhật Tham Số' ở trên để tái phân bổ ngân sách từ.";
-      } else {
-        reply = `🤖 <strong>Trợ lý AI:</strong> Đã tiếp nhận yêu cầu: <em>"${escapeHtml(msg)}"</em>. Bạn có thể bấm 'Cấu Hình AI' để kiểm tra kết nối API key cho mô hình ngôn ngữ lớn!`;
+      } catch (err) {
+        console.warn("Copilot API gặp sự cố, chuyển sang heuristic local:", err);
       }
+
+      // FALLBACK LOCAL HEURISTIC (Chạy mượt 100% kể cả khi mất mạng / không có API key)
+      const localActions = parseLocalCopilotCommand(msg);
+      let localReply = "";
+      if (localActions.length > 0) {
+        executeCopilotActions(localActions);
+        const onlyAct = localActions.find(a => a.type === 'set_only_chapters');
+        const exAct = localActions.find(a => a.type === 'exclude_chapters');
+        if (onlyAct) {
+          localReply = `✅ <strong>Trợ lý AI:</strong> Đã cập nhật sơ đồ! Chỉ giữ lại <strong>Chương ${onlyAct.chapters.join(', ')}</strong>, các chương còn lại đã được loại bỏ khỏi kịch bản.`;
+        } else if (exAct) {
+          localReply = `✅ <strong>Trợ lý AI:</strong> Đã loại bỏ <strong>Chương ${exAct.chapters.join(', ')}</strong> khỏi kịch bản và cập nhật lại thời lượng tổng!`;
+        }
+      } else {
+        const lower = msg.toLowerCase();
+        if (lower.includes('video') || lower.includes('dựng') || lower.includes('tạo')) {
+          localReply = "🎬 <strong>Trợ lý AI:</strong> Đã ghi nhận yêu cầu tạo video bài giảng đa phương thức! Hệ thống sẽ tự động phối hợp phân cảnh, hình ảnh slide và giọng đọc đồng bộ.";
+        } else if (lower.includes('sơ đồ') || lower.includes('nhánh') || lower.includes('mindmap')) {
+          localReply = "🧠 <strong>Trợ lý AI:</strong> Sơ đồ tư duy đa gốc hiện đang hiển thị theo cấu trúc mọc từ trên xuống. Bạn có thể tự do kéo di chuyển các gốc học liệu trên bảng vẽ.";
+        } else {
+          localReply = `🤖 <strong>Trợ lý AI:</strong> Đã tiếp nhận yêu cầu: <em>"${escapeHtml(msg)}"</em>. Bạn có thể ra lệnh như <em>"bỏ chương 1 2 4"</em> hoặc <em>"chỉ giữ chương 3 và 5"</em> để tôi tự động thao tác trên sơ đồ!`;
+        }
+      }
+
       bubbleEl.style.opacity = '1';
       bubbleEl.style.fontStyle = 'normal';
-      bubbleEl.innerHTML = reply;
+      bubbleEl.innerHTML = localReply;
       chatContainer.scrollTop = chatContainer.scrollHeight;
     }
 
