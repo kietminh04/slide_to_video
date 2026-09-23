@@ -3427,7 +3427,7 @@
       <div style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.25); border-radius: var(--radius-sm); padding: 12px; margin-bottom: 16px;">
         <div style="font-size: 12px; font-weight: 700; color: #34d399; margin-bottom: 4px;">🛡️ Cơ Chế Bảo Vệ & Tiết Kiệm Token</div>
         <div style="font-size: 11.5px; color: var(--text-muted); line-height: 1.5;">
-          Hệ thống ưu tiên kết nối <strong>Gemini Local (Free)</strong> để thử nghiệm miễn phí. Khi dùng <strong>OpenAI</strong>, model mặc định được khóa ở <code>gpt-4o-mini</code> (siêu rẻ, ~25đ/bài) kèm bộ nhớ đệm cache chống gọi trùng.
+          Hệ thống ưu tiên kết nối <strong>Google Gemini</strong> để trải nghiệm miễn phí tốc độ cao. Khi dùng <strong>OpenAI</strong>, model mặc định được chọn là <code>gpt-4o-mini</code> kèm bộ nhớ đệm cache chống gọi trùng.
         </div>
       </div>
 
@@ -3438,15 +3438,15 @@
           <label class="provider-radio-card" id="card-prov-gemini" style="padding: 10px 12px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.12); border-radius: var(--radius-sm); cursor: pointer; display: flex; align-items: flex-start; gap: 8px;">
             <input type="radio" name="ai-provider" value="gemini_local" id="radio-prov-gemini" style="margin-top: 2px;">
             <div>
-              <div style="font-size: 12px; font-weight: 700; color: #fff;">Gemini Local</div>
-              <div style="font-size: 11px; color: #34d399; font-weight: 600;">Miễn phí 100% (Port 4981)</div>
+              <div style="font-size: 12px; font-weight: 700; color: #fff;">Google Gemini</div>
+              <div style="font-size: 11px; color: #34d399; font-weight: 600;">Miễn phí (Google AI Studio)</div>
             </div>
           </label>
           <label class="provider-radio-card" id="card-prov-openai" style="padding: 10px 12px; background: rgba(56,189,248,0.1); border: 1px solid var(--cyan); border-radius: var(--radius-sm); cursor: pointer; display: flex; align-items: flex-start; gap: 8px;">
             <input type="radio" name="ai-provider" value="openai" id="radio-prov-openai" style="margin-top: 2px;" checked>
             <div>
               <div style="font-size: 12px; font-weight: 700; color: #fff;">OpenAI Official</div>
-              <div style="font-size: 11px; color: var(--cyan); font-weight: 600;">gpt-4o-mini (Tiết kiệm)</div>
+              <div style="font-size: 11px; color: var(--cyan); font-weight: 600;">gpt-4o-mini / gpt-4o</div>
             </div>
           </label>
         </div>
@@ -3456,8 +3456,8 @@
       <div style="margin-bottom: 14px;">
         <label class="form-label" for="cfg-model-select">Mô Hình (Model)</label>
         <select class="form-input" id="cfg-model-select">
-          <option value="gpt-4o-mini">gpt-4o-mini (Khuyên dùng: Siêu nhanh, tiết kiệm 30x token)</option>
-          <option value="gpt-4o">gpt-4o (Đỉnh cao: Đa phương thức chuẩn CIKM)</option>
+          <option value="gemini-2.5-flash">gemini-2.5-flash (Khuyên dùng)</option>
+          <option value="gemini-pro-latest">gemini-pro-latest (Cao cấp)</option>
         </select>
       </div>
 
@@ -10806,13 +10806,12 @@ ${tableRows}
 
     const PROVIDER_MODELS = {
       gemini_local: [
-        { value: 'gemini-2.5-flash', label: 'gemini-2.5-flash (Khuyên dùng: Siêu tốc, ổn định, 1 Triệu tokens)' },
-        { value: 'gemini-pro-latest', label: 'gemini-pro-latest (Cấp cao: Tư duy sâu, suy luận bài giảng phức tạp)' },
-        { value: 'gemini-flash-latest', label: 'gemini-flash-latest (Bản cập nhật Flash mới nhất)' }
+        { value: 'gemini-2.5-flash', label: 'gemini-2.5-flash (Khuyên dùng)' },
+        { value: 'gemini-pro-latest', label: 'gemini-pro-latest (Cao cấp)' }
       ],
       openai: [
-        { value: 'gpt-4o-mini', label: 'gpt-4o-mini (Siêu nhanh, tiết kiệm token)' },
-        { value: 'gpt-4o', label: 'gpt-4o (Đa phương thức chuẩn CIKM)' }
+        { value: 'gpt-4o-mini', label: 'gpt-4o-mini (Khuyên dùng)' },
+        { value: 'gpt-4o', label: 'gpt-4o (Cao cấp)' }
       ]
     };
 
