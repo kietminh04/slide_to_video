@@ -8297,7 +8297,8 @@ Trả về DUY NHẤT JSON hợp lệ với 5 trường sau (mỗi trường T�
             console.warn("[LLM] Direct endpoint error:", e);
           }
         }
-        if (res && res.ok) {
+        try {
+          if (res && res.ok) {
             const data = await res.json();
             const raw = data.choices?.[0]?.message?.content || '';
             const parsed = this.safeJsonParse(raw);
@@ -8565,7 +8566,8 @@ Trả về DUY NHẤT JSON hợp lệ:
             console.warn("[LLM] Direct endpoint error:", e);
           }
         }
-        if (res && res.ok) {
+        try {
+          if (res && res.ok) {
             const data = await res.json();
             const raw = data.choices?.[0]?.message?.content || '';
             const parsed = this.safeJsonParse(raw);
@@ -8689,7 +8691,8 @@ Hãy viết kịch bản lời thoại giảng dạy:`;
             console.warn("[LLM] Direct endpoint error:", e);
           }
         }
-        if (res && res.ok) {
+        try {
+          if (res && res.ok) {
             const data = await res.json();
             const text = data.choices?.[0]?.message?.content || '';
             if (text && text.trim().length > 10) return text.trim();
@@ -8913,7 +8916,8 @@ OUTPUT: Valid JSON only.
             console.warn("[LLM] Direct endpoint error:", e);
           }
         }
-        if (res && res.ok) {
+        try {
+          if (res && res.ok) {
             const data = await res.json();
             const raw = data.choices?.[0]?.message?.content || '';
             const parsed = this.safeJsonParse(raw);
@@ -8993,7 +8997,8 @@ OUTPUT: Valid JSON only, no markdown.
             console.warn("[LLM] Direct endpoint error:", e);
           }
         }
-        if (res && res.ok) {
+        try {
+          if (res && res.ok) {
             const data = await res.json();
             const raw = data.choices?.[0]?.message?.content || '';
             const parsed = this.safeJsonParse(raw);
