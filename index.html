@@ -3368,6 +3368,9 @@
         <button class="btn-export" id="btn-export-json">
           <span>⚙️</span> JSON
         </button>
+        <button class="btn-export" id="btn-export-pptx">
+          <span>📊</span> Slide (.pptx)
+        </button>
       </div>
     </div>
 
@@ -4335,8 +4338,8 @@
       }
     }
 
-    document.getElementById('btn-brand-home').addEventListener('click', () => switchView('projects'));
-    document.getElementById('btn-back-dashboard').addEventListener('click', () => switchView('projects'));
+    document.getElementById('btn-brand-home')?.addEventListener('click', () => switchView('projects'));
+    document.getElementById('btn-back-dashboard')?.addEventListener('click', () => switchView('projects'));
     document.getElementById('btn-ws-delete-project')?.addEventListener('click', () => {
       if (currentProjectId) {
         deleteProject(currentProjectId);
@@ -13640,7 +13643,7 @@ ${foreshadowText}`;
     }
 
     // 1. XUẤT MARKDOWN SƯ PHẠM CHUYÊN NGHIỆP (.MD)
-    document.getElementById('btn-export-md').addEventListener('click', () => {
+    document.getElementById('btn-export-md')?.addEventListener('click', () => {
       const data = getActiveScriptDocumentData();
       if (!data || data.flatSegments.length === 0) {
         showToast('⚠️ Không có nội dung phân cảnh nào để xuất Markdown!');
@@ -13727,7 +13730,7 @@ ${foreshadowText}`;
     });
 
     // 2. XUẤT TÀI LIỆU GIÁO ÁN WORD CHUẨN ACADEMIC (.DOC)
-    document.getElementById('btn-export-docx').addEventListener('click', async () => {
+    document.getElementById('btn-export-docx')?.addEventListener('click', async () => {
       const data = getActiveScriptDocumentData();
       if (!data || data.flatSegments.length === 0) {
         showToast('⚠️ Không có nội dung phân cảnh nào để xuất Word!');
@@ -13935,7 +13938,7 @@ ${foreshadowText}`;
     });
 
     // 3. XUẤT PHỤ ĐỀ CHUẨN SUBRIP CHO VIDEO (.SRT)
-    document.getElementById('btn-export-srt').addEventListener('click', () => {
+    document.getElementById('btn-export-srt')?.addEventListener('click', () => {
       const data = getActiveScriptDocumentData();
       if (!data || data.flatSegments.length === 0) {
         showToast('⚠️ Không có nội dung phân cảnh nào để xuất phụ đề SRT!');
@@ -14010,7 +14013,7 @@ ${foreshadowText}`;
     });
 
     // 4. XUẤT MANIFEST CẤU TRÚC DỰ ÁN TOÀN DIỆN (.JSON)
-    document.getElementById('btn-export-json').addEventListener('click', () => {
+    document.getElementById('btn-export-json')?.addEventListener('click', () => {
       const data = getActiveScriptDocumentData();
       if (!data) {
         showToast('⚠️ Không có dữ liệu dự án để xuất JSON!');
@@ -14054,7 +14057,7 @@ ${foreshadowText}`;
       showToast(`Đã xuất hồ sơ dữ liệu JSON toàn diện: ${filename}`);
     });
 
-    document.getElementById('btn-export-pptx').addEventListener('click', async () => {
+    document.getElementById('btn-export-pptx')?.addEventListener('click', async () => {
       const data = getActiveScriptDocumentData();
       if (!data || !data.flatSegments || data.flatSegments.length === 0) {
         showToast('⚠️ Không có dữ liệu để tải slide!');
@@ -14108,7 +14111,7 @@ ${foreshadowText}`;
     });
 
     // SEARCH FILTER PROJECTS
-    document.getElementById('project-search').addEventListener('input', (e) => {
+    document.getElementById('project-search')?.addEventListener('input', (e) => {
       renderProjectsGrid(e.target.value);
     });
 
