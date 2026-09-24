@@ -3846,11 +3846,11 @@
        MODAL: AI & API KEY CONFIGURATION (TOKEN-FRUGAL ENGINE)
        ========================================================================= -->
   <div class="modal-backdrop" id="modal-api-config" style="display: none; z-index: 9999;">
-    <div class="modal-content" style="max-width: 650px; padding: 0; background: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 40px rgba(0,0,0,0.1);">
+    <div class="modal-content" style="max-width: 650px; padding: 0; background: #0f172a; border-radius: 12px; overflow: hidden; border: 1px solid rgba(99,102,241,0.25); box-shadow: 0 20px 60px rgba(0,0,0,0.5);">
       
       <!-- TABS HEADER -->
-      <div style="display: flex; background: #f8fafc; border-bottom: 1px solid #e2e8f0; position: relative;" id="ai-config-tabs">
-        <button class="ai-config-tab active" data-prov="gemini_local" style="flex: 1; padding: 14px 0; border: none; background: transparent; font-size: 13px; font-weight: 600; color: #3b82f6; cursor: pointer; border-bottom: 2px solid #3b82f6; display: flex; align-items: center; justify-content: center; gap: 6px;">
+      <div style="display: flex; background: rgba(15,23,42,0.95); border-bottom: 1px solid rgba(99,102,241,0.15); position: relative;" id="ai-config-tabs">
+        <button class="ai-config-tab active" data-prov="gemini_local" style="flex: 1; padding: 14px 0; border: none; background: transparent; font-size: 13px; font-weight: 600; color: #818cf8; cursor: pointer; border-bottom: 2px solid #818cf8; display: flex; align-items: center; justify-content: center; gap: 6px;">
           ⚡ Google <span style="display:inline-block; width:6px; height:6px; border-radius:50%; background:#10b981;"></span>
         </button>
         <button class="ai-config-tab" data-prov="anthropic" style="flex: 1; padding: 14px 0; border: none; background: transparent; font-size: 13px; font-weight: 600; color: #64748b; cursor: pointer; border-bottom: 2px solid transparent; display: flex; align-items: center; justify-content: center; gap: 6px;">
@@ -3868,13 +3868,13 @@
       <div style="padding: 24px; padding-top: 16px;">
         
         <!-- ENGINE ACTIVATION CARD -->
-        <div style="display: flex; align-items: center; justify-content: space-between; padding: 14px; border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 20px; background: #fff;">
+        <div style="display: flex; align-items: center; justify-content: space-between; padding: 14px; border: 1px solid rgba(99,102,241,0.2); border-radius: 10px; margin-bottom: 20px; background: rgba(30,41,59,0.7);">
           <div style="display: flex; align-items: center; gap: 12px;">
             <div id="cfg-prov-icon" style="font-size: 24px;">⚡</div>
             <div>
               <div style="display: flex; align-items: center; gap: 8px;">
-                <span id="cfg-prov-title" style="font-weight: 700; color: #0f172a; font-size: 14px;">Google Gemini</span>
-                <span id="cfg-prov-badge" style="background: #f1f5f9; color: #64748b; font-size: 10.5px; padding: 2px 8px; border-radius: 12px; font-weight: 600;">Khuyên dùng</span>
+                <span id="cfg-prov-title" style="font-weight: 700; color: #e2e8f0; font-size: 14px;">Google Gemini</span>
+                <span id="cfg-prov-badge" style="background: rgba(99,102,241,0.15); color: #a5b4fc; font-size: 10.5px; padding: 2px 8px; border-radius: 12px; font-weight: 600;">Khuyên dùng</span>
               </div>
               <div id="cfg-prov-desc" style="font-size: 12px; color: #64748b; margin-top: 4px;">Miễn phí, tốc độ cao (Google AI Studio)</div>
             </div>
@@ -3883,8 +3883,8 @@
 
         <!-- MODEL SELECTION -->
         <div style="margin-bottom: 20px;">
-          <div style="font-size: 11px; font-weight: 700; color: #4f46e5; margin-bottom: 12px; display: flex; align-items: center; gap: 6px; text-transform: uppercase;">
-            <span style="color: #6366f1;">⚙️</span> MÔ HÌNH THỰC THI (<span id="cfg-lbl-model-group">GOOGLE GEMINI</span>)
+          <div style="font-size: 11px; font-weight: 700; color: #818cf8; margin-bottom: 12px; display: flex; align-items: center; gap: 6px; text-transform: uppercase;">
+            <span style="color: #818cf8;">⚙️</span> MÔ HÌNH THỰC THI (<span id="cfg-lbl-model-group">GOOGLE GEMINI</span>)
           </div>
           
           <div id="cfg-model-list" style="display: flex; flex-direction: column; gap: 8px;">
@@ -3895,18 +3895,18 @@
         <!-- API KEY INPUT -->
         <div style="margin-bottom: 24px;">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-            <div id="cfg-lbl-key-title" style="font-size: 11.5px; font-weight: 700; color: #475569; text-transform: uppercase;">
+            <div id="cfg-lbl-key-title" style="font-size: 11.5px; font-weight: 700; color: #94a3b8; text-transform: uppercase;">
               🔑 API KEY CHO GOOGLE GEMINI
             </div>
-            <a href="https://aistudio.google.com/app/apikey" target="_blank" id="cfg-key-link" style="font-size: 11.5px; color: #4f46e5; text-decoration: none; font-weight: 600;">Lấy Key tại Google AI Studio &rarr;</a>
+            <a href="https://aistudio.google.com/app/apikey" target="_blank" id="cfg-key-link" style="font-size: 11.5px; color: #818cf8; text-decoration: none; font-weight: 600;">Lấy Key tại Google AI Studio &rarr;</a>
           </div>
           <div style="position: relative;">
             <!-- DYNAMIC BASE URL (Mặc định ẩn, chỉ hiện ở OpenRouter/OpenAI Compatible) -->
             <div id="cfg-base-url-container" style="display: none; margin-bottom: 12px;">
-              <input type="text" id="cfg-base-url" placeholder="VD: https://openrouter.ai/api/v1" style="width: 100%; padding: 12px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #0f172a; background: #fff; box-sizing: border-box;">
+              <input type="text" id="cfg-base-url" placeholder="VD: https://openrouter.ai/api/v1" style="width: 100%; padding: 12px 14px; border: 1px solid rgba(99,102,241,0.25); border-radius: 8px; font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #e2e8f0; background: rgba(30,41,59,0.8); box-sizing: border-box;">
             </div>
 
-            <input type="password" id="cfg-api-key" placeholder="Để trống để dùng khóa mặc định hệ thống" style="width: 100%; padding: 12px 14px; padding-right: 40px; border: 1px solid #cbd5e1; border-radius: 8px; font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #0f172a; background: #fff; box-sizing: border-box;">
+            <input type="password" id="cfg-api-key" placeholder="Để trống để dùng khóa mặc định hệ thống" style="width: 100%; padding: 12px 14px; padding-right: 40px; border: 1px solid rgba(99,102,241,0.25); border-radius: 8px; font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #e2e8f0; background: rgba(30,41,59,0.8); box-sizing: border-box;">
             <button type="button" id="btn-toggle-cfg-key" style="position: absolute; right: 12px; bottom: 0px; height: 43px; background: none; border: none; color: #94a3b8; cursor: pointer; font-size: 16px;">👁️</button>
           </div>
           <div id="cfg-key-hint" style="font-size: 11.5px; color: #64748b; margin-top: 10px; line-height: 1.4;">
@@ -3915,14 +3915,14 @@
         </div>
 
         <!-- FOOTER ACTIONS -->
-        <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #f1f5f9; padding-top: 16px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid rgba(99,102,241,0.15); padding-top: 16px;">
           <div style="display: flex; align-items: center; gap: 10px;">
-            <button id="btn-ping-ai-test" style="background: #fff; border: 1px solid #e2e8f0; color: #64748b; cursor: pointer; display: flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 600; padding: 8px 12px; border-radius: 6px;">⚡ Kiểm tra kết nối</button>
+            <button id="btn-ping-ai-test" style="background: rgba(30,41,59,0.8); border: 1px solid rgba(99,102,241,0.25); color: #94a3b8; cursor: pointer; display: flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 600; padding: 8px 12px; border-radius: 6px;">⚡ Kiểm tra kết nối</button>
             <span id="cfg-ping-status" style="font-size: 12px; font-weight: 500; color: #10b981;"></span>
           </div>
           <div style="display: flex; gap: 10px;">
-            <button id="btn-cancel-ai-config" style="background: none; border: none; color: #475569; font-weight: 600; font-size: 13px; cursor: pointer; padding: 8px 16px;">Hủy</button>
-            <button id="btn-save-ai-config" style="background: #4f46e5; color: #fff; border: none; padding: 8px 20px; border-radius: 6px; font-weight: 600; font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 6px;"><span>✓</span> Lưu & Kích hoạt</button>
+            <button id="btn-cancel-ai-config" style="background: none; border: none; color: #94a3b8; font-weight: 600; font-size: 13px; cursor: pointer; padding: 8px 16px;">Hủy</button>
+            <button id="btn-save-ai-config" style="background: linear-gradient(135deg, #6366f1, #818cf8); color: #fff; border: none; padding: 8px 20px; border-radius: 8px; box-shadow: 0 4px 12px rgba(99,102,241,0.3); font-weight: 600; font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 6px;"><span>✓</span> Lưu & Kích hoạt</button>
           </div>
         </div>
       </div>
