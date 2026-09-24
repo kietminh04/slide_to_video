@@ -10292,7 +10292,7 @@ OUTPUT: Valid JSON only.
             const chNum = cIdx + 1;
             const chTitle = chNode.data?.title || `Chương ${chNum}`;
             const chEx = isNodeExcluded(chNode.key);
-            const chNarration = (currentScenes[cIdx]?.narration) || getNodeParam(chNode.key, 'narration', '');
+            const chNarration = typeof getNodeParam === 'function' ? getNodeParam(chNode.key, 'narration', currentScenes[cIdx]?.narration || '') : (currentScenes[cIdx]?.narration || '');
 
             out += `\n[CHƯƠNG ${chNum}]: "${chTitle}" (Thời lượng: ${chNode.data?.duration || 60}s | Trạng thái: ${chEx ? 'ĐÃ ẨN' : 'ĐANG DÙNG'})\n`;
             if (chNarration) {
@@ -10308,10 +10308,10 @@ OUTPUT: Valid JSON only.
               (secNode.children || []).forEach((itNode, iIdx) => {
                 const itCode = itNode.data?.code || `item${iIdx+1}`;
                 const itTitle = itNode.data?.title || '';
-                const itSummary = itNode.data?.summary || '';
-                const itMech = itNode.data?.mechanism || '';
-                const itKey = itNode.data?.key_point || '';
-                const itNarr = itNode.data?.narration || '';
+                const itSummary = typeof getNodeParam === 'function' ? getNodeParam(itNode.key, 'summary', itNode.data?.summary || '') : (itNode.data?.summary || '');
+                const itMech = typeof getNodeParam === 'function' ? getNodeParam(itNode.key, 'mechanism', itNode.data?.mechanism || '') : (itNode.data?.mechanism || '');
+                const itKey = typeof getNodeParam === 'function' ? getNodeParam(itNode.key, 'key_point', itNode.data?.key_point || '') : (itNode.data?.key_point || '');
+                const itNarr = typeof getNodeParam === 'function' ? getNodeParam(itNode.key, 'narration', itNode.data?.narration || '') : (itNode.data?.narration || '');
                 const itEx = isNodeExcluded(itNode.key, [chNode.key, secNode.key]);
 
                 out += `      * Mục [${itCode}]: "${itTitle}" | Tóm tắt: ${itSummary || itTitle}`;
@@ -13377,6 +13377,9 @@ ${foreshadowText}`;
       try {
         const projData = await callMultiAgentGenerate(file, name, desc, dur, wpm);
         defaultProjects[projData.id] = projData;
+        if (typeof CloudDB !== 'undefined' && CloudDB.save) {
+          CloudDB.save(projData);
+        }
         try {
           const userProjects = JSON.parse(localStorage.getItem('clsg_user_projects') || '{}');
           userProjects[projData.id] = projData;
@@ -13541,10 +13544,10 @@ ${foreshadowText}`;
 
                   let content = [];
                   const itKey = `item-${rootKey}-${cIdx}-${sIdx}-${iIdx}`;
-                  const summary = it.summary || (typeof getNodeParam === 'function' ? getNodeParam(itKey, 'summary', '') : '');
-                  const mechanism = it.mechanism || (typeof getNodeParam === 'function' ? getNodeParam(itKey, 'mechanism', '') : '');
-                  const keyPoint = it.key_point || (typeof getNodeParam === 'function' ? getNodeParam(itKey, 'key_point', '') : '');
-                  const details = it.details || (typeof getNodeParam === 'function' ? getNodeParam(itKey, 'details', '') : '');
+                  const summary = typeof getNodeParam === 'function' ? getNodeParam(itKey, 'summary', it.summary || '') : (it.summary || '');
+                  const mechanism = typeof getNodeParam === 'function' ? getNodeParam(itKey, 'mechanism', it.mechanism || '') : (it.mechanism || '');
+                  const keyPoint = typeof getNodeParam === 'function' ? getNodeParam(itKey, 'key_point', it.key_point || '') : (it.key_point || '');
+                  const details = typeof getNodeParam === 'function' ? getNodeParam(itKey, 'details', it.details || '') : (it.details || '');
 
                   if (summary) content.push({ text: `📌 Khái niệm: ${summary}`, options: { bullet: true, color: '1E293B', breakLine: true } });
                   if (keyPoint) content.push({ text: `🎯 Trọng tâm: ${keyPoint}`, options: { bullet: true, color: '1E293B', breakLine: true } });
@@ -13555,7 +13558,7 @@ ${foreshadowText}`;
                     s.addText(content, { x: 0.6, y: 1.6, w: '88%', h: 3.6, fontSize: 15, align: 'left', valign: 'top' });
                   }
 
-                  const narration = it.narration || (typeof getNodeParam === 'function' ? getNodeParam(itKey, 'narration', '') : '');
+                  const narration = typeof getNodeParam === 'function' ? getNodeParam(itKey, 'narration', it.narration || '') : (it.narration || '');
                   if (narration) {
                     s.addNotes(narration);
                   }
@@ -13612,10 +13615,10 @@ ${foreshadowText}`;
         });
 
         let content = [];
-        const summary = node.data?.summary || (typeof getNodeParam === 'function' ? getNodeParam(node.key, 'summary', '') : '');
-        const keyPoint = node.data?.key_point || (typeof getNodeParam === 'function' ? getNodeParam(node.key, 'key_point', '') : '');
-        const mechanism = node.data?.mechanism || (typeof getNodeParam === 'function' ? getNodeParam(node.key, 'mechanism', '') : '');
-        const details = node.data?.details || (typeof getNodeParam === 'function' ? getNodeParam(node.key, 'details', '') : '');
+        const summary = typeof getNodeParam === 'function' ? getNodeParam(node.key, 'summary', node.data?.summary || '') : (node.data?.summary || '');
+        const keyPoint = typeof getNodeParam === 'function' ? getNodeParam(node.key, 'key_point', node.data?.key_point || '') : (node.data?.key_point || '');
+        const mechanism = typeof getNodeParam === 'function' ? getNodeParam(node.key, 'mechanism', node.data?.mechanism || '') : (node.data?.mechanism || '');
+        const details = typeof getNodeParam === 'function' ? getNodeParam(node.key, 'details', node.data?.details || '') : (node.data?.details || '');
 
         if (summary) content.push({ text: `📌 Khái niệm cốt lõi: ${summary}`, options: { bullet: true, color: '1E293B', breakLine: true } });
         if (keyPoint) content.push({ text: `🎯 Trọng tâm: ${keyPoint}`, options: { bullet: true, color: '1E293B', breakLine: true } });
@@ -13626,7 +13629,7 @@ ${foreshadowText}`;
           s.addText(content, { x: 0.6, y: 1.6, w: '88%', h: 3.6, fontSize: 16, align: 'left', valign: 'top' });
         }
 
-        const narration = node.data?.narration || (typeof getNodeParam === 'function' ? getNodeParam(node.key, 'narration', '') : '');
+        const narration = typeof getNodeParam === 'function' ? getNodeParam(node.key, 'narration', node.data?.narration || '') : (node.data?.narration || '');
         if (narration) {
           s.addNotes(narration);
         }
