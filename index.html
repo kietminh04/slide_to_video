@@ -3436,6 +3436,10 @@
             <span class="btn-gen-text">Sinh Kịch Bản (Các Phần Đã Chọn)</span>
             <span class="btn-gen-badge" id="btn-gen-count-badge">0 mục</span>
           </button>
+          <button class="btn-generate-script-now" id="btn-download-slide-toolbar" style="background: linear-gradient(135deg, #6366f1, #818cf8); margin-left: 8px; min-width: auto; padding: 6px 14px;" title="Tải xuống toàn bộ nội dung bài giảng dưới dạng file PowerPoint (.pptx)">
+            <span>📊</span>
+            <span class="btn-gen-text">Tải Slide</span>
+          </button>
         </div>
 
         <!-- THANH CẤU HÌNH CHUNG (GLOBAL CONFIG BAR) -->
@@ -14057,6 +14061,11 @@ ${foreshadowText}`;
 
       downloadFile(filename, JSON.stringify(exportManifest, null, 2), 'application/json');
       showToast(`Đã xuất hồ sơ dữ liệu JSON toàn diện: ${filename}`);
+    });
+
+    document.getElementById('btn-download-slide-toolbar')?.addEventListener('click', async () => {
+      // Redirect to the same PPTX export logic
+      document.getElementById('btn-export-pptx')?.click();
     });
 
     document.getElementById('btn-export-pptx')?.addEventListener('click', async () => {
