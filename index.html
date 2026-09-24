@@ -8227,20 +8227,20 @@
 
       async summarizeNode({ projectTitle, chapterName, sectionName, nodeCode, nodeText }) {
         const cfg = this.getConfig();
-        const prompt = `Bạn là Giảng viên Đại học chuyên ngành Toán - Tin và Khoa học Dữ liệu.
+        const prompt = `Bạn là Giảng viên Đại học / Chuyên gia học thuật cấp cao.
 Bài giảng: "${projectTitle}".
 Chương/Phần: "${chapterName} • ${sectionName}".
 Phân đoạn: [${nodeCode}] "${nodeText}".
 
-BỎ QUA thông tin rác (tên tác giả, trường đại học, nhà xuất bản, số trang, copyright).
+BỎ QUA thông tin rác (tên tác giả, trường đại học, nhà xuất bản, số trang, copyright, tài liệu tham khảo, lời mở đầu, mục lục).
 
 NHIỆM VỤ: Viết BẢN TÓM TẮT HỌC THUẬT CHUYÊN SÂU giúp người học nắm bắt TOÀN BỘ nội dung của phân đoạn này. Không viết qua loa cho có, mà phải ĐỦ CHI TIẾT để người đọc hiểu được bản chất mà KHÔNG CẦN mở giáo trình gốc.
-CÔNG THỨC TOÁN HỌC: Mọi công thức toán học, ký hiệu ma trận, hàm số BẮT BUỘC viết dưới dạng LaTeX chuẩn kẹp giữa cặp dấu đô la $...$ để hệ thống tự động biên dịch sang công thức trực quan.
+ĐỊNH DẠNG: Bóc tách nội dung chính xác. NẾU CÓ công thức toán học thì dùng định dạng LaTeX $...$, NHƯNG TUYỆT ĐỐI KHÔNG TỰ BỊA ĐẶT CÔNG THỨC VÀO VĂN BẢN (như Lịch sử Đảng, Xã hội học thì cấm dùng công thức).
 
-Trả về DUY NHẤT JSON hợp lệ với 5 trường sau (mỗi trường TỐI THIỂU 2-3 câu, phân tích sâu bản chất toán học):
+Trả về DUY NHẤT JSON hợp lệ với 5 trường sau (mỗi trường TỐI THIỂU 2-3 câu, phân tích sâu bản chất, bám sát nội dung gốc):
 {
-  "summary": "KHÁI NIỆM CỐT LÕI: Giải thích rõ ràng bản chất lý thuyết, định nghĩa toán học chính thức, ý nghĩa trực quan của khái niệm.",
-  "mechanism": "CƠ CHẾ & GIẢI THUẬT: Mô tả chi tiết quy trình, các bước thực hiện, công thức toán học cốt lõi $...$, cách biến đổi dữ liệu.",
+  "summary": "KHÁI NIỆM CỐT LÕI: Giải thích rõ ràng bản chất lý thuyết, định nghĩa chính thức, ý nghĩa trực quan của khái niệm.",
+  "mechanism": "CƠ CHẾ & GIẢI THUẬT: Mô tả chi tiết quy trình, các bước thực hiện, công thức cốt lõi/nguyên lý hoạt động, cách biến đổi dữ liệu.",
   "key_point": "ĐIỂM THEN CHỐT: Các lưu ý quan trọng khi áp dụng, điều kiện tiên quyết, giới hạn phương pháp.",
   "details": "NỘI DUNG CHI TIẾT: Liệt kê và giải thích từng thành phần con, định lý, tính chất, hoặc trường hợp đặc biệt.",
   "examples": "VÍ DỤ & ỨNG DỤNG: Đưa ra ví dụ cụ thể minh họa khái niệm và ứng dụng thực tiễn."
@@ -8249,7 +8249,7 @@ Trả về DUY NHẤT JSON hợp lệ với 5 trường sau (mỗi trường T�
         const payload = {
           model: cfg.model || 'gemini-2.5-flash-lite',
           messages: [
-            { role: 'system', content: 'Bạn là chuyên gia bóc tách tài liệu học thuật Toán - Tin. Trả lời CHI TIẾT, ĐẦY ĐỦ, CÔNG THỨC DÙNG LATEX $...$. Output chuẩn JSON hợp lệ duy nhất.' },
+            { role: 'system', content: 'Bạn là chuyên gia bóc tách tài liệu học thuật. Trả lời CHI TIẾT, ĐẦY ĐỦ. Bám sát nội dung gốc. Output chuẩn JSON hợp lệ duy nhất.' },
             { role: 'user', content: prompt }
           ],
           max_tokens: 2500,

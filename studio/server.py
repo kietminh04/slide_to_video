@@ -57,7 +57,7 @@ class StudioHandler(BaseHTTPRequestHandler):
         url_path = urllib.parse.unquote(self.path.split("?")[0])
 
         if url_path in ("/", "/index.html"):
-            index_path = ROOT_DIR / "studio" / "index.html"
+            index_path = ROOT_DIR / "index.html"
             content = index_path.read_bytes()
             self.send_response(200)
             self.send_header("Content-Type", "text/html; charset=utf-8")
