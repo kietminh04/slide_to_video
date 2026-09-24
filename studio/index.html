@@ -10009,6 +10009,12 @@ OUTPUT: Valid JSON only.
       if (typeof currentProjectId === 'undefined' || !currentProjectId) return;
       try {
         localStorage.setItem('clsg_chat_history_' + currentProjectId, JSON.stringify(clsgChatSessionHistory));
+        if (typeof activeProject !== 'undefined' && activeProject) {
+            activeProject.chatHistory = clsgChatSessionHistory;
+            const chatContainer = document.getElementById('ai-chat-messages');
+            if (chatContainer) activeProject.chatHtml = chatContainer.innerHTML;
+            CloudDB.save(activeProject);
+        }
         const chatContainer = document.getElementById('ai-chat-messages');
         if (chatContainer) {
           localStorage.setItem('clsg_chat_html_' + currentProjectId, chatContainer.innerHTML);
@@ -10544,9 +10550,15 @@ QUY TẮC PHẢN HỒI QUAN TRỌNG:
         try {
           const savedHistory = JSON.parse(localStorage.getItem('clsg_chat_history_' + projId));
           const savedHTML = localStorage.getItem('clsg_chat_html_' + projId);
-          if (savedHistory && savedHistory.length > 0 && savedHTML) {
-             clsgChatSessionHistory.push(...savedHistory);
-             chatContainer.innerHTML = savedHTML;
+          if ((!savedHistory || savedHistory.length === 0) && activeProject && activeProject.chatHistory) {
+              localStorage.setItem('clsg_chat_history_' + projId, JSON.stringify(activeProject.chatHistory));
+              if (activeProject.chatHtml) localStorage.setItem('clsg_chat_html_' + projId, activeProject.chatHtml);
+          }
+          const finalHistory = savedHistory || (activeProject && activeProject.chatHistory);
+          const finalHTML = savedHTML || (activeProject && activeProject.chatHtml);
+          if (finalHistory && finalHistory.length > 0 && finalHTML) {
+             clsgChatSessionHistory.push(...finalHistory);
+             chatContainer.innerHTML = finalHTML;
              setTimeout(() => { chatContainer.scrollTop = chatContainer.scrollHeight; }, 100);
           } else {
              chatContainer.innerHTML = `
