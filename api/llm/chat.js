@@ -1,4 +1,4 @@
-// Vercel Serverless Function: LLM Proxy (Bảo mật API Key trên Server)
+// Vercel Serverless Function: LLM Proxy (Bảo mật API Key trên Server & Auto-Cascade Fallback)
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
@@ -15,55 +15,91 @@ module.exports = async (req, res) => {
   try {
     const body = (typeof req.body === 'string') ? JSON.parse(req.body) : (req.body || {});
     const envGemini = process.env.GEMINI_API_KEY || 'AQ.Ab8RN6Iiy_lvpeUOc_0fG385dl88DQQWYdtbHsHuIuAaGR6zag';
-    const envOpenai = process.env.OPENAI_API_KEY;
+    const envOpenai = process.env.OPENAI_API_KEY || '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';
 
-    let apiKey = body.apiKey || envGemini || envOpenai;
-    let provider = body.provider;
+    const customKey = body.apiKey && body.apiKey.trim();
+    const requestedModel = body.model;
+    const maxTokens = body.max_tokens || 3500;
+    const temperature = body.temperature ?? 0.2;
+    const messages = body.messages || [];
 
-    if (!apiKey) {
-      return res.status(400).json({
-        error: 'Chưa cấu hình API Key trên Vercel. Hãy thêm GEMINI_API_KEY hoặc OPENAI_API_KEY trong mục Settings -> Environment Variables trên Vercel.'
-      });
-    }
+    // Danh sách ứng viên tự động chuyển tiếp (Cascade Candidates)
+    const candidates = [];
 
-    if (!provider) {
-      if (apiKey.startsWith('AIzaSy') || apiKey.startsWith('AIza') || apiKey.startsWith('AQ.') || apiKey === envGemini) {
-        provider = 'gemini_local';
+    // Nếu người dùng cung cấp Key riêng:
+    if (customKey) {
+      if (customKey.startsWith('sk-')) {
+        candidates.push({
+          provider: 'openai',
+          apiKey: customKey,
+          baseUrl: 'https://api.openai.com/v1',
+          model: requestedModel || 'gpt-4o-mini'
+        });
       } else {
-        provider = 'openai';
+        candidates.push({
+          provider: 'gemini',
+          apiKey: customKey,
+          baseUrl: 'https://generativelanguage.googleapis.com/v1beta/openai',
+          model: (requestedModel && !requestedModel.includes('gpt')) ? requestedModel : 'gemini-2.5-flash-lite'
+        });
       }
     }
 
-    let baseUrl = body.baseUrl;
-    let model = body.model;
+    // Các ứng viên mặc định của hệ thống (ưu tiên flash-lite tránh 429 limit 20 req/ngày của 2.5-flash)
+    candidates.push(
+      { provider: 'gemini', apiKey: envGemini, baseUrl: 'https://generativelanguage.googleapis.com/v1beta/openai', model: 'gemini-2.5-flash-lite' },
+      { provider: 'gemini', apiKey: envGemini, baseUrl: 'https://generativelanguage.googleapis.com/v1beta/openai', model: 'gemini-flash-latest' },
+      { provider: 'gemini', apiKey: envGemini, baseUrl: 'https://generativelanguage.googleapis.com/v1beta/openai', model: 'gemini-3.1-flash-lite' },
+      { provider: 'openai', apiKey: envOpenai, baseUrl: 'https://api.openai.com/v1', model: 'gpt-4o-mini' }
+    );
 
-    if (provider === 'gemini_local' || apiKey.startsWith('AIza') || apiKey.startsWith('AQ.')) {
-      baseUrl = 'https://generativelanguage.googleapis.com/v1beta/openai';
-      if (!model || model.startsWith('gpt') || model.includes('1.5') || model.includes('2.0')) model = 'gemini-2.5-flash';
-    } else {
-      baseUrl = baseUrl || 'https://api.openai.com/v1';
-      if (!model || model.startsWith('gemini')) model = 'gpt-4o-mini';
+    let lastError = null;
+    for (const cand of candidates) {
+      try {
+        const targetUrl = `${cand.baseUrl.replace(/\/+$/, '')}/chat/completions`;
+        const payload = {
+          model: cand.model,
+          messages: messages,
+          max_tokens: maxTokens,
+          temperature: temperature
+        };
+
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 25000);
+
+        const upstreamRes = await fetch(targetUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${cand.apiKey}`
+          },
+          body: JSON.stringify(payload),
+          signal: controller.signal
+        });
+        clearTimeout(timeoutId);
+
+        if (upstreamRes.ok) {
+          const data = await upstreamRes.json();
+          // Kiểm tra xem phản hồi có nội dung không
+          const content = data.choices?.[0]?.message?.content;
+          if (content && content.trim().length > 0) {
+            return res.status(200).json(data);
+          }
+        }
+
+        const errText = await upstreamRes.text();
+        lastError = `[${cand.provider}:${cand.model}] HTTP ${upstreamRes.status}: ${errText.slice(0, 150)}`;
+        console.warn(`[Proxy Cascade] Fallback từ ${cand.model} vì lỗi:`, lastError);
+      } catch (e) {
+        lastError = `[${cand.provider}:${cand.model}] ${e.message}`;
+        console.warn(`[Proxy Cascade] Network exception từ ${cand.model}:`, e.message);
+      }
     }
 
-    const forwardPayload = {
-      model: model,
-      messages: body.messages || [],
-      max_tokens: body.max_tokens || 1200,
-      temperature: body.temperature || 0.5
-    };
-
-    const targetUrl = `${baseUrl.replace(/\/+$/, '')}/chat/completions`;
-    const upstreamRes = await fetch(targetUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`
-      },
-      body: JSON.stringify(forwardPayload)
+    return res.status(500).json({
+      error: 'Tất cả các mô hình LLM dự phòng đều phản hồi không thành công.',
+      details: lastError
     });
-
-    const data = await upstreamRes.json();
-    return res.status(upstreamRes.status).json(data);
   } catch (err) {
     return res.status(500).json({ error: err.message || 'Lỗi xử lý LLM proxy trên Vercel' });
   }

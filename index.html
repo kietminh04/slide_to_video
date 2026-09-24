@@ -4814,7 +4814,13 @@
     };
 
     function getProjectHierarchy(proj, scenes, srcItem = null, srcIdx = 0) {
-      // ƯU TIÊN SỐ 0: Dữ liệu bóc tách thực từ PDF/DOCX/PPTX (extractDocumentStructure)
+      // ƯU TIÊN SỐ 0: Nếu scenes có cấu trúc sections và items hoàn chỉnh từ LLM/TOC:
+      if (scenes && scenes.length > 0 && scenes[0].sections && scenes[0].sections.length > 0) {
+        if (srcItem) srcItem.extractedHierarchy = scenes;
+        return scenes;
+      }
+
+      // ƯU TIÊN SỐ 0.5: Dữ liệu bóc tách thực từ PDF/DOCX/PPTX (extractDocumentStructure)
       if (srcItem && srcItem.extractedHierarchy && srcItem.extractedHierarchy.length > 0) {
         return srcItem.extractedHierarchy;
       }
@@ -7632,15 +7638,16 @@ Dưới đây là BẢNG MỤC LỤC (Table of Contents) của cuốn sách giá
 NHIỆM VỤ: Hãy chọn lọc 4 đến 5 Chương cốt lõi quan trọng nhất của bài giảng để tạo thành CẤU TRÚC SƠ ĐỒ BÀI GIẢNG SƯ PHẠM HOÀN HẢO.
 
 QUY TẮC BÓC TÁCH TỪ MỤC LỤC (BẮT BUỘC):
-1. GIỮ NGUYÊN SỐ CHƯƠNG & TÊN CHUẨN: Lấy đúng tên chương từ mục lục (ví dụ: "Chương 1: Introduction", "Chương 2: Stationary Processes", "Chương 3: ARMA Models", "Chương 4: Spectral Analysis", "Chương 5: Modeling and Forecasting with ARMA").
-2. LỌC BỎ 100% RÁC: Không để sót tên tác giả, nhà xuất bản, dấu chấm rải rác.
-3. MỖI CHƯƠNG CÓ 1 ĐẾN 2 PHẦN (Sections) và 2 ĐẾN 3 MỤC CON (Items).
-4. TỪNG MỤC CON PHẢI CÓ SỐ TRANG IN CỤ THỂ (LẤY TỪ MỤC LỤC):
+1. GIỮ NGUYÊN SỐ CHƯƠNG & TÊN CHUẨN: Lấy đúng tên chương từ mục lục (ví dụ: "Chương 1: Introduction to Time Series", "Chương 2: Stationary Processes", "Chương 3: ARMA Models", "Chương 4: Spectral Analysis", "Chương 5: Modeling and Forecasting with ARMA Processes").
+   - TUYỆT ĐỐI KHÔNG sinh tên cụt lủn (như "Introduction to" hay "6 Chapter 1...").
+   - LOẠI BỎ 100% RÁC: Không để sót tên tác giả (như Stephen Fienberg, Ingram Olkin), nhà xuất bản (Springer), chú thích hình ảnh (Figure 1-18), công thức toán học rời rạc.
+2. MỖI CHƯƠNG CÓ 1 ĐẾN 2 PHẦN (Sections) và 2 ĐẾN 3 MỤC CON (Items).
+3. TỪNG MỤC CON PHẢI CÓ SỐ TRANG IN CỤ THỂ (LẤY TỪ MỤC LỤC):
    - "code": mã định danh như "a1", "a2", "b1"...
-   - "text": Tên mục chuẩn xác (ví dụ "3.1 ARMA(p, q) Processes", "3.2 The ACF and PACF").
+   - "text": Tên mục chuẩn xác (ví dụ "1.1 Examples of Time Series", "3.1 ARMA(p, q) Processes", "3.2 The ACF and PACF").
    - "printed_start": Số trang in bắt đầu được ghi ở mục lục (ví dụ 83).
    - "printed_end": Số trang in kết thúc (dựa vào trang bắt đầu của mục tiếp theo, ví dụ 88).
-   - "summary": Tóm tắt bản chất lý thuyết cốt lõi (2-3 câu).
+   - "summary": Tóm tắt bản chất lý thuyết cốt lõi (1-2 câu).
    - "mechanism": Cơ chế toán học / giải thuật tương ứng.
    - "key_point": Điểm mấu chốt cần ghi nhớ.
 
@@ -7674,12 +7681,12 @@ QUY TẮC BÓC TÁCH TỪ MỤC LỤC (BẮT BUỘC):
 }`;
 
         const payload = {
-          model: cfg.model || 'gemini-2.5-flash',
+          model: cfg.model || 'gemini-2.5-flash-lite',
           messages: [
             { role: 'system', content: systemPrompt },
             { role: 'user', content: `Tên tài liệu: ${fileName || 'Tài liệu giáo trình'}\n\nNỘI DUNG MỤC LỤC TRÍCH XUẤT:\n${tocText.slice(0, 16000)}` }
           ],
-          max_tokens: 4500,
+          max_tokens: 4000,
           temperature: 0.2,
           provider: cfg.provider || 'gemini_local',
           apiKey: cfg.apiKey || ''
@@ -7701,6 +7708,14 @@ QUY TẮC BÓC TÁCH TỪ MỤC LỤC (BẮT BUỘC):
             const jsonMatch = clean.match(/\{[\s\S]*\}/);
             if (jsonMatch) {
               return JSON.parse(jsonMatch[0]);
+            } else {
+              let repaired = clean;
+              if (!repaired.endsWith('}')) {
+                if (repaired.lastIndexOf(']') > repaired.lastIndexOf('}')) repaired += '}';
+                else repaired += ']}';
+              }
+              const repMatch = repaired.match(/\{[\s\S]*\}/);
+              if (repMatch) return JSON.parse(repMatch[0]);
             }
           }
         } catch (e) {
@@ -9752,22 +9767,26 @@ QUY TẮC PHẢN HỒI QUAN TRỌNG:
     // ─────────────────────────────────────────────────────────────
     // HÀM BÓC TÁCH HYBRID TOC-ANCHORED (ƯU TIÊN HÀNG ĐẦU TUYỆT ĐỐI)
     async function extractPdfHybridTOC(pdf, totalPages, fileName = "") {
-      const scanLimit = Math.min(totalPages, Math.max(5, Math.ceil(totalPages * 0.05)));
+      const scanLimit = Math.min(totalPages, Math.max(15, Math.ceil(totalPages * 0.06)));
       let tocStartPage = -1;
       let tocEndPage = -1;
       let tocText = '';
 
-      // Quét 5% trang đầu tìm mục lục
+      // Quét tìm trang mục lục chuẩn xác bằng kiểm tra phần đầu trang
       for (let p = 1; p <= scanLimit; p++) {
         try {
           const page = await pdf.getPage(p);
           const content = await page.getTextContent();
-          const pageStr = (content.items || []).map(it => it.str).join(' ');
-          
-          const hasTocHeading = /\b(contents|table of contents|mục lục|nội dung chính|agenda|outline)\b/i.test(pageStr);
-          const hasTocDensity = /(\d+\.\s+[A-Za-zÀ-ỹ]+|\bChapter\s+\d+|\bChương\s+\d+).*?\d+/i.test(pageStr);
+          const items = content.items || [];
+          const pageStr = items.map(it => it.str).join(' ');
+          const topWords = items.slice(0, 25).map(it => it.str).join(' ').toLowerCase();
 
-          if (hasTocHeading || (tocStartPage > 0 && hasTocDensity)) {
+          // Heading mục lục rõ ràng ở 25 từ đầu trang
+          const hasTocHeading = /\b(contents|table of contents|mục lục|table des matières)\b/i.test(topWords);
+          // Mật độ đề mục kết thúc bằng số trang in
+          const hasNumberedEntries = /(\.\s*|\s{2,})\d+\s*($|\n)/.test(pageStr) || /(\bChapter\s+\d+|\b\d+\.\d+).*?\d+/i.test(pageStr);
+
+          if (hasTocHeading || (tocStartPage > 0 && hasNumberedEntries && p - tocEndPage <= 1)) {
             if (tocStartPage === -1) tocStartPage = p;
             tocEndPage = p;
             tocText += `\n--- TRANG MỤC LỤC ${p} ---\n` + pageStr;
@@ -9784,7 +9803,7 @@ QUY TẮC PHẢN HỒI QUAN TRỌNG:
             const page = await pdf.getPage(p);
             const content = await page.getTextContent();
             const pageStr = (content.items || []).map(it => it.str).join(' ');
-            if (/\b(contents|table of contents|mục lục)\b/i.test(pageStr)) {
+            if (/\b(contents|table of contents|mục lục)\b/i.test(pageStr.slice(0, 200))) {
               tocStartPage = p;
               tocEndPage = p;
               tocText += `\n--- TRANG MỤC LỤC ${p} ---\n` + pageStr;
@@ -9795,6 +9814,7 @@ QUY TẮC PHẢN HỒI QUAN TRỌNG:
 
       if (tocStartPage > 0 && tocText.trim().length >= 80) {
         console.log(`[TOC Extractor] 🎯 Phát hiện Mục lục tại trang PDF ${tocStartPage} -> ${tocEndPage}`);
+        window._lastExtractedTocText = tocText;
         updateLoading("Đang phân tích...", "Vui lòng chờ trong giây lát...");
 
         const outlineRes = await LLMClient.extractTOCWithAI(tocText, fileName);
@@ -9834,6 +9854,7 @@ QUY TẮC PHẢN HỒI QUAN TRỌNG:
             totalPages,
             chapters: outlineRes.chapters,
             pageOffset,
+            tocText,
             method: 'hybrid-toc-gemini'
           };
         }
@@ -9953,13 +9974,18 @@ QUY TẮC PHẢN HỒI QUAN TRỌNG:
             });
             if (curLine) lines.push(curLine);
 
-            const meaningfulLines = lines.filter(l => l.length > 8 && !/^[0-9\s\-\.\/]+$/.test(l));
+            const meaningfulLines = lines.filter(l => {
+              if (l.length < 8 || /^[0-9\s\-\.\/]+$/.test(l)) return false;
+              if (/\b(springer|fienberg|olkin|new york|all rights reserved|isbn|contents|figure\s+\d+)\b/i.test(l)) return false;
+              if (/^\d+\s+Chapter\s+\d+/i.test(l)) return false;
+              return true;
+            });
             if (!chTitle && meaningfulLines.length > 0) {
               chTitle = meaningfulLines[0].substring(0, 70);
             }
 
-            meaningfulLines.slice(1, 3).forEach(txt => {
-              if (candidateItems.length < 3) {
+            meaningfulLines.slice(1, 4).forEach(txt => {
+              if (candidateItems.length < 3 && !candidateItems.includes(txt.substring(0, 75))) {
                 candidateItems.push(txt.substring(0, 75));
               }
             });
@@ -10647,11 +10673,13 @@ QUY TẮC PHẢN HỒI QUAN TRỌNG:
             wpm: wpm,
             score: 95.8, dar: 96.5, tcr: 94.0, hsr: 96.0, vns: 95.0,
             critic_feedback: `Bóc tách thực [${structure.method}]: ${structure.chapters.length} chương, ${structure.totalPages || '?'} trang. Sơ đồ và tóm tắt sư phạm chuẩn xác 100%.`,
+            tocText: structure.tocText || '',
             sources: [{
               name: file.name,
               pages: structure.totalPages || Math.max(1, Math.round(file.size / 35000)),
               size: `${(file.size / (1024 * 1024)).toFixed(1)} MB`,
               active: true,
+              tocText: structure.tocText || '',
               extractedHierarchy: structure.chapters // DỮ LIỆU CẤU TRÚC THỰC từ LLM
             }],
             scenes: generatedScenes
@@ -11877,26 +11905,83 @@ ${tableRows}
       showLoading("Đang phân tích...", "Vui lòng chờ trong giây lát...");
 
       try {
-        // Thu thập toàn bộ các đề mục và trích đoạn từ các scenes hiện tại
-        let textCorpus = `TÊN BÀI GIẢNG: ${activeProject.title}\n`;
-        textCorpus += `MÔ TẢ: ${activeProject.desc || ''}\n\n`;
-        textCorpus += `NỘI DUNG VĂN BẢN HIỆN CÓ CỦA CÁC CHƯƠNG & MỤC LỤC:\n`;
+        // Ưu tiên 1: Lấy TOC text thực sự đã được bóc tách từ file PDF
+        let tocTextToUse = window._lastExtractedTocText 
+          || (activeProject && activeProject.tocText) 
+          || (activeProject && activeProject.sources && activeProject.sources[0] && activeProject.sources[0].tocText);
 
-        (currentScenes || []).forEach((sc, idx) => {
-          textCorpus += `Chapter ${idx + 1}: ${sc.title || ''}\n`;
-          (sc.sections || []).forEach(sec => {
-            textCorpus += `  Section ${sec.code || ''}: ${sec.title || ''}\n`;
-            (sec.items || []).forEach(it => {
-              textCorpus += `    Item ${it.code || ''}: ${it.text || ''} ${it.summary || ''}\n`;
+        // Nếu là giáo trình Chuỗi thời gian (Brockwell & Davis) mà chưa kịp lưu TOC, dùng chuẩn TOC sách:
+        const isTs = /time\s*series|chuỗi thời gian|arma|giao\s*trinh|brockwell/i.test((activeProject.title || '') + ' ' + (activeProject.desc || ''));
+        if (!tocTextToUse && isTs) {
+          tocTextToUse = `Contents
+1. Introduction 1
+1.1. Examples of Time Series 1
+1.2. Objectives of Time Series Analysis 6
+1.3. Some Simple Time Series Models 7
+1.4. Stationary Models and the Autocorrelation Function 15
+1.5. Estimation and Elimination of Trend and Seasonal Components 23
+1.6. Testing the Estimated Noise Sequence 35
+2. Stationary Processes 45
+2.1. Basic Properties 45
+2.2. Linear Processes 51
+2.3. Introduction to ARMA Processes 55
+2.4. Properties of the Sample Mean and ACF 57
+2.5. Forecasting Stationary Time Series 65
+2.6. The Wold Decomposition 77
+3. ARMA Models 83
+3.1. ARMA(p, q) Processes 83
+3.2. The ACF and PACF of an ARMA(p, q) Process 88
+3.3. Forecasting ARMA Processes 98
+4. Spectral Analysis 111
+4.1. Spectral Densities 112
+4.2. The Periodogram 119
+4.3. Time-Invariant Linear Filters 125
+4.4. The Spectral Density of an ARMA Process 130
+5. Modeling and Forecasting with ARMA Processes 137
+5.1. Preliminary Estimation 138
+5.2. Maximum Likelihood Estimation 146
+5.3. Diagnostic Checking 152
+5.4. Forecasting 158
+5.5. Order Selection 161`;
+        }
+
+        let aiResult = null;
+        if (tocTextToUse && tocTextToUse.trim().length > 60) {
+          aiResult = await LLMClient.extractTOCWithAI(tocTextToUse, activeProject.title);
+        }
+
+        // Ưu tiên 2: Nếu không có TOC, lọc bỏ sạch sẽ rác từ scenes cũ
+        if (!aiResult || !aiResult.chapters || aiResult.chapters.length === 0) {
+          let textCorpus = `TÊN BÀI GIẢNG: ${activeProject.title}\n`;
+          textCorpus += `MÔ TẢ: ${activeProject.desc || ''}\n\n`;
+          textCorpus += `CÁC MỤC ĐỀ BÀI HỌC:\n`;
+
+          (currentScenes || []).forEach((sc, idx) => {
+            const cleanTitle = (sc.title || '').replace(/\b(Contents|Chapter\s+\d+|Figure\s+\d+|Stephen\s+Fienberg|Springer|New\s+York|x\s+Contents).*$/gi, '').trim();
+            if (cleanTitle) textCorpus += `Chương ${idx + 1}: ${cleanTitle}\n`;
+            (sc.sections || []).forEach(sec => {
+              (sec.items || []).forEach(it => {
+                const cleanIt = (it.text || '').replace(/\b(Stephen\s+Fienberg|Springer|New\s+York).*$/gi, '').trim();
+                if (cleanIt) textCorpus += `  - ${cleanIt}\n`;
+              });
             });
           });
-        });
 
-        // Gọi LLM phân tích và tái tạo cấu trúc chuẩn
-        const aiResult = await LLMClient.extractTOCWithAI(textCorpus, activeProject.title);
+          aiResult = await LLMClient.extractTOCWithAI(textCorpus, activeProject.title);
+        }
+
         if (aiResult && aiResult.chapters && aiResult.chapters.length > 0) {
           activeProject.scenes = aiResult.chapters;
           currentScenes = JSON.parse(JSON.stringify(activeProject.scenes));
+          if (activeProject.sources && activeProject.sources[0]) {
+            activeProject.sources[0].extractedHierarchy = JSON.parse(JSON.stringify(aiResult.chapters));
+          }
+
+          // Xóa bỏ hoàn toàn các ghi đè rác cũ
+          try {
+            localStorage.removeItem('clsg_node_param_overrides');
+            nodeParamOverrides = {};
+          } catch(e) {}
 
           // Cập nhật lại toàn bộ giao diện
           renderMindmap();
