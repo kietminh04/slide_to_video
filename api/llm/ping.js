@@ -8,7 +8,7 @@ module.exports = async (req, res) => {
 
   const body = (typeof req.body === 'string') ? JSON.parse(req.body) : (req.body || {});
   const envGemini = process.env.GEMINI_API_KEY || 'AQ.Ab8RN6Iiy_lvpeUOc_0fG385dl88DQQWYdtbHsHuIuAaGR6zag';
-  const envOpenai = process.env.OPENAI_API_KEY || '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';
+  const envOpenai = process.env.OPENAI_API_KEY || '';
 
   const customKey = body.apiKey && body.apiKey.trim();
   const requestedModel = body.model;
@@ -37,17 +37,22 @@ module.exports = async (req, res) => {
     // 2. Sử dụng khóa hệ thống trên máy chủ (Tự động chuyển tiếp nếu gặp giới hạn tốc độ 429)
     const isExplicitOpenAI = (body.provider === 'openai' || requestedModel?.includes('gpt'));
     if (isExplicitOpenAI) {
+      if (envOpenai) {
+        candidates.push({ provider: 'OpenAI', apiKey: envOpenai, baseUrl: 'https://api.openai.com/v1', model: requestedModel || 'gpt-4o-mini' });
+      }
       candidates.push(
-        { provider: 'OpenAI', apiKey: envOpenai, baseUrl: 'https://api.openai.com/v1', model: requestedModel || 'gpt-4o-mini' },
-        { provider: 'Google Gemini', apiKey: envGemini, baseUrl: 'https://generativelanguage.googleapis.com/v1beta/openai', model: 'gemini-2.5-flash-lite' }
+        { provider: 'Google Gemini', apiKey: envGemini, baseUrl: 'https://generativelanguage.googleapis.com/v1beta/openai', model: 'gemini-2.5-flash-lite' },
+        { provider: 'Google Gemini', apiKey: envGemini, baseUrl: 'https://generativelanguage.googleapis.com/v1beta/openai', model: 'gemini-2.5-flash' }
       );
     } else {
       const primaryGeminiModel = (requestedModel && !requestedModel.includes('gpt')) ? requestedModel : 'gemini-2.5-flash';
       candidates.push(
         { provider: 'Google Gemini', apiKey: envGemini, baseUrl: 'https://generativelanguage.googleapis.com/v1beta/openai', model: primaryGeminiModel },
-        { provider: 'Google Gemini', apiKey: envGemini, baseUrl: 'https://generativelanguage.googleapis.com/v1beta/openai', model: 'gemini-2.5-flash-lite' },
-        { provider: 'OpenAI', apiKey: envOpenai, baseUrl: 'https://api.openai.com/v1', model: 'gpt-4o-mini' }
+        { provider: 'Google Gemini', apiKey: envGemini, baseUrl: 'https://generativelanguage.googleapis.com/v1beta/openai', model: 'gemini-2.5-flash-lite' }
       );
+      if (envOpenai) {
+        candidates.push({ provider: 'OpenAI', apiKey: envOpenai, baseUrl: 'https://api.openai.com/v1', model: 'gpt-4o-mini' });
+      }
     }
   }
 

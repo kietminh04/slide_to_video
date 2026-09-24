@@ -120,6 +120,149 @@
       letter-spacing: 0.5px;
     }
 
+    /* QUICK API KEY BAR IN HEADER */
+    .header-left-wrap {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      min-width: 0;
+    }
+    .quick-api-bar {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 3px 6px 3px 10px;
+      border-radius: 9999px;
+      background: rgba(15, 23, 42, 0.75);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      backdrop-filter: blur(12px);
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.25);
+      transition: all 0.25s ease;
+    }
+    .quick-api-bar:focus-within, .quick-api-bar:hover {
+      border-color: rgba(99, 102, 241, 0.45);
+      box-shadow: 0 0 16px rgba(99, 102, 241, 0.18);
+    }
+    .quick-api-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 11px;
+      cursor: default;
+      user-select: none;
+    }
+    .quick-api-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #38bdf8;
+      box-shadow: 0 0 6px #38bdf8;
+      transition: all 0.25s;
+    }
+    .quick-api-dot.openai {
+      background: #10b981;
+      box-shadow: 0 0 8px #10b981;
+    }
+    .quick-api-dot.gemini {
+      background: #818cf8;
+      box-shadow: 0 0 8px #818cf8;
+    }
+    .quick-api-source {
+      font-weight: 700;
+      font-size: 11px;
+      color: #38bdf8;
+      white-space: nowrap;
+    }
+    .quick-api-source.openai {
+      color: #34d399;
+    }
+    .quick-api-source.gemini {
+      color: #a5b4fc;
+    }
+    .quick-api-input-wrap {
+      display: inline-flex;
+      align-items: center;
+      background: rgba(0, 0, 0, 0.35);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 9999px;
+      padding: 2px 6px 2px 10px;
+      transition: all 0.2s;
+    }
+    .quick-api-input-wrap:focus-within {
+      border-color: rgba(56, 189, 248, 0.5);
+      background: rgba(0, 0, 0, 0.55);
+    }
+    .quick-api-input-wrap input {
+      width: 175px;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: #f1f5f9;
+      font-size: 11.5px;
+      font-family: 'JetBrains Mono', monospace, sans-serif;
+      transition: width 0.25s ease;
+    }
+    .quick-api-input-wrap input:focus {
+      width: 240px;
+    }
+    .quick-api-input-wrap input::placeholder {
+      color: rgba(255, 255, 255, 0.28);
+      font-size: 11px;
+    }
+    .quick-api-icon-btn {
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      font-size: 11.5px;
+      padding: 2px 4px;
+      opacity: 0.7;
+      color: var(--text-dim);
+      border-radius: 4px;
+      transition: opacity 0.2s, transform 0.15s;
+    }
+    .quick-api-icon-btn:hover {
+      opacity: 1;
+      transform: scale(1.1);
+      color: #fff;
+    }
+    .quick-api-clear-btn {
+      color: #f87171;
+      font-weight: 700;
+    }
+    .quick-api-clear-btn:hover {
+      color: #ef4444;
+    }
+    .quick-api-action-btn {
+      background: rgba(56, 189, 248, 0.15);
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      color: #38bdf8;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 3px 10px;
+      border-radius: 9999px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      transition: all 0.2s ease;
+    }
+    .quick-api-action-btn:hover {
+      background: rgba(56, 189, 248, 0.28);
+      color: #ffffff;
+      transform: translateY(-1px);
+    }
+    .quick-api-action-btn.success {
+      background: rgba(16, 185, 129, 0.2) !important;
+      border-color: rgba(16, 185, 129, 0.5) !important;
+      color: #34d399 !important;
+    }
+    .quick-api-action-btn.error {
+      background: rgba(244, 63, 94, 0.2) !important;
+      border-color: rgba(244, 63, 94, 0.5) !important;
+      color: #f87171 !important;
+    }
+
+
     .nav-tabs-group {
       display: flex;
       align-items: center;
@@ -2900,11 +3043,34 @@
 
   <!-- GLOBAL HEADER -->
   <header>
-    <div class="brand-group" id="btn-brand-home">
-      <div class="brand-logo">C</div>
-      <div class="brand-title">
-        CLSG Studio Pro
-        <span class="badge-pro">CLSG ENGINE v2.0</span>
+    <div class="header-left-wrap">
+      <div class="brand-group" id="btn-brand-home">
+        <div class="brand-logo">C</div>
+        <div class="brand-title">
+          CLSG Studio Pro
+          <span class="badge-pro">CLSG ENGINE v2.0</span>
+        </div>
+      </div>
+
+      <!-- THANH CẤU HÌNH NHANH API KEY (CHỈ LƯU TRÊN TRÌNH DUYỆT RIÊNG - KHÔNG CHIA SẺ) -->
+      <div class="quick-api-bar" id="quick-api-bar" title="Cấu hình API Key riêng (Chỉ lưu trên trình duyệt của bạn, người khác vào web không bị lộ/dùng ké)">
+        <div class="quick-api-badge" id="quick-api-badge">
+          <span class="quick-api-dot" id="quick-api-dot"></span>
+          <span class="quick-api-source" id="quick-api-source">Hệ Thống</span>
+        </div>
+        <div class="quick-api-input-wrap">
+          <input type="password" id="quick-api-key-input" placeholder="Dán OpenAI (sk-...) / Gemini..." autocomplete="off" spellcheck="false" title="Khóa được lưu riêng trên LocalStorage trình duyệt này. Hoàn toàn bảo mật!">
+          <button type="button" id="btn-quick-key-eye" class="quick-api-icon-btn" title="Hiện / Ẩn khóa">👁️</button>
+        </div>
+        <button type="button" id="btn-quick-ping" class="quick-api-action-btn" title="Kiểm tra kết nối khóa này ngay (Ping 1 Token)">
+          <span id="quick-ping-icon">⚡</span> <span id="quick-ping-text">Thử</span>
+        </button>
+        <button type="button" id="btn-quick-clear" class="quick-api-icon-btn quick-api-clear-btn" title="Xóa khóa riêng (quay về dùng mặc định hệ thống)" style="display: none;">
+          ✕
+        </button>
+        <button type="button" id="btn-quick-modal" class="quick-api-icon-btn" title="Mở bảng cài đặt nâng cao (Model, Nhiệt độ, Ngôn ngữ)">
+          ⚙️
+        </button>
       </div>
     </div>
 
@@ -7393,9 +7559,11 @@
           let baseUrl = saved.baseUrl || '';
           let model = saved.model;
 
-          // Tự động chuyển provider sang Gemini nếu phát hiện API key của Google (bắt đầu bằng AIza)
+          // Tự động chuyển provider nếu phát hiện API key tương ứng
           if (apiKey.startsWith('AIzaSy') || apiKey.startsWith('AIza') || apiKey.startsWith('AQ.')) {
             provider = 'gemini_local';
+          } else if (apiKey.startsWith('sk-')) {
+            provider = 'openai';
           }
 
           if (provider === 'gemini_local') {
@@ -11954,8 +12122,137 @@ ${tableRows}
       badge.textContent = `⚙️ AI: ${cfg.model || 'gemini-2.5-flash'}`;
     }
 
+    function updateQuickApiKeyUI() {
+      const cfg = LLMClient.getConfig();
+      const dot = document.getElementById('quick-api-dot');
+      const source = document.getElementById('quick-api-source');
+      const input = document.getElementById('quick-api-key-input');
+      const clearBtn = document.getElementById('btn-quick-clear');
+      if (!dot || !source || !input) return;
+
+      if (cfg.apiKey && cfg.apiKey.trim()) {
+        const k = cfg.apiKey.trim();
+        input.value = k;
+        if (clearBtn) clearBtn.style.display = 'inline-flex';
+
+        if (k.startsWith('sk-')) {
+          dot.className = 'quick-api-dot openai';
+          source.className = 'quick-api-source openai';
+          source.textContent = 'OpenAI Riêng';
+          source.title = 'Đang dùng khóa OpenAI cá nhân của bạn (Lưu trong LocalStorage máy này, hoàn toàn bảo mật)';
+        } else {
+          dot.className = 'quick-api-dot gemini';
+          source.className = 'quick-api-source gemini';
+          source.textContent = 'Gemini Riêng';
+          source.title = 'Đang dùng khóa Gemini cá nhân của bạn (Lưu trong LocalStorage máy này)';
+        }
+      } else {
+        input.value = '';
+        if (clearBtn) clearBtn.style.display = 'none';
+        dot.className = 'quick-api-dot';
+        source.className = 'quick-api-source';
+        source.textContent = 'Hệ Thống';
+        source.title = 'Đang dùng khóa hệ thống miễn phí trên máy chủ (Không tốn token cá nhân)';
+      }
+    }
+
     // Khởi tạo nhãn model trên nút header
     setTimeout(updateAiBadge, 100);
+
+    // KHỞI TẠO THANH CẤU HÌNH NHANH API KEY TRÊN HEADER
+    const quickKeyInput = document.getElementById('quick-api-key-input');
+    quickKeyInput?.addEventListener('input', () => {
+      const val = quickKeyInput.value.trim();
+      const cfg = LLMClient.getConfig();
+      cfg.apiKey = val;
+
+      if (val.startsWith('sk-')) {
+        cfg.provider = 'openai';
+        cfg.baseUrl = 'https://api.openai.com/v1';
+        if (!cfg.model || cfg.model.startsWith('gemini')) cfg.model = 'gpt-4o-mini';
+      } else if (val.startsWith('AIza') || val.startsWith('AQ.')) {
+        cfg.provider = 'gemini_local';
+        cfg.baseUrl = 'https://generativelanguage.googleapis.com/v1beta/openai';
+        if (!cfg.model || cfg.model.startsWith('gpt')) cfg.model = 'gemini-2.5-flash';
+      } else if (!val) {
+        cfg.apiKey = '';
+        cfg.provider = 'gemini_local';
+        cfg.baseUrl = 'https://generativelanguage.googleapis.com/v1beta/openai';
+        cfg.model = 'gemini-2.5-flash';
+      }
+
+      LLMClient.saveConfig(cfg);
+      updateQuickApiKeyUI();
+      updateAiBadge();
+
+      // Đồng bộ vào input của modal cấu hình nếu có
+      const modalKeyInput = document.getElementById('cfg-api-key');
+      if (modalKeyInput) modalKeyInput.value = val;
+    });
+
+    quickKeyInput?.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        document.getElementById('btn-quick-ping')?.click();
+      }
+    });
+
+    document.getElementById('btn-quick-key-eye')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (!quickKeyInput) return;
+      const isPass = quickKeyInput.type === 'password';
+      quickKeyInput.type = isPass ? 'text' : 'password';
+      e.currentTarget.textContent = isPass ? '🔒' : '👁️';
+    });
+
+    document.getElementById('btn-quick-clear')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (!quickKeyInput) return;
+      quickKeyInput.value = '';
+      quickKeyInput.dispatchEvent(new Event('input'));
+      showToast('ℹ️ Đã xóa khóa cá nhân, chuyển về dùng khóa hệ thống miễn phí.');
+    });
+
+    const btnQuickPing = document.getElementById('btn-quick-ping');
+    const quickPingIcon = document.getElementById('quick-ping-icon');
+    const quickPingText = document.getElementById('quick-ping-text');
+    btnQuickPing?.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      if (btnQuickPing.dataset.testing === 'true') return;
+      btnQuickPing.dataset.testing = 'true';
+      if (quickPingIcon) quickPingIcon.textContent = '⏳';
+      if (quickPingText) quickPingText.textContent = '...';
+      btnQuickPing.className = 'quick-api-action-btn';
+
+      try {
+        const cfg = LLMClient.getConfig();
+        const res = await LLMClient.ping(cfg);
+        btnQuickPing.className = 'quick-api-action-btn success';
+        if (quickPingIcon) quickPingIcon.textContent = '✅';
+        if (quickPingText) quickPingText.textContent = `${res.latency}ms`;
+        const srcLabel = cfg.apiKey ? 'Khóa cá nhân' : 'Khóa hệ thống';
+        showToast(`✅ [${res.model || cfg.model}] phản hồi tốt (${res.latency}ms - ${srcLabel})`);
+      } catch (err) {
+        btnQuickPing.className = 'quick-api-action-btn error';
+        if (quickPingIcon) quickPingIcon.textContent = '❌';
+        if (quickPingText) quickPingText.textContent = 'Lỗi';
+        showToast(`❌ Lỗi kết nối: ${err.message}`);
+      } finally {
+        setTimeout(() => {
+          btnQuickPing.dataset.testing = 'false';
+          btnQuickPing.className = 'quick-api-action-btn';
+          if (quickPingIcon) quickPingIcon.textContent = '⚡';
+          if (quickPingText) quickPingText.textContent = 'Thử';
+        }, 3000);
+      }
+    });
+
+    document.getElementById('btn-quick-modal')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      openAiConfigModal();
+    });
+
+    setTimeout(updateQuickApiKeyUI, 120);
+
 
     function openAiConfigModal() {
       const cfg = LLMClient.getConfig();
@@ -12091,6 +12388,7 @@ ${tableRows}
 
       LLMClient.saveConfig({ provider, baseUrl, model, apiKey, outputLang });
       updateAiBadge();
+      updateQuickApiKeyUI();
       closeAiConfigModal();
       showToast(`Đã lưu cấu hình: Đang kích hoạt [${model}]!`);
     });
