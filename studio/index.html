@@ -7405,7 +7405,7 @@
       selectedLeafNode = node;
       try {
         if (node && node.key) {
-          localStorage.setItem('clsg_active_leaf_key', node.key);
+          localStorage.setItem('clsg_active_leaf_key_' + (typeof currentProjectId !== 'undefined' ? currentProjectId : 'default'), node.key);
         }
       } catch (e) {}
 
@@ -9997,6 +9997,17 @@ OUTPUT: Valid JSON only.
     // LỊCH SỬ HỘI THOẠI TRONG PHIÊN CHAT COPILOT
     const clsgChatSessionHistory = [];
 
+    function saveChatState() {
+      if (typeof currentProjectId === 'undefined' || !currentProjectId) return;
+      try {
+        localStorage.setItem('clsg_chat_history_' + currentProjectId, JSON.stringify(clsgChatSessionHistory));
+        const chatContainer = document.getElementById('ai-chat-messages');
+        if (chatContainer) {
+          localStorage.setItem('clsg_chat_html_' + currentProjectId, chatContainer.innerHTML);
+        }
+      } catch(e) {}
+    }
+
     // TRÍ NHỚ CÂU HỎI ĐÁP COPILOT (COPILOT Q&A CACHE - 0 TOKEN, ZERO CRASH)
     const CopilotQACache = {
       getStorageKey() {
@@ -10064,6 +10075,7 @@ OUTPUT: Valid JSON only.
         chatContainer.scrollTop = chatContainer.scrollHeight;
         clsgChatSessionHistory.push({ role: 'user', content: msg });
         clsgChatSessionHistory.push({ role: 'assistant', content: cachedAnswer });
+        saveChatState();
         return;
       }
 
@@ -10517,27 +10529,35 @@ QUY TẮC PHẢN HỒI QUAN TRỌNG:
       if (exportActions) exportActions.style.display = (savedTab === 'script') ? 'flex' : 'none';
       switchCenterTab(savedTab);
 
-      // [FIX] Chặn thông nhau Chat và Summary giữa các Project
-      if (typeof clsgChatSessionHistory !== 'undefined') {
-          clsgChatSessionHistory.length = 0;
-      }
+      // [FIX] Chặn thông nhau Chat và Summary giữa các Project + Restore Session
+      if (typeof clsgChatSessionHistory !== 'undefined') clsgChatSessionHistory.length = 0;
       const chatContainer = document.getElementById('ai-chat-messages');
       if (chatContainer) {
-        chatContainer.innerHTML = `
-            <div class="chat-msg msg-ai">
-              <div class="msg-avatar">🤖</div>
-              <div class="msg-bubble">
-                Chào bạn! Tôi là trợ lý AI sư phạm. Bạn có thể yêu cầu tạo video bài giảng, mở rộng nhánh sơ đồ tư duy hoặc tinh chỉnh kịch bản theo yêu cầu riêng.
-              </div>
-            </div>
-            <div class="chat-suggestions">
-              <div style="font-size: 10.5px; color: var(--text-dim); margin-bottom: 3px;">Gợi ý câu lệnh nhanh cho người mới:</div>
-              <button class="chat-pill-btn" onclick="sendQuickPrompt('📖 Tóm tắt toàn bộ bài giảng này và nêu các luận điểm cốt lõi')">📖 Tóm tắt bài giảng</button>
-              <button class="chat-pill-btn" onclick="sendQuickPrompt('🎙️ Đọc thử lời giảng kịch bản của Chương 1')">🎙️ Đọc thử Chương 1</button>
-              <button class="chat-pill-btn" onclick="sendQuickPrompt('🎯 Chỉ giữ lại các chương cốt lõi nhất, ẩn các phần phụ')">🎯 Giữ phần cốt lõi</button>
-              <button class="chat-pill-btn" onclick="sendQuickPrompt('⏱️ Cân đối tổng thời lượng bài giảng về đúng 10 phút')">⏱️ Cân đối 10 phút</button>
-            </div>
-        `;
+        try {
+          const savedHistory = JSON.parse(localStorage.getItem('clsg_chat_history_' + projId));
+          const savedHTML = localStorage.getItem('clsg_chat_html_' + projId);
+          if (savedHistory && savedHistory.length > 0 && savedHTML) {
+             clsgChatSessionHistory.push(...savedHistory);
+             chatContainer.innerHTML = savedHTML;
+             setTimeout(() => { chatContainer.scrollTop = chatContainer.scrollHeight; }, 100);
+          } else {
+             chatContainer.innerHTML = `
+                <div class="chat-msg msg-ai">
+                  <div class="msg-avatar">🤖</div>
+                  <div class="msg-bubble">
+                    Chào bạn! Tôi là trợ lý AI sư phạm. Bạn có thể yêu cầu tạo video bài giảng, mở rộng nhánh sơ đồ tư duy hoặc tinh chỉnh kịch bản theo yêu cầu riêng.
+                  </div>
+                </div>
+                <div class="chat-suggestions">
+                  <div style="font-size: 10.5px; color: var(--text-dim); margin-bottom: 3px;">Gợi ý câu lệnh nhanh cho người mới:</div>
+                  <button class="chat-pill-btn" onclick="sendQuickPrompt('📖 Tóm tắt toàn bộ bài giảng này và nêu các luận điểm cốt lõi')">📖 Tóm tắt bài giảng</button>
+                  <button class="chat-pill-btn" onclick="sendQuickPrompt('🎙️ Đọc thử lời giảng kịch bản của Chương 1')">🎙️ Đọc thử Chương 1</button>
+                  <button class="chat-pill-btn" onclick="sendQuickPrompt('🎯 Chỉ giữ lại các chương cốt lõi nhất, ẩn các phần phụ')">🎯 Giữ phần cốt lõi</button>
+                  <button class="chat-pill-btn" onclick="sendQuickPrompt('⏱️ Cân đối tổng thời lượng bài giảng về đúng 10 phút')">⏱️ Cân đối 10 phút</button>
+                </div>
+             `;
+          }
+        } catch(e) { }
       }
       
       const emptyState = document.getElementById('inspector-empty-state');
@@ -10548,7 +10568,7 @@ QUY TẮC PHẢN HỒI QUAN TRỌNG:
       if (miniBadge) miniBadge.style.display = 'none';
 
       // Khôi phục phân đoạn (node) đang xem dở
-      const savedLeafKey = localStorage.getItem('clsg_active_leaf_key');
+      const savedLeafKey = localStorage.getItem('clsg_active_leaf_key_' + projId);
       if (savedLeafKey && currentNodesMap[savedLeafKey]) {
         const leafNode = currentNodesMap[savedLeafKey];
         const card = document.getElementById(`node-${savedLeafKey}`);
