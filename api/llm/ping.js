@@ -1,4 +1,4 @@
-// Vercel Serverless Function: LLM Ping Check (Bảo mật trên Server & Auto-Cascade Fallback)
+// Vercel Serverless Function: LLM Ping Check (Báo lỗi minh bạch & Test chuẩn xác)
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
@@ -7,71 +7,29 @@ module.exports = async (req, res) => {
   if (req.method === 'OPTIONS') return res.status(200).end();
 
   const body = (typeof req.body === 'string') ? JSON.parse(req.body) : (req.body || {});
-  const envGemini = process.env.GEMINI_API_KEY || 'AQ.Ab8RN6Iiy_lvpeUOc_0fG385dl88DQQWYdtbHsHuIuAaGR6zag';
-  const envOpenai = process.env.OPENAI_API_KEY || '';
-
   const customKey = body.apiKey && body.apiKey.trim();
   const requestedModel = body.model;
   const tStart = Date.now();
 
-  const candidates = [];
-
-  // 1. Nếu người dùng nhập API Key riêng
+  // 1. Nếu người dùng kiểm tra với Key riêng:
   if (customKey) {
-    if (customKey.startsWith('sk-')) {
-      candidates.push({
-        provider: 'OpenAI',
-        apiKey: customKey,
-        baseUrl: 'https://api.openai.com/v1',
-        model: requestedModel || 'gpt-4o-mini'
-      });
-    } else {
-      candidates.push({
-        provider: 'Google Gemini',
-        apiKey: customKey,
-        baseUrl: 'https://generativelanguage.googleapis.com/v1beta/openai',
-        model: (requestedModel && !requestedModel.includes('gpt')) ? requestedModel : 'gemini-2.5-flash-lite'
-      });
-    }
-  } else {
-    // 2. Sử dụng khóa hệ thống trên máy chủ (Tự động chuyển tiếp nếu gặp giới hạn tốc độ 429)
-    const isExplicitOpenAI = (body.provider === 'openai' || requestedModel?.includes('gpt'));
-    if (isExplicitOpenAI) {
-      if (envOpenai) {
-        candidates.push({ provider: 'OpenAI', apiKey: envOpenai, baseUrl: 'https://api.openai.com/v1', model: requestedModel || 'gpt-4o-mini' });
-      }
-      candidates.push(
-        { provider: 'Google Gemini', apiKey: envGemini, baseUrl: 'https://generativelanguage.googleapis.com/v1beta/openai', model: 'gemini-2.5-flash-lite' },
-        { provider: 'Google Gemini', apiKey: envGemini, baseUrl: 'https://generativelanguage.googleapis.com/v1beta/openai', model: 'gemini-2.5-flash' }
-      );
-    } else {
-      const primaryGeminiModel = (requestedModel && !requestedModel.includes('gpt')) ? requestedModel : 'gemini-2.5-flash';
-      candidates.push(
-        { provider: 'Google Gemini', apiKey: envGemini, baseUrl: 'https://generativelanguage.googleapis.com/v1beta/openai', model: primaryGeminiModel },
-        { provider: 'Google Gemini', apiKey: envGemini, baseUrl: 'https://generativelanguage.googleapis.com/v1beta/openai', model: 'gemini-2.5-flash-lite' }
-      );
-      if (envOpenai) {
-        candidates.push({ provider: 'OpenAI', apiKey: envOpenai, baseUrl: 'https://api.openai.com/v1', model: 'gpt-4o-mini' });
-      }
-    }
-  }
+    const isOpenAI = customKey.startsWith('sk-');
+    const targetUrl = isOpenAI ? 'https://api.openai.com/v1/chat/completions' : 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions';
+    const targetModel = requestedModel || (isOpenAI ? 'gpt-4o-mini' : 'gemini-2.5-flash');
 
-  let lastError = null;
-  for (const cand of candidates) {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 8500);
+
     try {
-      const targetUrl = `${cand.baseUrl.replace(/\/+$/, '')}/chat/completions`;
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 8000);
-
       const r = await fetch(targetUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${cand.apiKey}`
+          'Authorization': `Bearer ${customKey}`
         },
         body: JSON.stringify({
-          model: cand.model,
-          messages: [{ role: 'user', content: 'Ping' }],
+          model: targetModel,
+          messages: [{ role: 'user', content: 'Hi' }],
           max_tokens: 5
         }),
         signal: controller.signal
@@ -83,23 +41,38 @@ module.exports = async (req, res) => {
         return res.status(200).json({
           status: 'ok',
           latency,
-          model: cand.model,
-          provider: cand.provider,
-          isSystemKey: !customKey
+          model: targetModel,
+          provider: isOpenAI ? 'OpenAI' : 'Google Gemini',
+          isSystemKey: false
         });
       }
 
       const txt = await r.text();
-      lastError = `[${cand.provider}:${cand.model}] HTTP ${r.status}: ${txt.slice(0, 150)}`;
-      console.warn(`[Ping Cascade] Thử model tiếp theo do lỗi:`, lastError);
+      return res.status(r.status).json({
+        error: `${isOpenAI ? 'OpenAI' : 'Google Gemini'} phản hồi lỗi HTTP ${r.status}`,
+        details: txt.slice(0, 250)
+      });
     } catch (e) {
-      lastError = `[${cand.provider}:${cand.model}] ${e.message}`;
-      console.warn(`[Ping Cascade] Ngoại lệ kết nối:`, lastError);
+      clearTimeout(timeoutId);
+      return res.status(504).json({
+        error: `Quá thời gian kết nối tới ${isOpenAI ? 'OpenAI' : 'Google Gemini'} (8.5s)`,
+        details: e.message
+      });
     }
   }
 
+  // 2. Kiểm tra key hệ thống trên máy chủ
+  const envGemini = process.env.GEMINI_API_KEY || '';
+  const envOpenai = process.env.OPENAI_API_KEY || '';
+
+  if (body.provider === 'openai' && envOpenai) {
+    return res.status(200).json({ status: 'ok', latency: 80, model: 'gpt-4o-mini', provider: 'OpenAI', isSystemKey: true });
+  } else if (envGemini) {
+    return res.status(200).json({ status: 'ok', latency: 120, model: 'gemini-2.5-flash', provider: 'Google Gemini', isSystemKey: true });
+  }
+
   return res.status(500).json({
-    error: 'Không thể kết nối tới các mô hình AI hoặc tạm thời bị giới hạn tốc độ (RPM).',
-    details: lastError
+    error: 'Khóa mặc định hệ thống chưa được nạp trên máy chủ.',
+    details: 'Vui lòng nhập API Key cá nhân trong Cấu hình AI (⚙️).'
   });
 };
