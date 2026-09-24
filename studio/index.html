@@ -8612,6 +8612,13 @@ Trả về DUY NHẤT JSON hợp lệ:
           mediaInstruction = `Chỉ dẫn tư liệu: "${mediaNote}".`;
         }
 
+                // [UPGRADE 2: Visual Taxonomy Prompting]
+        let visualTaxonomyRule = '';
+        if (visualType === 'split_screen') visualTaxonomyRule = 'QUY TẮC ĐẠO DIỄN THỊ GIÁC (Split Screen): Hình ảnh minh họa nằm ở MỘT NỬA màn hình. Bạn phải dùng từ ngữ chỉ hướng để điều hướng mắt học viên (Ví dụ: "Hãy quan sát biểu đồ bên cạnh...", "Như chúng ta thấy ở nửa bên kia...").';
+        else if (visualType === 'immersive') visualTaxonomyRule = 'QUY TẮC ĐẠO DIỄN THỊ GIÁC (Immersive): Hình ảnh minh họa ĐANG BAO TRÙM TOÀN MÀN HÌNH. TUYỆT ĐỐI KHÔNG dùng từ "hãy nhìn vào chữ" hay "bảng bên cạnh". Thay vào đó, dùng ngôn ngữ mô tả sâu vào hình ảnh và kể chuyện để học viên chìm đắm vào hình ảnh trước mắt.';
+        else if (visualType === 'lower_third') visualTaxonomyRule = 'QUY TẮC ĐẠO DIỄN THỊ GIÁC (Lower Third): Chữ chỉ xuất hiện như một dải nhỏ ở dưới cùng, bạn đang chiếm trọn khung hình. Hãy nói chuyện trực tiếp, duy trì giao tiếp bằng mắt (eye contact) với người học qua camera, không chỉ trỏ.';
+        else visualTaxonomyRule = `QUY TẮC ĐẠO DIỄN THỊ GIÁC: Định dạng là [${visualType}]. Điều chỉnh lời dẫn cho phù hợp.`;
+
         const systemPrompt = `Bạn là Chuyên gia Giảng dạy cấp cao.
 Nhiệm vụ: Viết KỊCH BẢN LỜI THOẠI GIẢNG DẠY SƯ PHẠM (Narration Script) cho một phân đoạn kiến thức cụ thể thuộc bài giảng "${projectTitle || 'Tổng hợp'}".
 
@@ -8623,7 +8630,8 @@ QUY TẮC BẮT BUỘC:
    - [P3] (ngắt 1.5s để người học ngẫm nghĩ sau khái niệm cốt lõi)
 3. Độ dài kịch bản phải khớp sát khoảng ${targetWords} từ (tương ứng ${dur} giây ở tốc độ đọc ${pace} WPM).
 4. Các thuật ngữ chuyên ngành phải giải thích dễ hiểu. Các công thức (nếu có) dùng định dạng LaTeX kẹp giữa $...$.
-${mediaInstruction ? '5. ' + mediaInstruction : ''}
+5. ${visualTaxonomyRule}
+${mediaInstruction ? '6. ' + mediaInstruction : ''}
 
 Trả về DUY NHẤT văn bản kịch bản lời thoại hoàn chỉnh (không trả về JSON, không bao giờ thêm lời chào ngoài lề ở đầu hay cuối).`;
 
@@ -10973,6 +10981,22 @@ QUY TẮC PHẢN HỒI QUAN TRỌNG:
             if (lastSentence.length > 8) {
               bridgeIntro = `Nối tiếp câu kết của phần trước: "${lastSentence.slice(0, 120)}"`;
             }
+          }
+        }
+        // [UPGRADE 1: 3D Contextual Bridge (Next Slide Foreshadowing)]
+        const cards = Array.from(document.querySelectorAll('.segment-script-card'));
+        const currentCard = document.getElementById(`seg-card-${itKey}`);
+        const idx = cards.indexOf(currentCard);
+        if (idx !== -1 && idx < cards.length - 1) {
+          const nextCard = cards[idx + 1];
+          const nextTitleEl = nextCard.querySelector('.seg-title');
+          if (nextTitleEl) {
+            const nextTitle = nextTitleEl.innerText.trim();
+            const foreshadowText = `=> LƯU Ý FORESHADOWING TỪ ĐẠO DIỄN: Phần tiếp theo bài giảng sẽ nói về "${nextTitle}". Hãy chèn 1 CÂU GỢI MỞ ngắn ở CUỐI kịch bản để dẫn dắt sự tò mò của học viên sang phần đó một cách tự nhiên.`;
+            if (bridgeIntro) bridgeIntro += `
+
+${foreshadowText}`;
+            else bridgeIntro = foreshadowText;
           }
         }
 
