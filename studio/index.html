@@ -7741,67 +7741,25 @@ Hãy viết lời giảng sư phạm hoàn chỉnh theo từng phân đoạn [m�
         const cfg = this.getConfig();
         if (!deckCatalog || deckCatalog.trim().length < 30) return null;
 
-        const systemPrompt = `Bạn là Giáo sư & Chuyên gia Sư phạm Giảng dạy Đại học môn Toán - Tin và Khoa học Dữ liệu.
-Dưới đây là DANH MỤC TOÀN BỘ SLIDE CỦA BÀI GIẢNG (kèm tiêu đề và trích đoạn nội dung).
+        const systemPrompt = `Analyze the slide catalog below and group slides into pedagogical chapters.
 
-NHIỆM VỤ: Hãy phân tích toàn bộ tiến trình bài giảng và gom các slide thành các CHƯƠNG SƯ PHẠM HOÀN HẢO THEO ĐÚNG MẠCH KIẾN THỨC THỰC TẾ.
+RULES:
+- Number of chapters should match the actual content structure. Do NOT force a fixed count.
+- Each chapter has sections with original slide numbering. Each section has items with pdfStart/pdfEnd.
+- Items include: code, text, pdfStart, pdfEnd, summary (1 sentence), mechanism (LaTeX $...$), key_point, details, examples.
+- Use numbered codes matching slide structure (1.1, 1.2... NOT "Phần a").
 
-QUY TẮC BÓC TÁCH LINH HOẠT & CHUẨN MỰC HỌC THUẬT:
-1. ĐẶT TÊN CHƯƠNG & PHÂN CẤP CHUẨN MỰC:
-   - Số lượng chương linh hoạt bám sát nội dung slide thực tế (không ép cứng số lượng).
-   - Tên chương đại diện đúng cho chủ đề kiến thức của phân đoạn slide đó.
-2. TRÍCH XUẤT ĐẦY ĐỦ CÁC MỤC CON (SECTIONS):
-   - Đánh số linh hoạt: Nếu slide có số mục 1.1, 1.2, 1.3... thì dùng đúng "code": "1.1", "1.2"...
-   - Tuyệt đối không tự ý cắt bớt các phần hay ép cứng chỉ 1-2 phần.
-3. PHÂN ĐOẠN SLIDE CHÍNH XÁC:
-   - "pdfStart": số slide bắt đầu thực tế.
-   - "pdfEnd": số slide kết thúc thực tế.
-4. CÔNG THỨC TOÁN HỌC: Mọi công thức toán học, ký hiệu ma trận, hàm số BẮT BUỘC viết dưới dạng LaTeX chuẩn kẹp giữa cặp dấu đô la $...$ (ví dụ: $P(\\alpha_1 Y_1 + \\alpha_2 Y_2 | Z)$, $\\phi(B)X_t = \\theta(B)W_t$, $\\gamma(h)$, $\\mathbb{R}^d$) để hệ thống tự động biên dịch sang công thức trực quan.
-5. TỪNG MỤC CON BẮT BUỘC CÓ ĐỦ 5 TRƯỜNG BÓC TÁCH CHUYÊN SÂU CHI TIẾT:
-   - "summary": KHÁI NIỆM CỐT LÕI (2-3 câu phân tích sâu bản chất lý thuyết, định nghĩa toán học chính thức).
-   - "mechanism": CƠ CHẾ & GIẢI THUẬT (Mô tả chi tiết giải thuật, công thức toán học $...$, các bước tính toán).
-   - "key_point": ĐIỂM THEN CHỐT (Các lưu ý quan trọng, điều kiện tiên quyết, giới hạn phương pháp).
-   - "details": NỘI DUNG CHI TIẾT (Liệt kê và giải thích từng thành phần con, định lý, tính chất cụ thể).
-   - "examples": VÍ DỤ & ỨNG DỤNG (Đưa ra ít nhất 1 ví dụ cụ thể minh họa và ứng dụng thực tiễn).
+OUTPUT: Valid JSON only.
+{"chapters":[{"chapter":"CHƯƠNG 1","title":"...","depth":"core","visual_type":"split_screen","sections":[{"code":"1.1","title":"...","items":[{"code":"1.1.1","text":"...","pdfStart":1,"pdfEnd":5,"summary":"...","mechanism":"...","key_point":"...","details":"...","examples":"..."}]}]}]}`;
 
-ĐỊNH DẠNG ĐẦU RA: Trả về DUY NHẤT JSON hợp lệ (không kèm markdown):
-{
-  "chapters": [
-    {
-      "chapter": "CHƯƠNG 1",
-      "title": "Tên chương chuẩn học thuật",
-      "depth": "bridge",
-      "visual_type": "split_screen",
-      "sections": [
-        {
-          "code": "1.1",
-          "title": "Tên phân đoạn",
-          "items": [
-            {
-              "code": "1.1.1",
-              "text": "Tên mục kiến thức",
-              "pdfStart": 1,
-              "pdfEnd": 6,
-              "summary": "Khái niệm cốt lõi đầy đủ...",
-              "mechanism": "Cơ chế hoặc công thức cốt lõi $...$...",
-              "key_point": "Điểm quan trọng cần nhớ...",
-              "details": "Nội dung chi tiết từng trường hợp...",
-              "examples": "Ví dụ cụ thể và ứng dụng..."
-            }
-          ]
-        }
-      ]
-    }
-  ]
-}`;
         const payload = {
-          model: cfg.model || 'gemini-2.5-flash-lite',
+          model: cfg.model || 'gemini-2.5-flash',
           messages: [
             { role: 'system', content: systemPrompt },
-            { role: 'user', content: `Tài liệu: ${fileName || 'Bài giảng đại học'}\nTổng số slide: ${totalPages}\n\nDANH MỤC TOÀN BỘ SLIDE:\n${deckCatalog}` }
+            { role: 'user', content: `Document: ${fileName || 'Lecture'}\nTotal slides: ${totalPages}\n\nSLIDE CATALOG:\n${deckCatalog}` }
           ],
-          max_tokens: 8000,
-          temperature: 0.2,
+          max_tokens: 16000,
+          temperature: 0.15,
           provider: cfg.provider || 'gemini_local',
           apiKey: cfg.apiKey || ''
         };
@@ -7820,11 +7778,14 @@ QUY TẮC BÓC TÁCH LINH HOẠT & CHUẨN MỰC HỌC THUẬT:
             const raw = data.choices?.[0]?.message?.content || '';
             const parsed = this.safeJsonParse(raw);
             if (parsed && parsed.chapters && parsed.chapters.length > 0) {
+              parsed.chapters.forEach((ch, idx) => {
+                if (!ch.chapter) ch.chapter = `CHƯƠNG ${idx + 1}`;
+              });
               return parsed;
             }
           }
         } catch (e) {
-          console.warn('[LLMClient] Lỗi bóc tách Slide Deck qua serverless:', e);
+          console.warn('[LLMClient] extractSlideDeckStructure error:', e);
         }
         return null;
       },
@@ -7833,154 +7794,25 @@ QUY TẮC BÓC TÁCH LINH HOẠT & CHUẨN MỰC HỌC THUẬT:
         const cfg = this.getConfig();
         if (!tocText || tocText.trim().length < 40) return null;
 
-        const systemPrompt = `Bạn là Chuyên gia Sư phạm Giảng dạy Đại học môn Toán - Tin & Khoa học Dữ liệu.
-Dưới đây là BẢNG MỤC LỤC (Table of Contents) hoặc AGENDA / OUTLINE của tài liệu học thuật / bài giảng.
+        const systemPrompt = `Parse the Table of Contents below into a COMPLETE JSON structure.
 
-NHIỆM VỤ CỐT LÕI:
-Dựa vào Mục lục hoặc Agenda được cung cấp, hãy trích xuất và thiết kế CẤU TRÚC SƠ ĐỒ BÀI GIẢNG SƯ PHẠM HOÀN CHỈNH, ĐẦY ĐỦ VÀ CHÍNH XÁC 100%.
+RULES:
+- Extract ALL chapters. If the book has 10 chapters, output 10 chapters. NEVER truncate.
+- Extract ALL sections per chapter with their original numbering (1.1, 1.2, 1.3...).
+- Each section has 1-2 items with: code, text (short name), printed_start, printed_end, summary (1 sentence), mechanism (key formula in LaTeX $...$), key_point (1 sentence).
+- Use "code" matching the document numbering (e.g. "1.1", "2.3", NOT "Phần a").
 
-QUY TẮC BÓC TÁCH LINH HOẠT & CHUẨN MỰC HỌC THUẬT (BẮT BUỘC):
-1. TRÍCH XUẤT ĐẦY ĐỦ TẤT CẢ CÁC CHƯƠNG / PHẦN CHÍNH:
-   - Giữ nguyên số lượng chương thực tế của tài liệu. Nếu tài liệu có 5 chương, 8 chương hay 12 chương thì BẮT BUỘC trích xuất đủ bấy nhiêu chương. TUYỆT ĐỐI KHÔNG tự ý cắt bớt chương.
-   - Định dạng: "chapter": "CHƯƠNG 1", "CHƯƠNG 2"... kèm "title" là tên chuẩn học thuật (loại bỏ từ rác).
-
-2. TRÍCH XUẤT ĐẦY ĐỦ 100% TẤT CẢ CÁC MỤC CON (SECTIONS) TRONG TỪNG CHƯƠNG:
-   - TUYỆT ĐỐI KHÔNG giới hạn số lượng mục. Nếu Chương 1 có các mục 1.1, 1.2, 1.3, 1.4, 1.5, 1.6 thì BẮT BUỘC phải trích xuất ĐỦ CẢ 6 MỤC (từ 1.1 đến 1.6). Không được bỏ sót bất kỳ mục nào.
-   - ĐÁNH SỐ LINH HOẠT THEO TÀI LIỆU ("code"):
-     + Nếu tài liệu đánh số thập phân (1.1, 1.2, 1.3... hoặc 2.1, 2.2...): Gán đúng "code": "1.1", "code": "1.2"... và "title" là phần tên không chứa số.
-     + Nếu tài liệu dùng La Mã (I, II, III), chữ cái (A, B, C) hoặc tên phân đoạn: Giữ nguyên mã đó ("I", "II", "Phần 1"...).
-     + TUYỆT ĐỐI KHÔNG tự ý đổi mã số "1.1", "1.2" thành "Phần a", "Phần b".
-
-3. PHÂN CẤP NHÁNH LÁ (ITEMS) THỰC CHẤT, TRÁNH TRÙNG LẶP:
-   - Dưới mỗi Section (mục con), tạo 1 đến 3 Items là các khái niệm / bài toán / định lý toán học cụ thể thực tế.
-   - TUYỆT ĐỐI KHÔNG đặt tên Item con trùng lặp lại y hệt tiêu đề của Section cha.
-   - Ví dụ:
-     + Mục "1.1 Examples of Time Series" -> items: [{"code": "1.1.1", "text": "Dữ liệu Chuỗi thời gian Kinh tế & Tài chính"}, {"code": "1.1.2", "text": "Dữ liệu Vật lý, Khí hậu & Kỹ thuật"}]
-     + Mục "1.4 Stationary Time Series" -> items: [{"code": "1.4.1", "text": "Định nghĩa Tính dừng ngặt & Tính dừng yếu"}, {"code": "1.4.2", "text": "Hàm tự hiệp phương sai ACVF và Tự tương quan ACF"}]
-     + Mục "1.5 Estimation of Trend and Seasonal Components" -> items: [{"code": "1.5.1", "text": "Lọc trung bình trượt khử Trend"}, {"code": "1.5.2", "text": "Phương pháp sai phân (Differencing) khử tính mùa vụ"}]
-     + Mục "1.6 Autocorrelation Function" -> items: [{"code": "1.6.1", "text": "Hàm ACF mẫu (Sample ACF)"}, {"code": "1.6.2", "text": "Kiểm định Nhiễu trắng (Portmanteau / Ljung-Box Test)"}]
-
-4. CÔNG THỨC TOÁN HỌC & TÓM TẮT:
-   - Mọi công thức toán học viết bằng LaTeX chuẩn kẹp giữa cặp $...$ (ví dụ: $\\gamma(h)$, $\\rho(h)$, $\\nabla X_t = X_t - X_{t-1}$, $\\phi(B)X_t = \\theta(B)W_t$).
-   - Mỗi item có:
-     + "summary": Tóm tắt 1-2 câu về bản chất khái niệm.
-     + "mechanism": Công thức toán học hoặc giải thuật cốt lõi.
-     + "key_point": Điểm quan trọng cần ghi nhớ.
-     + "printed_start": Số trang in bắt đầu (nếu có trong mục lục).
-     + "printed_end": Số trang in kết thúc (nếu có trong mục lục).
-
-ĐỊNH DẠNG ĐẦU RA: Trả về DUY NHẤT JSON hợp lệ (không kèm bất kỳ văn bản markdown nào ngoài JSON):
-{
-  "chapters": [
-    {
-      "chapter": "CHƯƠNG 1",
-      "title": "Introduction",
-      "depth": "bridge",
-      "visual_type": "split_screen",
-      "sections": [
-        {
-          "code": "1.1",
-          "title": "Examples of Time Series",
-          "items": [
-            {
-              "code": "1.1.1",
-              "text": "Dữ liệu Kinh tế & Tài chính",
-              "printed_start": 1,
-              "printed_end": 6,
-              "summary": "Chuỗi thời gian là dãy quan sát theo thứ tự thời gian...",
-              "mechanism": "Mô hình hóa $X_t = m_t + s_t + Y_t$...",
-              "key_point": "Nhận diện tính phụ thuộc tương quan giữa các thời điểm."
-            }
-          ]
-        },
-        {
-          "code": "1.2",
-          "title": "Objectives of Time Series Analysis",
-          "items": [
-            {
-              "code": "1.2.1",
-              "text": "Mục tiêu Dự báo & Điều khiển",
-              "printed_start": 6,
-              "printed_end": 8,
-              "summary": "Mục tiêu cốt lõi là giải thích cơ chế sinh dữ liệu và dự báo tương lai...",
-              "mechanism": "Sử dụng hàm tổn thất sai số bình phương trung bình $MSE$...",
-              "key_point": "Dự báo tối ưu dựa trên kỳ vọng có điều kiện."
-            }
-          ]
-        },
-        {
-          "code": "1.3",
-          "title": "Simple Descriptive Techniques",
-          "items": [
-            {
-              "code": "1.3.1",
-              "text": "Phân rã Xu thế & Tính mùa",
-              "printed_start": 8,
-              "printed_end": 14,
-              "summary": "Kỹ thuật mô tả và phân rã các thành phần trong chuỗi...",
-              "mechanism": "Bộ lọc trung bình trượt và làm mịn hàm spline...",
-              "key_point": "Khử xu thế trước khi phân tích tính dừng."
-            }
-          ]
-        },
-        {
-          "code": "1.4",
-          "title": "Stationary Time Series",
-          "items": [
-            {
-              "code": "1.4.1",
-              "text": "Tính dừng ngặt & Dừng yếu",
-              "printed_start": 14,
-              "printed_end": 23,
-              "summary": "Định nghĩa tính dừng yếu thông qua kỳ vọng không đổi và hiệp phương sai chỉ phụ thuộc khoảng cách $h$...",
-              "mechanism": "Hàm tự hiệp phương sai $\\gamma(h) = Cov(X_{t+h}, X_t)$ và $\\rho(h) = \\gamma(h)/\\gamma(0)$...",
-              "key_point": "Tính không âm xác định của ma trận tự hiệp phương sai."
-            }
-          ]
-        },
-        {
-          "code": "1.5",
-          "title": "Estimation of Trend and Seasonal Components",
-          "items": [
-            {
-              "code": "1.5.1",
-              "text": "Ước lượng Trend & Sai phân",
-              "printed_start": 23,
-              "printed_end": 37,
-              "summary": "Ước lượng đa thức xu thế và phương pháp sai phân $\\nabla X_t$...",
-              "mechanism": "Toán tử trễ lùi $B$ và toán tử sai phân $(1-B)^d$...",
-              "key_point": "Khử tính không dừng bằng phép lấy sai phân."
-            }
-          ]
-        },
-        {
-          "code": "1.6",
-          "title": "Autocorrelation Function",
-          "items": [
-            {
-              "code": "1.6.1",
-              "text": "Hàm ACF mẫu & Kiểm định White Noise",
-              "printed_start": 37,
-              "printed_end": 43,
-              "summary": "Tính toán tự tương quan mẫu $\\hat{\\rho}(h)$ để nhận diện mô hình...",
-              "mechanism": "Phân phối tiệm cận chuẩn $N(0, 1/n)$ và kiểm định Ljung-Box $Q$...",
-              "key_point": "Khoảng tin cậy $\\pm 1.96/\\sqrt{n}$ để kiểm tra nhiễu trắng."
-            }
-          ]
-        }
-      ]
-    }
-  ]
-}`;
+OUTPUT: Valid JSON only, no markdown.
+{"chapters":[{"chapter":"CH1","title":"...","depth":"core","visual_type":"split_screen","sections":[{"code":"1.1","title":"...","items":[{"code":"1.1.1","text":"...","printed_start":1,"printed_end":5,"summary":"...","mechanism":"...","key_point":"..."}]}]}]}`;
 
         const payload = {
-          model: cfg.model || 'gemini-2.5-flash-lite',
+          model: cfg.model || 'gemini-2.5-flash',
           messages: [
             { role: 'system', content: systemPrompt },
-            { role: 'user', content: `Tên tài liệu: ${fileName || 'Tài liệu học tập'}\n\nNỘI DUNG MỤC LỤC / AGENDA TRÍCH XUẤT ĐẦY ĐỦ:\n${tocText.slice(0, 32000)}` }
+            { role: 'user', content: `Document: ${fileName || 'Textbook'}\n\nTABLE OF CONTENTS:\n${tocText.slice(0, 30000)}` }
           ],
-          max_tokens: 8000,
-          temperature: 0.2,
+          max_tokens: 16000,
+          temperature: 0.1,
           provider: cfg.provider || 'gemini_local',
           apiKey: cfg.apiKey || ''
         };
@@ -7999,11 +7831,15 @@ QUY TẮC BÓC TÁCH LINH HOẠT & CHUẨN MỰC HỌC THUẬT (BẮT BUỘC):
             const raw = data.choices?.[0]?.message?.content || '';
             const parsed = this.safeJsonParse(raw);
             if (parsed && parsed.chapters && parsed.chapters.length > 0) {
+              // Chuẩn hóa chapter labels
+              parsed.chapters.forEach((ch, idx) => {
+                if (!ch.chapter || ch.chapter.startsWith('CH')) ch.chapter = `CHƯƠNG ${idx + 1}`;
+              });
               return parsed;
             }
           }
         } catch (e) {
-          console.warn('[LLMClient] Lỗi bóc tách TOC qua serverless:', e);
+          console.warn('[LLMClient] extractTOCWithAI error:', e);
         }
         return null;
       },
@@ -8012,747 +7848,67 @@ QUY TẮC BÓC TÁCH LINH HOẠT & CHUẨN MỰC HỌC THUẬT (BẮT BUỘC):
         const cfg = this.getConfig();
         if (!rawText || rawText.trim().length < 50) return null;
 
-        // Trích chọn lọc mẫu văn bản giàu ngữ nghĩa nhất từ đầu, giữa và các đề mục
-        const textSample = rawText.trim().slice(0, 18000);
+        const textSample = rawText.trim().slice(0, 20000);
 
-        const systemPrompt = `Bạn là Chuyên gia Sư phạm Đại học và Giảng viên cấp cao ngành Toán - Tin và Khoa học Dữ liệu.
-NHIỆM VỤ: Đọc toàn bộ nội dung tài liệu / bài giảng được cung cấp và thiết kế một CẤU TRÚC SƠ ĐỒ BÀI GIẢNG SƯ PHẠM ĐẲNG CẤP, CHUẨN MỰC.
+        const systemPrompt = `Analyze the document text and create a complete chapter structure.
 
-QUY TẮC BÓC TÁCH & ĐẶT TÊN SƯ PHẠM LINH HOẠT (BẮT BUỘC):
-1. LỌC BỎ RÁC: Tuyệt đối không để sót số trang vụn vặt, tên tác giả, trường đại học, nhà xuất bản, copyright.
-2. SỐ LƯỢNG CHƯƠNG LINH HOẠT: Bám sát mạch kiến thức thực tế của tài liệu (không gò ép số chương). Mỗi chương đại diện cho một phân đoạn tri thức học thuật mạch lạc.
-3. TRÍCH XUẤT ĐẦY ĐỦ CÁC MỤC CON (SECTIONS) VÀ ĐÁNH SỐ CHUẨN:
-   - Nếu tài liệu đánh số 1.1, 1.2, 1.3... thì dùng đúng "code": "1.1", "1.2"... Tuyệt đối không tự đổi thành "Phần a", "Phần b".
-   - Trích xuất đầy đủ tất cả các mục thực tế, không tự ý cắt bớt.
-4. MỖI MỤC CON CÓ CÁC LUẬN ĐIỂM THỰC CHẤT:
-   - Tuyệt đối không đặt tên Item con trùng lặp y hệt tiêu đề của Section cha.
-   - Công thức toán học bắt buộc viết dạng LaTeX kẹp giữa $...$.
-5. TỪNG MỤC CON PHẢI CÓ ĐỦ BẢN TÓM TẮT SÂU SẮC 5 MỤC (TUYỆT ĐỐI KHÔNG ĐƯỢC VIẾT "Nội dung trích xuất từ trang..."):
-   - "summary": Khái niệm cốt lõi (2-3 câu phân tích sâu bản chất toán học).
-   - "mechanism": Cơ chế vận hành, quy trình thuật toán hoặc công thức cốt lõi.
-   - "key_point": Điểm then chốt cần ghi nhớ khi áp dụng.
-   - "details": Liệt kê các định lý, tính chất hoặc các bước chi tiết.
-   - "examples": Ví dụ minh họa thực tiễn.
+RULES:
+- Extract ALL chapters matching the document's actual structure. NEVER truncate.
+- Each chapter has sections with document numbering (1.1, 1.2...). Each section has 1-2 items.
+- Items include: code, text, summary, mechanism (LaTeX $...$), key_point, details, examples.
+- Filter out junk: page numbers, author names, publisher info, copyright.
 
-ĐỊNH DẠNG ĐẦU RA: Trả về duy nhất JSON hợp lệ (không giải thích thêm):
-{
-  "chapters": [
-    {
-      "chapter": "CHƯƠNG 1",
-      "title": "Tên chương chuẩn sư phạm",
-      "depth": "bridge",
-      "visual_type": "split_screen",
-      "sections": [
-        {
-          "code": "Phần a",
-          "title": "Tên phân đoạn",
-          "items": [
-            {
-              "code": "a1",
-              "text": "Tên mục kiến thức",
-              "duration": 30,
-              "summary": "Khái niệm cốt lõi đầy đủ...",
-              "mechanism": "Cơ chế và giải thuật toán học...",
-              "key_point": "Điểm then chốt cần nắm...",
-              "details": "Chi tiết các thành phần...",
-              "examples": "Ví dụ và ứng dụng thực tiễn..."
-            }
-          ]
-        }
-      ]
-    }
-  ]
-}`;
+OUTPUT: Valid JSON only.
+{"chapters":[{"chapter":"CHƯƠNG 1","title":"...","depth":"core","visual_type":"split_screen","sections":[{"code":"1.1","title":"...","items":[{"code":"1.1.1","text":"...","duration":30,"summary":"...","mechanism":"...","key_point":"...","details":"...","examples":"..."}]}]}]}`;
 
-        const userPrompt = `Tên tài liệu: ${fileName || 'Tài liệu học tập'}\n\nNội dung bài giảng trích xuất:\n\n${textSample}`;
+        const userPrompt = `Document: ${fileName || 'Textbook'}\n\nContent:\n\n${textSample}`;
 
         const payload = {
-          model: cfg.model || 'gemini-2.5-flash-lite',
+          model: cfg.model || 'gemini-2.5-flash',
           messages: [
             { role: 'system', content: systemPrompt },
             { role: 'user', content: userPrompt }
           ],
-          max_tokens: 3500,
-          temperature: 0.35,
+          max_tokens: 16000,
+          temperature: 0.3,
           provider: cfg.provider || 'gemini_local',
           apiKey: cfg.apiKey || ''
         };
 
-        // ƯU TIÊN SỐ 1 TUYỆT ĐỐI: GỌI QUA SERVERLESS PROXY /api/llm/chat (BẢO MẬT & DÙNG SẴN KEY HỆ THỐNG)
+        // GỌI QUA SERVERLESS PROXY
         let res = null;
         try {
           const serverUrl = (window.location.origin.startsWith('http') && !window.location.origin.includes('file:'))
             ? `${window.location.origin}/api/llm/chat`
-            : 'http://127.0.0.1:8765/api/llm/chat';
+            : 'https://slide-to-video-sigma.vercel.app/api/llm/chat';
           res = await fetch(serverUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
           });
         } catch (e) {
-          console.warn('[LLMClient] Server proxy không phản hồi, thử gọi trực tiếp...');
+          console.warn('[LLMClient] Server proxy error, trying direct...', e);
         }
 
         if (!res || !res.ok) {
           const endpoint = `${cfg.baseUrl.replace(/\/+$/, '')}/chat/completions`;
           const headers = { 'Content-Type': 'application/json' };
-          if (cfg.apiKey) {
-            headers['Authorization'] = `Bearer ${cfg.apiKey}`;
-          }
-          res = await fetch(endpoint, {
-            method: 'POST',
-            headers,
-            body: JSON.stringify(payload)
-          });
+          if (cfg.apiKey) headers['Authorization'] = `Bearer ${cfg.apiKey}`;
+          res = await fetch(endpoint, { method: 'POST', headers, body: JSON.stringify(payload) });
         }
 
-        if (!res.ok) {
-          const errText = await res.text();
-          throw new Error(`HTTP ${res.status}: ${errText.slice(0, 150)}`);
-        }
-
-        const data = await res.json();
-        let content = (data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) || '{}';
-        content = content.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
-        const parsed = this.safeJsonParse(content) || {};
-
-        if (!parsed.chapters || !Array.isArray(parsed.chapters) || parsed.chapters.length === 0) {
-          throw new Error('LLM không trả về danh sách chapters hợp lệ.');
-        }
-
-        // Đảm bảo thời lượng mặc định 30s và cấu trúc đầy đủ
-        parsed.chapters.forEach((ch, chIdx) => {
-          ch.chapter = ch.chapter || `CHƯƠNG ${chIdx + 1}`;
-          ch.depth = ch.depth || (chIdx === 0 ? 'bridge' : 'core');
-          ch.visual_type = ch.visual_type || 'split_screen';
-          (ch.sections || []).forEach((sec, secIdx) => {
-            sec.code = sec.code || `Phần ${String.fromCharCode(97 + secIdx)}`;
-            (sec.items || []).forEach((it, itIdx) => {
-              it.code = it.code || `a${itIdx + 1}`;
-              it.duration = it.duration || 30;
-              it.summary = it.summary || it.text || '';
-              it.mechanism = it.mechanism || '';
-              it.key_point = it.key_point || '';
+        if (res.ok) {
+          const data = await res.json();
+          const raw = data.choices?.[0]?.message?.content || '';
+          const parsed = this.safeJsonParse(raw);
+          if (parsed && parsed.chapters && parsed.chapters.length > 0) {
+            parsed.chapters.forEach((ch, idx) => {
+              if (!ch.chapter) ch.chapter = `CHƯƠNG ${idx + 1}`;
             });
-          });
-        });
-
-        return parsed;
-      }
-    };
-
-    async function generateSceneWithAI(chKey) {
-      showLoading("Đang Dùng AI Viết Lời Thoại...", "Đang đối chuẩn ngân sách từ và tính toán ngữ điệu sư phạm...");
-      try {
-        const res = await generateSceneWithAIInternal(chKey);
-        hideLoading();
-        renderScriptDocument();
-        renderTimeline();
-        if (res && res.isLiveAI) {
-          const mName = LLMClient.getConfig().model || 'Live AI';
-          showToast(`✨ Đã sinh lời thoại AI cho phân cảnh từ [${mName}]!`);
-        } else {
-          showToast("⚡ Đã sinh kịch bản sư phạm chuyên sâu cho phân cảnh (Bộ sinh CIKM Cục Bộ)!");
-        }
-      } catch (err) {
-        hideLoading();
-        console.error("Lỗi sinh lời thoại:", err);
-        await showCustomAlert({
-          title: "Chưa Thể Sinh Lời Thoại",
-          subtitle: "Lỗi kết nối",
-          message: `Không thể hoàn tất sinh lời thoại: ${err.message}`,
-          icon: "⚠️",
-          buttonText: "Đã Hiểu"
-        });
-      }
-    }
-
-    async function generateSceneWithAIInternal(chKey) {
-      const allSources = activeProject.sources || [
-        { name: activeProject.title + '.pdf', pages: 35, size: '1.2 MB', active: true }
-      ];
-      const activeSources = allSources.filter(s => s.active !== false);
-
-      let targetItem = null;
-      let targetSceneMatch = null;
-
-      for (let sIdx = 0; sIdx < activeSources.length; sIdx++) {
-        const src = activeSources[sIdx];
-        const originalIdx = allSources.indexOf(src);
-        const rootKey = getSourceKey(src, originalIdx >= 0 ? originalIdx : sIdx);
-        const sourceScenes = (src.scenes && src.scenes.length > 0)
-          ? src.scenes
-          : (originalIdx === 0 ? currentScenes : []);
-        const hierarchyChapters = getProjectHierarchy(activeProject, sourceScenes, src, originalIdx >= 0 ? originalIdx : sIdx);
-
-        for (let chIdx = 0; chIdx < hierarchyChapters.length; chIdx++) {
-          const currentKey = `ch-${rootKey}-${chIdx}`;
-          if (currentKey === chKey) {
-            targetItem = hierarchyChapters[chIdx];
-            targetSceneMatch = (originalIdx === 0 ? currentScenes : (src.scenes || []))[chIdx];
-            break;
+            return parsed;
           }
         }
-        if (targetItem) break;
-      }
-
-      if (!targetItem) {
-        throw new Error(`Không tìm thấy dữ liệu phân cảnh [${chKey}]`);
-      }
-
-      let purifiedText = '';
-      let isLiveAI = false;
-
-      // THỬ GỌI LIVE LLM NẾU CÓ MẠNG HOẶC API KEY
-      try {
-        const rawAiText = await LLMClient.generateNarration(targetItem);
-        if (rawAiText && rawAiText.trim().length > 30) {
-          purifiedText = ContentPurifier.purify(rawAiText);
-          isLiveAI = true;
-        }
-      } catch (err) {
-        console.warn(`[AI Engine] Live LLM không phản hồi. Tự động kích hoạt Bộ Sinh Sư Phạm Cục Bộ CIKM...`);
-      }
-
-      // NẾU LIVE LLM KHÔNG PHẢN HỒI -> TỰ ĐỘNG SINH SƯ PHẠM CHI TIẾT 65-75 TỪ CHO TỪNG NHÁNH LÁ
-      if (!purifiedText) {
-        const segNarrations = [];
-        (targetItem.sections || []).forEach(sec => {
-          (sec.items || []).forEach(it => {
-            const richNarr = synthesizeRichSegmentNarration(it, targetItem.title, targetItem.depth, activeProject.wpm || 140);
-            it.narration = richNarr;
-            segNarrations.push(`[${it.code}] ${richNarr}`);
-          });
-        });
-        purifiedText = segNarrations.join('\n\n');
-      } else {
-        // Cập nhật lời thoại chi tiết vào từng mục con (item) nếu có format [code]
-        const segPattern = /\[([a-z]\d{1,2})\]\s*([^\[]+)/gi;
-        const parsedSegs = {};
-        let match;
-        while ((match = segPattern.exec(purifiedText)) !== null) {
-          parsedSegs[match[1].trim()] = match[2].trim();
-        }
-
-        (targetItem.sections || []).forEach(sec => {
-          (sec.items || []).forEach(it => {
-            if (parsedSegs[it.code]) {
-              it.narration = parsedSegs[it.code];
-            } else if (!it.narration || it.narration.length < 35) {
-              it.narration = synthesizeRichSegmentNarration(it, targetItem.title, targetItem.depth, activeProject.wpm || 140);
-            }
-          });
-        });
-      }
-
-      setNodeParam(chKey, 'narration', purifiedText);
-      if (targetSceneMatch) {
-        targetSceneMatch.narration = purifiedText;
-      }
-
-      return { isLiveAI, purifiedText };
-    }
-
-    async function generateAllScenesWithAI() {
-      const allSources = activeProject.sources || [
-        { name: activeProject.title + '.pdf', pages: 35, size: '1.2 MB', active: true }
-      ];
-      const activeSources = allSources.filter(s => s.active !== false);
-
-      const chKeys = [];
-      activeSources.forEach((src, srcIdx) => {
-        const originalIdx = allSources.indexOf(src);
-        const rootKey = getSourceKey(src, originalIdx >= 0 ? originalIdx : srcIdx);
-        if (isNodeExcluded(rootKey)) return;
-        const sourceScenes = (src.scenes && src.scenes.length > 0)
-          ? src.scenes
-          : (originalIdx === 0 ? currentScenes : []);
-        const hierarchyChapters = getProjectHierarchy(activeProject, sourceScenes, src, originalIdx >= 0 ? originalIdx : srcIdx);
-        hierarchyChapters.forEach((chData, chIdx) => {
-          const chKey = `ch-${rootKey}-${chIdx}`;
-          if (!isNodeExcluded(chKey, [rootKey])) {
-            chKeys.push({ chKey, title: getNodeParam(chKey, 'title', chData.title) });
-          }
-        });
-      });
-
-      if (chKeys.length === 0) {
-        showToast('Không có phân cảnh nào đang hoạt động để sinh lời thoại!');
-        return;
-      }
-
-      const ok = await showCustomConfirm({
-        title: "Viết Toàn Bộ Kịch Bản Bài Giảng",
-        subtitle: "Chuẩn sư phạm MOOC CIKM • Tự động lấp đầy ngân sách thời lượng",
-        message: `Hệ thống sẽ viết kịch bản sư phạm chuyên sâu cho toàn bộ ${chKeys.length} phân cảnh (bao gồm tất cả các phân đoạn con trên sơ đồ tư duy).\n\n• Phân bổ chi tiết 65-75 từ cho từng phân đoạn 30s\n• Xóa bỏ hoàn toàn khoảng lặng dư thừa\n• Tự động tối ưu ngữ điệu và điểm ngắt nhịp [P1/P2/P3]`,
-        icon: "✨",
-        confirmText: "Bắt Đầu Viết",
-        cancelText: "Hủy Bỏ"
-      });
-      if (!ok) return;
-
-      showLoading(`Đang Khởi Tạo Viết Toàn Bộ...`, `Tổng cộng ${chKeys.length} phân cảnh...`);
-
-      let liveCount = 0;
-      let localCount = 0;
-
-      for (let i = 0; i < chKeys.length; i++) {
-        const item = chKeys[i];
-        updateLoading(`Đang Viết Lời Thoại (${i + 1}/${chKeys.length})...`, `Chương: ${item.title}`);
-        try {
-          const res = await generateSceneWithAIInternal(item.chKey);
-          if (res && res.isLiveAI) liveCount++;
-          else localCount++;
-        } catch (err) {
-          console.error(`Lỗi sinh cảnh ${item.chKey}:`, err);
-        }
-      }
-
-      hideLoading();
-      renderScriptDocument();
-      renderTimeline();
-      if (liveCount > 0) {
-        const mName = LLMClient.getConfig().model || 'Live AI';
-        showToast(`🎉 Đã hoàn tất viết kịch bản cho ${chKeys.length} phân cảnh (${liveCount} qua Live AI [${mName}], ${localCount} qua CIKM Engine)!`);
-      } else {
-        showToast(`🎉 Đã hoàn tất viết kịch bản chi tiết cho toàn bộ ${chKeys.length} phân cảnh!`);
-      }
-    }
-
-    function renderScriptDocument() {
-      const paper = document.getElementById('script-paper-view');
-      if (!paper) return;
-      paper.innerHTML = '';
-
-      const allSources = activeProject.sources || [
-        { name: activeProject.title + '.pdf', pages: 35, size: '1.2 MB', active: true }
-      ];
-      // Lọc các slide/nguồn tài liệu đang được tích chọn (active !== false)
-      const activeSources = allSources.filter(s => s.active !== false);
-
-      if (activeSources.length === 0) {
-        paper.innerHTML = `
-          <div style="text-align: center; padding: 60px 20px; color: var(--text-dim); background: rgba(15, 23, 42, 0.5); border-radius: var(--radius-md); border: 1px dashed rgba(244, 63, 94, 0.4);">
-            <div style="font-size: 40px; margin-bottom: 12px;">⚠️</div>
-            <div style="font-size: 15px; font-weight: 700; color: #f87171; margin-bottom: 6px;">Không có slide nào được chọn trong kịch bản!</div>
-            <div style="font-size: 12px; color: var(--text-muted);">Hãy tích chọn ít nhất 1 slide ở danh sách tài liệu bên trái để tự động tạo kịch bản bài giảng.</div>
-          </div>
-        `;
-        const metaEl = document.getElementById('doc-summary-meta');
-        if (metaEl) {
-          metaEl.innerHTML = `
-            <div class="meta-stat-row">⏱️ Tổng thời lượng: <strong>0s</strong></div>
-            <div class="meta-stat-row">🎬 0 chương từ 0 slide</div>
-          `;
-        }
-        updateBtnGenCountBadge(0, 0);
-        return;
-      }
-
-      // Quét tất cả các chương từ các slide đang active
-      let globalChapIdx = 0;
-      const scriptItems = [];
-
-      activeSources.forEach((src, srcIdx) => {
-        const originalIdx = allSources.indexOf(src);
-        const rootKey = getSourceKey(src, originalIdx >= 0 ? originalIdx : srcIdx);
-        if (isNodeExcluded(rootKey)) return;
-
-        const sourceScenes = (src.scenes && src.scenes.length > 0)
-          ? src.scenes
-          : (originalIdx === 0 ? currentScenes : []);
-        const hierarchyChapters = getProjectHierarchy(activeProject, sourceScenes, src, originalIdx >= 0 ? originalIdx : srcIdx);
-
-        hierarchyChapters.forEach((chData, chIdx) => {
-          const chKey = `ch-${rootKey}-${chIdx}`;
-          // Kiểm tra loại trừ
-          const isEx = isNodeExcluded(chKey, [rootKey]);
-          if (isEx) return;
-
-          const customTitle = getNodeParam(chKey, 'title', chData.title);
-          const customDur = getNodeParam(chKey, 'duration', chData.duration_s || 60);
-          const customWpm = getNodeParam(chKey, 'wpm', 140);
-          const customVisual = getNodeParam(chKey, 'visualType', chData.visual_type || 'split_screen');
-          const customNotes = getNodeParam(chKey, 'notes', '');
-
-          // Lọc các sections & items con
-          const validSections = [];
-          (chData.sections || []).forEach((sec, secIdx) => {
-            const secKey = `sec-${rootKey}-${chIdx}-${secIdx}`;
-            if (isNodeExcluded(secKey, [chKey, rootKey])) return;
-
-            const validItems = [];
-            (sec.items || []).forEach((it, itIdx) => {
-              const itKey = `item-${rootKey}-${chIdx}-${secIdx}-${itIdx}`;
-              if (!isNodeExcluded(itKey, [secKey, chKey, rootKey])) {
-                validItems.push(it);
-              }
-            });
-
-            validSections.push({
-              code: sec.code,
-              title: sec.title,
-              items: validItems
-            });
-          });
-
-          // Lấy lời giảng phù hợp và làm sạch bằng ContentPurifier
-          const sceneMatch = sourceScenes[chIdx] || {};
-          let narrationText = getNodeParam(chKey, 'narration', sceneMatch.narration || '');
-          narrationText = ContentPurifier.purify(narrationText);
-
-          globalChapIdx++;
-
-          scriptItems.push({
-            src,
-            srcIdx,
-            srcOrder: srcIdx + 1,
-            globalChapIdx,
-            chKey,
-            title: customTitle,
-            chapterTag: `CHƯƠNG ${globalChapIdx}`,
-            depth: chData.depth || 'core',
-            duration: customDur,
-            visualType: customVisual,
-            visualDesc: sceneMatch.visual_purpose || customTitle,
-            narration: narrationText,
-            sections: validSections,
-            notes: customNotes
-          });
-        });
-      });
-
-      if (scriptItems.length === 0) {
-        paper.innerHTML = `
-          <div style="text-align: center; padding: 60px 20px; color: var(--text-dim); background: rgba(15, 23, 42, 0.5); border-radius: var(--radius-md); border: 1px dashed rgba(244, 63, 94, 0.4);">
-            <div style="font-size: 40px; margin-bottom: 12px;">⚠️</div>
-            <div style="font-size: 15px; font-weight: 700; color: #f87171; margin-bottom: 6px;">Toàn bộ các chương đã bị loại bỏ khỏi kịch bản!</div>
-            <div style="font-size: 12px; color: var(--text-muted);">Hãy bấm lại nút ✕ trên sơ đồ để khôi phục các chương cần thiết cho bài giảng của bạn.</div>
-          </div>
-        `;
-        return;
-      }
-
-      // 3. THỰC HIỆN ACTIVE AUTO-RESCALING VỚI PROSODY PLANNER
-      const rescaled = ActiveRescaler.rescale(scriptItems, activeProject.duration_s, activeProject.wpm || 140);
-      const totalWords = rescaled.items.reduce((acc, it) => acc + (it.planRes ? it.planRes.words : 0), 0);
-
-      // Cập nhật thống kê tiêu đề
-      const totalM = Math.floor(rescaled.meta.finalDuration / 60);
-      const totalS = rescaled.meta.finalDuration % 60;
-      const metaEl = document.getElementById('doc-summary-meta');
-      const titleEl = document.getElementById('doc-active-title');
-
-      if (titleEl) titleEl.textContent = activeProject.title;
-      if (metaEl) {
-        const hasScript = rescaled.meta.totalSpeech >= (rescaled.meta.targetDuration * 0.4);
-        metaEl.innerHTML = `
-          <div class="meta-stat-row">⏱️ Mục tiêu: <strong>${totalM}p ${totalS < 10 ? '0' : ''}${totalS}s</strong> (${rescaled.meta.targetDuration}s)</div>
-          <div class="meta-stat-row">🗣️ Đã có: <strong>${Math.round(rescaled.meta.totalSpeech)}s</strong></div>
-          <div class="meta-stat-row">⏸️ Khoảng nghỉ: <strong>${Math.round(rescaled.meta.totalPause)}s</strong></div>
-          <div class="meta-stat-row">🎬 <strong>${rescaled.items.length}</strong> phân cảnh</div>
-          <div class="meta-stat-row">📝 ~<strong>${totalWords}</strong> từ ${hasScript ? '' : '<span style="color: #f59e0b; font-weight: 700;">(Chưa sinh đủ)</span>'}</div>
-        `;
-      }
-      updateBtnGenCountBadge(rescaled.items.length, activeSources.length);
-
-      // Render từng chương vào paper
-      let currentRenderSrc = null;
-      rescaled.items.forEach(item => {
-        if (activeSources.length > 1 && item.src !== currentRenderSrc) {
-          currentRenderSrc = item.src;
-          const srcDivider = document.createElement('div');
-          srcDivider.className = 'script-source-divider';
-          srcDivider.innerHTML = `
-            <div style="display: flex; align-items: center; gap: 10px; margin: 28px 0 16px 0; padding-bottom: 8px; border-bottom: 2px solid rgba(56, 189, 248, 0.35);">
-              <span class="source-order-badge" style="background: rgba(56, 189, 248, 0.2); color: var(--cyan); border: 1px solid rgba(56, 189, 248, 0.4); font-size: 11px; font-weight: 800; padding: 3px 8px; border-radius: 4px; font-family: 'JetBrains Mono', monospace;">
-                THỨ TỰ #${item.srcOrder}
-              </span>
-              <span style="font-size: 15px; font-weight: 800; color: #fff;">📄 ${item.src.name}</span>
-              <span style="font-size: 12px; color: var(--text-muted);">(${item.src.pages || 10} trang)</span>
-            </div>
-          `;
-          paper.appendChild(srcDivider);
-        }
-
-        const startStr = formatTime(item.startS);
-        const endStr = formatTime(item.endS);
-
-        const subSecHtml = item.sections.map(sec => {
-          const itemsList = sec.items.map(it => `
-            <div class="script-subsec-item">• <strong style="color: var(--cyan);">${it.code}:</strong> ${it.text}</div>
-          `).join('');
-          return `
-            <div style="margin-top: 8px;">
-              <div style="font-size: 12px; font-weight: 700; color: var(--text-main); margin-bottom: 3px;">
-                <span class="script-subsec-code">${sec.code}:</span> ${sec.title}
-              </div>
-              <div style="padding-left: 12px; display: flex; flex-direction: column; gap: 3px;">${itemsList}</div>
-            </div>
-          `;
-        }).join('');
-
-        // XÂY DỰNG CÁC PHÂN ĐOẠN KỊCH BẢN CHI TIẾT TƯƠNG ỨNG TỪNG NHÁNH CON TRÊN SƠ ĐỒ
-        let hasSegments = false;
-        let segmentsHtml = '';
-        const chapterSegmentsList = [];
-
-        (item.sections || []).forEach(sec => {
-          (sec.items || []).forEach(it => {
-            hasSegments = true;
-            const itDur = it.duration || 30;
-            const itTargetWords = Math.round((itDur * (activeProject.wpm || 140)) / 60);
-            const itNarr = getSegmentNarration(it, item.title);
-            it.narration = itNarr;
-            chapterSegmentsList.push(itNarr);
-
-            const itPlan = ProsodyPlanner.plan(itNarr, activeProject.wpm || 140);
-
-            let itContentHtml = '';
-            if (currentScriptViewMode === 'ssml') {
-              itContentHtml = `<pre style="background: rgba(0, 0, 0, 0.6); border: 1px solid rgba(56, 189, 248, 0.3); padding: 10px; border-radius: 4px; font-size: 11px; color: #a5f3fc; overflow-x: auto; font-family: 'JetBrains Mono', monospace; line-height: 1.5; white-space: pre-wrap; margin: 0;">${escapeHtml(itPlan.ssml)}</pre>`;
-            } else if (currentScriptViewMode === 'plain') {
-              itContentHtml = `<div style="font-size: 13px; line-height: 1.75; color: #e2e8f0;">${escapeHtml(itPlan.plain)}</div>`;
-            } else {
-              itContentHtml = `<div class="script-segment-body">${itPlan.html}</div>`;
-            }
-
-            const isPending = !itNarr || itNarr.trim().length === 0;
-
-            if (isPending) {
-              segmentsHtml += `
-                <div class="script-segment-card pending" id="seg-card-${item.chKey}-${it.code}" style="border: 1px dashed rgba(99, 102, 241, 0.35); background: rgba(15, 23, 42, 0.45); border-radius: 8px; margin-bottom: 10px; padding: 12px 14px;">
-                  <div class="script-segment-header" style="margin-bottom: 6px;">
-                    <div class="script-segment-title-wrap">
-                      <span class="segment-code-badge" style="background: rgba(99, 102, 241, 0.2); color: #c7d2fe;">${it.code}</span>
-                      <span class="segment-title" style="font-weight: 700; color: #fff;">${it.text}</span>
-                      <span class="segment-sec-tag">• ${sec.title}</span>
-                    </div>
-                    <div class="script-segment-badges">
-                      <span class="segment-dur-badge">⏱️ ${itDur}s</span>
-                      <span class="segment-word-badge" style="background: rgba(148, 163, 184, 0.1); color: #94a3b8; border: 1px solid rgba(148, 163, 184, 0.2);">⏳ Chưa sinh lời thoại</span>
-                    </div>
-                  </div>
-                  <div style="font-size: 12px; color: var(--text-muted); display: flex; align-items: center; justify-content: space-between; padding-top: 4px;">
-                    <span><em>Chưa có kịch bản cho phân đoạn này (~${itTargetWords} từ).</em></span>
-                    <span style="font-size: 11px; color: var(--cyan); font-weight: 600;">Bấm "✨ AI Viết Lời Thoại" ở trên để tạo ↗</span>
-                  </div>
-                </div>
-              `;
-            } else {
-              segmentsHtml += `
-                <div class="script-segment-card" id="seg-card-${item.chKey}-${it.code}">
-                  <div class="script-segment-header">
-                    <div class="script-segment-title-wrap">
-                      <span class="segment-code-badge">${it.code}</span>
-                      <span class="segment-title">${it.text}</span>
-                      <span class="segment-sec-tag">• ${sec.title}</span>
-                    </div>
-                    <div class="script-segment-badges">
-                      <span class="segment-dur-badge">⏱️ ${itDur}s</span>
-                      <span class="segment-word-badge">📝 ${itPlan.words} / ~${itTargetWords} từ</span>
-                    </div>
-                  </div>
-                  ${itContentHtml}
-                </div>
-              `;
-            }
-          });
-        });
-
-        // Nếu chương có phân đoạn con, tổng hợp lại lời thoại đầy đủ cho toàn chương
-        if (hasSegments && chapterSegmentsList.length > 0) {
-          item.narration = chapterSegmentsList.join(' ');
-          item.planRes = ProsodyPlanner.plan(item.narration, activeProject.wpm || 140);
-        }
-
-        // Tùy theo currentScriptViewMode để render lời thoại phẳng (nếu không có phân đoạn con)
-        let fallbackNarrationHtml = '';
-        if (currentScriptViewMode === 'ssml') {
-          fallbackNarrationHtml = `
-            <pre style="background: rgba(0, 0, 0, 0.6); border: 1px solid rgba(56, 189, 248, 0.3); padding: 14px; border-radius: 6px; font-size: 11.5px; color: #a5f3fc; overflow-x: auto; font-family: 'JetBrains Mono', monospace; line-height: 1.6; white-space: pre-wrap; margin: 0;">${escapeHtml(item.planRes ? item.planRes.ssml : item.narration)}</pre>
-          `;
-        } else if (currentScriptViewMode === 'plain') {
-          fallbackNarrationHtml = item.planRes ? item.planRes.plain : item.narration;
-        } else {
-          fallbackNarrationHtml = item.planRes ? item.planRes.html : item.narration;
-        }
-
-        const sectionEl = document.createElement('div');
-        sectionEl.className = 'script-chapter-section';
-        sectionEl.innerHTML = `
-          <div class="script-chapter-header">
-            <div class="script-chapter-title-group">
-              <span class="depth-tag depth-${item.depth}">${item.chapterTag}</span>
-              <span class="script-chapter-name">${item.title}</span>
-            </div>
-            <div style="display: flex; align-items: center; gap: 10px;">
-              <button class="script-action-btn btn-scene-ai-write" data-chkey="${item.chKey}" style="background: rgba(99, 102, 241, 0.15); border: 1px solid rgba(99, 102, 241, 0.4); color: #c7d2fe; font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 4px; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; transition: all 0.2s;" title="Dùng AI viết lời thoại sư phạm tối ưu theo từng phân đoạn">
-                <span>✨</span> AI Viết Lời Thoại
-              </button>
-              <div class="script-chapter-timing">[${startStr} - ${endStr}] (${item.duration}s)</div>
-            </div>
-          </div>
-
-          <div class="script-visual-directive">
-            <span>👁️</span> <strong>[${item.visualType}]</strong>
-            <span>Chỉ dẫn thị giác: ${item.visualDesc}</span>
-          </div>
-
-          ${hasSegments ? `
-            <div class="script-segments-list">
-              ${segmentsHtml}
-            </div>
-          ` : `
-            <div class="script-narration-body">${fallbackNarrationHtml}</div>
-          `}
-
-          ${item.notes ? `
-            <div style="margin-top: 8px; padding: 6px 10px; background: rgba(56, 189, 248, 0.08); border-left: 3px solid var(--cyan); border-radius: 4px; font-size: 11.5px; color: #bae6fd;">
-              📝 <strong>Ghi chú sư phạm:</strong> ${item.notes}
-            </div>
-          ` : ''}
-        `;
-
-        const aiBtn = sectionEl.querySelector('.btn-scene-ai-write');
-        if (aiBtn) {
-          aiBtn.addEventListener('click', () => {
-            generateSceneWithAI(item.chKey);
-          });
-        }
-
-        paper.appendChild(sectionEl);
-      });
-    }
-
-    // =========================================================================
-    // CỖ MÁY ĐIỀU KHIỂN GIAO DIỆN & AI COPILOT PLAYBOOK (AGENTIC ENGINE)
-    // Tách biệt hoàn toàn: LLM làm Bộ Não Lập Kế Hoạch (Planner, ~25 tokens)
-    //                     Cỗ máy JS làm Bộ Tay Chân Thực Thi Tất Định (Deterministic Engine)
-    // =========================================================================
-
-    // BẢNG QUY CHUẨN CHỈ DẪN HÀNH ĐỘNG (COPILOT ACTION SCHEMA)
-    const COPILOT_ACTION_SCHEMA = {
-      "focus_chapter": {
-        "desc": "Lia camera mượt mà vào giữa chương trên sơ đồ và làm phát sáng viền thẻ",
-        "params": { "chapter": "Số thứ tự chương (ví dụ 1, 2, 3...)" }
-      },
-      "open_editor": {
-        "desc": "Mở ngăn kéo terminal ở góc dưới để chỉnh sửa thông số/ghi chú của chương",
-        "params": { "chapter": "Số thứ tự chương" }
-      },
-      "close_editor": {
-        "desc": "Đóng ngăn kéo terminal chỉnh sửa",
-        "params": {}
-      },
-      "switch_tab": {
-        "desc": "Chuyển đổi tab hiển thị ở cột giữa",
-        "params": { "tab": "'mindmap' | 'script' | 'video'" }
-      },
-      "center_view": {
-        "desc": "Căn giữa toàn bộ sơ đồ tư duy về trạng thái ban đầu",
-        "params": {}
-      },
-      "set_only_chapters": {
-        "desc": "Chỉ giữ lại các chương được chỉ định, ẩn/loại bỏ tất cả các chương còn lại",
-        "params": { "chapters": "Mảng các số chương, ví dụ [3, 5]" }
-      },
-      "exclude_chapters": {
-        "desc": "Ẩn/loại bỏ các chương chỉ định khỏi kịch bản",
-        "params": { "chapters": "Mảng các số chương, ví dụ [1, 2, 4]" }
-      },
-      "include_chapters": {
-        "desc": "Bật lại/khôi phục các chương đã bị ẩn vào kịch bản",
-        "params": { "chapters": "Mảng các số chương, ví dụ [2]" }
-      },
-      "set_chapter_duration": {
-        "desc": "Thiết lập thời lượng riêng cho một chương và phân bổ xuống các nhánh con",
-        "params": { "chapter": "Số thứ tự chương", "seconds": "Số giây, ví dụ 1200" }
-      },
-      "set_total_minutes": {
-        "desc": "Thiết lập thời gian tổng toàn bài giảng (chia theo tỷ lệ)",
-        "params": { "minutes": "Số phút tổng, ví dụ 40" }
-      },
-      "lock_chapter": {
-        "desc": "Khóa hoặc mở khóa thời lượng của chương",
-        "params": { "chapter": "Số thứ tự chương", "locked": "true | false" }
-      },
-      "set_speed": {
-        "desc": "Điều chỉnh tốc độ nhịp đọc WPM toàn bài",
-        "params": { "wpm": "120 | 140 | 165 | 190 hoặc rate: '0.85' | '1.0' | '1.2' | '1.35'" }
-      },
-      "set_voice": {
-        "desc": "Đổi giọng đọc AI (TTS Voice)",
-        "params": { "voice": "'quynh_anh' | 'nam_an' | 'mai_phuong' | 'minh_quang' | 'jenny_en' | 'guy_en'" }
-      }
-    };
-
-    function getAllChaptersInfo() {
-      const chapters = [];
-      Object.values(currentNodesMap).forEach(n => {
-        if (n.level === 1) {
-          const parts = n.key.split('-');
-          const idx = parseInt(parts[parts.length - 1]);
-          const num = !isNaN(idx) ? (idx + 1) : (chapters.length + 1);
-          chapters.push({
-            key: n.key,
-            num: num,
-            title: n.data?.title || `Chương ${num}`,
-            duration: n.data?.duration || 60,
-            isExcluded: isNodeExcluded(n.key),
-            isLocked: getNodeParam(n.key, 'isLocked', false)
-          });
-        }
-      });
-      chapters.sort((a, b) => a.num - b.num);
-      return chapters;
-    }
-
-        // =========================================================================
-    // HỆ THỐNG TRÍ NHỚ HỎI-ĐÁP (Q&A CACHE - ZERO TOKEN) & HỌC BỔ SUNG (FEW-SHOT)
-    // =========================================================================
-    let clsgChatSessionHistory = [];
-
-    // DỌN DẸP SẠCH TOÀN BỘ CÂU TRẢ LỜI CŨ / LỖI TỪ CHỐI TRONG TRÌNH DUYỆT
-    try {
-      localStorage.removeItem('clsg_qa_cache');
-    } catch(e) {}
-
-    const CopilotQACache = {
-      STORAGE_KEY: 'clsg_qa_cache',
-      SEEDS: {
-        "cnn là gì": "🧠 <strong>Convolutional Neural Network (CNN / Mạng nơ-ron tích chập):</strong> Là kiến trúc mạng nơ-ron chuyên dụng cho dữ liệu dạng lưới (đặc biệt là hình ảnh và video). Cơ chế cốt lõi gồm các tầng <em>Tích chập (Convolution)</em> để trích xuất đặc trưng không gian (cạnh, góc, kết cấu) và tầng <em>Gộp mẫu (Pooling)</em> để giảm chiều dữ liệu.",
-        "mạng nơ ron tích chập là gì": "🧠 <strong>Convolutional Neural Network (CNN):</strong> Là kiến trúc mạng nơ-ron chuyên xử lý dữ liệu không gian như hình ảnh, tín hiệu thị giác máy tính với các tầng Convolution, Activation (ReLU) và Pooling.",
-        "overfitting là gì": "⚠️ <strong>Overfitting (Hiện tượng Quá khớp):</strong> Xảy ra khi mô hình học quá sâu vào nhiễu và chi tiết vụn vặt của tập huấn luyện (training set), dẫn đến sai số rất thấp trên tập train nhưng dự báo rất kém trên dữ liệu mới (test set). Cách khắc phục: Dropout, Regularization (L1/L2), tăng dữ liệu (Data Augmentation).",
-        "loss function là gì": "📉 <strong>Loss Function (Hàm mất mát / Hàm thiệt hại):</strong> Là hàm toán học đo lường độ sai lệch giữa giá trị dự đoán của mô hình và nhãn thực tế (ground truth). Mục tiêu tối ưu trong Deep Learning là tìm trọng số mạng để cực tiểu hóa hàm mất mát (thường dùng Cross-Entropy, MSE, MAE).",
-        "transformer là gì": "⚡ <strong>Transformer:</strong> Là kiến trúc mạng nơ-ron mang tính cách mạng (Vaswani et al., 2017) dựa trên cơ chế <em>Tự chú ý (Self-Attention)</em>, loại bỏ hoàn toàn cấu trúc hồi quy tuần tự (RNN/LSTM), cho phép tính toán song song cực nhanh và nắm bắt ngữ cảnh tầm xa vượt trội.",
-        "chuỗi thời gian là gì": "📈 <strong>Time Series (Chuỗi thời gian):</strong> Là tập hợp các điểm dữ liệu được quan sát tuần tự theo các mốc thời gian đều đặn. Các mô hình kinh điển gồm AR, MA, ARMA, ARIMA và các mô hình học sâu như RNN, LSTM, TSDiT để dự báo giá trị tương lai.",
-        "time series là gì": "📈 <strong>Time Series (Chuỗi thời gian):</strong> Là chuỗi quan sát số liệu $X_t$ theo thời gian. Mục tiêu cốt lõi là phân tích xu hướng (Trend), tính mùa vụ (Seasonality) và dự báo tương lai."
-      },
-      normalize(q) {
-        return q.toLowerCase().replace(/[\?\!\.,;:'"“”]/g, '').trim();
-      },
-      get(q) {
-        // TUYỆT ĐỐI KHÔNG BẮT CACHE KHI CÂU HỎI LÀ LỆNH ĐIỀU KHIỂN HOẶC HỎI VỀ BÀI GIẢNG / PHÂN ĐOẠN CỤ THỂ
-        const lower = q.toLowerCase();
-        // TUYỆT ĐỐI KHÔNG CACHE: lệnh điều khiển, hỏi bài giảng, hỏi nội dung, hỏi giải thích
-        if (/bỏ|giữ|ẩn|xóa|đổi|chỉnh|thời lượng|phút|wpm|tóm tắt|chương|phần|mục|slide|bản tóm tắt|nội dung|giải thích|đọc hộ|chi tiết|phân đoạn|kiến thức|bài giảng|bản chất|công thức|ví dụ|cơ chế|tại sao|như thế nào|kể|liệt kê|trình bày|phân tích|so sánh/i.test(lower)) {
-          return null;
-        }
-        const norm = this.normalize(q);
-        if (this.SEEDS[norm]) return this.SEEDS[norm];
-        try {
-          const cache = JSON.parse(localStorage.getItem(this.STORAGE_KEY) || '{}');
-          const entry = cache[norm];
-          if (!entry) return null;
-          const ans = entry.answer || '';
-          if (ans.includes('không có quyền') || ans.includes('không thể') || ans.includes('xin lỗi')) {
-            delete cache[norm];
-            localStorage.setItem(this.STORAGE_KEY, JSON.stringify(cache));
-            return null;
-          }
-          return ans;
-        } catch (e) { return null; }
+        return null;
       },
       set(q, answer) {
         if (!answer || answer.includes('không có quyền') || answer.includes('không thể') || answer.length < 20) return;

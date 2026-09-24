@@ -78,7 +78,7 @@ module.exports = async (req, res) => {
         };
 
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 25000);
+        const timeoutId = setTimeout(() => controller.abort(), 55000);
 
         const upstreamRes = await fetch(targetUrl, {
           method: 'POST',
