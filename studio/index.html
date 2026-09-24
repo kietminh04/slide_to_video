@@ -7677,14 +7677,45 @@
         /\*\*(?:Người dẫn|Giảng viên|Teacher|MC|Lời thoại|Kịch bản):\*\*\s*/gi,
         /(?:HÃY SUY NGHĨ|LƯU Ý QUAN TRỌNG|CÂU HỎI GỢI MỞ|ĐẶT VẤN ĐỀ):\s*/gi,
       ],
-      bulletMap: {
-        '■': ', ', '□': ', ', '●': ', ', '○': ', ', '◆': ', ', '◇': ', ',
-        '➢': ', ', '▶': ', ', '►': ', ', '▪': ', ', '▫': ', ',
-        '–': ' - ', '—': ' - ', '•': ', ', '\u2022': ', '
+      normalizeUnicodeAndSymbols(rawText) {
+        if (!rawText) return '';
+        const mathPlaceholders = [];
+        const mathRegex = /(\$\$[\s\S]*?\$\$|\$[^$\n]+\$|\\\[[\s\S]*?\\\]|\\\([\s\S]*?\\\))/g;
+        let text = rawText.replace(mathRegex, (match) => {
+          const placeholder = `__LATEX_MATH_BLOCK_${mathPlaceholders.length}__`;
+          mathPlaceholders.push(match);
+          return placeholder;
+        });
+
+        text = text.normalize('NFC');
+        text = text.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F-\u009F\u200B-\u200F\uFEFF\u00AD\uFFFC]/g, '');
+
+        const bulletGlyphs = '[■□▪▫▬▭▮▯▲▼▶◄►◆◇●○◉◘◙⦿★☆✦✧✨‣⁃∙·\\u25A0-\\u25FF\\uE000-\\uF8FF\\uFFFD]';
+
+        const rangeWithBulletRegex = new RegExp(`(?:${bulletGlyphs}\\s*)?(\\b\\d+)\\s*\\^[-–—~]\\s*(\\d+\\b)(?:\\s*[:\\-])?`, 'g');
+        text = text.replace(rangeWithBulletRegex, '$1–$2:');
+        text = text.replace(/(\b\d+)\s*\^[-–—~]\s*(\d+\b)/g, '$1–$2');
+
+        const bulletNumberPattern = new RegExp(`(?:^|[.,;:\\n]\\s*)${bulletGlyphs}\\s*(\\b\\d+(?:[–—\\-]\\d+)?)\\s*(?![:\\-])`, 'g');
+        text = text.replace(bulletNumberPattern, (match, num) => {
+          const prefix = match.match(/^[.,;:\n]\s*/)?.[0] || '';
+          return `${prefix}${num}: `;
+        });
+
+        text = text.replace(new RegExp(`^\\s*${bulletGlyphs}+\\s*`, 'gm'), '');
+        text = text.replace(new RegExp(`([,;:.]\\s*)${bulletGlyphs}+\\s*`, 'g'), '$1');
+        text = text.replace(new RegExp(`\\s*${bulletGlyphs}+\\s*([,;:?.!])`, 'g'), '$1');
+        text = text.replace(new RegExp(`\\s*${bulletGlyphs}+\\s*`, 'g'), ', ');
+
+        mathPlaceholders.forEach((math, idx) => {
+          text = text.replace(`__LATEX_MATH_BLOCK_${idx}__`, math);
+        });
+
+        return text;
       },
       purify(rawText) {
         if (!rawText) return '';
-        let text = rawText;
+        let text = this.normalizeUnicodeAndSymbols(rawText);
 
         // Tầng 2: Gọt nhãn đạo diễn & prompt tags
         this.rolePatterns.forEach(pat => {
@@ -7699,13 +7730,6 @@
           if (/©|all rights reserved|confidential|chỉ lưu hành nội bộ/i.test(l)) return false;
           return true;
         }).join('\n');
-
-        // Tầng 3: Biến bullet thành dấu phẩy ngắt nhịp
-        for (const [sym, repl] of Object.entries(this.bulletMap)) {
-          if (text.includes(sym)) {
-            text = text.split(sym).join(repl);
-          }
-        }
 
         // Chuẩn hóa dấu câu & khoảng trắng
         text = text.replace(/[,;:\-]\s*[,;:\-]+/g, ', ');
@@ -8273,7 +8297,8 @@ Trả về DUY NHẤT JSON hợp lệ với 5 trường sau (mỗi trường T�
             console.warn("[LLM] Direct endpoint error:", e);
           }
         }
-        if (res && res.ok) {
+        try {
+          if (res && res.ok) {
             const data = await res.json();
             const raw = data.choices?.[0]?.message?.content || '';
             const parsed = this.safeJsonParse(raw);
@@ -8541,7 +8566,8 @@ Trả về DUY NHẤT JSON hợp lệ:
             console.warn("[LLM] Direct endpoint error:", e);
           }
         }
-        if (res && res.ok) {
+        try {
+          if (res && res.ok) {
             const data = await res.json();
             const raw = data.choices?.[0]?.message?.content || '';
             const parsed = this.safeJsonParse(raw);
@@ -8667,7 +8693,8 @@ Hãy viết kịch bản lời thoại giảng dạy:`;
             console.warn("[LLM] Direct endpoint error:", e);
           }
         }
-        if (res && res.ok) {
+        try {
+          if (res && res.ok) {
             const data = await res.json();
             const text = data.choices?.[0]?.message?.content || '';
             if (text && text.trim().length > 10) return text.trim();
@@ -8891,7 +8918,8 @@ OUTPUT: Valid JSON only.
             console.warn("[LLM] Direct endpoint error:", e);
           }
         }
-        if (res && res.ok) {
+        try {
+          if (res && res.ok) {
             const data = await res.json();
             const raw = data.choices?.[0]?.message?.content || '';
             const parsed = this.safeJsonParse(raw);
@@ -8971,7 +8999,8 @@ OUTPUT: Valid JSON only, no markdown.
             console.warn("[LLM] Direct endpoint error:", e);
           }
         }
-        if (res && res.ok) {
+        try {
+          if (res && res.ok) {
             const data = await res.json();
             const raw = data.choices?.[0]?.message?.content || '';
             const parsed = this.safeJsonParse(raw);
@@ -9850,7 +9879,7 @@ OUTPUT: Valid JSON only.
 
       // 0a. Câu lệnh phức hợp: "à thôi, để lại chương 4 với phần a b của chương 1 đi"
       const cleanMsg = msg.replace(/^(?:à\s*thôi|thôi|đổi\s*lại)\s*,?\s*/i, '').trim();
-      const mCombo = cleanMsg.match(/(?:chỉ\s*)?(?:để\s*lại|giữ\s*(?:lại)?|lấy)\s*(?:chương|phần)?\s*([0-9\s,\bvà]+)\s*(?:với|và|kèm|cùng)\s*phần\s*([^c]+?)\s*của\s*chương\s*(\d+)/i);
+      const mCombo = cleanMsg.match(/(?:chỉ\s*)?(?:để\s*lại|giữ\s*(?:lại)?|lấy)\s*(?:chương|phần)?\s*([0-9\s,và]+)\s*(?:với|và|kèm|cùng)\s*phần\s*([^c]+?)\s*của\s*chương\s*(\d+)/i);
       if (mCombo) {
         const keepChaps = (mCombo[1].match(/\b\d+\b/g) || []).map(n => parseInt(n));
         const targetCh = parseInt(mCombo[3]);
@@ -9874,9 +9903,9 @@ OUTPUT: Valid JSON only.
       }
 
       // 0. Bỏ / Ẩn / Tắt / Xóa / Ấn tất cả chỉ để lại / chỉ giữ lại / trừ chương X (Ví dụ: "ấn tất cả chỉ để lại chương 2 này", "ẩn tất cả chỉ giữ chương 3")
-      const mKeepOnly = msg.match(/(?:bỏ|loại\s*bỏ|xóa|ẩn|tắt|ấn)\s+(?:(?:hết|tất\s*cả|mọi\s*(?:thứ|chương)|toàn\s*bộ)\s*)*(?:(?:chỉ\s*)?(?:trừ|giữ(?:\s*lại)?|để\s*lại|chừa(?:\s*lại)?)|ngoại\s*trừ)\s*(?:các\s*)?(?:chương|phần)?\s*([0-9\s,\bvà]+)/i) ||
-                        msg.match(/(?:(?:ẩn|ấn|bỏ|loại\s*bỏ|xóa|tắt)\s+)?(?:tất\s*cả|toàn\s*bộ)\s*.*?(?:chỉ\s*để\s*lại|chỉ\s*giữ|chỉ\s*lấy|để\s*lại|giữ\s*lại)\s*(?:các\s*)?(?:chương|phần)?\s*([0-9\s,\bvà]+)/i) ||
-                        msg.match(/(?:chỉ\s*(?:cần|lấy|giữ(?:\s*lại)?|chọn|để\s*lại|chừa(?:\s*lại)?)|giữ\s*lại|để\s*lại|chừa\s*lại)\s*(?:mỗi\s*|duy\s*nhất\s*)?(?:chương|phần)?\s*([0-9\s,\bvà]+)/i);
+      const mKeepOnly = msg.match(/(?:bỏ|loại\s*bỏ|xóa|ẩn|tắt|ấn)\s+(?:(?:hết|tất\s*cả|mọi\s*(?:thứ|chương)|toàn\s*bộ)\s*)*(?:(?:chỉ\s*)?(?:trừ|giữ(?:\s*lại)?|để\s*lại|chừa(?:\s*lại)?)|ngoại\s*trừ)\s*(?:các\s*)?(?:chương|phần)?\s*([0-9\s,và]+)/i) ||
+                        msg.match(/(?:(?:ẩn|ấn|bỏ|loại\s*bỏ|xóa|tắt)\s+)?(?:tất\s*cả|toàn\s*bộ)\s*.*?(?:chỉ\s*để\s*lại|chỉ\s*giữ|chỉ\s*lấy|để\s*lại|giữ\s*lại)\s*(?:các\s*)?(?:chương|phần)?\s*([0-9\s,và]+)/i) ||
+                        msg.match(/(?:chỉ\s*(?:cần|lấy|giữ(?:\s*lại)?|chọn|để\s*lại|chừa(?:\s*lại)?)|giữ\s*lại|để\s*lại|chừa\s*lại)\s*(?:mỗi\s*|duy\s*nhất\s*)?(?:chương|phần)?\s*([0-9\s,và]+)/i);
       if (mKeepOnly) {
         const rawGroup = mKeepOnly[1] || mKeepOnly[2] || mKeepOnly[3];
         if (rawGroup) {
@@ -9888,14 +9917,14 @@ OUTPUT: Valid JSON only.
         }
       }
       // 2. Bỏ / ẩn / loại bỏ chương X Y
-      const mEx = msg.match(/(?:bỏ|loại\s*bỏ|xóa|ẩn|tắt)\s*(?:các\s*)?(?:chương|phần)?\s*([0-9\s,\bvà]+)/i);
+      const mEx = msg.match(/(?:bỏ|loại\s*bỏ|xóa|ẩn|tắt)\s*(?:các\s*)?(?:chương|phần)?\s*([0-9\s,và]+)/i);
       if (mEx) {
         const nums = (mEx[1].match(/\b\d+\b/g) || []).map(n => parseInt(n));
         if (nums.length > 0) actions.push({ type: 'exclude_chapters', chapters: nums });
       }
 
       // 3. Khôi phục / bật lại chương X
-      const mInc = msg.match(/(?:khôi phục|bật lại|mở lại|thêm lại)\s*(?:chương|phần)?\s*([0-9\s,\bvà]+)/i);
+      const mInc = msg.match(/(?:khôi phục|bật lại|mở lại|thêm lại)\s*(?:chương|phần)?\s*([0-9\s,và]+)/i);
       if (mInc) {
         const nums = (mInc[1].match(/\b\d+\b/g) || []).map(n => parseInt(n));
         if (nums.length > 0) actions.push({ type: 'include_chapters', chapters: nums });
