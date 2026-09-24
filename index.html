@@ -6652,7 +6652,8 @@
       if (titleEl) titleEl.textContent = nodeText;
       const miniBadge = document.getElementById('insp-mini-badge');
       if (miniBadge) {
-        miniBadge.textContent = nodeCode;
+        const pageRangeText = node.data?.pageRange || (node.data?.printed_start ? `Trang ${node.data.printed_start} - ${node.data.printed_end}` : '');
+        miniBadge.textContent = pageRangeText ? `${nodeCode} • ${pageRangeText}` : nodeCode;
         miniBadge.style.display = 'inline-block';
       }
 
@@ -7617,6 +7618,94 @@ Hãy viết lời giảng sư phạm hoàn chỉnh theo từng phân đoạn [m�
         }
 
         // 3. FALLBACK AN TOÀN TUYỆT ĐỐI (0 CRASH, 0 FAILED TO FETCH)
+        return null;
+      },
+
+            // BÓC TÁCH MỤC LỤC BẰNG GEMINI AI (HYBRID TOC ARCHITECTURE)
+      async extractTOCWithAI(tocText, fileName = "") {
+        const cfg = this.getConfig();
+        if (!tocText || tocText.trim().length < 50) return null;
+
+        const systemPrompt = `Bạn là Chuyên gia Sư phạm Giảng dạy Đại học môn Toán - Tin & Khoa học Dữ liệu.
+Dưới đây là BẢNG MỤC LỤC (Table of Contents) của cuốn sách giáo trình / tài liệu học thuật.
+
+NHIỆM VỤ: Hãy chọn lọc 4 đến 5 Chương cốt lõi quan trọng nhất của bài giảng để tạo thành CẤU TRÚC SƠ ĐỒ BÀI GIẢNG SƯ PHẠM HOÀN HẢO.
+
+QUY TẮC BÓC TÁCH TỪ MỤC LỤC (BẮT BUỘC):
+1. GIỮ NGUYÊN SỐ CHƯƠNG & TÊN CHUẨN: Lấy đúng tên chương từ mục lục (ví dụ: "Chương 1: Introduction", "Chương 2: Stationary Processes", "Chương 3: ARMA Models", "Chương 4: Spectral Analysis", "Chương 5: Modeling and Forecasting with ARMA").
+2. LỌC BỎ 100% RÁC: Không để sót tên tác giả, nhà xuất bản, dấu chấm rải rác.
+3. MỖI CHƯƠNG CÓ 1 ĐẾN 2 PHẦN (Sections) và 2 ĐẾN 3 MỤC CON (Items).
+4. TỪNG MỤC CON PHẢI CÓ SỐ TRANG IN CỤ THỂ (LẤY TỪ MỤC LỤC):
+   - "code": mã định danh như "a1", "a2", "b1"...
+   - "text": Tên mục chuẩn xác (ví dụ "3.1 ARMA(p, q) Processes", "3.2 The ACF and PACF").
+   - "printed_start": Số trang in bắt đầu được ghi ở mục lục (ví dụ 83).
+   - "printed_end": Số trang in kết thúc (dựa vào trang bắt đầu của mục tiếp theo, ví dụ 88).
+   - "summary": Tóm tắt bản chất lý thuyết cốt lõi (2-3 câu).
+   - "mechanism": Cơ chế toán học / giải thuật tương ứng.
+   - "key_point": Điểm mấu chốt cần ghi nhớ.
+
+ĐỊNH DẠNG ĐẦU RA: Trả về duy nhất JSON hợp lệ (không kèm markdown):
+{
+  "chapters": [
+    {
+      "chapter": "CHƯƠNG 1",
+      "title": "Tên chương chuẩn",
+      "depth": "bridge",
+      "visual_type": "split_screen",
+      "sections": [
+        {
+          "code": "Phần a",
+          "title": "Tên phân đoạn",
+          "items": [
+            {
+              "code": "a1",
+              "text": "Tên mục chuẩn",
+              "printed_start": 1,
+              "printed_end": 6,
+              "summary": "...",
+              "mechanism": "...",
+              "key_point": "..."
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}`;
+
+        const payload = {
+          model: cfg.model || 'gemini-2.5-flash',
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: `Tên tài liệu: ${fileName || 'Tài liệu giáo trình'}\n\nNỘI DUNG MỤC LỤC TRÍCH XUẤT:\n${tocText.slice(0, 16000)}` }
+          ],
+          max_tokens: 4500,
+          temperature: 0.2,
+          provider: cfg.provider || 'gemini_local',
+          apiKey: cfg.apiKey || ''
+        };
+
+        try {
+          const serverUrl = (window.location.origin.startsWith('http') && !window.location.origin.includes('file:'))
+            ? `${window.location.origin}/api/llm/chat`
+            : 'http://127.0.0.1:8765/api/llm/chat';
+          const res = await fetch(serverUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+          if (res.ok) {
+            const data = await res.json();
+            const raw = data.choices?.[0]?.message?.content || '';
+            const clean = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
+            const jsonMatch = clean.match(/\{[\s\S]*\}/);
+            if (jsonMatch) {
+              return JSON.parse(jsonMatch[0]);
+            }
+          }
+        } catch (e) {
+          console.warn('[LLMClient] Lỗi bóc tách TOC qua serverless:', e);
+        }
         return null;
       },
 
@@ -9661,6 +9750,97 @@ QUY TẮC PHẢN HỒI QUAN TRỌNG:
     // ─────────────────────────────────────────────────────────────
     // 1. PDF EXTRACTOR (pdf.js): LLM AI Outline (Mặc định) → Outline → Font-size → Regex
     // ─────────────────────────────────────────────────────────────
+    // HÀM BÓC TÁCH HYBRID TOC-ANCHORED (ƯU TIÊN HÀNG ĐẦU TUYỆT ĐỐI)
+    async function extractPdfHybridTOC(pdf, totalPages, fileName = "") {
+      const scanLimit = Math.min(totalPages, Math.max(5, Math.ceil(totalPages * 0.05)));
+      let tocStartPage = -1;
+      let tocEndPage = -1;
+      let tocText = '';
+
+      // Quét 5% trang đầu tìm mục lục
+      for (let p = 1; p <= scanLimit; p++) {
+        try {
+          const page = await pdf.getPage(p);
+          const content = await page.getTextContent();
+          const pageStr = (content.items || []).map(it => it.str).join(' ');
+          
+          const hasTocHeading = /\b(contents|table of contents|mục lục|nội dung chính|agenda|outline)\b/i.test(pageStr);
+          const hasTocDensity = /(\d+\.\s+[A-Za-zÀ-ỹ]+|\bChapter\s+\d+|\bChương\s+\d+).*?\d+/i.test(pageStr);
+
+          if (hasTocHeading || (tocStartPage > 0 && hasTocDensity)) {
+            if (tocStartPage === -1) tocStartPage = p;
+            tocEndPage = p;
+            tocText += `\n--- TRANG MỤC LỤC ${p} ---\n` + pageStr;
+          } else if (tocStartPage > 0 && (p - tocEndPage >= 2)) {
+            break; // Đã qua hết các trang mục lục liên tiếp
+          }
+        } catch (e) {}
+      }
+
+      // Quét thêm 3 trang cuối nếu chưa thấy
+      if (tocStartPage === -1 && totalPages > 10) {
+        for (let p = Math.max(1, totalPages - 3); p <= totalPages; p++) {
+          try {
+            const page = await pdf.getPage(p);
+            const content = await page.getTextContent();
+            const pageStr = (content.items || []).map(it => it.str).join(' ');
+            if (/\b(contents|table of contents|mục lục)\b/i.test(pageStr)) {
+              tocStartPage = p;
+              tocEndPage = p;
+              tocText += `\n--- TRANG MỤC LỤC ${p} ---\n` + pageStr;
+            }
+          } catch(e) {}
+        }
+      }
+
+      if (tocStartPage > 0 && tocText.trim().length >= 80) {
+        console.log(`[TOC Extractor] 🎯 Phát hiện Mục lục tại trang PDF ${tocStartPage} -> ${tocEndPage}`);
+        updateLoading("Đang Dùng Gemini AI Phân Tích Mục Lục...", `Phát hiện mục lục tại trang ${tocStartPage}-${tocEndPage}. Đang lập sơ đồ chuẩn sư phạm...`);
+
+        const outlineRes = await LLMClient.extractTOCWithAI(tocText, fileName);
+        if (outlineRes && outlineRes.chapters && outlineRes.chapters.length > 0) {
+          // Tính Offset trang PDF:
+          let pageOffset = 0;
+          let firstPrintedStart = 1;
+          try {
+            firstPrintedStart = outlineRes.chapters[0]?.sections?.[0]?.items?.[0]?.printed_start || 1;
+            for (let checkP = tocEndPage + 1; checkP <= Math.min(totalPages, tocEndPage + 25); checkP++) {
+              const page = await pdf.getPage(checkP);
+              const content = await page.getTextContent();
+              const pStr = (content.items || []).map(it => it.str).join(' ');
+              if (/\b(1\.\s+Introduction|Chapter\s+1|Chương\s+1)\b/i.test(pStr) || (checkP >= 15 && /\b1\.1\b/i.test(pStr))) {
+                pageOffset = checkP - firstPrintedStart;
+                console.log(`[TOC Extractor] 📐 Tính được Offset trang: PDF ${checkP} - In ${firstPrintedStart} = ${pageOffset} trang`);
+                break;
+              }
+            }
+          } catch(e) {}
+
+          // Gán startPage, endPage thực tế trong PDF cho từng node
+          outlineRes.chapters.forEach(ch => {
+            (ch.sections || []).forEach(sec => {
+              (sec.items || []).forEach(it => {
+                const pStart = it.printed_start || 1;
+                const pEnd = it.printed_end || (pStart + 4);
+                it.pdfStart = Math.min(totalPages, Math.max(1, pStart + pageOffset));
+                it.pdfEnd = Math.min(totalPages, Math.max(it.pdfStart, pEnd + pageOffset));
+                it.pageRange = `Trang ${pStart} - ${pEnd}`;
+              });
+            });
+          });
+
+          return {
+            title: (fileName || '').replace(/\.[^/.]+$/, ""),
+            totalPages,
+            chapters: outlineRes.chapters,
+            pageOffset,
+            method: 'hybrid-toc-gemini'
+          };
+        }
+      }
+      return null;
+    }
+
     async function extractPdfStructure(arrayBuffer, fileName = "") {
       if (typeof pdfjsLib === 'undefined') {
         console.warn('[PDF Extractor] pdf.js chưa tải xong');
@@ -9670,9 +9850,22 @@ QUY TẮC PHẢN HỒI QUAN TRỌNG:
 
       const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
       const totalPages = pdf.numPages;
-      const rawText = await extractAllPdfText(pdf, totalPages);
 
-      // ƯU TIÊN SỐ 1: GỌI LLM 1 LẦN MẶC ĐỊNH ĐỂ TRÍCH XUẤT TÓM TẮT & SƠ ĐỒ CHUẨN SƯ PHẠM
+      // ƯU TIÊN SỐ 1 TUYỆT ĐỐI: BÓC TÁCH HYBRID THEO MỤC LỤC (TIẾT KIỆM TOKEN, CHUẨN TỪNG TRANG)
+      try {
+        updateLoading("Đang Dò Tìm Mục Lục Bài Giảng...", `Đang quét 5% trang đầu để nhận diện Table of Contents...`);
+        const tocResult = await extractPdfHybridTOC(pdf, totalPages, fileName);
+        if (tocResult && tocResult.chapters && tocResult.chapters.length > 0) {
+          console.log(`[PDF Extractor] 🌟 Bóc tách thành công qua Mục lục Hybrid TOC: ${tocResult.chapters.length} chương!`);
+          return tocResult;
+        }
+      } catch (tocErr) {
+        console.warn('[PDF Extractor] Lỗi bóc tách TOC, chuyển sang bước tiếp theo:', tocErr);
+      }
+
+      const rawText = await extractAllPdfText(pdf, Math.min(totalPages, 50));
+
+      // ƯU TIÊN SỐ 2: GỌI LLM CHO OUTLINE TỔNG THỂ NẾU KHÔNG CÓ MỤC LỤC
       if (rawText && rawText.trim().length >= 50) {
         try {
           updateLoading("Đang Dùng AI Lập Sơ Đồ & Tóm Tắt...", `Đang phân tích cấu trúc bài giảng từ ${fileName || 'PDF'} qua LLM...`);
@@ -11667,7 +11860,7 @@ ${tableRows}
     checkServerHealth();
     setInterval(checkServerHealth, 5000);
 
-        // HÀM TÁI CẤU TRÚC TOÀN BỘ SƠ ĐỒ BẰNG GEMINI AI (LLM CHUYÊN SÂU)
+        // HÀM TÁI CẤU TRÚC TOÀN BỘ SƠ ĐỒ BẰNG HYBRID TOC GEMINI AI
     async function refactorCurrentMindmapWithAI() {
       if (!activeProject) {
         showToast('⚠️ Vui lòng mở một dự án bài giảng để tái cấu trúc!');
@@ -11677,33 +11870,33 @@ ${tableRows}
       const btn = document.getElementById('btn-ai-refactor-mindmap');
       const originalHtml = btn ? btn.innerHTML : '<span>✨</span> AI Tái Cấu Trúc Sơ Đồ';
       if (btn) {
-        btn.innerHTML = '<span>⏳</span> <span>Gemini AI Đang Phân Tích...</span>';
+        btn.innerHTML = '<span>⏳</span> <span>Gemini AI Đang Quét Mục Lục...</span>';
         btn.disabled = true;
       }
 
       showLoading(
-        "✨ Gemini AI Đang Tái Cấu Trúc Toàn Bộ Sơ Đồ...",
-        "Đang dùng mô hình học thuật để làm sạch 100% rác OCR, thiết kế lại cấu trúc 3-5 Chương chuẩn sư phạm và viết tóm tắt chuyên sâu từng mục..."
+        "✨ Gemini AI Đang Tái Cấu Trúc Toàn Bộ Sơ Đồ Theo Mục Lục (TOC)...",
+        "Đang quét 5% trang đầu để nhận diện Table of Contents, khóa chặt ranh giới từng chương và viết tóm tắt học thuật chuyên sâu..."
       );
 
       try {
-        // Thu thập toàn bộ tri thức hiện có của bài giảng
+        // Thu thập toàn bộ các đề mục và trích đoạn từ các scenes hiện tại
         let textCorpus = `TÊN BÀI GIẢNG: ${activeProject.title}\n`;
         textCorpus += `MÔ TẢ: ${activeProject.desc || ''}\n\n`;
+        textCorpus += `NỘI DUNG VĂN BẢN HIỆN CÓ CỦA CÁC CHƯƠNG & MỤC LỤC:\n`;
 
-        // Lấy toàn bộ các đề mục và trích đoạn từ các scenes hiện tại
         (currentScenes || []).forEach((sc, idx) => {
-          textCorpus += `[Phân đoạn ${idx + 1}]: ${sc.title || ''}\n`;
+          textCorpus += `Chapter ${idx + 1}: ${sc.title || ''}\n`;
           (sc.sections || []).forEach(sec => {
-            textCorpus += `  - ${sec.title || ''}\n`;
+            textCorpus += `  Section ${sec.code || ''}: ${sec.title || ''}\n`;
             (sec.items || []).forEach(it => {
-              textCorpus += `    * ${it.text || ''}: ${it.summary || ''} (Cơ chế: ${it.mechanism || ''})\n`;
+              textCorpus += `    Item ${it.code || ''}: ${it.text || ''} ${it.summary || ''}\n`;
             });
           });
         });
 
         // Gọi LLM phân tích và tái tạo cấu trúc chuẩn
-        const aiResult = await LLMClient.extractDocumentOutlineWithAI(textCorpus, activeProject.title);
+        const aiResult = await LLMClient.extractTOCWithAI(textCorpus, activeProject.title);
         if (aiResult && aiResult.chapters && aiResult.chapters.length > 0) {
           activeProject.scenes = aiResult.chapters;
           currentScenes = JSON.parse(JSON.stringify(activeProject.scenes));
