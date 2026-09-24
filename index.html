@@ -3543,11 +3543,12 @@
 
             <!-- BẢN TÓM TẮT TRỌNG TÂM KIẾN THỨC CHO HỌC SINH ĐỌC HIỂU NGAY -->
             <div class="inspector-body-card" id="insp-section-summary">
-              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-                <div class="inspector-section-label" style="margin-bottom: 0;">💡 Tóm Tắt Đầy Đủ Ý Trước Khi Tạo Video</div>
-                <button id="btn-insp-ai-summarize" style="background: rgba(168, 85, 247, 0.15); border: 1px solid rgba(168, 85, 247, 0.4); color: #c084fc; font-size: 10.5px; font-weight: 600; padding: 3px 8px; border-radius: 4px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;" title="Dùng AI (Gemini Flash) sinh tóm tắt sư phạm chuyên sâu">
-                  <span>✨</span> <span>AI Bóc Tách Chuyên Sâu</span>
-                </button>
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <div class="inspector-section-label" style="margin-bottom: 0;">💡 Phân Tích & Tóm Tắt Chi Tiết Kiến Thức</div>
+                <div id="insp-auto-indicator" style="font-size: 11px; color: #a5b4fc; display: none; align-items: center; gap: 5px; background: rgba(99, 102, 241, 0.15); padding: 2px 8px; border-radius: 12px; border: 1px solid rgba(99, 102, 241, 0.3);">
+                  <span style="display:inline-block; animation: spin 1s linear infinite;">⏳</span>
+                  <span>AI Đang Bóc Tách Chi Tiết...</span>
+                </div>
               </div>
               <ul class="inspector-summary-list" id="insp-summary-list">
               </ul>
@@ -6809,6 +6810,38 @@
       showToast('🖥️ Đã mở rộng sơ đồ toàn màn hình!');
     }
 
+        // BỘ HỖ TRỢ BIÊN DỊCH CÔNG THỨC TOÁN HỌC LATEX (KATEX INTEGRATION)
+    function formatMathInText(str) {
+      if (!str) return '';
+      return String(str);
+    }
+
+    function renderMathFormulas(element) {
+      if (!element) return;
+      function runRender() {
+        if (window.renderMathInElement) {
+          try {
+            window.renderMathInElement(element, {
+              delimiters: [
+                { left: '$$', right: '$$', display: true },
+                { left: '$', right: '$', display: false },
+                { left: '\(', right: '\)', display: false },
+                { left: '\[', right: '\]', display: true }
+              ],
+              throwOnError: false
+            });
+          } catch (e) {
+            console.warn('[KaTeX] renderMathFormulas error:', e);
+          }
+        }
+      }
+      if (window.renderMathInElement) {
+        runRender();
+      } else {
+        setTimeout(runRender, 300);
+      }
+    }
+
     function selectLeafNodeForContent(node, cardEl) {
       selectedLeafNode = node;
       try {
@@ -6868,74 +6901,38 @@
       let coreSummary = itemData.summary;
       let coreMech = itemData.mechanism;
       let coreKeyPoint = itemData.key_point;
+      let coreDetails = itemData.details || '';
+      let coreExamples = itemData.examples || '';
 
       if (isNoise && (!coreSummary || coreSummary.includes('Colorado'))) {
-        coreSummary = `Tổng quan về chuỗi thời gian (Time Series): Tập hợp các quan sát số liệu X_t được ghi nhận tuần tự theo các mốc thời gian đều đặn.`;
-        coreMech = `Phân rã chuỗi thời gian thành 4 thành phần kinh điển: Xu hướng dài hạn (Trend), Biến động mùa vụ (Seasonality), Chu kỳ kinh tế (Cyclical) và Sai số ngẫu nhiên (White Noise).`;
+        coreSummary = `Tổng quan về chuỗi thời gian (Time Series): Tập hợp các quan sát số liệu $X_t$ được ghi nhận tuần tự theo các mốc thời gian đều đặn.`;
+        coreMech = `Phân rã chuỗi thời gian thành 4 thành phần kinh điển: Xu hướng dài hạn ($T_t$), Biến động mùa vụ ($S_t$), Chu kỳ kinh tế và Sai số ngẫu nhiên ($W_t$).`;
         coreKeyPoint = `Nền tảng mở đầu bắt buộc để xây dựng các mô hình dự báo thống kê (ARMA, ARIMA) và mô hình học sâu.`;
-      } else {
-        coreSummary = coreSummary || `Phân tích trọng tâm về luận điểm: ${nodeText}. Đây là nội dung cốt lõi của phân đoạn.`;
-        coreMech = coreMech || `Cơ chế vận hành dựa trên việc chuẩn hóa dữ liệu, trích xuất đặc trưng và liên kết các thành phần giải thuật.`;
-        coreKeyPoint = coreKeyPoint || `Điểm mấu chốt cần nắm vững để áp dụng chính xác vào đồ án và bài toán thực tế.`;
+      } else if (!coreSummary || coreSummary.startsWith('Phân tích trọng tâm về luận điểm:')) {
+        // Fallback thông minh theo từ khóa bài giảng để lập tức có kiến thức chi tiết
+        if (/dbscan|optics|density/i.test(nodeText)) {
+          coreSummary = `Phân cụm dựa trên mật độ điểm (DBSCAN / OPTICS): Tự động phát hiện các cụm dữ liệu có hình dạng bất kỳ và cô lập các điểm nhiễu (noise) $x \notin C_k$.`;
+          coreMech = `Vận hành dựa trên 2 siêu tham số: Bán kính lân cận $\epsilon$ và số điểm tối thiểu $\text{MinPts}$. Phân loại các điểm thành 3 nhóm: Điểm lõi (Core point), Điểm biên (Border point) và Điểm nhiễu (Noise).`;
+          coreKeyPoint = `Không cần biết trước số cụm $k$ (khác K-Means), xử lý tốt dữ liệu phi tuyến và có khả năng chống nhiễu ngoại lai vượt trội.`;
+          coreDetails = `Giải thuật OPTICS mở rộng DBSCAN bằng cách khắc phục nhược điểm về mật độ biến thiên, xây dựng đồ thị khoảng cách tiếp cận (reachability plot).`;
+          coreExamples = `Ứng dụng trong phát hiện gian lận giao dịch tài chính, phân vùng bản đồ nhiệt giao thông và thiên văn học.`;
+        } else if (/k-means|k-medoids|centroid/i.test(nodeText)) {
+          coreSummary = `Thuật toán phân cụm phân hoạch đại diện K-Means: Chia tập dữ liệu $X = \{x_1, ..., x_n\} \subset \mathbb{R}^d$ thành $k$ cụm không chồng lấn.`;
+          coreMech = `Lặp qua 2 bước: Gán từng điểm vào Centroid $\mu_j$ gần nhất theo khoảng cách Euclidean $||x_i - \mu_j||^2$, sau đó cập nhật tâm mới $\mu_j = \frac{1}{|C_j|} \sum_{x_i \in C_j} x_i$.`;
+          coreKeyPoint = `Cực tiểu hóa tổng bình phương sai số nội cụm: $\text{SSE} = \sum_{j=1}^k \sum_{x_i \in C_j} ||x_i - \mu_j||^2$. Nhạy cảm với khởi tạo và chỉ tối ưu với cụm hình cầu.`;
+        } else if (/som|kohonen|tô-pô|topology/i.test(nodeText)) {
+          coreSummary = `Mạng nơ-ron tự tổ chức Self-Organizing Maps (SOM / Kohonen): Chiếu không gian vector nhiều chiều $\mathbb{R}^d$ xuống lưới 2D tô-pô thích nghi.`;
+          coreMech = `Cơ chế học cạnh tranh (Competitive Learning): Tìm nơ-ron chiến thắng $c = \arg\min_i ||x - w_i||$, cập nhật trọng số nơ-ron chiến thắng và các nơ-ron lân cận theo hàm Gauss.`;
+          coreKeyPoint = `Bảo toàn cấu trúc lân cận tô-pô của dữ liệu gốc, hỗ trợ trực quan hóa các cụm phức tạp một cách trực quan.`;
+        } else {
+          coreSummary = coreSummary || `Phân tích trọng tâm về luận điểm: ${nodeText}. Nắm vững các định nghĩa toán học và tính chất bản chất của chủ đề.`;
+          coreMech = coreMech || `Cơ chế vận hành dựa trên việc chuẩn hóa dữ liệu, trích xuất đặc trưng và liên kết các thành phần giải thuật giải bài toán.`;
+          coreKeyPoint = coreKeyPoint || `Điểm mấu chốt cần nắm vững để áp dụng chính xác vào đồ án, bài thi và bài toán thực tế.`;
+        }
       }
 
-      // Xử lý nút AI Bóc Tách Chuyên Sâu
-      const btnAiSummarize = document.getElementById('btn-insp-ai-summarize');
-      if (btnAiSummarize) {
-        btnAiSummarize.onclick = async (e) => {
-          e.stopPropagation();
-          btnAiSummarize.innerHTML = '<span>⏳</span> <span>Đang bóc tách chuyên sâu...</span>';
-          btnAiSummarize.disabled = true;
-          try {
-            const res = await LLMClient.summarizeNode({
-              projectTitle: activeProject?.title || '',
-              chapterName: chapterName,
-              sectionName: secName,
-              nodeCode: nodeCode,
-              nodeText: nodeText
-            });
-            if (res) {
-              const newSumm = res.summary || res['Khái niệm cốt lõi'] || res.concept || '';
-              const newMech = res.mechanism || res['Cơ chế & Giải thuật'] || res.method || '';
-              const newKey = res.key_point || res['Điểm chốt quan trọng'] || res.keypoint || '';
-              const newDetails = res.details || res['Nội dung chi tiết'] || '';
-              const newExamples = res.examples || res['Ví dụ & Ứng dụng'] || '';
-
-              if (newSumm || newMech) {
-                node.data.summary = newSumm || node.data.summary;
-                node.data.mechanism = newMech || node.data.mechanism;
-                node.data.key_point = newKey || node.data.key_point;
-                node.data.details = newDetails;
-                node.data.examples = newExamples;
-
-                setNodeParam(node.key, 'summary', node.data.summary);
-                setNodeParam(node.key, 'mechanism', node.data.mechanism);
-                setNodeParam(node.key, 'key_point', node.data.key_point);
-                setNodeParam(node.key, 'details', newDetails);
-                setNodeParam(node.key, 'examples', newExamples);
-
-                updateContentInspector(node, cardEl);
-                renderMathFormulas(document.getElementById('insp-section-summary'));
-                showToast('✨ Đã nâng cấp bóc tách chuyên sâu 5 tầng từ AI thành công!');
-              } else {
-                showToast('⚠️ AI không trả về đủ cấu trúc tóm tắt.');
-              }
-            } else {
-              showToast('⚠️ Không nhận được phản hồi từ AI, vui lòng thử lại.');
-            }
-          } catch (err) {
-            showToast('⚠️ Không thể sinh tóm tắt: ' + err.message);
-          } finally {
-            btnAiSummarize.innerHTML = '<span>✨</span> <span>AI Bóc Tách Chuyên Sâu</span>';
-            btnAiSummarize.disabled = false;
-          }
-        };
-      }
-
-      const coreDetails = itemData.details || '';
-      const coreExamples = itemData.examples || '';
-
-      if (summaryList) {
+      function renderSummaryHtml() {
+        if (!summaryList) return;
         let html = `
           <li style="margin-bottom: 8px;"><strong>📌 Khái niệm cốt lõi:</strong> <span class="math-tex">${formatMathInText(coreSummary)}</span></li>
           <li style="margin-bottom: 8px;"><strong>⚙️ Cơ chế & Giải thuật:</strong> <span class="math-tex">${formatMathInText(coreMech)}</span></li>
@@ -6949,6 +6946,8 @@
         summaryList.innerHTML = html;
         renderMathFormulas(summaryList);
       }
+
+      renderSummaryHtml();
 
       // 2. DIỄN GIẢI KIẾN THỨC TOÀN DIỆN (KHÔNG SÁO RỖNG SƯ PHẠM, ĐI THẲNG VÀO NỘI DUNG BÀI HỌC)
       if (narrationText) {
@@ -6964,8 +6963,7 @@
         if (coreExamples) {
           narrHtml += `• <strong>Ví dụ:</strong> ${coreExamples}<br>`;
         }
-        narrHtml += `<br><em style="color: var(--text-dim);">Nhấn nút ✨ AI Bóc Tách Chuyên Sâu để AI phân tích sâu hơn nữa.</em>
-          </div>`;
+        narrHtml += `</div>`;
         narrationText.innerHTML = narrHtml;
       }
 
@@ -6983,24 +6981,60 @@
         };
       }
 
-      // ===== AUTO-SUMMARIZE: Tự động gọi LLM khi có API key =====
-      // Nếu node chưa có tóm tắt AI thực sự → auto-trigger LLM ngay khi chọn node
-      const _cfg = LLMClient.getConfig();
-      const hasLLM = true; // Luôn sẵn sàng vì có khóa mặc định trên máy chủ
-      const isRawSummary = !itemData.summary
-        || /trích xuất từ trang|nội dung trích|the methods described|estimation and elimination|introduction to time|colorado|springer|copyright/i.test(itemData.summary || '')
-        || /trích xuất từ trang|nội dung trích|the methods described/i.test(itemData.mechanism || '')
-        || (itemData.summary && itemData.summary.length < 60 && !itemData.details);
+      // 4. AUTO-BÓC TÁCH CHUYÊN SÂU: Tự động chạy ngầm bóc tách AI 5 tầng khi chọn node (không cần nút bấm)
+      const autoIndicator = document.getElementById('insp-auto-indicator');
+      const needsAiExtraction = !itemData.details
+        || !itemData.summary
+        || itemData.summary.length < 50
+        || itemData.summary.startsWith('Phân tích trọng tâm về luận điểm:');
 
-      if (hasLLM && isRawSummary && btnAiSummarize && !btnAiSummarize.disabled) {
-        // Debounce: tránh gọi trùng khi click nhanh nhiều node
+      if (needsAiExtraction) {
+        if (autoIndicator) autoIndicator.style.display = 'inline-flex';
+
         clearTimeout(window._autoSummarizeTimer);
-        window._autoSummarizeTimer = setTimeout(() => {
-          // Kiểm tra node hiện tại vẫn là node đã chọn
-          if (selectedLeafNode && selectedLeafNode.key === node.key) {
-            btnAiSummarize.click(); // Trigger cùng logic nút bấm
+        window._autoSummarizeTimer = setTimeout(async () => {
+          if (!selectedLeafNode || selectedLeafNode.key !== node.key) return;
+
+          try {
+            const res = await LLMClient.summarizeNode({
+              projectTitle: activeProject?.title || '',
+              chapterName: chapterName,
+              sectionName: secName,
+              nodeCode: nodeCode,
+              nodeText: nodeText
+            });
+
+            if (res && (res.summary || res.mechanism)) {
+              coreSummary = res.summary || coreSummary;
+              coreMech = res.mechanism || coreMech;
+              coreKeyPoint = res.key_point || coreKeyPoint;
+              coreDetails = res.details || coreDetails;
+              coreExamples = res.examples || coreExamples;
+
+              node.data.summary = coreSummary;
+              node.data.mechanism = coreMech;
+              node.data.key_point = coreKeyPoint;
+              node.data.details = coreDetails;
+              node.data.examples = coreExamples;
+
+              setNodeParam(node.key, 'summary', coreSummary);
+              setNodeParam(node.key, 'mechanism', coreMech);
+              setNodeParam(node.key, 'key_point', coreKeyPoint);
+              setNodeParam(node.key, 'details', coreDetails);
+              setNodeParam(node.key, 'examples', coreExamples);
+
+              if (selectedLeafNode && selectedLeafNode.key === node.key) {
+                renderSummaryHtml();
+              }
+            }
+          } catch (err) {
+            console.warn('[AutoSummarize] Lỗi bóc tách tự động:', err);
+          } finally {
+            if (autoIndicator) autoIndicator.style.display = 'none';
           }
-        }, 300);
+        }, 150);
+      } else {
+        if (autoIndicator) autoIndicator.style.display = 'none';
       }
     }
 
