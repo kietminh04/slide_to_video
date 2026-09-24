@@ -7655,6 +7655,92 @@ Hãy viết lời giảng sư phạm hoàn chỉnh theo từng phân đoạn [m�
         return null;
       },
       // BÓC TÁCH MỤC LỤC & AGENDA SLIDE BẰNG GEMINI AI (HYBRID TOC/AGENDA ARCHITECTURE)
+      // BÓC TÁCH CẤU TRÚC SLIDE BÀI GIẢNG BẰNG AI CATALOG ARCHITECTURE (FULL LLM SLIDE EXTRACTION)
+      async extractSlideDeckStructure(deckCatalog, totalPages, fileName = "") {
+        const cfg = this.getConfig();
+        if (!deckCatalog || deckCatalog.trim().length < 30) return null;
+
+        const systemPrompt = `Bạn là Giáo sư & Chuyên gia Sư phạm Giảng dạy Đại học môn Toán - Tin và Khoa học Dữ liệu.
+Dưới đây là DANH MỤC TOÀN BỘ SLIDE CỦA BÀI GIẢNG (kèm tiêu đề và trích đoạn nội dung).
+
+NHIỆM VỤ: Hãy phân tích toàn bộ tiến trình bài giảng và gom các slide thành 4 ĐẾN 6 CHƯƠNG SƯ PHẠM HOÀN HẢO.
+
+QUY TẮC BẮT BUỘC:
+1. ĐẶT TÊN CHƯƠNG CHUẨN MỰC HỌC THUẬT:
+   - Tên chương phải đại diện đúng cho chủ đề kiến thức của phân đoạn slide đó.
+   - Tuyệt đối không sinh tên rác, không để tên lặp lại cụt lủn (như "Lecture" hay lặp lại cùng một tiêu đề slide thô).
+2. XÁC ĐỊNH RÕ RÀNG SLIDE BẮT ĐẦU VÀ KẾT THÚC CỦA TỪNG MỤC:
+   - "pdfStart": số slide bắt đầu thực tế.
+   - "pdfEnd": số slide kết thúc thực tế.
+3. MỖI CHƯƠNG GỒM 1-2 Sections và 2-3 Items. Mỗi Item có:
+   - "summary": Tóm tắt bản chất lý thuyết (2-3 câu phân tích sâu).
+   - "mechanism": Cơ chế toán học / giải thuật tương ứng.
+   - "key_point": Điểm then chốt cần ghi nhớ khi áp dụng.
+
+ĐỊNH DẠNG ĐẦU RA: Trả về DUY NHẤT JSON hợp lệ (không kèm markdown):
+{
+  "chapters": [
+    {
+      "chapter": "CHƯƠNG 1",
+      "title": "Tên chương chuẩn học thuật",
+      "depth": "bridge",
+      "visual_type": "split_screen",
+      "sections": [
+        {
+          "code": "Phần a",
+          "title": "Tên phân đoạn",
+          "items": [
+            {
+              "code": "a1",
+              "text": "Tên mục kiến thức",
+              "pdfStart": 1,
+              "pdfEnd": 6,
+              "summary": "Tóm tắt bản chất lý thuyết...",
+              "mechanism": "Cơ chế hoặc công thức cốt lõi...",
+              "key_point": "Điểm quan trọng..."
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}`;
+
+        const payload = {
+          model: cfg.model || 'gemini-2.5-flash-lite',
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: `Tài liệu: ${fileName || 'Bài giảng đại học'}\nTổng số slide: ${totalPages}\n\nDANH MỤC TOÀN BỘ SLIDE:\n${deckCatalog}` }
+          ],
+          max_tokens: 4000,
+          temperature: 0.2,
+          provider: cfg.provider || 'gemini_local',
+          apiKey: cfg.apiKey || ''
+        };
+
+        try {
+          const serverUrl = (window.location.origin.startsWith('http') && !window.location.origin.includes('file:'))
+            ? `${window.location.origin}/api/llm/chat`
+            : 'https://slide-to-video-sigma.vercel.app/api/llm/chat';
+          const res = await fetch(serverUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+          if (res.ok) {
+            const data = await res.json();
+            const raw = data.choices?.[0]?.message?.content || '';
+            const parsed = this.safeJsonParse(raw);
+            if (parsed && parsed.chapters && parsed.chapters.length > 0) {
+              return parsed;
+            }
+          }
+        } catch (e) {
+          console.warn('[LLMClient] Lỗi bóc tách Slide Deck qua serverless:', e);
+        }
+        return null;
+      },
+
       async extractTOCWithAI(tocText, fileName = "") {
         const cfg = this.getConfig();
         if (!tocText || tocText.trim().length < 40) return null;
@@ -9923,8 +10009,75 @@ QUY TẮC PHẢN HỒI QUAN TRỌNG:
       return null;
     }
 
-    async function extractPdfStructure(arrayBuffer, fileName = "") {
+    // BỘ BÓC TÁCH SLIDE TOÀN NĂNG (FULL LLM SLIDE CATALOG ARCHITECTURE)
+    async function extractSlideDeckWithAI(pdf, totalPages, fileName = "") {
+      const scanLimit = Math.min(totalPages, 80);
+      const slidesInfo = [];
 
+      for (let p = 1; p <= scanLimit; p++) {
+        try {
+          const page = await pdf.getPage(p);
+          const content = await page.getTextContent();
+          const items = content.items || [];
+          const lines = [];
+          let curLine = "";
+          items.forEach(it => {
+            if (it.str && it.str.trim()) {
+              curLine += (curLine ? " " : "") + it.str.trim();
+              if (curLine.length > 60 || it.hasEOL) {
+                lines.push(curLine);
+                curLine = "";
+              }
+            }
+          });
+          if (curLine) lines.push(curLine);
+
+          const meaningfulLines = lines.filter(l => {
+            if (l.length < 3) return false;
+            if (/^[0-9\s\-\.\/]+$/.test(l)) return false;
+            return true;
+          });
+
+          const title = meaningfulLines[0] || `Slide ${p}`;
+          const bodySample = meaningfulLines.slice(1, 4).join(' ').substring(0, 120);
+          slidesInfo.push(`Slide ${p}: ${title} | ${bodySample}`);
+        } catch (e) {}
+      }
+
+      if (slidesInfo.length === 0) return null;
+      const deckCatalog = slidesInfo.join('\n');
+
+      updateLoading("Đang phân tích slide bằng AI...", "Đang bóc tách kiến thức toàn bộ bài giảng...");
+      const aiResult = await LLMClient.extractSlideDeckStructure(deckCatalog, totalPages, fileName);
+
+      if (aiResult && aiResult.chapters && aiResult.chapters.length > 0) {
+        // Chuẩn hóa tên chương và pageRange
+        aiResult.chapters.forEach((ch, idx) => {
+          if (!ch.chapter) ch.chapter = `CHƯƠNG ${idx + 1}`;
+          if (!ch.title) ch.title = ch.name || `Chương ${idx + 1}`;
+          (ch.sections || []).forEach(sec => {
+            (sec.items || []).forEach(it => {
+              const pStart = it.pdfStart || 1;
+              const pEnd = it.pdfEnd || pStart;
+              it.pdfStart = Math.min(totalPages, Math.max(1, pStart));
+              it.pdfEnd = Math.min(totalPages, Math.max(it.pdfStart, pEnd));
+              it.pageRange = `Slide ${it.pdfStart} - ${it.pdfEnd}`;
+            });
+          });
+        });
+
+        console.log(`[PDF Extractor] 🌟 Bóc tách Slide Deck thành công qua AI Catalog: ${aiResult.chapters.length} chương!`);
+        return {
+          title: (fileName || '').replace(/\.[^/.]+$/, ""),
+          totalPages,
+          chapters: aiResult.chapters,
+          method: 'ai-slide-catalog'
+        };
+      }
+      return null;
+    }
+
+    async function extractPdfStructure(arrayBuffer, fileName = "") {
       if (typeof pdfjsLib === 'undefined') {
         console.warn('[PDF Extractor] pdf.js chưa tải xong');
         return null;
@@ -9934,7 +10087,32 @@ QUY TẮC PHẢN HỒI QUAN TRỌNG:
       const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
       const totalPages = pdf.numPages;
 
-      // ƯU TIÊN SỐ 1 TUYỆT ĐỐI: BÓC TÁCH HYBRID THEO MỤC LỤC (TIẾT KIỆM TOKEN, CHUẨN TỪNG TRANG)
+      // 1. KIỂM TRA ĐỊNH DẠNG TÀI LIỆU (SLIDE BÀI GIẢNG vs SÁCH / GIÁO TRÌNH)
+      let isSlideDeck = false;
+      try {
+        const page1 = await pdf.getPage(1);
+        const vp = page1.getViewport({ scale: 1.0 });
+        if (vp.width > vp.height || totalPages <= 60) {
+          isSlideDeck = true;
+        }
+      } catch (e) {
+        if (totalPages <= 60) isSlideDeck = true;
+      }
+
+      // ƯU TIÊN SỐ 1 CHO SLIDE BÀI GIẢNG: BÓC TÁCH TOÀN NĂNG BẰNG AI CATALOG
+      if (isSlideDeck) {
+        try {
+          updateLoading("Đang phân tích slide bằng AI...", "Đang bóc tách kiến thức toàn bộ bài giảng...");
+          const slideResult = await extractSlideDeckWithAI(pdf, totalPages, fileName);
+          if (slideResult && slideResult.chapters && slideResult.chapters.length > 0) {
+            return slideResult;
+          }
+        } catch (deckErr) {
+          console.warn('[PDF Extractor] Lỗi bóc tách Slide Deck qua AI Catalog, thử phương án tiếp theo:', deckErr);
+        }
+      }
+
+      // ƯU TIÊN SỐ 1 CHO SÁCH / GIÁO TRÌNH DÀY: BÓC TÁCH HYBRID THEO MỤC LỤC (TIẾT KIỆM TOKEN, CHUẨN TỪNG TRANG)
       try {
         updateLoading("Đang phân tích...", "Vui lòng chờ trong giây lát...");
         const tocResult = await extractPdfHybridTOC(pdf, totalPages, fileName);
