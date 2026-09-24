@@ -13433,6 +13433,17 @@ ${foreshadowText}`;
           renderMindmap();
           renderScriptDocument();
           renderProjectsGrid();
+
+          // Tự động lưu file đúng định dạng đúng chi tiết luôn (cập nhật DB và Local)
+          if (typeof CloudDB !== 'undefined' && CloudDB.save) {
+            CloudDB.save(activeProject);
+          }
+          try {
+            const userProjects = JSON.parse(localStorage.getItem('clsg_user_projects') || '{}');
+            userProjects[activeProject.id] = activeProject;
+            localStorage.setItem('clsg_user_projects', JSON.stringify(userProjects));
+          } catch(e) {}
+
           showToast(`Đã thêm thành công tài liệu: ${f.name}`);
         } catch (err) {
           console.error("Lỗi thêm tài liệu:", err);
@@ -13477,6 +13488,7 @@ ${foreshadowText}`;
           x: 1.5, y: 3.5, w: '70%', h: 0.8, fontSize: 16, color: '94A3B8', align: 'center'
         });
 
+        const rootKey = getSourceKey(src, idx);
         // 2. Lấy các chương/mục thuộc nguồn này
         const sourceScenes = (src.scenes && src.scenes.length > 0)
           ? src.scenes
@@ -13528,10 +13540,11 @@ ${foreshadowText}`;
                   });
 
                   let content = [];
-                  const summary = it.summary || (typeof getNodeParam === 'function' ? getNodeParam(`item-${cIdx}-${sIdx}-${iIdx}`, 'summary', '') : '');
-                  const mechanism = it.mechanism || (typeof getNodeParam === 'function' ? getNodeParam(`item-${cIdx}-${sIdx}-${iIdx}`, 'mechanism', '') : '');
-                  const keyPoint = it.key_point || (typeof getNodeParam === 'function' ? getNodeParam(`item-${cIdx}-${sIdx}-${iIdx}`, 'key_point', '') : '');
-                  const details = it.details || (typeof getNodeParam === 'function' ? getNodeParam(`item-${cIdx}-${sIdx}-${iIdx}`, 'details', '') : '');
+                  const itKey = `item-${rootKey}-${cIdx}-${sIdx}-${iIdx}`;
+                  const summary = it.summary || (typeof getNodeParam === 'function' ? getNodeParam(itKey, 'summary', '') : '');
+                  const mechanism = it.mechanism || (typeof getNodeParam === 'function' ? getNodeParam(itKey, 'mechanism', '') : '');
+                  const keyPoint = it.key_point || (typeof getNodeParam === 'function' ? getNodeParam(itKey, 'key_point', '') : '');
+                  const details = it.details || (typeof getNodeParam === 'function' ? getNodeParam(itKey, 'details', '') : '');
 
                   if (summary) content.push({ text: `📌 Khái niệm: ${summary}`, options: { bullet: true, color: '1E293B', breakLine: true } });
                   if (keyPoint) content.push({ text: `🎯 Trọng tâm: ${keyPoint}`, options: { bullet: true, color: '1E293B', breakLine: true } });
@@ -13542,7 +13555,7 @@ ${foreshadowText}`;
                     s.addText(content, { x: 0.6, y: 1.6, w: '88%', h: 3.6, fontSize: 15, align: 'left', valign: 'top' });
                   }
 
-                  const narration = it.narration || (typeof getNodeParam === 'function' ? getNodeParam(`item-${cIdx}-${sIdx}-${iIdx}`, 'narration', '') : '');
+                  const narration = it.narration || (typeof getNodeParam === 'function' ? getNodeParam(itKey, 'narration', '') : '');
                   if (narration) {
                     s.addNotes(narration);
                   }
