@@ -12331,20 +12331,17 @@ QUY TẮC PHẢN HỒI QUAN TRỌNG:
         console.warn('[PPTX Extractor] JSZip chưa tải xong');
         return null;
       }
-
       const zip = await JSZip.loadAsync(arrayBuffer);
-
-      // Tìm tất cả slide files (ppt/slides/slide1.xml, slide2.xml, ...)
       const slideFiles = [];
       zip.forEach((path, entry) => {
         const match = path.match(/^ppt\/slides\/slide(\d+)\.xml$/i);
         if (match) slideFiles.push({ path, num: parseInt(match[1]) });
       });
       slideFiles.sort((a, b) => a.num - b.num);
-
       if (slideFiles.length === 0) return null;
 
       const chapters = [];
+      const nsP = 'http://schemas.openxmlformats.org/presentationml/2006/main';
       const nsA = 'http://schemas.openxmlformats.org/drawingml/2006/main';
 
       for (const sf of slideFiles) {
@@ -12353,37 +12350,85 @@ QUY TẮC PHẢN HỒI QUAN TRỌNG:
 
         const parser = new DOMParser();
         const doc = parser.parseFromString(xml, 'application/xml');
-
-        // Trích text từ tất cả text body shapes
-        const textBodies = doc.getElementsByTagNameNS(nsA, 'p');
+        
         let slideTitle = '';
-        const bulletPoints = [];
-
-        for (let i = 0; i < textBodies.length; i++) {
-          const p = textBodies[i];
-          const runs = p.getElementsByTagNameNS(nsA, 't');
-          let lineText = '';
-          for (let r = 0; r < runs.length; r++) {
-            lineText += runs[r].textContent || '';
-          }
-          lineText = lineText.trim();
-          if (!lineText) continue;
-
-          // Phát hiện title (paragraph đầu tiên có text dài > 3 ký tự, hoặc font lớn)
-          if (!slideTitle && lineText.length > 2) {
-            slideTitle = lineText;
-          } else if (lineText.length > 2) {
-            bulletPoints.push(lineText);
+        let titleShapeId = null;
+        const shapes = doc.getElementsByTagNameNS(nsP, 'sp');
+        
+        // BƯỚC 1: Dò chuẩn - Tìm khung Title Placeholder
+        for (let s = 0; s < shapes.length; s++) {
+          const sp = shapes[s];
+          const ph = sp.querySelector('nvSpPr > nvPr > ph');
+          if (ph) {
+            const type = ph.getAttribute('type');
+            if (type === 'title' || type === 'ctrTitle') {
+              const texts = Array.from(sp.getElementsByTagNameNS(nsA, 't')).map(t => t.textContent).join('');
+              if (texts.trim()) {
+                slideTitle = texts.trim();
+                titleShapeId = s;
+                break;
+              }
+            }
           }
         }
 
+        // BƯỚC 2: Fallback - Tìm Textbox đầu tiên có chữ nếu mất Title
+        if (!slideTitle) {
+          for (let s = 0; s < shapes.length; s++) {
+            const sp = shapes[s];
+            const paragraphs = sp.getElementsByTagNameNS(nsA, 'p');
+            if (paragraphs.length > 0) {
+              const texts = Array.from(paragraphs[0].getElementsByTagNameNS(nsA, 't')).map(t => t.textContent).join('');
+              if (texts.trim()) {
+                slideTitle = texts.trim();
+                titleShapeId = s;
+                break;
+              }
+            }
+          }
+        }
         if (!slideTitle) slideTitle = `Slide ${sf.num}`;
 
-        // Mỗi slide = 1 section (không phải chapter, vì PPTX thường phẳng)
-        const items = bulletPoints.slice(0, 8).map((bp, idx) => ({
+        // BƯỚC 3: Bóc tách chi tiết (Paragraph vs Bullet Point vs Level)
+        const slideElements = [];
+        for (let s = 0; s < shapes.length; s++) {
+          const sp = shapes[s];
+          const paragraphs = sp.getElementsByTagNameNS(nsA, 'p');
+          
+          for (let pIdx = 0; pIdx < paragraphs.length; pIdx++) {
+            const p = paragraphs[pIdx];
+            const text = Array.from(p.getElementsByTagNameNS(nsA, 't')).map(t => t.textContent).join('').trim();
+            if (!text) continue;
+
+            // Bỏ qua dòng đã được dùng làm tiêu đề
+            if (s === titleShapeId && pIdx === 0 && text === slideTitle) continue;
+
+            const pPr = p.getElementsByTagNameNS(nsA, 'pPr')[0];
+            let lvl = 0;
+            if (pPr && pPr.hasAttribute('lvl')) {
+              lvl = parseInt(pPr.getAttribute('lvl'));
+            }
+            
+            const isBullet = (lvl > 0 || text.startsWith('-') || text.startsWith('•'));
+            slideElements.push({
+               type: isBullet ? 'bullet' : 'paragraph',
+               level: lvl,
+               text: text
+            });
+          }
+        }
+
+        // Format clean text để nạp LLM
+        const cleanTextList = slideElements.map(el => {
+           const indent = '  '.repeat(el.level);
+           return el.type === 'bullet' ? `${indent}- ${el.text}` : `${indent}${el.text}`;
+        });
+
+        // Mỗi slide = 1 section (để tương thích biến chapters cũ trước khi nạp LLM)
+        const items = slideElements.slice(0, 10).map((el, idx) => ({
           code: `a${idx + 1}`,
-          text: bp.substring(0, 150),
-          summary: bp,
+          text: el.text.substring(0, 150),
+          summary: el.text,
           mechanism: '', key_point: ''
         }));
 
@@ -12392,6 +12437,7 @@ QUY TẮC PHẢN HỒI QUAN TRỌNG:
           title: slideTitle.substring(0, 80),
           depth: sf.num === 1 ? 'bridge' : 'core',
           visual_type: 'split_screen',
+          cleanLines: cleanTextList,
           sections: [{
             code: 'Phần a',
             title: slideTitle,
@@ -12401,7 +12447,7 @@ QUY TẮC PHẢN HỒI QUAN TRỌNG:
       }
 
       // ƯU TIÊN SỐ 1: GỌI LLM 1 LẦN MẶC ĐỊNH ĐỂ TRÍCH XUẤT TÓM TẮT & SƠ ĐỒ CHUẨN SƯ PHẠM
-      const rawPptxText = chapters.map(ch => `${ch.title}: ${(ch.sections[0]?.items || []).map(it => it.text).join(', ')}`).join('\n');
+      const rawPptxText = chapters.map(ch => `[SLIDE ${ch.chapter.replace('SLIDE ','')}] TIÊU ĐỀ: ${ch.title}\nNỘI DUNG:\n${ch.cleanLines.join('\n')}`).join('\n\n');
       if (rawPptxText && rawPptxText.trim().length >= 50) {
         try {
           updateLoading("Đang Dùng AI Lập Sơ Đồ & Tóm Tắt...", `Đang phân tích cấu trúc bài giảng từ ${fileName || 'PPTX'} qua LLM...`);
