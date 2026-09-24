@@ -14230,13 +14230,13 @@ ${foreshadowText}`;
       provInfo.models.forEach((m, idx) => {
         const isSelected = (targetModel === m.value) || (!targetModel && idx === 0);
         const div = document.createElement('div');
-        div.style.cssText = `display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border: 1px solid ${isSelected ? '#818cf8' : '#e2e8f0'}; border-radius: 8px; background: ${isSelected ? '#eef2ff' : '#f8fafc'}; cursor: pointer; transition: all 0.2s;`;
+        div.style.cssText = `display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border: 1px solid ${isSelected ? '#818cf8' : 'rgba(99,102,241,0.15)'}; border-radius: 8px; background: ${isSelected ? 'rgba(99,102,241,0.15)' : 'rgba(30,41,59,0.5)'}; cursor: pointer; transition: all 0.2s;`;
         div.innerHTML = `
           <div style="display: flex; align-items: center; gap: 10px;">
-            <div style="width: 16px; height: 16px; border-radius: 50%; border: 2px solid ${isSelected ? '#4f46e5' : '#cbd5e1'}; display: flex; align-items: center; justify-content: center; background: ${isSelected ? '#4f46e5' : 'transparent'};">
+            <div style="width: 16px; height: 16px; border-radius: 50%; border: 2px solid ${isSelected ? '#818cf8' : '#475569'}; display: flex; align-items: center; justify-content: center; background: ${isSelected ? '#818cf8' : 'transparent'};">
               ${isSelected ? '<div style="width: 6px; height: 6px; border-radius: 50%; background: #fff;"></div>' : ''}
             </div>
-            <span style="font-size: 13px; font-weight: ${isSelected ? '600' : '500'}; color: ${isSelected ? '#312e81' : '#475569'};">${m.label}</span>
+            <span style="font-size: 13px; font-weight: ${isSelected ? '600' : '500'}; color: ${isSelected ? '#e0e7ff' : '#94a3b8'};">${m.label}</span>
           </div>
         `;
         div.addEventListener('click', () => {
@@ -14261,8 +14261,8 @@ ${foreshadowText}`;
       aiConfigTabs.forEach(tab => {
         if (tab.dataset.prov === providerKey) {
           tab.classList.add('active');
-          tab.style.borderBottom = '2px solid #3b82f6';
-          tab.style.color = '#3b82f6';
+          tab.style.borderBottom = '2px solid #818cf8';
+          tab.style.color = '#818cf8';
         } else {
           tab.classList.remove('active');
           tab.style.borderBottom = '2px solid transparent';
