@@ -9800,6 +9800,9 @@ OUTPUT: Valid JSON only.
       return actions;
     }
 
+    // LỊCH SỬ HỘI THOẠI TRONG PHIÊN CHAT COPILOT
+    const clsgChatSessionHistory = [];
+
     // TRÍ NHỚ CÂU HỎI ĐÁP COPILOT (COPILOT Q&A CACHE - 0 TOKEN, ZERO CRASH)
     const CopilotQACache = {
       STORAGE_KEY: 'clsg_copilot_qa_cache',
@@ -10199,14 +10202,20 @@ QUY TẮC PHẢN HỒI QUAN TRỌNG:
         `<div style="margin-top:8px;"><button class="chat-pill-btn" onclick="playVoiceNarration(this)" style="font-size:11px; padding:2px 8px; border-color:rgba(56,189,248,0.3); color:var(--cyan); cursor:pointer;">🔊 Nghe đọc</button></div>`;
       chatContainer.scrollTop = chatContainer.scrollHeight;
 
-      clsgChatSessionHistory.push({ role: 'user', content: msg });
-      clsgChatSessionHistory.push({ role: 'assistant', content: localReply });
+      try {
+        clsgChatSessionHistory.push({ role: 'user', content: msg });
+        clsgChatSessionHistory.push({ role: 'assistant', content: localReply });
+      } catch (e) {}
     } catch (fallbackErr) {
       console.error("[Copilot Fallback Error]:", fallbackErr);
-      bubbleEl.style.opacity = '1';
-      bubbleEl.style.fontStyle = 'normal';
-      bubbleEl.innerHTML = `⚠️ <strong>Trợ lý AI:</strong> Đã tiếp nhận yêu cầu <em>"${escapeHtml(msg)}"</em> nhưng gặp sự cố khi xử lý lệnh. Vui lòng thử lại!`;
-      chatContainer.scrollTop = chatContainer.scrollHeight;
+      if (bubbleEl) {
+        bubbleEl.style.opacity = '1';
+        bubbleEl.style.fontStyle = 'normal';
+        if (!bubbleEl.innerHTML || bubbleEl.innerHTML.includes('Đang phân tích')) {
+          bubbleEl.innerHTML = `⚠️ <strong>Trợ lý AI:</strong> Đã tiếp nhận yêu cầu <em>"${escapeHtml(msg)}"</em> nhưng gặp sự cố khi xử lý lệnh. Vui lòng thử lại!`;
+        }
+      }
+      if (chatContainer) chatContainer.scrollTop = chatContainer.scrollHeight;
     }
   }
 
@@ -13953,6 +13962,10 @@ QUY TẮC PHẢN HỒI QUAN TRỌNG:
     });
 
     btnSaveAiCfg?.addEventListener('click', () => {
+      const originalText = btnSaveAiCfg.innerHTML;
+      btnSaveAiCfg.innerHTML = '<span>⏳</span> Đang lưu...';
+      btnSaveAiCfg.disabled = true;
+
       const provider = radioProvGemini?.checked ? 'gemini_local' : 'openai';
       const currentInputKey = document.getElementById('cfg-api-key')?.value.trim() || '';
       if (provider === 'openai') {
@@ -13976,9 +13989,12 @@ QUY TẮC PHẢN HỒI QUAN TRỌNG:
       });
 
       updateAiBadge();
-      updateQuickApiKeyUI();
       closeAiConfigModal();
-      showToast(`Đã lưu cấu hình: Đang kích hoạt [${model}] (${provider === 'openai' ? 'OpenAI' : 'Google Gemini'})!`);
+
+      btnSaveAiCfg.innerHTML = originalText;
+      btnSaveAiCfg.disabled = false;
+
+      showToast(`🎉 Đã lưu cấu hình AI thành công: Đang sử dụng [${model}] (${provider === 'openai' ? 'OpenAI Official' : 'Google Gemini'})!`);
     });
 
     // NÚT LƯU ĐỒNG BỘ CLOUD (NEON POSTGRES)
