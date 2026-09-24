@@ -8201,8 +8201,9 @@
       synthesizeAcademicSummaryLocally({ projectTitle, chapterName, sectionName, nodeCode, nodeText }) {
         const text = `${nodeText || ''} ${chapterName || ''} ${sectionName || ''} ${projectTitle || ''}`.toLowerCase();
         
-        let mechanismFormula = "$$\\min_{\\theta} \\mathcal{L}(\\theta) = \\frac{1}{N} \\sum_{i=1}^N \\ell(f_\\theta(x_i), y_i) + \\lambda \\|\\theta\\|^2_2$$";
-        let domainConcept = "cấu trúc dữ liệu và giải thuật tối ưu";
+        let mechanismFormula = "";
+        let domainConcept = "nội dung chuyên môn tương ứng";
+        let defaultMechanism = `• Cơ chế & Trình tự logic: Phân tích theo cấu trúc diễn dịch, đi từ bức tranh toàn cảnh đến việc mổ xẻ các khía cạnh chi tiết của vấn đề, từ đó rút ra quy luật và bài học ứng dụng.`;
         
         if (text.includes('cluster') || text.includes('phân cụm') || text.includes('gom cụm') || text.includes('k-means') || text.includes('gmm')) {
           mechanismFormula = "$$J = \\sum_{k=1}^K \\sum_{x_i \\in S_k} \\|x_i - \\mu_k\\|^2 \\quad \\text{với} \\quad \\mu_k = \\frac{1}{|S_k|} \\sum_{x_i \\in S_k} x_i$$";
@@ -8216,14 +8217,21 @@
         } else if (text.includes('loss') || text.includes('hàm mất mát') || text.includes('entropy') || text.includes('gradient')) {
           mechanismFormula = "$$\\mathcal{L}_{CE} = -\\sum_{c=1}^C y_c \\log(\\hat{y}_c) + \\alpha \\sum_{j=1}^m \\|w_j\\|^2$$";
           domainConcept = "tối ưu hóa hàm mục tiêu và lan truyền ngược gradient";
+        } else if (text.includes('lịch sử') || text.includes('đảng') || text.includes('chính trị') || text.includes('xã hội') || text.includes('triết học')) {
+          domainConcept = "bối cảnh lịch sử, triết học và nền tảng tư tưởng";
+          defaultMechanism = `• Cơ chế & Trình tự logic: Phân tích theo dòng thời gian (chronological) hoặc theo logic biện chứng (dialectical), đặt sự kiện vào đúng bối cảnh không gian - thời gian để đánh giá nguyên nhân và hệ quả.`;
+        }
+
+        if (mechanismFormula) {
+            defaultMechanism = `• Cơ chế & Công thức Toán học: Phương pháp giải quyết bài toán thông qua việc tối ưu hóa hàm mục tiêu và chuẩn hóa không gian véc-tơ:\n${mechanismFormula}\nQuy trình thực thi gồm các bước: chuẩn hóa dữ liệu đầu vào, ánh xạ qua hàm biến đổi không gian, và tính toán nghiệm tối ưu dựa trên đạo hàm riêng.`;
         }
 
         return {
-          summary: `• Khái niệm cốt lõi: Phân đoạn [${nodeCode}] "${nodeText}" là nội dung then chốt thuộc ${chapterName} (${sectionName}). Phân đoạn này tập trung phân tích bản chất lý thuyết của ${domainConcept}, thiết lập không gian bài toán và định hình các tiền đề quan trọng cho toàn bộ hệ thống.`,
-          mechanism: `• Cơ chế & Công thức Toán học: Phương pháp giải quyết bài toán thông qua việc tối ưu hóa hàm mục tiêu và chuẩn hóa không gian véc-tơ:\n${mechanismFormula}\nQuy trình thực thi gồm các bước: chuẩn hóa dữ liệu đầu vào, ánh xạ qua hàm biến đổi không gian, và tính toán nghiệm tối ưu dựa trên đạo hàm riêng.`,
-          key_point: `• Điểm then chốt & Lưu ý: Cần đặc biệt lưu ý các giả định tiên quyết về phân phối dữ liệu, kiểm soát sai số ước lượng và đảm bảo tính hội tụ của giải thuật khi triển khai trên dữ liệu thực tế quy mô lớn.`,
-          details: `• Bóc tách chuyên sâu: Khảo sát tường minh các thành phần cấu thành, diễn giải ý nghĩa toán học của từng tham số và đánh giá tính chất tiệm cận của mô hình.`,
-          examples: `• Ứng dụng thực tiễn: Áp dụng trực tiếp trong bài toán phân tích hệ thống, xử lý kịch bản hiếm (Rare Scenarios), phát hiện bất thường và tối ưu hóa quy trình ra quyết định trong sản xuất.`
+          summary: `• Khái niệm cốt lõi: Phân đoạn [${nodeCode}] "${nodeText}" là nội dung then chốt thuộc ${chapterName} (${sectionName}). Phân đoạn này tập trung phân tích bản chất lý thuyết của ${domainConcept}, thiết lập các tiền đề quan trọng cho toàn bộ hệ thống.`,
+          mechanism: defaultMechanism,
+          key_point: `• Điểm then chốt & Lưu ý: Cần đặc biệt lưu ý các giả định tiên quyết, bối cảnh áp dụng, và tính nhất quán của khung lý thuyết khi triển khai phân tích vào thực tế.`,
+          details: `• Bóc tách chuyên sâu: Khảo sát tường minh các thành phần cấu thành, diễn giải ý nghĩa và đánh giá tính chất tiệm cận của mô hình/hệ thống.`,
+          examples: `• Ứng dụng thực tiễn: Áp dụng trực tiếp trong bài toán phân tích hệ thống, giúp người học vận dụng tư duy để giải quyết các tình huống tương tự trong môi trường thực tế.`
         };
       },
 
