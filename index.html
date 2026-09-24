@@ -20,6 +20,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <!-- JSZip: Giải nén DOCX/PPTX (đều là ZIP chứa XML bên trong) -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
   <style>
     :root {
       --bg-base: #080c14;
@@ -3841,96 +3842,85 @@
   <!-- =========================================================================
        MODAL: AI & API KEY CONFIGURATION (TOKEN-FRUGAL ENGINE)
        ========================================================================= -->
-  <div class="modal-backdrop" id="modal-api-config" style="display: none;">
-    <div class="modal-content" style="max-width: 540px;">
-      <div class="modal-header">
-        <div class="modal-title" style="display: flex; align-items: center; gap: 8px;">
-          <span>⚙️</span> Cấu Hình Mô Hình & API Key
-        </div>
-        <button class="btn-close-modal" id="btn-close-ai-config">&times;</button>
-      </div>
-
-      <div style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.25); border-radius: var(--radius-sm); padding: 12px; margin-bottom: 16px;">
-        <div style="font-size: 12px; font-weight: 700; color: #34d399; margin-bottom: 4px;">🛡️ Cơ Chế Bảo Vệ & Tiết Kiệm Token</div>
-        <div style="font-size: 11.5px; color: var(--text-muted); line-height: 1.5;">
-          Hệ thống ưu tiên kết nối <strong>Google Gemini</strong> để trải nghiệm miễn phí tốc độ cao. Khi dùng <strong>OpenAI</strong>, model mặc định được chọn là <code>gpt-4o-mini</code> kèm bộ nhớ đệm cache chống gọi trùng.
-        </div>
-      </div>
-
-      <!-- SELECT PROVIDER -->
-      <div style="margin-bottom: 14px;">
-        <label class="form-label">Chọn Nguồn Cung Cấp (Provider)</label>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-          <label class="provider-radio-card" id="card-prov-gemini" style="padding: 10px 12px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.12); border-radius: var(--radius-sm); cursor: pointer; display: flex; align-items: flex-start; gap: 8px;">
-            <input type="radio" name="ai-provider" value="gemini_local" id="radio-prov-gemini" style="margin-top: 2px;">
-            <div>
-              <div style="font-size: 12px; font-weight: 700; color: #fff;">Google Gemini</div>
-              <div style="font-size: 11px; color: #34d399; font-weight: 600;">Miễn phí (Google AI Studio)</div>
-            </div>
-          </label>
-          <label class="provider-radio-card" id="card-prov-openai" style="padding: 10px 12px; background: rgba(56,189,248,0.1); border: 1px solid var(--cyan); border-radius: var(--radius-sm); cursor: pointer; display: flex; align-items: flex-start; gap: 8px;">
-            <input type="radio" name="ai-provider" value="openai" id="radio-prov-openai" style="margin-top: 2px;" checked>
-            <div>
-              <div style="font-size: 12px; font-weight: 700; color: #fff;">OpenAI Official</div>
-              <div style="font-size: 11px; color: var(--cyan); font-weight: 600;">gpt-4o-mini / gpt-4o</div>
-            </div>
-          </label>
-        </div>
-      </div>
-
-      <!-- MODEL SELECT -->
-      <div style="margin-bottom: 14px;">
-        <label class="form-label" for="cfg-model-select">Mô Hình (Model)</label>
-        <select class="form-input" id="cfg-model-select">
-          <option value="gemini-2.5-flash">gemini-2.5-flash (Khuyên dùng)</option>
-          <option value="gemini-pro-latest">gemini-pro-latest (Cao cấp)</option>
-        </select>
-      </div>
-
-      <!-- API KEY INPUT (TÙY CHỌN: DÀNH CHO NGƯỜI DÙNG NHẬP KEY RIÊNG) -->
-      <div style="margin-bottom: 14px;" id="wrapper-cfg-api-key">
-        <label class="form-label" for="cfg-api-key" style="display: flex; justify-content: space-between; align-items: center;">
-          <span>Khóa Truy Cập Riêng (Tùy chọn)</span>
-          <span style="color: #34d399; font-size: 11px; font-weight: 600;">🛡️ Mặc định đã có khóa hệ thống</span>
-        </label>
-        <div style="position: relative;">
-          <input type="password" class="form-input" id="cfg-api-key" placeholder="Để trống để dùng khóa mặc định hệ thống (hoặc dán key riêng sk-... / AIza...)" style="padding-right: 42px; font-family: 'JetBrains Mono', monospace; font-size: 12px;">
-          <button type="button" id="btn-toggle-cfg-key" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--text-dim); cursor: pointer; font-size: 14px;" title="Ẩn/Hiện khóa API">👁️</button>
-        </div>
-        <div style="font-size: 10.5px; color: var(--text-dim); margin-top: 4px; line-height: 1.4;">
-          * <strong>Khuyên dùng để trống:</strong> Hệ thống tự động sử dụng khóa Google Gemini đã cấu hình sẵn trên máy chủ (hoàn toàn miễn phí, bảo mật). Bạn chỉ cần dán khóa vào đây nếu muốn dùng hạn mức tài khoản cá nhân.
-        </div>
-      </div>
-
-      <!-- NGÔN NGỮ ĐẦU RA -->
-      <div style="margin-bottom: 14px;">
-        <label class="form-label" for="cfg-output-lang">Ngôn Ngữ Kịch Bản (Output Language)</label>
-        <select class="form-input" id="cfg-output-lang">
-          <option value="vi">🇻🇳 Tiếng Việt (Vietnamese)</option>
-          <option value="en">🇬🇧 Tiếng Anh (English)</option>
-        </select>
-        <div style="font-size: 10.5px; color: var(--text-dim); margin-top: 4px; line-height: 1.4;">
-          * Chọn ngôn ngữ đầu ra cho lời giảng. Tài liệu tiếng Anh nên chọn English để giữ nguyên thuật ngữ gốc.
-        </div>
-      </div>
-
-      <!-- BASE URL -->
-      <div style="margin-bottom: 14px;">
-        <label class="form-label" for="cfg-base-url">API Base URL</label>
-        <input type="text" class="form-input" id="cfg-base-url" placeholder="https://api.openai.com/v1" value="https://api.openai.com/v1">
-      </div>
-
-
-      <!-- PING TEST STATUS -->
-      <div id="cfg-ping-status" style="display: none; padding: 8px 12px; border-radius: 4px; font-size: 11.5px; margin-bottom: 14px; font-weight: 600;"></div>
-
-      <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px;">
-        <button class="btn-export" id="btn-ping-ai-test" style="font-size: 12px; padding: 6px 14px;">
-          <span>⚡</span> Kiểm Tra (Ping 1 Token)
+  <div class="modal-backdrop" id="modal-api-config" style="display: none; z-index: 9999;">
+    <div class="modal-content" style="max-width: 650px; padding: 0; background: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 40px rgba(0,0,0,0.1);">
+      
+      <!-- TABS HEADER -->
+      <div style="display: flex; background: #f8fafc; border-bottom: 1px solid #e2e8f0; position: relative;" id="ai-config-tabs">
+        <button class="ai-config-tab active" data-prov="gemini_local" style="flex: 1; padding: 14px 0; border: none; background: transparent; font-size: 13px; font-weight: 600; color: #3b82f6; cursor: pointer; border-bottom: 2px solid #3b82f6; display: flex; align-items: center; justify-content: center; gap: 6px;">
+          ⚡ Google <span style="display:inline-block; width:6px; height:6px; border-radius:50%; background:#10b981;"></span>
         </button>
-        <div style="display: flex; gap: 8px;">
-          <button class="btn-export" id="btn-cancel-ai-config">Hủy</button>
-          <button class="btn-primary" id="btn-save-ai-config">Lưu Cấu Hình</button>
+        <button class="ai-config-tab" data-prov="anthropic" style="flex: 1; padding: 14px 0; border: none; background: transparent; font-size: 13px; font-weight: 600; color: #64748b; cursor: pointer; border-bottom: 2px solid transparent; display: flex; align-items: center; justify-content: center; gap: 6px;">
+          🟣 Anthropic
+        </button>
+        <button class="ai-config-tab" data-prov="openai" style="flex: 1; padding: 14px 0; border: none; background: transparent; font-size: 13px; font-weight: 600; color: #64748b; cursor: pointer; border-bottom: 2px solid transparent; display: flex; align-items: center; justify-content: center; gap: 6px;">
+          🟢 OpenAI
+        </button>
+        <button class="ai-config-tab" data-prov="openrouter" style="flex: 1; padding: 14px 0; border: none; background: transparent; font-size: 13px; font-weight: 600; color: #64748b; cursor: pointer; border-bottom: 2px solid transparent; display: flex; align-items: center; justify-content: center; gap: 6px;">
+          🌐 OpenRouter
+        </button>
+        <button class="btn-close-modal" id="btn-close-ai-config" style="position: absolute; right: 8px; top: 8px; background: none; border: none; font-size: 20px; color: #94a3b8; cursor: pointer; padding: 4px 8px;">&times;</button>
+      </div>
+
+      <div style="padding: 24px; padding-top: 16px;">
+        
+        <!-- ENGINE ACTIVATION CARD -->
+        <div style="display: flex; align-items: center; justify-content: space-between; padding: 14px; border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 20px; background: #fff;">
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <div id="cfg-prov-icon" style="font-size: 24px;">⚡</div>
+            <div>
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span id="cfg-prov-title" style="font-weight: 700; color: #0f172a; font-size: 14px;">Google Gemini</span>
+                <span id="cfg-prov-badge" style="background: #f1f5f9; color: #64748b; font-size: 10.5px; padding: 2px 8px; border-radius: 12px; font-weight: 600;">Khuyên dùng</span>
+              </div>
+              <div id="cfg-prov-desc" style="font-size: 12px; color: #64748b; margin-top: 4px;">Miễn phí, tốc độ cao (Google AI Studio)</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- MODEL SELECTION -->
+        <div style="margin-bottom: 20px;">
+          <div style="font-size: 11px; font-weight: 700; color: #4f46e5; margin-bottom: 12px; display: flex; align-items: center; gap: 6px; text-transform: uppercase;">
+            <span style="color: #6366f1;">⚙️</span> MÔ HÌNH THỰC THI (<span id="cfg-lbl-model-group">GOOGLE GEMINI</span>)
+          </div>
+          
+          <div id="cfg-model-list" style="display: flex; flex-direction: column; gap: 8px;">
+            <!-- Rendered by JS -->
+          </div>
+        </div>
+
+        <!-- API KEY INPUT -->
+        <div style="margin-bottom: 24px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <div id="cfg-lbl-key-title" style="font-size: 11.5px; font-weight: 700; color: #475569; text-transform: uppercase;">
+              🔑 API KEY CHO GOOGLE GEMINI
+            </div>
+            <a href="https://aistudio.google.com/app/apikey" target="_blank" id="cfg-key-link" style="font-size: 11.5px; color: #4f46e5; text-decoration: none; font-weight: 600;">Lấy Key tại Google AI Studio &rarr;</a>
+          </div>
+          <div style="position: relative;">
+            <!-- DYNAMIC BASE URL (Mặc định ẩn, chỉ hiện ở OpenRouter/OpenAI Compatible) -->
+            <div id="cfg-base-url-container" style="display: none; margin-bottom: 12px;">
+              <input type="text" id="cfg-base-url" placeholder="VD: https://openrouter.ai/api/v1" style="width: 100%; padding: 12px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #0f172a; background: #fff; box-sizing: border-box;">
+            </div>
+
+            <input type="password" id="cfg-api-key" placeholder="Để trống để dùng khóa mặc định hệ thống" style="width: 100%; padding: 12px 14px; padding-right: 40px; border: 1px solid #cbd5e1; border-radius: 8px; font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #0f172a; background: #fff; box-sizing: border-box;">
+            <button type="button" id="btn-toggle-cfg-key" style="position: absolute; right: 12px; bottom: 0px; height: 43px; background: none; border: none; color: #94a3b8; cursor: pointer; font-size: 16px;">👁️</button>
+          </div>
+          <div id="cfg-key-hint" style="font-size: 11.5px; color: #64748b; margin-top: 10px; line-height: 1.4;">
+            Khuyên dùng để trống: Hệ thống tự động sử dụng khóa Google Gemini đã cấu hình sẵn trên máy chủ.
+          </div>
+        </div>
+
+        <!-- FOOTER ACTIONS -->
+        <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #f1f5f9; padding-top: 16px;">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <button id="btn-ping-ai-test" style="background: #fff; border: 1px solid #e2e8f0; color: #64748b; cursor: pointer; display: flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 600; padding: 8px 12px; border-radius: 6px;">⚡ Kiểm tra kết nối</button>
+            <span id="cfg-ping-status" style="font-size: 12px; font-weight: 500; color: #10b981;"></span>
+          </div>
+          <div style="display: flex; gap: 10px;">
+            <button id="btn-cancel-ai-config" style="background: none; border: none; color: #475569; font-weight: 600; font-size: 13px; cursor: pointer; padding: 8px 16px;">Hủy</button>
+            <button id="btn-save-ai-config" style="background: #4f46e5; color: #fff; border: none; padding: 8px 20px; border-radius: 6px; font-weight: 600; font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 6px;"><span>✓</span> Lưu & Kích hoạt</button>
+          </div>
         </div>
       </div>
     </div>
@@ -6491,7 +6481,7 @@
               const itemKey = `item-${rootKey}-${chIdx}-${secIdx}-${itemIdx}`;
               // MẶC ĐỊNH TẤT CẢ CÁC NHÁNH NHỎ NHẤT (LÁ) LÀ 30S
               const itemDur = getNodeParam(itemKey, 'duration', 30);
-              const itemTitle = getNodeParam(itemKey, 'title', item.text || item.code);
+              const itemTitle = getNodeParam(itemKey, 'title', item.title || item.text || item.code);
               const itemSummary = getNodeParam(itemKey, 'summary', item.summary || '');
               const itemMech = getNodeParam(itemKey, 'mechanism', item.mechanism || '');
               const itemKeyPoint = getNodeParam(itemKey, 'key_point', item.key_point || '');
@@ -6502,8 +6492,8 @@
                 key: itemKey,
                 parentKey: secKey,
                 level: 3,
-                width: 175,
-                height: 60,
+                width: 190,
+                height: 85,
                 isExpanded: false,
                 data: {
                   code: item.code,
@@ -6985,10 +6975,13 @@
       } else if (node.level === 3) {
         contentHtml = `
           <div style="display: flex; align-items: flex-start; gap: 5px; padding-right: 22px;">
-            <span class="leaf-code">${node.data.code}</span>
-            <span class="node-leaf-text" style="font-size: 10px; color: var(--text-muted); line-height: 1.3; max-height: 35px; overflow: hidden;">
+            <span class="leaf-code" style="font-weight: 700;">${node.data.code}</span>
+            <span class="node-leaf-text" style="font-size: 10.5px; font-weight: 700; color: #fff; line-height: 1.3; max-height: 28px; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">
               ${node.data.text}
             </span>
+          </div>
+          <div class="node-leaf-summary" style="font-size: 9px; color: var(--text-muted); line-height: 1.35; height: 26px; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; margin-top: 4px; padding-top: 4px; border-top: 1px dashed rgba(255,255,255,0.1); margin-right: 22px;">
+            ${node.data.summary || 'Đang tạo tóm tắt...'}
           </div>
           <div style="display: flex; align-items: center; justify-content: flex-end; margin-top: 4px; padding: 0 26px;">
             <span class="node-duration-badge" title="Thời lượng nhánh này (bấm để chỉnh)">⏱️ ${node.data.duration || 30}s</span>
@@ -7532,24 +7525,21 @@
         renderMathFormulas(summaryList);
       }
 
-      // Xử lý nút bóc tách AI thủ công (Chỉ hiện khi ở chế độ chi tiết mà chưa có dữ liệu sâu)
+      // Xử lý nút bóc tách AI thủ công (Luôn hiện ở chế độ chi tiết để có thể re-generate)
       const actionBox = document.getElementById('insp-manual-action-box');
       if (actionBox) {
         if (isDetailed) {
           const hasFullAiDetails = coreDetails && coreExamples && !coreSummary.startsWith('Phân tích trọng tâm về luận điểm:');
-          if (!hasFullAiDetails) {
-            actionBox.style.display = 'block';
-            actionBox.innerHTML = `
-              <div style="padding: 8px 10px; background: rgba(99, 102, 241, 0.08); border: 1px dashed rgba(99, 102, 241, 0.35); border-radius: 6px; display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap;">
-                <span style="font-size: 10.5px; color: #a5b4fc;">Muốn AI đào sâu 5 tầng kiến thức cho mục này?</span>
-                <button type="button" class="btn-primary" onclick="triggerManualDeepSummarize()" style="padding: 3px 10px; font-size: 10.5px; white-space: nowrap; margin: 0; display: inline-flex; align-items: center; gap: 4px;">
-                  ✨ Bóc Tách Chi Tiết
-                </button>
-              </div>
-            `;
-          } else {
-            actionBox.style.display = 'none';
-          }
+          
+          actionBox.style.display = 'block';
+          actionBox.innerHTML = `
+            <div style="padding: 8px 10px; background: rgba(99, 102, 241, 0.08); border: 1px dashed rgba(99, 102, 241, 0.35); border-radius: 6px; display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap;">
+              <span style="font-size: 10.5px; color: #a5b4fc;">${!hasFullAiDetails ? 'Muốn AI đào sâu 5 tầng kiến thức cho mục này?' : 'Cần AI bóc tách lại theo hướng dẫn mới (nếu có)?'}</span>
+              <button type="button" class="btn-primary" onclick="triggerManualDeepSummarize()" style="padding: 3px 10px; font-size: 10.5px; white-space: nowrap; margin: 0; display: inline-flex; align-items: center; gap: 4px;">
+                ✨ ${!hasFullAiDetails ? 'Bóc Tách Chi Tiết' : 'Bóc Tách Lại'}
+              </button>
+            </div>
+          `;
         } else {
           actionBox.style.display = 'none';
         }
@@ -8201,8 +8191,9 @@
       synthesizeAcademicSummaryLocally({ projectTitle, chapterName, sectionName, nodeCode, nodeText }) {
         const text = `${nodeText || ''} ${chapterName || ''} ${sectionName || ''} ${projectTitle || ''}`.toLowerCase();
         
-        let mechanismFormula = "$$\\min_{\\theta} \\mathcal{L}(\\theta) = \\frac{1}{N} \\sum_{i=1}^N \\ell(f_\\theta(x_i), y_i) + \\lambda \\|\\theta\\|^2_2$$";
-        let domainConcept = "cấu trúc dữ liệu và giải thuật tối ưu";
+        let mechanismFormula = "";
+        let domainConcept = "nội dung chuyên môn tương ứng";
+        let defaultMechanism = `• Cơ chế & Trình tự logic: Phân tích theo cấu trúc diễn dịch, đi từ bức tranh toàn cảnh đến việc mổ xẻ các khía cạnh chi tiết của vấn đề, từ đó rút ra quy luật và bài học ứng dụng.`;
         
         if (text.includes('cluster') || text.includes('phân cụm') || text.includes('gom cụm') || text.includes('k-means') || text.includes('gmm')) {
           mechanismFormula = "$$J = \\sum_{k=1}^K \\sum_{x_i \\in S_k} \\|x_i - \\mu_k\\|^2 \\quad \\text{với} \\quad \\mu_k = \\frac{1}{|S_k|} \\sum_{x_i \\in S_k} x_i$$";
@@ -8216,14 +8207,21 @@
         } else if (text.includes('loss') || text.includes('hàm mất mát') || text.includes('entropy') || text.includes('gradient')) {
           mechanismFormula = "$$\\mathcal{L}_{CE} = -\\sum_{c=1}^C y_c \\log(\\hat{y}_c) + \\alpha \\sum_{j=1}^m \\|w_j\\|^2$$";
           domainConcept = "tối ưu hóa hàm mục tiêu và lan truyền ngược gradient";
+        } else if (text.includes('lịch sử') || text.includes('đảng') || text.includes('chính trị') || text.includes('xã hội') || text.includes('triết học')) {
+          domainConcept = "bối cảnh lịch sử, triết học và nền tảng tư tưởng";
+          defaultMechanism = `• Cơ chế & Trình tự logic: Phân tích theo dòng thời gian (chronological) hoặc theo logic biện chứng (dialectical), đặt sự kiện vào đúng bối cảnh không gian - thời gian để đánh giá nguyên nhân và hệ quả.`;
+        }
+
+        if (mechanismFormula) {
+            defaultMechanism = `• Cơ chế & Công thức Toán học: Phương pháp giải quyết bài toán thông qua việc tối ưu hóa hàm mục tiêu và chuẩn hóa không gian véc-tơ:\n${mechanismFormula}\nQuy trình thực thi gồm các bước: chuẩn hóa dữ liệu đầu vào, ánh xạ qua hàm biến đổi không gian, và tính toán nghiệm tối ưu dựa trên đạo hàm riêng.`;
         }
 
         return {
-          summary: `• Khái niệm cốt lõi: Phân đoạn [${nodeCode}] "${nodeText}" là nội dung then chốt thuộc ${chapterName} (${sectionName}). Phân đoạn này tập trung phân tích bản chất lý thuyết của ${domainConcept}, thiết lập không gian bài toán và định hình các tiền đề quan trọng cho toàn bộ hệ thống.`,
-          mechanism: `• Cơ chế & Công thức Toán học: Phương pháp giải quyết bài toán thông qua việc tối ưu hóa hàm mục tiêu và chuẩn hóa không gian véc-tơ:\n${mechanismFormula}\nQuy trình thực thi gồm các bước: chuẩn hóa dữ liệu đầu vào, ánh xạ qua hàm biến đổi không gian, và tính toán nghiệm tối ưu dựa trên đạo hàm riêng.`,
-          key_point: `• Điểm then chốt & Lưu ý: Cần đặc biệt lưu ý các giả định tiên quyết về phân phối dữ liệu, kiểm soát sai số ước lượng và đảm bảo tính hội tụ của giải thuật khi triển khai trên dữ liệu thực tế quy mô lớn.`,
-          details: `• Bóc tách chuyên sâu: Khảo sát tường minh các thành phần cấu thành, diễn giải ý nghĩa toán học của từng tham số và đánh giá tính chất tiệm cận của mô hình.`,
-          examples: `• Ứng dụng thực tiễn: Áp dụng trực tiếp trong bài toán phân tích hệ thống, xử lý kịch bản hiếm (Rare Scenarios), phát hiện bất thường và tối ưu hóa quy trình ra quyết định trong sản xuất.`
+          summary: `• Khái niệm cốt lõi: Phân đoạn [${nodeCode}] "${nodeText}" là nội dung then chốt thuộc ${chapterName} (${sectionName}). Phân đoạn này tập trung phân tích bản chất lý thuyết của ${domainConcept}, thiết lập các tiền đề quan trọng cho toàn bộ hệ thống.`,
+          mechanism: defaultMechanism,
+          key_point: `• Điểm then chốt & Lưu ý: Cần đặc biệt lưu ý các giả định tiên quyết, bối cảnh áp dụng, và tính nhất quán của khung lý thuyết khi triển khai phân tích vào thực tế.`,
+          details: `• Bóc tách chuyên sâu: Khảo sát tường minh các thành phần cấu thành, diễn giải ý nghĩa và đánh giá tính chất tiệm cận của mô hình/hệ thống.`,
+          examples: `• Ứng dụng thực tiễn: Áp dụng trực tiếp trong bài toán phân tích hệ thống, giúp người học vận dụng tư duy để giải quyết các tình huống tương tự trong môi trường thực tế.`
         };
       },
 
@@ -8268,7 +8266,7 @@ Trả về DUY NHẤT JSON hợp lệ với 5 trường sau (mỗi trường T�
             : 'https://slide-to-video-sigma.vercel.app/api/llm/chat';
           const proxyPayload = { ...payload, apiKey: cfg.apiKey || '', baseUrl: cfg.baseUrl || '', provider: cfg.provider || 'openai' };
           const ctl = new AbortController();
-          const tId = setTimeout(() => ctl.abort(), 8000);
+          const tId = setTimeout(() => ctl.abort(), 55000);
           res = await fetch(serverUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -8285,7 +8283,7 @@ Trả về DUY NHẤT JSON hợp lệ với 5 trường sau (mỗi trường T�
             const endpoint = `${cfg.baseUrl.replace(/\/+$/, '')}/chat/completions`;
             const headers = { 'Content-Type': 'application/json', 'Authorization': `Bearer ${cfg.apiKey}` };
             const ctl = new AbortController();
-            const tId = setTimeout(() => ctl.abort(), 8000);
+            const tId = setTimeout(() => ctl.abort(), 55000);
             res = await fetch(endpoint, {
               method: 'POST',
               headers,
@@ -8493,14 +8491,14 @@ Trả về DUY NHẤT JSON hợp lệ với 5 trường sau (mỗi trường T�
 
         return script.trim();
       },
-async generateChapterNarrativeStoryboard({ chapterTitle, items }) {
+      async generateChapterNarrativeStoryboard({ projectTitle, projectDesc, chapterTitle, items }) {
         const cfg = this.getConfig();
         if (!items || items.length === 0) return null;
 
         const itemsList = items.map((it, idx) => `Phân đoạn ${idx + 1} [${it.code}]: "${it.title}" - Trọng tâm: ${it.summary || it.title} ${it.mechanism ? '| Công thức: ' + it.mechanism : ''}`).join('\n');
 
-        const systemPrompt = `Bạn là Chuyên gia Xây dựng Dàn ý Kịch bản Sư phạm Đại học.
-Nhiệm vụ: Lập các câu cầu nối chuyển ý (Bridge Transitions) kết nối các phân đoạn trong cùng một chương bài giảng, tạo thành một mạch kể chuyện (Narrative Arc) liền mạch từ đầu đến cuối như một bài thuyết trình hoàn chỉnh.
+        const systemPrompt = `Bạn là Chuyên gia Xây dựng Dàn ý Kịch bản Sư phạm cấp cao.
+Nhiệm vụ: Lập các câu cầu nối chuyển ý (Bridge Transitions) kết nối các phân đoạn trong cùng một chương thuộc bài giảng "${projectTitle || 'Tổng hợp'}", tạo thành một mạch kể chuyện (Narrative Arc) liền mạch từ đầu đến cuối như một bài thuyết trình hoàn chỉnh.
 
 QUY TẮC BẮT BUỘC:
 1. "chapter_hook": 1 câu mở đầu nêu bật chủ đề cốt lõi của chương.
@@ -8516,7 +8514,7 @@ Trả về DUY NHẤT JSON hợp lệ:
   }
 }`;
 
-        const userPrompt = `Chương: "${chapterTitle}"\nDanh sách các phân đoạn:\n${itemsList}`;
+        const userPrompt = `Tên bài giảng: "${projectTitle || ''}"\nMô tả: "${projectDesc || ''}"\nChương: "${chapterTitle}"\nDanh sách các phân đoạn:\n${itemsList}`;
 
         const payload = {
           model: cfg.model || 'gemini-2.5-flash',
@@ -8537,7 +8535,7 @@ Trả về DUY NHẤT JSON hợp lệ:
             : 'https://slide-to-video-sigma.vercel.app/api/llm/chat';
           const proxyPayload = { ...payload, apiKey: cfg.apiKey || '', baseUrl: cfg.baseUrl || '', provider: cfg.provider || 'openai' };
           const ctl = new AbortController();
-          const tId = setTimeout(() => ctl.abort(), 8000);
+          const tId = setTimeout(() => ctl.abort(), 55000);
           res = await fetch(serverUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -8554,7 +8552,7 @@ Trả về DUY NHẤT JSON hợp lệ:
             const endpoint = `${cfg.baseUrl.replace(/\/+$/, '')}/chat/completions`;
             const headers = { 'Content-Type': 'application/json', 'Authorization': `Bearer ${cfg.apiKey}` };
             const ctl = new AbortController();
-            const tId = setTimeout(() => ctl.abort(), 8000);
+            const tId = setTimeout(() => ctl.abort(), 55000);
             res = await fetch(endpoint, {
               method: 'POST',
               headers,
@@ -8596,7 +8594,7 @@ Trả về DUY NHẤT JSON hợp lệ:
       },
 
       // TẦNG 2: SINH LỜI THOẠI PHÂN ĐOẠN (HỖ TRỢ CÂU NỐI Ý SƯ PHẠM BRIDGE INTRO)
-      async generateSegmentNarration({ nodeCode, nodeText, chapterTitle, sectionTitle, duration, wpm, visualType, summary, mechanism, keyPoint, notes, mediaAttachments, mediaNote, bridgeIntro }) {
+      async generateSegmentNarration({ projectTitle, projectDesc, nodeCode, nodeText, chapterTitle, sectionTitle, duration, wpm, visualType, summary, mechanism, keyPoint, notes, mediaAttachments, mediaNote, bridgeIntro }) {
         const cfg = this.getConfig();
         const dur = Math.max(10, parseInt(duration) || 30);
         const pace = Math.max(80, parseInt(wpm) || 140);
@@ -8612,27 +8610,37 @@ Trả về DUY NHẤT JSON hợp lệ:
           mediaInstruction = `Chỉ dẫn tư liệu: "${mediaNote}".`;
         }
 
-        const systemPrompt = `Bạn là Chuyên gia Giảng dạy Đại học môn Toán - Tin & Khoa học Dữ liệu.
-Nhiệm vụ: Viết KỊCH BẢN LỜI THOẠI GIẢNG DẠY SƯ PHẠM (Narration Script) cho một phân đoạn kiến thức cụ thể.
+                // [UPGRADE 2: Visual Taxonomy Prompting]
+        let visualTaxonomyRule = '';
+        if (visualType === 'split_screen') visualTaxonomyRule = 'QUY TẮC ĐẠO DIỄN THỊ GIÁC (Split Screen): Hình ảnh minh họa nằm ở MỘT NỬA màn hình. Bạn phải dùng từ ngữ chỉ hướng để điều hướng mắt học viên (Ví dụ: "Hãy quan sát biểu đồ bên cạnh...", "Như chúng ta thấy ở nửa bên kia...").';
+        else if (visualType === 'immersive') visualTaxonomyRule = 'QUY TẮC ĐẠO DIỄN THỊ GIÁC (Immersive): Hình ảnh minh họa ĐANG BAO TRÙM TOÀN MÀN HÌNH. TUYỆT ĐỐI KHÔNG dùng từ "hãy nhìn vào chữ" hay "bảng bên cạnh". Thay vào đó, dùng ngôn ngữ mô tả sâu vào hình ảnh và kể chuyện để học viên chìm đắm vào hình ảnh trước mắt.';
+        else if (visualType === 'lower_third') visualTaxonomyRule = 'QUY TẮC ĐẠO DIỄN THỊ GIÁC (Lower Third): Chữ chỉ xuất hiện như một dải nhỏ ở dưới cùng, bạn đang chiếm trọn khung hình. Hãy nói chuyện trực tiếp, duy trì giao tiếp bằng mắt (eye contact) với người học qua camera, không chỉ trỏ.';
+        else visualTaxonomyRule = `QUY TẮC ĐẠO DIỄN THỊ GIÁC: Định dạng là [${visualType}]. Điều chỉnh lời dẫn cho phù hợp.`;
+
+        const systemPrompt = `Bạn là Chuyên gia Giảng dạy cấp cao.
+Nhiệm vụ: Viết KỊCH BẢN LỜI THOẠI GIẢNG DẠY SƯ PHẠM (Narration Script) cho một phân đoạn kiến thức cụ thể thuộc bài giảng "${projectTitle || 'Tổng hợp'}".
 
 QUY TẮC BẮT BUỘC:
-1. Lời thoại tự nhiên, hấp dẫn, giải thích sâu sắc bản chất toán học/thuật toán, không sáo rỗng chào hỏi ("Chào các bạn...", "Hôm nay chúng ta...").
+1. Lời thoại tự nhiên, hấp dẫn, giải thích sâu sắc bản chất vấn đề, đi thẳng vào kiến thức trọng tâm, không sáo rỗng chào hỏi ("Chào các bạn...", "Hôm nay chúng ta...").
 2. Chèn các thẻ nhịp ngắt chuẩn sư phạm để giọng đọc AI truyền cảm:
-   - [P1] (ngắt ngắn 0.5s giữa các mệnh đề hoặc công thức)
+   - [P1] (ngắt ngắn 0.5s giữa các mệnh đề hoặc ý nhỏ)
    - [P2] (ngắt 1.0s khi chuyển ý quan trọng hoặc kết thúc luận điểm)
-   - [P3] (ngắt 1.5s để người học ngẫm nghĩ sau định lý/công thức cốt lõi)
+   - [P3] (ngắt 1.5s để người học ngẫm nghĩ sau khái niệm cốt lõi)
 3. Độ dài kịch bản phải khớp sát khoảng ${targetWords} từ (tương ứng ${dur} giây ở tốc độ đọc ${pace} WPM).
-4. Các công thức toán dùng dạng LaTeX kẹp giữa $...$.
-${mediaInstruction ? '5. ' + mediaInstruction : ''}
+4. Các thuật ngữ chuyên ngành phải giải thích dễ hiểu. Các công thức (nếu có) dùng định dạng LaTeX kẹp giữa $...$.
+5. ${visualTaxonomyRule}
+${mediaInstruction ? '6. ' + mediaInstruction : ''}
 
-Trả về DUY NHẤT văn bản kịch bản lời thoại hoàn chỉnh (không trả về JSON, không thêm lời chào ngoài lề).`;
+Trả về DUY NHẤT văn bản kịch bản lời thoại hoàn chỉnh (không trả về JSON, không bao giờ thêm lời chào ngoài lề ở đầu hay cuối).`;
 
         let bridgeNote = '';
         if (bridgeIntro && bridgeIntro.trim().length > 0) {
           bridgeNote = `\n🔗 CÂU CHUYỂN Ý MỞ ĐẦU (BẮT ĐẦU PHÂN ĐOẠN TỰ NHIÊN THEO Ý NÀY): "${bridgeIntro}"`;
         }
 
-        const userPrompt = `Chương: "${chapterTitle || ''}" • Phần: "${sectionTitle || ''}"
+        const userPrompt = `Tên bài giảng: "${projectTitle || ''}"
+Mô tả bài giảng: "${projectDesc || ''}"
+Chương: "${chapterTitle || ''}" • Phần: "${sectionTitle || ''}"
 Mục kiến thức: [${nodeCode}] "${nodeText}"
 Thời lượng: ${dur} giây (~${targetWords} từ)
 Kiểu trực quan: [${visualType || 'split_screen'}]
@@ -8662,7 +8670,7 @@ Hãy viết kịch bản lời thoại giảng dạy:`;
             : 'https://slide-to-video-sigma.vercel.app/api/llm/chat';
           const proxyPayload = { ...payload, apiKey: cfg.apiKey || '', baseUrl: cfg.baseUrl || '', provider: cfg.provider || 'openai' };
           const ctl = new AbortController();
-          const tId = setTimeout(() => ctl.abort(), 8000);
+          const tId = setTimeout(() => ctl.abort(), 55000);
           res = await fetch(serverUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -8679,7 +8687,7 @@ Hãy viết kịch bản lời thoại giảng dạy:`;
             const endpoint = `${cfg.baseUrl.replace(/\/+$/, '')}/chat/completions`;
             const headers = { 'Content-Type': 'application/json', 'Authorization': `Bearer ${cfg.apiKey}` };
             const ctl = new AbortController();
-            const tId = setTimeout(() => ctl.abort(), 8000);
+            const tId = setTimeout(() => ctl.abort(), 55000);
             res = await fetch(endpoint, {
               method: 'POST',
               headers,
@@ -8860,13 +8868,14 @@ Hãy viết lời giảng sư phạm hoàn chỉnh theo từng phân đoạn [m�
         const systemPrompt = `Analyze the slide catalog below and group slides into pedagogical chapters.
 
 RULES:
+- EXCLUDE and DO NOT EXTRACT non-pedagogical sections such as: Lời mở đầu (Introduction), Lời cảm ơn (Acknowledgments), Mục lục (Table of Contents), Tài liệu tham khảo (References), Phụ lục (Appendices).
 - Number of chapters should match the actual content structure. Do NOT force a fixed count.
 - Each chapter has sections with original slide numbering. Each section has items with pdfStart/pdfEnd.
-- Items include: code, text, pdfStart, pdfEnd, summary (1 sentence), mechanism (LaTeX $...$), key_point, details, examples.
+- Items include: code, title (short concise heading, 3-7 words), pdfStart, pdfEnd, summary (1 sentence), mechanism, key_point, details, examples.
 - Use numbered codes matching slide structure (1.1, 1.2... NOT "Phần a").
 
 OUTPUT: Valid JSON only.
-{"chapters":[{"chapter":"CHƯƠNG 1","title":"...","depth":"core","visual_type":"split_screen","sections":[{"code":"1.1","title":"...","items":[{"code":"1.1.1","text":"...","pdfStart":1,"pdfEnd":5,"summary":"...","mechanism":"...","key_point":"...","details":"...","examples":"..."}]}]}]}`;
+{"chapters":[{"chapter":"CHƯƠNG 1","title":"...","depth":"core","visual_type":"split_screen","sections":[{"code":"1.1","title":"...","items":[{"code":"1.1.1","title":"...","pdfStart":1,"pdfEnd":5,"summary":"...","mechanism":"...","key_point":"...","details":"...","examples":"..."}]}]}]}`;
 
         const payload = {
           model: cfg.model || 'gemini-2.5-flash',
@@ -8887,7 +8896,7 @@ OUTPUT: Valid JSON only.
             : 'https://slide-to-video-sigma.vercel.app/api/llm/chat';
           const proxyPayload = { ...payload, apiKey: cfg.apiKey || '', baseUrl: cfg.baseUrl || '', provider: cfg.provider || 'openai' };
           const ctl = new AbortController();
-          const tId = setTimeout(() => ctl.abort(), 8000);
+          const tId = setTimeout(() => ctl.abort(), 55000);
           res = await fetch(serverUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -8904,7 +8913,7 @@ OUTPUT: Valid JSON only.
             const endpoint = `${cfg.baseUrl.replace(/\/+$/, '')}/chat/completions`;
             const headers = { 'Content-Type': 'application/json', 'Authorization': `Bearer ${cfg.apiKey}` };
             const ctl = new AbortController();
-            const tId = setTimeout(() => ctl.abort(), 8000);
+            const tId = setTimeout(() => ctl.abort(), 55000);
             res = await fetch(endpoint, {
               method: 'POST',
               headers,
@@ -8941,9 +8950,10 @@ OUTPUT: Valid JSON only.
         const systemPrompt = `Parse the Table of Contents below into a COMPLETE JSON structure.
 
 RULES:
+- EXCLUDE and DO NOT EXTRACT non-pedagogical sections such as: Lời mở đầu (Introduction), Lời cảm ơn (Acknowledgments), Mục lục (Table of Contents), Tài liệu tham khảo (References), Phụ lục (Appendices).
 - Extract ALL chapters. If the book has 10 chapters, output 10 chapters. NEVER truncate.
 - Extract ALL sections per chapter with their original numbering (1.1, 1.2, 1.3...).
-- Each section has 1-2 items with: code, text (short name), printed_start, printed_end, summary (1 sentence), mechanism (key formula in LaTeX $...$), key_point (1 sentence).
+- Each section has 1-2 items with: code, text (short name), printed_start, printed_end, summary (1 sentence), mechanism, key_point (1 sentence).
 - Use "code" matching the document numbering (e.g. "1.1", "2.3", NOT "Phần a").
 
 OUTPUT: Valid JSON only, no markdown.
@@ -8968,7 +8978,7 @@ OUTPUT: Valid JSON only, no markdown.
             : 'https://slide-to-video-sigma.vercel.app/api/llm/chat';
           const proxyPayload = { ...payload, apiKey: cfg.apiKey || '', baseUrl: cfg.baseUrl || '', provider: cfg.provider || 'openai' };
           const ctl = new AbortController();
-          const tId = setTimeout(() => ctl.abort(), 8000);
+          const tId = setTimeout(() => ctl.abort(), 55000);
           res = await fetch(serverUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -8985,7 +8995,7 @@ OUTPUT: Valid JSON only, no markdown.
             const endpoint = `${cfg.baseUrl.replace(/\/+$/, '')}/chat/completions`;
             const headers = { 'Content-Type': 'application/json', 'Authorization': `Bearer ${cfg.apiKey}` };
             const ctl = new AbortController();
-            const tId = setTimeout(() => ctl.abort(), 8000);
+            const tId = setTimeout(() => ctl.abort(), 55000);
             res = await fetch(endpoint, {
               method: 'POST',
               headers,
@@ -9025,9 +9035,10 @@ OUTPUT: Valid JSON only, no markdown.
         const systemPrompt = `Analyze the document text and create a complete chapter structure.
 
 RULES:
-- Extract ALL chapters matching the document's actual structure. NEVER truncate.
+- Extract ALL pedagogical chapters matching the document's actual structure. NEVER truncate.
+- EXCLUDE and DO NOT EXTRACT non-pedagogical sections such as: Lời mở đầu (Introduction), Lời cảm ơn (Acknowledgments), Mục lục (Table of Contents), Tài liệu tham khảo (References), Phụ lục (Appendices).
 - Each chapter has sections with document numbering (1.1, 1.2...). Each section has 1-2 items.
-- Items include: code, text, summary, mechanism (LaTeX $...$), key_point, details, examples.
+- Items include: code, text, summary, mechanism, key_point, details, examples.
 - Filter out junk: page numbers, author names, publisher info, copyright.
 
 OUTPUT: Valid JSON only.
@@ -9166,16 +9177,29 @@ OUTPUT: Valid JSON only.
     function getAllChaptersInfo() {
       const chapters = [];
       for (const [key, node] of Object.entries(currentNodesMap || {})) {
-        if (node.level === 1) {
-          const num = node.data.chIdx !== undefined ? (node.data.chIdx + 1) : parseInt((node.data.chapter || '').replace(/\D/g, '') || '0');
-          chapters.push({
-            key: node.key,
-            num: num,
-            title: node.data.title || node.data.text || `Chương ${num}`
-          });
+        if (node && node.level === 1) {
+          let num = null;
+          if (node.data && typeof node.data.chapter === 'string') {
+            const m = node.data.chapter.match(/\d+/);
+            if (m) num = parseInt(m[0], 10);
+          }
+          if (num === null && node.data && node.data.code) {
+             const m = String(node.data.code).match(/\d+/);
+             if (m) num = parseInt(m[0], 10);
+          }
+          if (num === null && node.parentKey && currentNodesMap[node.parentKey]) {
+            const parent = currentNodesMap[node.parentKey];
+            if (parent.children) {
+              const idx = parent.children.findIndex(c => c.key === key);
+              if (idx !== -1) num = idx + 1;
+            }
+          }
+          if (num !== null && !isNaN(num)) {
+            chapters.push({ key, num, node });
+          }
         }
       }
-      return chapters.sort((a, b) => a.num - b.num);
+      return chapters;
     }
 
     // CỖ MÁY THỰC THI TẤT ĐỊNH (DETERMINISTIC COPILOT UI ENGINE)
@@ -9986,6 +10010,12 @@ OUTPUT: Valid JSON only.
       if (typeof currentProjectId === 'undefined' || !currentProjectId) return;
       try {
         localStorage.setItem('clsg_chat_history_' + currentProjectId, JSON.stringify(clsgChatSessionHistory));
+        if (typeof activeProject !== 'undefined' && activeProject) {
+            activeProject.chatHistory = clsgChatSessionHistory;
+            const chatContainer = document.getElementById('ai-chat-messages');
+            if (chatContainer) activeProject.chatHtml = chatContainer.innerHTML;
+            CloudDB.save(activeProject);
+        }
         const chatContainer = document.getElementById('ai-chat-messages');
         if (chatContainer) {
           localStorage.setItem('clsg_chat_html_' + currentProjectId, chatContainer.innerHTML);
@@ -9995,26 +10025,28 @@ OUTPUT: Valid JSON only.
 
     // TRÍ NHỚ CÂU HỎI ĐÁP COPILOT (COPILOT Q&A CACHE - 0 TOKEN, ZERO CRASH)
     const CopilotQACache = {
-      STORAGE_KEY: 'clsg_copilot_qa_cache',
+      getStorageKey() {
+        return typeof activeProject !== 'undefined' && activeProject && activeProject.id 
+          ? `clsg_copilot_qa_cache_${activeProject.id}` 
+          : 'clsg_copilot_qa_cache_global';
+      },
       normalize(q) {
         return (q || '').toLowerCase().replace(/[?,.!]/g, '').trim();
       },
       get(q) {
         try {
-          const cache = JSON.parse(localStorage.getItem(this.STORAGE_KEY) || '{}');
-          const prefix = (typeof currentProjectId !== 'undefined' && currentProjectId) ? currentProjectId + '_' : '';
-          const norm = prefix + this.normalize(q);
+          const cache = JSON.parse(localStorage.getItem(this.getStorageKey()) || '{}');
+          const norm = this.normalize(q);
           return cache[norm]?.answer || null;
         } catch(e) { return null; }
       },
       set(q, answer) {
         if (!answer || answer.length < 20) return;
         try {
-          const cache = JSON.parse(localStorage.getItem(this.STORAGE_KEY) || '{}');
-          const prefix = (typeof currentProjectId !== 'undefined' && currentProjectId) ? currentProjectId + '_' : '';
-          const norm = prefix + this.normalize(q);
+          const cache = JSON.parse(localStorage.getItem(this.getStorageKey()) || '{}');
+          const norm = this.normalize(q);
           cache[norm] = { answer, timestamp: Date.now() };
-          localStorage.setItem(this.STORAGE_KEY, JSON.stringify(cache));
+          localStorage.setItem(this.getStorageKey(), JSON.stringify(cache));
         } catch(e) {}
       }
     };
@@ -10194,7 +10226,7 @@ QUY TẮC PHẢN HỒI QUAN TRỌNG:
             : 'http://127.0.0.1:8765/api/llm/chat';
           const proxyPayload = { ...payload, apiKey: cfg.apiKey || '', baseUrl: cfg.baseUrl || '', provider: cfg.provider || 'openai' };
           const ctl = new AbortController();
-          const tId = setTimeout(() => ctl.abort(), 5500);
+          const tId = setTimeout(() => ctl.abort(), 55000);
           res = await fetch(serverUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -10212,7 +10244,7 @@ QUY TẮC PHẢN HỒI QUAN TRỌNG:
             const endpoint = `${cfg.baseUrl.replace(/\/+$/, '')}/chat/completions`;
             const headers = { 'Content-Type': 'application/json', 'Authorization': `Bearer ${cfg.apiKey}` };
             const ctl = new AbortController();
-            const tId = setTimeout(() => ctl.abort(), 6000);
+            const tId = setTimeout(() => ctl.abort(), 55000);
             res = await fetch(endpoint, {
               method: 'POST',
               headers,
@@ -10242,6 +10274,15 @@ QUY TẮC PHẢN HỒI QUAN TRỌNG:
               console.warn("Lỗi phân tích action JSON từ Copilot:", e);
             }
             cleanReply = reply.replace(/```json[\s\S]*?```/g, '').trim();
+            if (actionExecuted && jsonMatch[1]) {
+               try {
+                 const p = JSON.parse(jsonMatch[1]);
+                 if (p.actions && p.actions.length > 0) {
+                   const actionHtml = p.actions.map(a => `• <code>${a.type || a.action}</code>`).join('<br>');
+                   cleanReply += `<br><br><div style="font-size: 11px; color: var(--cyan); margin-top: 4px; padding: 6px; background: rgba(56,189,248,0.1); border-radius: 6px; border: 1px solid rgba(56,189,248,0.3);">⚡ <b>Copilot đã tự động cấu hình giao diện:</b><br>${actionHtml}</div>`;
+                 }
+               } catch (e) {}
+            }
           }
 
           if (!actionExecuted) {
@@ -10436,6 +10477,15 @@ QUY TẮC PHẢN HỒI QUAN TRỌNG:
       }
       currentScenes = JSON.parse(JSON.stringify(activeProject.scenes || []));
 
+      // Xoá trắng lịch sử Chat AI khi chuyển Project để tránh rò rỉ context
+      if (typeof clsgChatSessionHistory !== 'undefined') {
+        clsgChatSessionHistory.length = 0;
+      }
+      const chatContainer = document.getElementById('ai-chat-messages');
+      if (chatContainer) {
+        chatContainer.innerHTML = '';
+      }
+
       // Khôi phục toàn bộ kịch bản, tóm tắt và thông số nhánh (nodeCustomParams) từ localStorage
       try {
         const savedParams = JSON.parse(localStorage.getItem(`clsg_node_params_${projId}`) || '{}');
@@ -10501,9 +10551,15 @@ QUY TẮC PHẢN HỒI QUAN TRỌNG:
         try {
           const savedHistory = JSON.parse(localStorage.getItem('clsg_chat_history_' + projId));
           const savedHTML = localStorage.getItem('clsg_chat_html_' + projId);
-          if (savedHistory && savedHistory.length > 0 && savedHTML) {
-             clsgChatSessionHistory.push(...savedHistory);
-             chatContainer.innerHTML = savedHTML;
+          if ((!savedHistory || savedHistory.length === 0) && activeProject && activeProject.chatHistory) {
+              localStorage.setItem('clsg_chat_history_' + projId, JSON.stringify(activeProject.chatHistory));
+              if (activeProject.chatHtml) localStorage.setItem('clsg_chat_html_' + projId, activeProject.chatHtml);
+          }
+          const finalHistory = savedHistory || (activeProject && activeProject.chatHistory);
+          const finalHTML = savedHTML || (activeProject && activeProject.chatHtml);
+          if (finalHistory && finalHistory.length > 0 && finalHTML) {
+             clsgChatSessionHistory.push(...finalHistory);
+             chatContainer.innerHTML = finalHTML;
              setTimeout(() => { chatContainer.scrollTop = chatContainer.scrollHeight; }, 100);
           } else {
              chatContainer.innerHTML = `
@@ -10940,6 +10996,22 @@ QUY TẮC PHẢN HỒI QUAN TRỌNG:
             }
           }
         }
+        // [UPGRADE 1: 3D Contextual Bridge (Next Slide Foreshadowing)]
+        const cards = Array.from(document.querySelectorAll('.segment-script-card'));
+        const currentCard = document.getElementById(`seg-card-${itKey}`);
+        const idx = cards.indexOf(currentCard);
+        if (idx !== -1 && idx < cards.length - 1) {
+          const nextCard = cards[idx + 1];
+          const nextTitleEl = nextCard.querySelector('.seg-title');
+          if (nextTitleEl) {
+            const nextTitle = nextTitleEl.innerText.trim();
+            const foreshadowText = `=> LƯU Ý FORESHADOWING TỪ ĐẠO DIỄN: Phần tiếp theo bài giảng sẽ nói về "${nextTitle}". Hãy chèn 1 CÂU GỢI MỞ ngắn ở CUỐI kịch bản để dẫn dắt sự tò mò của học viên sang phần đó một cách tự nhiên.`;
+            if (bridgeIntro) bridgeIntro += `
+
+${foreshadowText}`;
+            else bridgeIntro = foreshadowText;
+          }
+        }
 
         // Tìm thông tin Chương & Phần
         let chapterTitle = '';
@@ -10960,6 +11032,8 @@ QUY TẮC PHẢN HỒI QUAN TRỌNG:
         const keyPoint = getNodeParam(itKey, 'key_point', itemData.key_point || '');
 
         const scriptText = await LLMClient.generateSegmentNarration({
+          projectTitle: activeProject?.title || '',
+          projectDesc: activeProject?.desc || '',
           nodeCode,
           nodeText,
           chapterTitle,
@@ -11079,6 +11153,8 @@ QUY TẮC PHẢN HỒI QUAN TRỌNG:
         let bridgesMap = {};
         try {
           const storyboard = await LLMClient.generateChapterNarrativeStoryboard({
+            projectTitle: activeProject?.title || '',
+            projectDesc: activeProject?.desc || '',
             chapterTitle: group.chTitle,
             items: group.items
           });
@@ -12292,20 +12368,17 @@ QUY TẮC PHẢN HỒI QUAN TRỌNG:
         console.warn('[PPTX Extractor] JSZip chưa tải xong');
         return null;
       }
-
       const zip = await JSZip.loadAsync(arrayBuffer);
-
-      // Tìm tất cả slide files (ppt/slides/slide1.xml, slide2.xml, ...)
       const slideFiles = [];
       zip.forEach((path, entry) => {
         const match = path.match(/^ppt\/slides\/slide(\d+)\.xml$/i);
         if (match) slideFiles.push({ path, num: parseInt(match[1]) });
       });
       slideFiles.sort((a, b) => a.num - b.num);
-
       if (slideFiles.length === 0) return null;
 
       const chapters = [];
+      const nsP = 'http://schemas.openxmlformats.org/presentationml/2006/main';
       const nsA = 'http://schemas.openxmlformats.org/drawingml/2006/main';
 
       for (const sf of slideFiles) {
@@ -12314,37 +12387,85 @@ QUY TẮC PHẢN HỒI QUAN TRỌNG:
 
         const parser = new DOMParser();
         const doc = parser.parseFromString(xml, 'application/xml');
-
-        // Trích text từ tất cả text body shapes
-        const textBodies = doc.getElementsByTagNameNS(nsA, 'p');
+        
         let slideTitle = '';
-        const bulletPoints = [];
-
-        for (let i = 0; i < textBodies.length; i++) {
-          const p = textBodies[i];
-          const runs = p.getElementsByTagNameNS(nsA, 't');
-          let lineText = '';
-          for (let r = 0; r < runs.length; r++) {
-            lineText += runs[r].textContent || '';
-          }
-          lineText = lineText.trim();
-          if (!lineText) continue;
-
-          // Phát hiện title (paragraph đầu tiên có text dài > 3 ký tự, hoặc font lớn)
-          if (!slideTitle && lineText.length > 2) {
-            slideTitle = lineText;
-          } else if (lineText.length > 2) {
-            bulletPoints.push(lineText);
+        let titleShapeId = null;
+        const shapes = doc.getElementsByTagNameNS(nsP, 'sp');
+        
+        // BƯỚC 1: Dò chuẩn - Tìm khung Title Placeholder
+        for (let s = 0; s < shapes.length; s++) {
+          const sp = shapes[s];
+          const ph = sp.querySelector('nvSpPr > nvPr > ph');
+          if (ph) {
+            const type = ph.getAttribute('type');
+            if (type === 'title' || type === 'ctrTitle') {
+              const texts = Array.from(sp.getElementsByTagNameNS(nsA, 't')).map(t => t.textContent).join('');
+              if (texts.trim()) {
+                slideTitle = texts.trim();
+                titleShapeId = s;
+                break;
+              }
+            }
           }
         }
 
+        // BƯỚC 2: Fallback - Tìm Textbox đầu tiên có chữ nếu mất Title
+        if (!slideTitle) {
+          for (let s = 0; s < shapes.length; s++) {
+            const sp = shapes[s];
+            const paragraphs = sp.getElementsByTagNameNS(nsA, 'p');
+            if (paragraphs.length > 0) {
+              const texts = Array.from(paragraphs[0].getElementsByTagNameNS(nsA, 't')).map(t => t.textContent).join('');
+              if (texts.trim()) {
+                slideTitle = texts.trim();
+                titleShapeId = s;
+                break;
+              }
+            }
+          }
+        }
         if (!slideTitle) slideTitle = `Slide ${sf.num}`;
 
-        // Mỗi slide = 1 section (không phải chapter, vì PPTX thường phẳng)
-        const items = bulletPoints.slice(0, 8).map((bp, idx) => ({
+        // BƯỚC 3: Bóc tách chi tiết (Paragraph vs Bullet Point vs Level)
+        const slideElements = [];
+        for (let s = 0; s < shapes.length; s++) {
+          const sp = shapes[s];
+          const paragraphs = sp.getElementsByTagNameNS(nsA, 'p');
+          
+          for (let pIdx = 0; pIdx < paragraphs.length; pIdx++) {
+            const p = paragraphs[pIdx];
+            const text = Array.from(p.getElementsByTagNameNS(nsA, 't')).map(t => t.textContent).join('').trim();
+            if (!text) continue;
+
+            // Bỏ qua dòng đã được dùng làm tiêu đề
+            if (s === titleShapeId && pIdx === 0 && text === slideTitle) continue;
+
+            const pPr = p.getElementsByTagNameNS(nsA, 'pPr')[0];
+            let lvl = 0;
+            if (pPr && pPr.hasAttribute('lvl')) {
+              lvl = parseInt(pPr.getAttribute('lvl'));
+            }
+            
+            const isBullet = (lvl > 0 || text.startsWith('-') || text.startsWith('•'));
+            slideElements.push({
+               type: isBullet ? 'bullet' : 'paragraph',
+               level: lvl,
+               text: text
+            });
+          }
+        }
+
+        // Format clean text để nạp LLM
+        const cleanTextList = slideElements.map(el => {
+           const indent = '  '.repeat(el.level);
+           return el.type === 'bullet' ? `${indent}- ${el.text}` : `${indent}${el.text}`;
+        });
+
+        // Mỗi slide = 1 section (để tương thích biến chapters cũ trước khi nạp LLM)
+        const items = slideElements.slice(0, 10).map((el, idx) => ({
           code: `a${idx + 1}`,
-          text: bp.substring(0, 150),
-          summary: bp,
+          text: el.text.substring(0, 150),
+          summary: el.text,
           mechanism: '', key_point: ''
         }));
 
@@ -12353,6 +12474,7 @@ QUY TẮC PHẢN HỒI QUAN TRỌNG:
           title: slideTitle.substring(0, 80),
           depth: sf.num === 1 ? 'bridge' : 'core',
           visual_type: 'split_screen',
+          cleanLines: cleanTextList,
           sections: [{
             code: 'Phần a',
             title: slideTitle,
@@ -12362,7 +12484,7 @@ QUY TẮC PHẢN HỒI QUAN TRỌNG:
       }
 
       // ƯU TIÊN SỐ 1: GỌI LLM 1 LẦN MẶC ĐỊNH ĐỂ TRÍCH XUẤT TÓM TẮT & SƠ ĐỒ CHUẨN SƯ PHẠM
-      const rawPptxText = chapters.map(ch => `${ch.title}: ${(ch.sections[0]?.items || []).map(it => it.text).join(', ')}`).join('\n');
+      const rawPptxText = chapters.map(ch => `[SLIDE ${ch.chapter.replace('SLIDE ','')}] TIÊU ĐỀ: ${ch.title}\nNỘI DUNG:\n${ch.cleanLines.join('\n')}`).join('\n\n');
       if (rawPptxText && rawPptxText.trim().length >= 50) {
         try {
           updateLoading("Đang Dùng AI Lập Sơ Đồ & Tóm Tắt...", `Đang phân tích cấu trúc bài giảng từ ${fileName || 'PPTX'} qua LLM...`);
@@ -13932,6 +14054,59 @@ QUY TẮC PHẢN HỒI QUAN TRỌNG:
       showToast(`Đã xuất hồ sơ dữ liệu JSON toàn diện: ${filename}`);
     });
 
+    document.getElementById('btn-export-pptx').addEventListener('click', async () => {
+      const data = getActiveScriptDocumentData();
+      if (!data || !data.flatSegments || data.flatSegments.length === 0) {
+        showToast('⚠️ Không có dữ liệu để tải slide!');
+        return;
+      }
+      showToast('⏳ Đang tạo slide PowerPoint...');
+      try {
+        let pres = new PptxGenJS();
+        pres.layout = 'LAYOUT_16x9';
+        pres.author = 'CLSG Studio Pro';
+        pres.company = 'CLSG';
+        pres.title = data.meta.title || 'Slide Bài Giảng';
+
+        // Title slide
+        let slide = pres.addSlide();
+        slide.background = { color: 'F8FAFC' };
+        slide.addText(data.meta.title || 'BÀI GIẢNG', { x: 1, y: 2, w: '80%', h: 1.5, fontSize: 40, bold: true, color: '0F172A', align: 'center' });
+        if (data.meta.desc) {
+             slide.addText(data.meta.desc, { x: 1.5, y: 3.5, w: '70%', h: 1, fontSize: 20, color: '475569', align: 'center' });
+        }
+
+        data.flatSegments.forEach(seg => {
+             let s = pres.addSlide();
+             // Header
+             s.addText(seg.title || 'Mục Mới', { x: 0.5, y: 0.3, w: '90%', h: 0.8, fontSize: 28, bold: true, color: '1E293B', border: [0, 0, {pt:2, color:'3B82F6'}, 0] });
+             
+             // Body
+             let content = [];
+             if (seg.summary) content.push({ text: `Khái niệm: ${seg.summary}`, options: { bullet: true, color: '334155', breakLine: true } });
+             if (seg.keyPoint) content.push({ text: `Trọng tâm: ${seg.keyPoint}`, options: { bullet: true, color: '334155', breakLine: true } });
+             if (seg.mechanism) content.push({ text: `Cơ chế: ${seg.mechanism}`, options: { bullet: true, color: '334155', breakLine: true } });
+             if (seg.details) content.push({ text: `Chi tiết: ${seg.details}`, options: { bullet: true, color: '334155', breakLine: true } });
+             
+             if (content.length > 0) {
+                 s.addText(content, { x: 0.5, y: 1.5, w: '90%', h: 3.5, fontSize: 18, align: 'left', valign: 'top' });
+             }
+
+             // Narration Notes
+             if (seg.narration) {
+                 s.addNotes(seg.narration);
+             }
+        });
+
+        const filename = `${(data.meta.title || 'Slide').replace(/[^a-z0-9]/gi, '_')}.pptx`;
+        await pres.writeFile({ fileName: filename });
+        showToast('🎉 Đã tải slide thành công!');
+      } catch (e) {
+        showToast(`❌ Lỗi tạo slide: ${e.message}`);
+        console.error(e);
+      }
+    });
+
     // SEARCH FILTER PROJECTS
     document.getElementById('project-search').addEventListener('input', (e) => {
       renderProjectsGrid(e.target.value);
@@ -13956,7 +14131,7 @@ QUY TẮC PHẢN HỒI QUAN TRỌNG:
     });
 
     // =========================================================================
-    // MODAL: AI & API KEY CONFIGURATION CONTROLLER
+    // MODAL: AI & API KEY CONFIGURATION CONTROLLER (MULTI-PROVIDER)
     // =========================================================================
     const modalAiConfig = document.getElementById('modal-api-config');
     const btnOpenAiCfg = document.getElementById('btn-open-ai-config');
@@ -13966,144 +14141,229 @@ QUY TẮC PHẢN HỒI QUAN TRỌNG:
     const btnSaveAiCfg = document.getElementById('btn-save-ai-config');
     const btnPingAiTest = document.getElementById('btn-ping-ai-test');
 
-    const radioProvGemini = document.getElementById('radio-prov-gemini');
-    const radioProvOpenai = document.getElementById('radio-prov-openai');
-    const cardProvGemini = document.getElementById('card-prov-gemini');
-    const cardProvOpenai = document.getElementById('card-prov-openai');
-
-    const cfgModelSelect = document.getElementById('cfg-model-select');
+    const cfgModelSelect = document.getElementById('cfg-model-list');
     const cfgBaseUrl = document.getElementById('cfg-base-url');
+    const cfgBaseUrlContainer = document.getElementById('cfg-base-url-container');
+    const cfgApiKey = document.getElementById('cfg-api-key');
     const cfgPingStatus = document.getElementById('cfg-ping-status');
+    const cfgKeyHint = document.getElementById('cfg-key-hint');
+    const cfgLblKeyTitle = document.getElementById('cfg-lbl-key-title');
+    const cfgKeyLink = document.getElementById('cfg-key-link');
+    
+    const cfgProvIcon = document.getElementById('cfg-prov-icon');
+    const cfgProvTitle = document.getElementById('cfg-prov-title');
+    const cfgProvBadge = document.getElementById('cfg-prov-badge');
+    const cfgProvDesc = document.getElementById('cfg-prov-desc');
+    const cfgLblModelGroup = document.getElementById('cfg-lbl-model-group');
+    const aiConfigTabs = document.querySelectorAll('.ai-config-tab');
 
-    const PROVIDER_MODELS = {
-      gemini_local: [
-        { value: 'gemini-2.5-flash', label: 'gemini-2.5-flash (Khuyên dùng)' },
-        { value: 'gemini-pro-latest', label: 'gemini-pro-latest (Cao cấp)' }
-      ],
-      openai: [
-        { value: 'gpt-4o-mini', label: 'gpt-4o-mini (Khuyên dùng)' },
-        { value: 'gpt-4o', label: 'gpt-4o (Cao cấp)' }
-      ]
+    // PROVIDER CONFIGURATIONS
+    const PROVIDERS_INFO = {
+      openrouter: {
+        id: 'openrouter',
+        icon: '🌐', title: 'OpenRouter (Tất cả mô hình)', badge: 'Đề xuất', desc: '1 API Key dùng được Claude 3.5, GPT-4o, DeepSeek, Llama mà không lo chặn CORS.',
+        baseUrl: 'https://openrouter.ai/api/v1',
+        models: [
+          { value: 'google/gemini-2.5-flash', label: 'Gemini 2.5 Flash' },
+          { value: 'anthropic/claude-3.5-sonnet', label: 'Claude 3.5 Sonnet' },
+          { value: 'openai/gpt-4o-mini', label: 'GPT-4o Mini' },
+          { value: 'deepseek/deepseek-chat', label: 'DeepSeek V3' }
+        ],
+        keyLabel: '🔑 API KEY CHO OPENROUTER', keyLink: 'https://openrouter.ai/keys', keyLinkText: 'Lấy Key tại OpenRouter.ai &rarr;',
+        keyPlaceholder: 'sk-or-v1-...',
+        keyHint: 'Mã khóa được lưu trữ an toàn trong LocalStorage. Dùng OpenRouter giúp loại bỏ hoàn toàn lỗi CORS.'
+      },
+      gemini_local: {
+        id: 'gemini_local',
+        icon: '⚡', title: 'Google Gemini', badge: 'Mặc định', desc: 'Miễn phí, tốc độ cao (Google AI Studio)',
+        baseUrl: 'https://generativelanguage.googleapis.com/v1beta/openai',
+        models: [
+          { value: 'gemini-2.5-flash', label: 'gemini-2.5-flash (Khuyên dùng)' },
+          { value: 'gemini-pro-latest', label: 'gemini-pro-latest (Cao cấp)' }
+        ],
+        keyLabel: '🔑 API KEY CHO GOOGLE GEMINI', keyLink: 'https://aistudio.google.com/app/apikey', keyLinkText: 'Lấy Key tại Google AI Studio &rarr;',
+        keyPlaceholder: 'Để trống để dùng khóa mặc định hệ thống',
+        keyHint: 'Khuyên dùng để trống: Hệ thống tự động sử dụng khóa Google Gemini đã cấu hình sẵn trên máy chủ.'
+      },
+      anthropic: {
+        id: 'anthropic',
+        icon: '🟣', title: 'Anthropic Claude', badge: 'Chính hãng', desc: 'Cần thiết lập proxy nếu bị lỗi CORS trên trình duyệt.',
+        baseUrl: 'https://api.anthropic.com/v1', // Proxy usually needed
+        models: [
+          { value: 'claude-3-5-sonnet-20241022', label: 'Claude 3.5 Sonnet' },
+          { value: 'claude-3-5-haiku-20241022', label: 'Claude 3.5 Haiku' }
+        ],
+        keyLabel: '🔑 API KEY CHO ANTHROPIC', keyLink: 'https://console.anthropic.com/settings/keys', keyLinkText: 'Lấy Key tại Anthropic Console &rarr;',
+        keyPlaceholder: 'sk-ant-api03-...',
+        keyHint: 'Lưu ý: API chính hãng của Anthropic chặn CORS trên trình duyệt. Hãy điền Base URL của proxy nếu bạn có (hoặc dùng OpenRouter).'
+      },
+      openai: {
+        id: 'openai',
+        icon: '🟢', title: 'OpenAI', badge: 'Chính hãng', desc: 'Truy cập trực tiếp API của OpenAI.',
+        baseUrl: 'https://api.openai.com/v1',
+        models: [
+          { value: 'gpt-4o-mini', label: 'gpt-4o-mini (Khuyên dùng)' },
+          { value: 'gpt-4o', label: 'gpt-4o (Cao cấp)' }
+        ],
+        keyLabel: '🔑 API KEY CHO OPENAI', keyLink: 'https://platform.openai.com/api-keys', keyLinkText: 'Lấy Key tại OpenAI Platform &rarr;',
+        keyPlaceholder: 'sk-proj-...',
+        keyHint: 'Lưu ý: OpenAI yêu cầu tài khoản đã nạp thẻ (tier 1+).'
+      }
     };
 
-    const PROVIDER_BASE_URLS = {
-      gemini_local: 'https://generativelanguage.googleapis.com/v1beta/openai',
-      openai: 'https://api.openai.com/v1'
+    let tempKeys = {
+      openrouter: '',
+      gemini_local: '',
+      anthropic: '',
+      openai: ''
     };
+    let currentActiveTabProvider = 'openrouter';
 
-    function updateModelOptions(provider, targetModel = null) {
+    function renderModels(providerKey, targetModel = null) {
       if (!cfgModelSelect) return;
-      const models = PROVIDER_MODELS[provider] || PROVIDER_MODELS.openai;
+      const provInfo = PROVIDERS_INFO[providerKey];
       cfgModelSelect.innerHTML = '';
-      models.forEach(m => {
-        const opt = document.createElement('option');
-        opt.value = m.value;
-        opt.textContent = m.label;
-        cfgModelSelect.appendChild(opt);
+      
+      provInfo.models.forEach((m, idx) => {
+        const isSelected = (targetModel === m.value) || (!targetModel && idx === 0);
+        const div = document.createElement('div');
+        div.style.cssText = `display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border: 1px solid ${isSelected ? '#818cf8' : '#e2e8f0'}; border-radius: 8px; background: ${isSelected ? '#eef2ff' : '#f8fafc'}; cursor: pointer; transition: all 0.2s;`;
+        div.innerHTML = `
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <div style="width: 16px; height: 16px; border-radius: 50%; border: 2px solid ${isSelected ? '#4f46e5' : '#cbd5e1'}; display: flex; align-items: center; justify-content: center; background: ${isSelected ? '#4f46e5' : 'transparent'};">
+              ${isSelected ? '<div style="width: 6px; height: 6px; border-radius: 50%; background: #fff;"></div>' : ''}
+            </div>
+            <span style="font-size: 13px; font-weight: ${isSelected ? '600' : '500'}; color: ${isSelected ? '#312e81' : '#475569'};">${m.label}</span>
+          </div>
+        `;
+        div.addEventListener('click', () => {
+          renderModels(providerKey, m.value);
+        });
+        div.dataset.value = m.value;
+        if (isSelected) div.classList.add('selected-model');
+        cfgModelSelect.appendChild(div);
+      });
+    }
+    
+    function getSelectedModel() {
+      const selected = cfgModelSelect.querySelector('.selected-model');
+      return selected ? selected.dataset.value : null;
+    }
+
+    function switchTab(providerKey, targetModel = null) {
+      currentActiveTabProvider = providerKey;
+      const provInfo = PROVIDERS_INFO[providerKey];
+      
+      // Tabs Styling
+      aiConfigTabs.forEach(tab => {
+        if (tab.dataset.prov === providerKey) {
+          tab.classList.add('active');
+          tab.style.borderBottom = '2px solid #3b82f6';
+          tab.style.color = '#3b82f6';
+        } else {
+          tab.classList.remove('active');
+          tab.style.borderBottom = '2px solid transparent';
+          tab.style.color = '#64748b';
+        }
       });
 
-      const validValues = models.map(m => m.value);
-      if (targetModel && validValues.includes(targetModel)) {
-        cfgModelSelect.value = targetModel;
+      // Update Card
+      if (cfgProvIcon) cfgProvIcon.textContent = provInfo.icon;
+      if (cfgProvTitle) cfgProvTitle.textContent = provInfo.title;
+      if (cfgProvBadge) cfgProvBadge.textContent = provInfo.badge;
+      if (cfgProvDesc) cfgProvDesc.textContent = provInfo.desc;
+      if (cfgLblModelGroup) cfgLblModelGroup.textContent = provInfo.title.toUpperCase();
+
+      // Render Models
+      renderModels(providerKey, targetModel);
+
+      // API Key & URL Section
+      if (cfgLblKeyTitle) cfgLblKeyTitle.textContent = provInfo.keyLabel;
+      if (cfgKeyLink) {
+        cfgKeyLink.href = provInfo.keyLink;
+        cfgKeyLink.innerHTML = provInfo.keyLinkText;
+      }
+      if (cfgApiKey) {
+        cfgApiKey.placeholder = provInfo.keyPlaceholder;
+        cfgApiKey.value = tempKeys[providerKey] || '';
+      }
+      if (cfgKeyHint) cfgKeyHint.innerHTML = provInfo.keyHint;
+
+      if (providerKey === 'openrouter' || providerKey === 'anthropic' || providerKey === 'openai') {
+        cfgBaseUrlContainer.style.display = 'block';
+        const cfg = LLMClient.getConfig();
+        // Giữ baseUrl custom nếu là provider hiện tại
+        cfgBaseUrl.value = (cfg.provider === providerKey && cfg.baseUrl) ? cfg.baseUrl : provInfo.baseUrl;
       } else {
-        cfgModelSelect.value = models[0].value;
+        cfgBaseUrlContainer.style.display = 'none';
+        cfgBaseUrl.value = provInfo.baseUrl;
+      }
+      
+      if (cfgPingStatus) {
+         cfgPingStatus.textContent = '';
+         cfgPingStatus.style.border = 'none';
+         cfgPingStatus.style.background = 'transparent';
       }
     }
 
-    function updateProviderCardStyles(selectedProvider) {
-      if (selectedProvider === 'gemini_local') {
-        if (cardProvGemini) {
-          cardProvGemini.style.background = 'rgba(16, 185, 129, 0.15)';
-          cardProvGemini.style.borderColor = '#10b981';
-        }
-        if (cardProvOpenai) {
-          cardProvOpenai.style.background = 'rgba(255, 255, 255, 0.04)';
-          cardProvOpenai.style.borderColor = 'rgba(255, 255, 255, 0.12)';
-        }
-      } else {
-        if (cardProvOpenai) {
-          cardProvOpenai.style.background = 'rgba(56, 189, 248, 0.15)';
-          cardProvOpenai.style.borderColor = 'var(--cyan)';
-        }
-        if (cardProvGemini) {
-          cardProvGemini.style.background = 'rgba(255, 255, 255, 0.04)';
-          cardProvGemini.style.borderColor = 'rgba(255, 255, 255, 0.12)';
-        }
-      }
-    }
+    aiConfigTabs.forEach(tab => {
+      tab.addEventListener('click', (e) => {
+        // Save current key typed before switching
+        if (cfgApiKey) tempKeys[currentActiveTabProvider] = cfgApiKey.value.trim();
+        switchTab(e.currentTarget.dataset.prov);
+      });
+    });
 
-    // BIẾN LƯU TẠM KEY TỪNG BÊN ĐỂ KHÔNG BỊ GHI ĐÈ LẪN NHAU
-    let tempGeminiApiKey = '';
-    let tempOpenaiApiKey = '';
+    document.getElementById('btn-toggle-cfg-key')?.addEventListener('click', () => {
+      if (cfgApiKey.type === 'password') {
+        cfgApiKey.type = 'text';
+      } else {
+        cfgApiKey.type = 'password';
+      }
+    });
 
     function updateAiBadge() {
       const badge = document.getElementById('lbl-active-ai-badge');
       const dot = document.getElementById('top-ai-dot');
       if (!badge) return;
       const cfg = LLMClient.getConfig();
-      if (cfg.provider === 'openai') {
-        const hasKey = Boolean(cfg.openaiApiKey || (cfg.apiKey && cfg.apiKey.startsWith('sk-')));
-        badge.textContent = `⚙️ AI: ${cfg.model || 'gpt-4o-mini'} (${hasKey ? 'OpenAI riêng' : 'OpenAI'})`;
-        if (dot) {
-          dot.style.background = '#10b981';
-          dot.style.boxShadow = '0 0 8px #10b981';
-        }
-      } else {
-        const hasKey = Boolean(cfg.geminiApiKey || (cfg.apiKey && !cfg.apiKey.startsWith('sk-')));
-        badge.textContent = `⚙️ AI: ${cfg.model || 'gemini-2.5-flash'} (${hasKey ? 'Gemini riêng' : 'Gemini'})`;
-        if (dot) {
-          dot.style.background = '#38bdf8';
-          dot.style.boxShadow = '0 0 6px #38bdf8';
-        }
+      
+      let title = cfg.provider;
+      if (cfg.provider === 'openrouter') title = 'OpenRouter';
+      if (cfg.provider === 'gemini_local') title = 'Google Gemini';
+      if (cfg.provider === 'openai') title = 'OpenAI';
+      if (cfg.provider === 'anthropic') title = 'Anthropic';
+
+      badge.textContent = `⚙️ AI: ${cfg.model || 'gpt-4o-mini'} (${title})`;
+      if (dot) {
+        dot.style.background = '#10b981';
+        dot.style.boxShadow = '0 0 8px #10b981';
       }
     }
 
-    // Khởi tạo nhãn model trên nút header
     setTimeout(updateAiBadge, 100);
-
-    // NÚT CẤU HÌNH AI TRÊN TOP HEADER
     document.getElementById('btn-top-open-ai-config')?.addEventListener('click', openAiConfigModal);
-
-    function updateApiKeyField(provider) {
-      const keyInput = document.getElementById('cfg-api-key');
-      const keyLabel = document.getElementById('lbl-cfg-key-title');
-      const keyHint = document.getElementById('hint-cfg-key-text');
-      if (!keyInput) return;
-
-      if (provider === 'gemini_local') {
-        keyInput.value = tempGeminiApiKey;
-        keyInput.placeholder = "Để trống để dùng khóa mặc định hệ thống Google Gemini (hoặc dán key AIza...)";
-        if (keyLabel) keyLabel.textContent = "Khóa Google Gemini (Tùy chọn)";
-        if (keyHint) keyHint.innerHTML = "* <strong>Khuyên dùng:</strong> Có thể để trống để dùng khóa hệ thống miễn phí hoặc dán Google AI Studio API Key cá nhân.";
-      } else {
-        keyInput.value = tempOpenaiApiKey;
-        keyInput.placeholder = "Dán khóa OpenAI API cá nhân (bắt đầu bằng sk-...)";
-        if (keyLabel) keyLabel.textContent = "Khóa OpenAI API (Bắt buộc khi dùng OpenAI)";
-        if (keyHint) keyHint.innerHTML = "* <strong>Lưu ý:</strong> OpenAI yêu cầu API Key có số dư (credit). Khóa của bạn được bảo mật tuyệt đối trên trình duyệt.";
-      }
-    }
 
     function openAiConfigModal() {
       const cfg = LLMClient.getConfig();
-      tempGeminiApiKey = cfg.geminiApiKey || '';
-      tempOpenaiApiKey = cfg.openaiApiKey || (cfg.apiKey && cfg.apiKey.startsWith('sk-') ? cfg.apiKey : '');
-
-      const currentProvider = (cfg.provider === 'openai') ? 'openai' : 'gemini_local';
-
-      if (currentProvider === 'gemini_local') {
-        if (radioProvGemini) radioProvGemini.checked = true;
-      } else {
-        if (radioProvOpenai) radioProvOpenai.checked = true;
+      
+      tempKeys.gemini_local = cfg.geminiApiKey || '';
+      tempKeys.openrouter = cfg.openrouterApiKey || '';
+      tempKeys.anthropic = cfg.anthropicApiKey || '';
+      tempKeys.openai = cfg.openaiApiKey || '';
+      
+      // Migrate from old config format
+      if (cfg.apiKey && !cfg.openaiApiKey && !cfg.geminiApiKey) {
+          if (cfg.apiKey.startsWith('sk-or')) tempKeys.openrouter = cfg.apiKey;
+          else if (cfg.apiKey.startsWith('sk-ant')) tempKeys.anthropic = cfg.apiKey;
+          else if (cfg.apiKey.startsWith('sk-')) tempKeys.openai = cfg.apiKey;
+          else tempKeys.gemini_local = cfg.apiKey;
       }
-      updateProviderCardStyles(currentProvider);
-      updateModelOptions(currentProvider, cfg.model);
 
-      if (cfgBaseUrl) cfgBaseUrl.value = cfg.baseUrl || PROVIDER_BASE_URLS[currentProvider];
-      updateApiKeyField(currentProvider);
+      let currentProvider = cfg.provider || 'gemini_local';
+      if (!PROVIDERS_INFO[currentProvider]) currentProvider = 'openrouter';
 
-      const cfgOutputLang = document.getElementById('cfg-output-lang');
-      if (cfgOutputLang) cfgOutputLang.value = cfg.outputLang || 'vi';
-      if (cfgPingStatus) cfgPingStatus.style.display = 'none';
+      switchTab(currentProvider, cfg.model);
 
       if (modalAiConfig) modalAiConfig.style.display = 'flex';
     }
@@ -14120,75 +14380,33 @@ QUY TẮC PHẢN HỒI QUAN TRỌNG:
       if (e.target === modalAiConfig) closeAiConfigModal();
     });
 
-    radioProvGemini?.addEventListener('change', () => {
-      if (radioProvGemini.checked) {
-        // Lưu tạm key cũ trước khi chuyển
-        const keyInput = document.getElementById('cfg-api-key');
-        if (keyInput) tempOpenaiApiKey = keyInput.value.trim();
-
-        updateProviderCardStyles('gemini_local');
-        updateModelOptions('gemini_local', 'gemini-2.5-flash');
-        if (cfgBaseUrl) cfgBaseUrl.value = PROVIDER_BASE_URLS.gemini_local;
-        updateApiKeyField('gemini_local');
-        if (cfgPingStatus) cfgPingStatus.style.display = 'none';
-      }
-    });
-
-    cardProvGemini?.addEventListener('click', () => {
-      if (radioProvGemini && !radioProvGemini.checked) {
-        radioProvGemini.checked = true;
-        radioProvGemini.dispatchEvent(new Event('change'));
-      }
-    });
-
-    radioProvOpenai?.addEventListener('change', () => {
-      if (radioProvOpenai.checked) {
-        // Lưu tạm key cũ trước khi chuyển
-        const keyInput = document.getElementById('cfg-api-key');
-        if (keyInput) tempGeminiApiKey = keyInput.value.trim();
-
-        updateProviderCardStyles('openai');
-        updateModelOptions('openai', 'gpt-4o-mini');
-        if (cfgBaseUrl) cfgBaseUrl.value = PROVIDER_BASE_URLS.openai;
-        updateApiKeyField('openai');
-        if (cfgPingStatus) cfgPingStatus.style.display = 'none';
-      }
-    });
-
-    cardProvOpenai?.addEventListener('click', () => {
-      if (radioProvOpenai && !radioProvOpenai.checked) {
-        radioProvOpenai.checked = true;
-        radioProvOpenai.dispatchEvent(new Event('change'));
-      }
-    });
-
     btnPingAiTest?.addEventListener('click', async () => {
       if (!cfgPingStatus) return;
       cfgPingStatus.style.display = 'block';
       cfgPingStatus.style.background = 'rgba(56, 189, 248, 0.15)';
       cfgPingStatus.style.color = '#38bdf8';
       cfgPingStatus.style.border = '1px solid rgba(56, 189, 248, 0.3)';
-      cfgPingStatus.textContent = '⚡ Đang gửi thử 1 token kiểm tra kết nối...';
+      cfgPingStatus.style.padding = '4px 10px';
+      cfgPingStatus.style.borderRadius = '6px';
+      cfgPingStatus.textContent = '⚡ Đang gửi thử 1 token...';
 
-      const provider = radioProvGemini?.checked ? 'gemini_local' : 'openai';
-      const baseUrl = cfgBaseUrl?.value.trim() || PROVIDER_BASE_URLS[provider];
-      const model = cfgModelSelect?.value || (provider === 'openai' ? 'gpt-4o-mini' : 'gemini-2.5-flash');
-      const apiKey = document.getElementById('cfg-api-key')?.value.trim() || '';
+      const provider = currentActiveTabProvider;
+      const baseUrl = cfgBaseUrl?.value.trim() || PROVIDERS_INFO[provider].baseUrl;
+      const model = getSelectedModel() || PROVIDERS_INFO[provider].models[0].value;
+      const apiKey = cfgApiKey?.value.trim() || '';
 
       try {
         const res = await LLMClient.ping({ provider, baseUrl, model, apiKey });
         cfgPingStatus.style.background = 'rgba(16, 185, 129, 0.15)';
         cfgPingStatus.style.color = '#34d399';
         cfgPingStatus.style.border = '1px solid rgba(16, 185, 129, 0.3)';
-        const sourceLabel = apiKey ? 'Khóa cá nhân' : 'Khóa hệ thống (Máy chủ)';
         const respondingModel = res.model || model;
-        const fallbackNote = (res.model && res.model !== model) ? ` (Đã tự động dự phòng từ ${model})` : '';
-        cfgPingStatus.innerHTML = `✅ Kết nối thành công! Phản hồi từ <strong>${respondingModel}</strong> [${sourceLabel}] trong ${res.latency}ms.${fallbackNote}`;
+        cfgPingStatus.innerHTML = `✅ Kết nối thành công! Phản hồi từ <strong>${respondingModel}</strong> trong ${res.latency}ms.`;
       } catch (err) {
         cfgPingStatus.style.background = 'rgba(244, 63, 94, 0.15)';
         cfgPingStatus.style.color = '#fb7185';
         cfgPingStatus.style.border = '1px solid rgba(244, 63, 94, 0.3)';
-        cfgPingStatus.innerHTML = `❌ Kiểm tra thất bại: ${err.message}`;
+        cfgPingStatus.innerHTML = `❌ Lỗi: ${err.message}`;
       }
     });
 
@@ -14198,37 +14416,33 @@ QUY TẮC PHẢN HỒI QUAN TRỌNG:
       btnSaveAiCfg.disabled = true;
 
       setTimeout(() => {
-      const provider = radioProvGemini?.checked ? 'gemini_local' : 'openai';
-      const currentInputKey = document.getElementById('cfg-api-key')?.value.trim() || '';
-      if (provider === 'openai') {
-        tempOpenaiApiKey = currentInputKey;
-      } else {
-        tempGeminiApiKey = currentInputKey;
-      }
+        const provider = currentActiveTabProvider;
+        if (cfgApiKey) tempKeys[provider] = cfgApiKey.value.trim();
 
-      const baseUrl = cfgBaseUrl?.value.trim() || PROVIDER_BASE_URLS[provider];
-      const model = cfgModelSelect?.value || (provider === 'openai' ? 'gpt-4o-mini' : 'gemini-2.5-flash');
-      const outputLang = document.getElementById('cfg-output-lang')?.value || 'vi';
+        const baseUrl = cfgBaseUrl?.value.trim() || PROVIDERS_INFO[provider].baseUrl;
+        const model = getSelectedModel() || PROVIDERS_INFO[provider].models[0].value;
+        
+        LLMClient.saveConfig({
+          provider,
+          baseUrl,
+          model,
+          apiKey: tempKeys[provider], // Backward compatibility
+          openaiApiKey: tempKeys.openai,
+          geminiApiKey: tempKeys.gemini_local,
+          openrouterApiKey: tempKeys.openrouter,
+          anthropicApiKey: tempKeys.anthropic
+        });
 
-      LLMClient.saveConfig({
-        provider,
-        baseUrl,
-        model,
-        apiKey: currentInputKey,
-        openaiApiKey: tempOpenaiApiKey,
-        geminiApiKey: tempGeminiApiKey,
-        outputLang
-      });
+        updateAiBadge();
+        closeAiConfigModal();
 
-      updateAiBadge();
-      closeAiConfigModal();
+        btnSaveAiCfg.innerHTML = originalText;
+        btnSaveAiCfg.disabled = false;
 
-      btnSaveAiCfg.innerHTML = originalText;
-      btnSaveAiCfg.disabled = false;
-
-      showToast(`🎉 Đã lưu cấu hình AI thành công: Đang sử dụng [${model}] (${provider === 'openai' ? 'OpenAI Official' : 'Google Gemini'})!`);
-    }, 400);
+        showToast(`🎉 Đã lưu cấu hình AI thành công: Đang sử dụng [${model}]!`);
+      }, 400);
     });
+
 
     // NÚT LƯU ĐỒNG BỘ CLOUD (NEON POSTGRES)
     document.getElementById('btn-cloud-sync')?.addEventListener('click', async () => {
