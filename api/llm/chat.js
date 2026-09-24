@@ -45,13 +45,22 @@ module.exports = async (req, res) => {
       }
     }
 
-    // Các ứng viên mặc định của hệ thống (ưu tiên flash-lite tránh 429 limit 20 req/ngày của 2.5-flash)
-    candidates.push(
-      { provider: 'gemini', apiKey: envGemini, baseUrl: 'https://generativelanguage.googleapis.com/v1beta/openai', model: 'gemini-2.5-flash-lite' },
-      { provider: 'gemini', apiKey: envGemini, baseUrl: 'https://generativelanguage.googleapis.com/v1beta/openai', model: 'gemini-flash-latest' },
-      { provider: 'gemini', apiKey: envGemini, baseUrl: 'https://generativelanguage.googleapis.com/v1beta/openai', model: 'gemini-3.1-flash-lite' },
-      { provider: 'openai', apiKey: envOpenai, baseUrl: 'https://api.openai.com/v1', model: 'gpt-4o-mini' }
-    );
+    // Các ứng viên mặc định của hệ thống
+    const isExplicitOpenAI = (body.provider === 'openai' || requestedModel?.includes('gpt'));
+    if (isExplicitOpenAI) {
+      candidates.push(
+        { provider: 'openai', apiKey: envOpenai, baseUrl: 'https://api.openai.com/v1', model: requestedModel || 'gpt-4o-mini' },
+        { provider: 'gemini', apiKey: envGemini, baseUrl: 'https://generativelanguage.googleapis.com/v1beta/openai', model: 'gemini-2.5-flash-lite' },
+        { provider: 'gemini', apiKey: envGemini, baseUrl: 'https://generativelanguage.googleapis.com/v1beta/openai', model: 'gemini-2.5-flash' }
+      );
+    } else {
+      const primaryGemini = (requestedModel && !requestedModel.includes('gpt')) ? requestedModel : 'gemini-2.5-flash';
+      candidates.push(
+        { provider: 'gemini', apiKey: envGemini, baseUrl: 'https://generativelanguage.googleapis.com/v1beta/openai', model: primaryGemini },
+        { provider: 'gemini', apiKey: envGemini, baseUrl: 'https://generativelanguage.googleapis.com/v1beta/openai', model: 'gemini-2.5-flash-lite' },
+        { provider: 'openai', apiKey: envOpenai, baseUrl: 'https://api.openai.com/v1', model: 'gpt-4o-mini' }
+      );
+    }
 
     let lastError = null;
     for (const cand of candidates) {

@@ -7499,15 +7499,23 @@ Trả về DUY NHẤT JSON hợp lệ với 5 trường sau (mỗi trường T�
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ provider: cfg.provider, apiKey: customKey, model: cfg.model })
           });
-          if (res.ok) {
-            const data = await res.json();
+          const resData = await res.json().catch(() => null);
+          if (res.ok && resData && resData.status === 'ok') {
             return {
-              data,
-              latency: data.latency || Math.round(performance.now() - tStart),
-              isSystemKey: data.isSystemKey
+              data: resData,
+              latency: resData.latency || Math.round(performance.now() - tStart),
+              isSystemKey: resData.isSystemKey,
+              model: resData.model || cfg.model,
+              provider: resData.provider || cfg.provider
             };
           }
+          if (resData && resData.error) {
+            throw new Error(resData.error + (resData.details ? ` (${resData.details})` : ''));
+          }
         } catch (e) {
+          if (e.message && !e.message.includes('Failed to fetch') && !e.message.includes('NetworkError') && !e.message.includes('Load failed')) {
+            throw e;
+          }
           console.warn('[LLMClient] Server proxy ping không phản hồi, thử gọi trực tiếp...');
         }
 
@@ -7533,10 +7541,10 @@ Trả về DUY NHẤT JSON hợp lệ với 5 trường sau (mỗi trường T�
             throw new Error(`HTTP ${res.status}: ${errText.slice(0, 150)}`);
           }
           const data = await res.json();
-          return { data, latency, isSystemKey: false };
+          return { data, latency, isSystemKey: false, model: cfg.model, provider: cfg.provider };
         }
 
-        throw new Error('Không thể kết nối tới máy chủ AI.');
+        throw new Error('Không thể kết nối tới máy chủ AI hoặc hệ thống đang bận. Vui lòng thử lại sau giây lát.');
       },
 
       async generateNarration({ title, depth, duration, wpm, visualDesc, sections, notes }) {
@@ -12039,7 +12047,9 @@ ${tableRows}
         cfgPingStatus.style.color = '#34d399';
         cfgPingStatus.style.border = '1px solid rgba(16, 185, 129, 0.3)';
         const sourceLabel = apiKey ? 'Khóa cá nhân' : 'Khóa hệ thống (Máy chủ)';
-        cfgPingStatus.innerHTML = `✅ Kết nối thành công! Phản hồi từ <strong>${model}</strong> [${sourceLabel}] trong ${res.latency}ms.`;
+        const respondingModel = res.model || model;
+        const fallbackNote = (res.model && res.model !== model) ? ` (Đã tự động dự phòng từ ${model})` : '';
+        cfgPingStatus.innerHTML = `✅ Kết nối thành công! Phản hồi từ <strong>${respondingModel}</strong> [${sourceLabel}] trong ${res.latency}ms.${fallbackNote}`;
       } catch (err) {
         cfgPingStatus.style.background = 'rgba(244, 63, 94, 0.15)';
         cfgPingStatus.style.color = '#f87171';
