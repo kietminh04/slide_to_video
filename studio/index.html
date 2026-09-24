@@ -7705,17 +7705,29 @@ QUY TẮC BÓC TÁCH TỪ MỤC LỤC (BẮT BUỘC):
             const data = await res.json();
             const raw = data.choices?.[0]?.message?.content || '';
             const clean = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
-            const jsonMatch = clean.match(/\{[\s\S]*\}/);
-            if (jsonMatch) {
-              return JSON.parse(jsonMatch[0]);
-            } else {
-              let repaired = clean;
-              if (!repaired.endsWith('}')) {
-                if (repaired.lastIndexOf(']') > repaired.lastIndexOf('}')) repaired += '}';
-                else repaired += ']}';
+            const match = clean.match(/\{[\s\S]*\}/);
+            if (match) {
+              const jsonStr = match[0];
+              try {
+                return JSON.parse(jsonStr);
+              } catch (e1) {
+                try {
+                  const sanitized = jsonStr.replace(/\\(?![/"\\bfnrtu]|u[0-9a-fA-F]{4})/g, '\\\\');
+                  return JSON.parse(sanitized);
+                } catch (e2) {
+                  let rep = jsonStr;
+                  if (!rep.endsWith('}')) {
+                    if (rep.lastIndexOf(']') > rep.lastIndexOf('}')) rep += '}';
+                    else rep += ']}';
+                  }
+                  try {
+                    const sanitizedRep = rep.replace(/\\(?![/"\\bfnrtu]|u[0-9a-fA-F]{4})/g, '\\\\');
+                    return JSON.parse(sanitizedRep);
+                  } catch (e3) {
+                    console.warn('[LLMClient] JSON parse failed:', e3);
+                  }
+                }
               }
-              const repMatch = repaired.match(/\{[\s\S]*\}/);
-              if (repMatch) return JSON.parse(repMatch[0]);
             }
           }
         } catch (e) {
@@ -9767,7 +9779,7 @@ QUY TẮC PHẢN HỒI QUAN TRỌNG:
     // ─────────────────────────────────────────────────────────────
     // HÀM BÓC TÁCH HYBRID TOC-ANCHORED (ƯU TIÊN HÀNG ĐẦU TUYỆT ĐỐI)
     async function extractPdfHybridTOC(pdf, totalPages, fileName = "") {
-      // 1. Quét 5% trang đầu (tối thiểu 2 trang cho slide/tài liệu ngắn để không bỏ sót slide Agenda/Mục lục)
+      // 1. Quét 5% trang đầu (tối thiểu 2-3 trang cho slide bài giảng để bắt slide Agenda/Mục lục)
       const frontLimit = Math.min(totalPages, Math.max(2, Math.ceil(totalPages * 0.05)));
       let tocStartPage = -1;
       let tocEndPage = -1;
@@ -9781,17 +9793,21 @@ QUY TẮC PHẢN HỒI QUAN TRỌNG:
           const pageStr = items.map(it => it.str).join(' ');
           const topWords = items.slice(0, 30).map(it => it.str).join(' ').toLowerCase();
 
-          // Nhận diện heading Mục Lục / Agenda / Outline / Nội dung chính ở phần đầu trang
-          const hasTocHeading = /\b(contents|table of contents|mục lục|table des matières|agenda|outline|nội dung chính|nội dung bài giảng)\b/i.test(topWords);
+          // Heading mục lục rõ ràng
+          const hasTocHeading = /\b(contents|table of contents|mục lục|table des matières|agenda|outline|nội dung chính|nội dung bài giảng|overview|topics)\b/i.test(topWords);
+          
+          // Hoặc slide liệt kê các phần 1. ... 2. ... 3. ... trong slide bài giảng (như slide 2 của lecture)
+          const hasSeqOutline = /(?:^|\n|\s{2,})\s*1[\.\)]\s+[A-Za-zÀ-ỹ]+.*?(?:\n|\s{2,})\s*2[\.\)]\s+[A-Za-zÀ-ỹ]+.*?(?:\n|\s{2,})\s*3[\.\)]\s+[A-Za-zÀ-ỹ]+/s.test(pageStr) && !topWords.includes('last lecture');
 
           let isTocPage = false;
-          if (hasTocHeading) {
+          if (hasTocHeading || hasSeqOutline) {
             isTocPage = true;
           } else if (tocStartPage > 0 && (p - tocEndPage === 1)) {
-            // Kiểm tra các trang mục lục nối tiếp: chứa nhiều số trang in, không phải đoạn văn xuôi
-            const rawLines = pageStr.split(/\s{2,}|\n/);
-            const numCount = rawLines.filter(l => /\b\d+\s*$/.test(l.trim())).length;
-            if (numCount >= 4) isTocPage = true;
+            // Trang mục lục kéo dài (chứa nhiều số trang in, ít đoạn văn xuôi)
+            const rawLines = [pageStr];
+            const numCount = (pageStr.match(/\b\d+\s*($|\n)/g) || []).length;
+            const hasProse = /In this chapter|Throughout this book|We introduce/i.test(pageStr);
+            if (numCount >= 4 && !hasProse) isTocPage = true;
           }
 
           if (isTocPage) {
@@ -9804,7 +9820,7 @@ QUY TẮC PHẢN HỒI QUAN TRỌNG:
         } catch (e) {}
       }
 
-      // 2. Quét 5% trang cuối nếu chưa tìm thấy ở 5% đầu (dành cho sách xếp mục lục ở cuối)
+      // 2. Quét 5% trang cuối nếu chưa tìm thấy ở 5% đầu
       const backStart = Math.max(frontLimit + 1, Math.floor(totalPages * 0.95));
       if (tocStartPage === -1 && backStart <= totalPages) {
         for (let p = backStart; p <= totalPages; p++) {
@@ -9827,14 +9843,14 @@ QUY TẮC PHẢN HỒI QUAN TRỌNG:
         }
       }
 
-      if (tocStartPage > 0 && tocText.trim().length >= 60) {
+      if (tocStartPage > 0 && tocText.trim().length >= 50) {
         console.log(`[TOC Extractor] 🎯 Phát hiện Mục lục tại trang PDF ${tocStartPage} -> ${tocEndPage}`);
         window._lastExtractedTocText = tocText;
         updateLoading("Đang phân tích...", "Vui lòng chờ trong giây lát...");
 
         const outlineRes = await LLMClient.extractTOCWithAI(tocText, fileName);
         if (outlineRes && outlineRes.chapters && outlineRes.chapters.length > 0) {
-          // Chuẩn hóa tên chương nếu thiếu
+          // Chuẩn hóa tên chương
           outlineRes.chapters.forEach((ch, idx) => {
             if (!ch.chapter) ch.chapter = `CHƯƠNG ${idx + 1}`;
             if (!ch.title) ch.title = ch.name || `Chương ${idx + 1}`;
