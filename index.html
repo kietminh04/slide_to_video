@@ -8118,7 +8118,83 @@ Trả về DUY NHẤT JSON hợp lệ với 5 trường sau (mỗi trường T�
       },
 
       
-      async generateSegmentNarration({ nodeCode, nodeText, chapterTitle, sectionTitle, duration, wpm, visualType, summary, mechanism, keyPoint, notes, mediaAttachments, mediaNote }) {
+      // TẦNG 1: SINH DÀN Ý DẪN CHUYỆN & CÂU CHUYỂN Ý SƯ PHẠM THEO CHƯƠNG (NARRATIVE STORYBOARD)
+      async generateChapterNarrativeStoryboard({ chapterTitle, items }) {
+        const cfg = this.getConfig();
+        if (!items || items.length === 0) return null;
+
+        const itemsList = items.map((it, idx) => `Phân đoạn ${idx + 1} [${it.code}]: "${it.title}" - Trọng tâm: ${it.summary || it.title} ${it.mechanism ? '| Công thức: ' + it.mechanism : ''}`).join('\n');
+
+        const systemPrompt = `Bạn là Chuyên gia Xây dựng Dàn ý Kịch bản Sư phạm Đại học.
+Nhiệm vụ: Lập các câu cầu nối chuyển ý (Bridge Transitions) kết nối các phân đoạn trong cùng một chương bài giảng, tạo thành một mạch kể chuyện (Narrative Arc) liền mạch từ đầu đến cuối như một bài thuyết trình hoàn chỉnh.
+
+QUY TẮC BẮT BUỘC:
+1. "chapter_hook": 1 câu mở đầu nêu bật chủ đề cốt lõi của chương.
+2. "bridges": Tạo câu nối ý mở đầu cho từng phân đoạn:
+   - Phân đoạn 1: Bắt đầu từ chapter_hook dẫn nhập vào bài toán.
+   - Các phân đoạn tiếp theo: Viết 1 câu chuyển ý đắt giá nối từ phân đoạn trước sang phân đoạn này (ví dụ: "Khi đã giải quyết xong bước A, thách thức tiếp theo là..."). Mỗi câu nối là duy nhất, tự nhiên, không lặp từ.
+
+Trả về DUY NHẤT JSON hợp lệ:
+{
+  "chapter_hook": "...",
+  "bridges": {
+    "key_hoặc_code": "Câu chuyển ý mở đầu cho phân đoạn này..."
+  }
+}`;
+
+        const userPrompt = `Chương: "${chapterTitle}"\nDanh sách các phân đoạn:\n${itemsList}`;
+
+        const payload = {
+          model: cfg.model || 'gemini-2.5-flash',
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: userPrompt }
+          ],
+          max_tokens: 1200,
+          temperature: 0.2,
+          provider: cfg.provider || 'gemini_local',
+          apiKey: cfg.apiKey || ''
+        };
+
+        try {
+          const serverUrl = (window.location.origin.startsWith('http') && !window.location.origin.includes('file:'))
+            ? `${window.location.origin}/api/llm/chat`
+            : 'https://slide-to-video-sigma.vercel.app/api/llm/chat';
+          const res = await fetch(serverUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+          if (res.ok) {
+            const data = await res.json();
+            const raw = data.choices?.[0]?.message?.content || '';
+            const parsed = this.safeJsonParse(raw);
+            if (parsed && parsed.bridges) return parsed;
+          }
+        } catch (e) {
+          console.warn('[LLMClient] generateChapterNarrativeStoryboard proxy error:', e);
+        }
+
+        try {
+          const endpoint = `${cfg.baseUrl.replace(/\/+$/, '')}/chat/completions`;
+          const headers = { 'Content-Type': 'application/json' };
+          if (cfg.apiKey) headers['Authorization'] = `Bearer ${cfg.apiKey}`;
+          const res = await fetch(endpoint, { method: 'POST', headers, body: JSON.stringify(payload) });
+          if (res.ok) {
+            const data = await res.json();
+            const raw = data.choices?.[0]?.message?.content || '';
+            const parsed = this.safeJsonParse(raw);
+            if (parsed && parsed.bridges) return parsed;
+          }
+        } catch (e) {
+          console.warn('[LLMClient] generateChapterNarrativeStoryboard direct error:', e);
+        }
+
+        return null;
+      },
+
+      // TẦNG 2: SINH LỜI THOẠI PHÂN ĐOẠN (HỖ TRỢ CÂU NỐI Ý SƯ PHẠM BRIDGE INTRO)
+      async generateSegmentNarration({ nodeCode, nodeText, chapterTitle, sectionTitle, duration, wpm, visualType, summary, mechanism, keyPoint, notes, mediaAttachments, mediaNote, bridgeIntro }) {
         const cfg = this.getConfig();
         const dur = Math.max(10, parseInt(duration) || 30);
         const pace = Math.max(80, parseInt(wpm) || 140);
@@ -8149,6 +8225,11 @@ ${mediaInstruction ? '5. ' + mediaInstruction : ''}
 
 Trả về DUY NHẤT văn bản kịch bản lời thoại hoàn chỉnh (không trả về JSON, không thêm lời chào ngoài lề).`;
 
+        let bridgeNote = '';
+        if (bridgeIntro && bridgeIntro.trim().length > 0) {
+          bridgeNote = `\n🔗 CÂU CHUYỂN Ý MỞ ĐẦU (BẮT ĐẦU PHÂN ĐOẠN TỰ NHIÊN THEO Ý NÀY): "${bridgeIntro}"`;
+        }
+
         const userPrompt = `Chương: "${chapterTitle || ''}" • Phần: "${sectionTitle || ''}"
 Mục kiến thức: [${nodeCode}] "${nodeText}"
 Thời lượng: ${dur} giây (~${targetWords} từ)
@@ -8156,7 +8237,7 @@ Kiểu trực quan: [${visualType || 'split_screen'}]
 ${summary ? `Khái niệm trọng tâm: ${summary}` : ''}
 ${mechanism ? `Cơ chế/Công thức: ${mechanism}` : ''}
 ${keyPoint ? `Điểm then chốt: ${keyPoint}` : ''}
-${notes ? `GHI CHÚ RIÊNG CỦA GIẢNG VIÊN (BẮT BUỘC LÀM THEO): "${notes}"` : ''}
+${notes ? `GHI CHÚ RIÊNG CỦA GIẢNG VIÊN (BẮT BUỘC LÀM THEO): "${notes}"` : ''}${bridgeNote}
 
 Hãy viết kịch bản lời thoại giảng dạy:`;
 
@@ -9840,8 +9921,61 @@ QUY TẮC PHẢN HỒI QUAN TRỌNG:
       }
     };
 
-    // 3. Sinh kịch bản riêng cho một mục con cụ thể
-    window.generateSingleSegmentScript = async function(itKey) {
+    // =========================================================================
+    // HỆ THỐNG KỊCH BẢN HAI TẦNG (TWO-PASS STORYBOARD & PARALLEL FAN-OUT)
+    // TẦNG 1: SINH DÀN Ý CÂU NỐI CHƯƠNG -> TẦNG 2: BẮN SONG SONG (PROMISE.ALL)
+    // =========================================================================
+    const chapterStoryboards = {};
+
+    function setChapterBridges(chKey, bridges) {
+      if (!chKey || !bridges) return;
+      chapterStoryboards[chKey] = bridges;
+      try {
+        if (activeProject) {
+          if (!activeProject._storyboards) activeProject._storyboards = {};
+          activeProject._storyboards[chKey] = bridges;
+          saveProjectsToStorage();
+        }
+      } catch(e) {}
+    }
+
+    function getChapterBridge(itKey) {
+      if (!itKey) return '';
+      for (const chKey in chapterStoryboards) {
+        const bridges = chapterStoryboards[chKey];
+        if (bridges) {
+          if (bridges[itKey]) return bridges[itKey];
+          const parts = itKey.split('-');
+          const itemIdx = parts[parts.length - 1];
+          if (bridges[`item${parseInt(itemIdx) + 1}`]) return bridges[`item${parseInt(itemIdx) + 1}`];
+        }
+      }
+      if (activeProject && activeProject._storyboards) {
+        for (const chKey in activeProject._storyboards) {
+          const bridges = activeProject._storyboards[chKey];
+          if (bridges && bridges[itKey]) return bridges[itKey];
+        }
+      }
+      return '';
+    }
+
+    function getPreviousSegmentNarration(itKey) {
+      const cards = Array.from(document.querySelectorAll('.segment-script-card'));
+      const currentCard = document.getElementById(`seg-card-${itKey}`);
+      if (!currentCard) return '';
+      const idx = cards.indexOf(currentCard);
+      if (idx > 0) {
+        const prevCard = cards[idx - 1];
+        const prevTextarea = prevCard.querySelector('.segment-script-editor');
+        if (prevTextarea && prevTextarea.value.trim().length > 10) {
+          return prevTextarea.value.trim();
+        }
+      }
+      return '';
+    }
+
+    // 3. Sinh kịch bản riêng cho một mục con cụ thể (Hỗ trợ câu nối bridge mượt mà)
+    window.generateSingleSegmentScript = async function(itKey, optionalBridge = '') {
       const card = document.getElementById(`seg-card-${itKey}`);
       const btn = document.getElementById(`btn-gen-${itKey}`);
       if (!card) return;
@@ -9866,6 +10000,22 @@ QUY TẮC PHẢN HỒI QUAN TRỌNG:
         const notes = getNodeParam(itKey, 'notes', '');
         const mediaNote = getNodeParam(itKey, 'mediaNote', '');
         const mediaAttachments = getNodeParam(itKey, 'attachments', []);
+
+        // Xác định câu nối ý chuyển đoạn sư phạm (Bridge)
+        let bridgeIntro = optionalBridge || '';
+        if (!bridgeIntro) {
+          bridgeIntro = getChapterBridge(itKey);
+        }
+        if (!bridgeIntro) {
+          const prevText = getPreviousSegmentNarration(itKey);
+          if (prevText) {
+            const sentences = prevText.trim().split(/(?<=[.!?])\s+/);
+            const lastSentence = sentences.slice(-2).join(' ');
+            if (lastSentence.length > 8) {
+              bridgeIntro = `Nối tiếp câu kết của phần trước: "${lastSentence.slice(0, 120)}"`;
+            }
+          }
+        }
 
         // Tìm thông tin Chương & Phần
         let chapterTitle = '';
@@ -9898,7 +10048,8 @@ QUY TẮC PHẢN HỒI QUAN TRỌNG:
           keyPoint,
           notes,
           mediaAttachments,
-          mediaNote
+          mediaNote,
+          bridgeIntro
         });
 
         if (scriptText) {
@@ -9911,9 +10062,9 @@ QUY TẮC PHẢN HỒI QUAN TRỌNG:
 
           updateSegmentCardStats(itKey, scriptText);
           updateScriptHeaderStats();
-          showToast(`✨ Đã sinh kịch bản cho mục: ${nodeCode} - ${nodeText.substring(0, 20)}...`);
+          showToast(`✨ Đã sinh kịch bản cho mục: [${nodeCode}] ${nodeText.substring(0, 20)}...`);
         } else {
-          showToast('⚠️ AI không thể tạo kịch bản lúc này, vui lòng kiểm tra API key!');
+          showToast('⚠️ AI không thể tạo kịch bản lúc này, vui lòng kiểm tra kết nối!');
         }
       } catch (err) {
         console.error("Lỗi sinh kịch bản đơn lẻ:", err);
@@ -9927,7 +10078,7 @@ QUY TẮC PHẢN HỒI QUAN TRỌNG:
       }
     };
 
-    // 4. Sinh kịch bản hàng loạt cho TẤT CẢ các phần đã chọn
+    // 4. Sinh kịch bản hai tầng siêu tốc (Two-Pass Parallel Fan-Out theo Chương)
     window.generateScriptFromSelection = async function() {
       const allSources = activeProject?.sources || [];
       const activeSources = allSources.filter(s => s.active !== false);
@@ -9939,8 +10090,8 @@ QUY TẮC PHẢN HỒI QUAN TRỌNG:
       // Chuyển sang tab kịch bản
       switchCenterTab('script');
 
-      // Thu thập tất cả các item con đang active
-      const pendingItems = [];
+      // Thu thập và phân nhóm các mục theo từng Chương
+      const chapterGroups = [];
       activeSources.forEach((src, srcIdx) => {
         const originalIdx = allSources.indexOf(src);
         const rootKey = getSourceKey(src, originalIdx >= 0 ? originalIdx : srcIdx);
@@ -9953,6 +10104,12 @@ QUY TẮC PHẢN HỒI QUAN TRỌNG:
           const chKey = `ch-${rootKey}-${chIdx}`;
           if (isNodeExcluded(chKey, [rootKey])) return;
 
+          const group = {
+            chKey,
+            chTitle: ch.title || `Chương ${chIdx + 1}`,
+            items: []
+          };
+
           (ch.sections || []).forEach((sec, secIdx) => {
             const secKey = `sec-${rootKey}-${chIdx}-${secIdx}`;
             if (isNodeExcluded(secKey, [chKey, rootKey])) return;
@@ -9960,33 +10117,71 @@ QUY TẮC PHẢN HỒI QUAN TRỌNG:
             (sec.items || []).forEach((it, itIdx) => {
               const itKey = `item-${rootKey}-${chIdx}-${secIdx}-${itIdx}`;
               if (!isNodeExcluded(itKey, [secKey, chKey, rootKey])) {
-                pendingItems.push(itKey);
+                group.items.push({
+                  itKey,
+                  code: it.code || `${chIdx + 1}.${secIdx + 1}.${itIdx + 1}`,
+                  title: it.text || it.title || itKey,
+                  summary: it.summary || '',
+                  mechanism: it.mechanism || '',
+                  duration: it.duration || 30
+                });
               }
             });
           });
+
+          if (group.items.length > 0) {
+            chapterGroups.push(group);
+          }
         });
       });
 
-      if (pendingItems.length === 0) {
+      const totalItems = chapterGroups.reduce((acc, g) => acc + g.items.length, 0);
+      if (totalItems === 0) {
         showToast('⚠️ Không có mục nào được chọn để sinh kịch bản!');
         return;
       }
 
-      showLoading("Đang Sinh Kịch Bản Hàng Loạt...", `Chuẩn bị sinh kịch bản cho ${pendingItems.length} mục kiến thức...`);
+      showLoading("Đang Sinh Kịch Bản Hai Tầng...", `Chuẩn bị sinh ${totalItems} phân đoạn (${chapterGroups.length} chương) với Dàn ý chuyển tiếp siêu tốc...`);
 
-      let completed = 0;
-      for (const itKey of pendingItems) {
-        completed++;
-        updateLoading(`Đang sinh mục ${completed}/${pendingItems.length}...`, `Hệ thống đang viết lời thoại sư phạm & lồng ghép tư liệu...`);
+      let completedCount = 0;
+
+      for (let gIdx = 0; gIdx < chapterGroups.length; gIdx++) {
+        const group = chapterGroups[gIdx];
+        updateLoading(`Chương ${gIdx + 1}/${chapterGroups.length}: ${group.chTitle}`, `Tầng 1: Đang thiết lập mạch dẫn chuyện & câu chuyển ý...`);
+
+        // TẦNG 1: Sinh Narrative Storyboard cho chương này (siêu nhẹ ~1s)
+        let bridgesMap = {};
         try {
-          await generateSingleSegmentScript(itKey);
-        } catch(e) {
-          console.warn(`Lỗi khi sinh cho ${itKey}:`, e);
+          const storyboard = await LLMClient.generateChapterNarrativeStoryboard({
+            chapterTitle: group.chTitle,
+            items: group.items
+          });
+          if (storyboard && storyboard.bridges) {
+            bridgesMap = storyboard.bridges;
+            setChapterBridges(group.chKey, bridgesMap);
+          }
+        } catch (e) {
+          console.warn('[Storyboard] Fallback sang sinh song song trực tiếp:', e);
         }
+
+        updateLoading(`Chương ${gIdx + 1}/${chapterGroups.length}: ${group.chTitle}`, `Tầng 2: Đang bắn song song ${group.items.length} phân đoạn...`);
+
+        // TẦNG 2: Bắn song song Promise.all đồng thời cho toàn bộ phân đoạn trong chương này!
+        await Promise.all(group.items.map(async (item) => {
+          const bridgeIntro = bridgesMap[item.itKey] || bridgesMap[item.code] || '';
+          try {
+            await generateSingleSegmentScript(item.itKey, bridgeIntro);
+          } catch (err) {
+            console.warn(`Lỗi sinh cho ${item.itKey}:`, err);
+          } finally {
+            completedCount++;
+            updateLoading(`Đang hoàn tất (${completedCount}/${totalItems} mục)...`, `Đã viết xong: ${item.title.substring(0, 25)}...`);
+          }
+        }));
       }
 
       hideLoading();
-      showToast(`🎉 Đã hoàn tất sinh kịch bản cho toàn bộ ${pendingItems.length} mục!`);
+      showToast(`🎉 Đã hoàn tất kịch bản hai tầng liền mạch cho toàn bộ ${totalItems} mục!`);
     };
 
     // 5. Cập nhật thống kê header của tab Kịch Bản
