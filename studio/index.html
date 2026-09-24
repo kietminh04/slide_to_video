@@ -15,7 +15,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Outfit:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@300;400;500;600;700;800&family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
   <!-- pdf.js v3: Bóc tách PDF (outline/bookmarks + font-size + text content) -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <!-- JSZip: Giải nén DOCX/PPTX (đều là ZIP chứa XML bên trong) -->
@@ -53,7 +53,7 @@
     body {
       background-color: var(--bg-base);
       color: var(--text-main);
-      font-family: 'Plus Jakarta Sans', -apple-system, sans-serif;
+      font-family: 'Inter', 'Be Vietnam Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       min-height: 100vh;
       display: flex;
       flex-direction: column;
@@ -2895,11 +2895,25 @@
     .inspector-summary-list {
       display: flex;
       flex-direction: column;
-      gap: 4px;
+      gap: 6px;
       margin: 0;
-      padding-left: 14px;
-      font-size: 11px;
+      padding-left: 16px;
+      font-size: 12.5px;
+      line-height: 1.65;
       color: var(--text-main);
+      letter-spacing: 0.01em;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+    .inspector-summary-list li {
+      margin-bottom: 6px;
+    }
+    .inspector-summary-list strong {
+      color: #f1f5f9;
+      font-weight: 600;
+    }
+    .inspector-summary-list .katex {
+      font-size: 1.05em;
     }
 
     .inspector-narration-box {
@@ -6726,7 +6740,33 @@
         // BỘ HỖ TRỢ BIÊN DỊCH CÔNG THỨC TOÁN HỌC LATEX (KATEX INTEGRATION)
     function formatMathInText(str) {
       if (!str) return '';
-      return String(str);
+      let s = String(str);
+      // Tự động khôi phục các lệnh LaTeX bị JSON.parse hoặc trình duyệt hiểu nhầm thành escape code
+      // \f (formfeed 0x0C) -> \frac, \forall, \phi, \flat
+      s = s.replace(/\x0crac/g, '\\frac')
+           .replace(/\x0corall/g, '\\forall')
+           .replace(/\x0chi/g, '\\phi')
+           .replace(/\x0c/g, '\\f');
+      // \b (backspace 0x08) -> \beta, \bar, \begin, \bf
+      s = s.replace(/\x08eta/g, '\\beta')
+           .replace(/\x08ar/g, '\\bar')
+           .replace(/\x08egin/g, '\\begin')
+           .replace(/\x08f/g, '\\bf')
+           .replace(/\x08/g, '\\b');
+      // \t (tab 0x09) -> \text, \theta, \times, \tau, \to
+      s = s.replace(/\x09ext/g, '\\text')
+           .replace(/\x09heta/g, '\\theta')
+           .replace(/\x09imes/g, '\\times')
+           .replace(/\x09au/g, '\\tau')
+           .replace(/\x09o\b/g, '\\to ')
+           .replace(/\t/g, ' ');
+      // \r (carriage return 0x0D) -> \rho
+      s = s.replace(/\x0dho/g, '\\rho')
+           .replace(/\r/g, '');
+      // Khôi phục nếu xuất hiện ký tự mũi tên unicode ⬆rac hoặc ký tự lạ do terminal/render lỗi
+      s = s.replace(/[\u2B06\u2191]rac/g, '\\frac')
+           .replace(/\u000crac/g, '\\frac');
+      return s;
     }
 
     function renderMathFormulas(element) {
@@ -7545,7 +7585,7 @@
           return JSON.parse(jsonStr);
         } catch (e1) {
           try {
-            const sanitized = jsonStr.replace(/\\(?![/"\\bfnrtu]|u[0-9a-fA-F]{4})/g, '\\\\');
+            const sanitized = jsonStr.replace(/\\(?![/"\\n]|u[0-9a-fA-F]{4})/g, '\\\\');
             return JSON.parse(sanitized);
           } catch (e2) {
             let rep = jsonStr;
@@ -7554,7 +7594,7 @@
               else rep += ']}';
             }
             try {
-              const sanitizedRep = rep.replace(/\\(?![/"\\bfnrtu]|u[0-9a-fA-F]{4})/g, '\\\\');
+              const sanitizedRep = rep.replace(/\\(?![/"\\n]|u[0-9a-fA-F]{4})/g, '\\\\');
               return JSON.parse(sanitizedRep);
             } catch (e3) {
               console.warn('[LLMClient] safeJsonParse thất bại:', e3);
