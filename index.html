@@ -3436,10 +3436,7 @@
             <span class="btn-gen-text">Sinh Kịch Bản (Các Phần Đã Chọn)</span>
             <span class="btn-gen-badge" id="btn-gen-count-badge">0 mục</span>
           </button>
-          <button class="btn-generate-script-now" id="btn-download-slide-toolbar" style="background: linear-gradient(135deg, #6366f1, #818cf8); margin-left: 8px; min-width: auto; padding: 6px 14px;" title="Tải xuống toàn bộ nội dung bài giảng dưới dạng file PowerPoint (.pptx)">
-            <span>📊</span>
-            <span class="btn-gen-text">Tải Slide</span>
-          </button>
+
         </div>
 
         <!-- THANH CẤU HÌNH CHUNG (GLOBAL CONFIG BAR) -->
@@ -10855,7 +10852,7 @@ QUY TẮC PHẢN HỒI QUAN TRỌNG:
               ${src.name}
             </label>
             <div class="source-actions-group">
-              <button class="btn-source-action btn-download-src" title="Tải riêng slide/tài liệu này (.pptx)" onclick="downloadSingleSourceSlide(${idx})" style="color: var(--cyan); border-color: rgba(56, 189, 248, 0.4);">📥</button>
+
               <button class="btn-source-action btn-move-up" title="Đẩy lên trước trong kịch bản" ${idx === 0 || !canReorder ? 'disabled' : ''} onclick="moveSourceItem(${idx}, -1)">▲</button>
               <button class="btn-source-action btn-move-down" title="Đẩy xuống sau trong kịch bản" ${idx === sources.length - 1 || !canReorder ? 'disabled' : ''} onclick="moveSourceItem(${idx}, 1)">▼</button>
               <button class="btn-source-action btn-delete-src" title="Xoá slide này khỏi dự án" onclick="deleteSourceItem(${idx})">🗑️</button>
@@ -11604,9 +11601,14 @@ ${foreshadowText}`;
                     <span class="segment-title">${itTitle}</span>
                     <span class="segment-breadcrumb">(${chTitle} • ${secTitle})</span>
                   </div>
-                  <button type="button" class="btn-gen-single-script" id="btn-gen-${itKey}" onclick="generateSingleSegmentScript('${itKey}')" title="Dùng AI sinh kịch bản lời thoại chuẩn sư phạm riêng cho phân đoạn này">
-                    <span>✨</span> Sinh Kịch Bản Cho Mục Này
-                  </button>
+                  <div style="display: flex; gap: 8px;">
+                    <button type="button" class="btn-gen-single-script" onclick="downloadSingleNodeSlide('${itKey}')" style="background: rgba(56, 189, 248, 0.15); border-color: rgba(56, 189, 248, 0.4); color: var(--cyan);" title="Tải riêng slide PowerPoint (.pptx) cho mục kiến thức này">
+                      <span>📥</span> Tải Slide
+                    </button>
+                    <button type="button" class="btn-gen-single-script" id="btn-gen-${itKey}" onclick="generateSingleSegmentScript('${itKey}')" title="Dùng AI sinh kịch bản lời thoại chuẩn sư phạm riêng cho phân đoạn này">
+                      <span>✨</span> Sinh Kịch Bản Cho Mục Này
+                    </button>
+                  </div>
                 </div>
 
                 <!-- HÀNG 2: THÔNG SỐ ĐỒNG BỘ 2 CHIỀU VỚI SƠ ĐỒ -->
@@ -14472,15 +14474,8 @@ ${foreshadowText}`;
     });
 
     document.getElementById('btn-download-slide-toolbar')?.addEventListener('click', async () => {
-      // Nếu có mục slide đang chọn trên sơ đồ/inspector -> tải riêng slide đó
-      if (typeof selectedLeafNode !== 'undefined' && selectedLeafNode) {
-        downloadSingleNodeSlide(selectedLeafNode);
-      } else if (activeProject && activeProject.sources && activeProject.sources.length > 0) {
-        // Tải riêng slide của tài liệu đang chọn
-        downloadSingleSourceSlide(0);
-      } else {
-        document.getElementById('btn-export-pptx')?.click();
-      }
+      // Redirect to the same PPTX export logic
+      document.getElementById('btn-export-pptx')?.click();
     });
 
     document.getElementById('btn-export-pptx')?.addEventListener('click', async () => {
