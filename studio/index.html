@@ -8878,9 +8878,10 @@ Hãy viết lời giảng sư phạm hoàn chỉnh theo từng phân đoạn [m�
         const systemPrompt = `Analyze the slide catalog below and group slides into pedagogical chapters.
 
 RULES:
+- EXCLUDE and DO NOT EXTRACT non-pedagogical sections such as: Lời mở đầu (Introduction), Lời cảm ơn (Acknowledgments), Mục lục (Table of Contents), Tài liệu tham khảo (References), Phụ lục (Appendices).
 - Number of chapters should match the actual content structure. Do NOT force a fixed count.
 - Each chapter has sections with original slide numbering. Each section has items with pdfStart/pdfEnd.
-- Items include: code, title (short concise heading, 3-7 words), pdfStart, pdfEnd, summary (1 sentence), mechanism (LaTeX $...$), key_point, details, examples.
+- Items include: code, title (short concise heading, 3-7 words), pdfStart, pdfEnd, summary (1 sentence), mechanism, key_point, details, examples.
 - Use numbered codes matching slide structure (1.1, 1.2... NOT "Phần a").
 
 OUTPUT: Valid JSON only.
@@ -8959,9 +8960,10 @@ OUTPUT: Valid JSON only.
         const systemPrompt = `Parse the Table of Contents below into a COMPLETE JSON structure.
 
 RULES:
+- EXCLUDE and DO NOT EXTRACT non-pedagogical sections such as: Lời mở đầu (Introduction), Lời cảm ơn (Acknowledgments), Mục lục (Table of Contents), Tài liệu tham khảo (References), Phụ lục (Appendices).
 - Extract ALL chapters. If the book has 10 chapters, output 10 chapters. NEVER truncate.
 - Extract ALL sections per chapter with their original numbering (1.1, 1.2, 1.3...).
-- Each section has 1-2 items with: code, text (short name), printed_start, printed_end, summary (1 sentence), mechanism (key formula in LaTeX $...$), key_point (1 sentence).
+- Each section has 1-2 items with: code, text (short name), printed_start, printed_end, summary (1 sentence), mechanism, key_point (1 sentence).
 - Use "code" matching the document numbering (e.g. "1.1", "2.3", NOT "Phần a").
 
 OUTPUT: Valid JSON only, no markdown.
@@ -9043,9 +9045,10 @@ OUTPUT: Valid JSON only, no markdown.
         const systemPrompt = `Analyze the document text and create a complete chapter structure.
 
 RULES:
-- Extract ALL chapters matching the document's actual structure. NEVER truncate.
+- Extract ALL pedagogical chapters matching the document's actual structure. NEVER truncate.
+- EXCLUDE and DO NOT EXTRACT non-pedagogical sections such as: Lời mở đầu (Introduction), Lời cảm ơn (Acknowledgments), Mục lục (Table of Contents), Tài liệu tham khảo (References), Phụ lục (Appendices).
 - Each chapter has sections with document numbering (1.1, 1.2...). Each section has 1-2 items.
-- Items include: code, text, summary, mechanism (LaTeX $...$), key_point, details, examples.
+- Items include: code, text, summary, mechanism, key_point, details, examples.
 - Filter out junk: page numbers, author names, publisher info, copyright.
 
 OUTPUT: Valid JSON only.
