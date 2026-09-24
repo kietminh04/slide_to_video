@@ -7325,6 +7325,34 @@
     // 4. LLM CLIENT & NARRATION GENERATOR (TOKEN-FRUGAL ENGINE)
     // =========================================================================
     const LLMClient = {
+      safeJsonParse(rawStr) {
+        if (!rawStr) return null;
+        let clean = rawStr.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
+        const match = clean.match(/\{[\s\S]*\}/);
+        if (!match) return null;
+        const jsonStr = match[0];
+        try {
+          return JSON.parse(jsonStr);
+        } catch (e1) {
+          try {
+            const sanitized = jsonStr.replace(/\\(?![/"\\bfnrtu]|u[0-9a-fA-F]{4})/g, '\\\\');
+            return JSON.parse(sanitized);
+          } catch (e2) {
+            let rep = jsonStr;
+            if (!rep.endsWith('}')) {
+              if (rep.lastIndexOf(']') > rep.lastIndexOf('}')) rep += '}';
+              else rep += ']}';
+            }
+            try {
+              const sanitizedRep = rep.replace(/\\(?![/"\\bfnrtu]|u[0-9a-fA-F]{4})/g, '\\\\');
+              return JSON.parse(sanitizedRep);
+            } catch (e3) {
+              console.warn('[LLMClient] safeJsonParse thất bại:', e3);
+              return null;
+            }
+          }
+        }
+      },
       STORAGE_KEY: 'clsg_ai_config',
       CACHE_PREFIX: 'clsg_ai_cache_',
       
@@ -7626,30 +7654,23 @@ Hãy viết lời giảng sư phạm hoàn chỉnh theo từng phân đoạn [m�
         // 3. FALLBACK AN TOÀN TUYỆT ĐỐI (0 CRASH, 0 FAILED TO FETCH)
         return null;
       },
-
-            // BÓC TÁCH MỤC LỤC BẰNG GEMINI AI (HYBRID TOC ARCHITECTURE)
+      // BÓC TÁCH MỤC LỤC & AGENDA SLIDE BẰNG GEMINI AI (HYBRID TOC/AGENDA ARCHITECTURE)
       async extractTOCWithAI(tocText, fileName = "") {
         const cfg = this.getConfig();
-        if (!tocText || tocText.trim().length < 50) return null;
+        if (!tocText || tocText.trim().length < 40) return null;
 
         const systemPrompt = `Bạn là Chuyên gia Sư phạm Giảng dạy Đại học môn Toán - Tin & Khoa học Dữ liệu.
-Dưới đây là BẢNG MỤC LỤC (Table of Contents) của cuốn sách giáo trình / tài liệu học thuật.
+Dưới đây là BẢNG MỤC LỤC (Table of Contents) hoặc NỘI DUNG AGENDA / OUTLINE của bài giảng slide / tài liệu học thuật.
 
-NHIỆM VỤ: Hãy chọn lọc 4 đến 5 Chương cốt lõi quan trọng nhất của bài giảng để tạo thành CẤU TRÚC SƠ ĐỒ BÀI GIẢNG SƯ PHẠM HOÀN HẢO.
+NHIỆM VỤ: Dựa vào Mục lục hoặc Agenda được cung cấp, hãy thiết kế CẤU TRÚC SƠ ĐỒ BÀI GIẢNG SƯ PHẠM HOÀN HẢO gồm 4 đến 6 Chương rõ ràng.
 
-QUY TẮC BÓC TÁCH TỪ MỤC LỤC (BẮT BUỘC):
-1. GIỮ NGUYÊN SỐ CHƯƠNG & TÊN CHUẨN: Lấy đúng tên chương từ mục lục (ví dụ: "Chương 1: Introduction to Time Series", "Chương 2: Stationary Processes", "Chương 3: ARMA Models", "Chương 4: Spectral Analysis", "Chương 5: Modeling and Forecasting with ARMA Processes").
-   - TUYỆT ĐỐI KHÔNG sinh tên cụt lủn (như "Introduction to" hay "6 Chapter 1...").
-   - LOẠI BỎ 100% RÁC: Không để sót tên tác giả (như Stephen Fienberg, Ingram Olkin), nhà xuất bản (Springer), chú thích hình ảnh (Figure 1-18), công thức toán học rời rạc.
+QUY TẮC BÓC TÁCH (BẮT BUỘC):
+1. GIỮ ĐÚNG TIÊU ĐỀ HỌC THUẬT: Lấy đúng nội dung các chủ đề từ mục lục / agenda.
+   - TUYỆT ĐỐI KHÔNG sinh tên cụt lủn hay rác OCR.
+   - Ví dụ với Time Series: 'Chương 1: Review: Forecasting', 'Chương 2: Partial Autocorrelation Function (PACF)', 'Chương 3: Recursive Methods: Durbin-Levinson Algorithm', 'Chương 4: The Innovations Representation & Algorithm', 'Chương 5: Example: Innovations Algorithm for Forecasting an MA(1)'.
 2. MỖI CHƯƠNG CÓ 1 ĐẾN 2 PHẦN (Sections) và 2 ĐẾN 3 MỤC CON (Items).
-3. TỪNG MỤC CON PHẢI CÓ SỐ TRANG IN CỤ THỂ (LẤY TỪ MỤC LỤC):
-   - "code": mã định danh như "a1", "a2", "b1"...
-   - "text": Tên mục chuẩn xác (ví dụ "1.1 Examples of Time Series", "3.1 ARMA(p, q) Processes", "3.2 The ACF and PACF").
-   - "printed_start": Số trang in bắt đầu được ghi ở mục lục (ví dụ 83).
-   - "printed_end": Số trang in kết thúc (dựa vào trang bắt đầu của mục tiếp theo, ví dụ 88).
-   - "summary": Tóm tắt bản chất lý thuyết cốt lõi (1-2 câu).
-   - "mechanism": Cơ chế toán học / giải thuật tương ứng.
-   - "key_point": Điểm mấu chốt cần ghi nhớ.
+3. ĐỐI VỚI SÁCH CÓ SỐ TRANG: Ghi rõ "printed_start", "printed_end" cho từng mục. ĐỐI VỚI SLIDE: Ghi các chủ đề chính xác.
+4. TỪNG MỤC CON PHẢI CÓ TÓM TẮT SÂU: "summary" (2-3 câu), "mechanism" (giải thuật/toán học), "key_point".
 
 ĐỊNH DẠNG ĐẦU RA: Trả về duy nhất JSON hợp lệ (không kèm markdown):
 {
@@ -7684,7 +7705,7 @@ QUY TẮC BÓC TÁCH TỪ MỤC LỤC (BẮT BUỘC):
           model: cfg.model || 'gemini-2.5-flash-lite',
           messages: [
             { role: 'system', content: systemPrompt },
-            { role: 'user', content: `Tên tài liệu: ${fileName || 'Tài liệu giáo trình'}\n\nNỘI DUNG MỤC LỤC TRÍCH XUẤT:\n${tocText.slice(0, 16000)}` }
+            { role: 'user', content: `Tên tài liệu: ${fileName || 'Tài liệu học tập'}\n\nNỘI DUNG MỤC LỤC / AGENDA TRÍCH XUẤT:\n${tocText.slice(0, 16000)}` }
           ],
           max_tokens: 4000,
           temperature: 0.2,
@@ -7704,30 +7725,9 @@ QUY TẮC BÓC TÁCH TỪ MỤC LỤC (BẮT BUỘC):
           if (res.ok) {
             const data = await res.json();
             const raw = data.choices?.[0]?.message?.content || '';
-            const clean = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
-            const match = clean.match(/\{[\s\S]*\}/);
-            if (match) {
-              const jsonStr = match[0];
-              try {
-                return JSON.parse(jsonStr);
-              } catch (e1) {
-                try {
-                  const sanitized = jsonStr.replace(/\\(?![/"\\bfnrtu]|u[0-9a-fA-F]{4})/g, '\\\\');
-                  return JSON.parse(sanitized);
-                } catch (e2) {
-                  let rep = jsonStr;
-                  if (!rep.endsWith('}')) {
-                    if (rep.lastIndexOf(']') > rep.lastIndexOf('}')) rep += '}';
-                    else rep += ']}';
-                  }
-                  try {
-                    const sanitizedRep = rep.replace(/\\(?![/"\\bfnrtu]|u[0-9a-fA-F]{4})/g, '\\\\');
-                    return JSON.parse(sanitizedRep);
-                  } catch (e3) {
-                    console.warn('[LLMClient] JSON parse failed:', e3);
-                  }
-                }
-              }
+            const parsed = this.safeJsonParse(raw);
+            if (parsed && parsed.chapters && parsed.chapters.length > 0) {
+              return parsed;
             }
           }
         } catch (e) {
@@ -7799,7 +7799,7 @@ QUY TẮC BÓC TÁCH & ĐẶT TÊN SƯ PHẠM (BẮT BUỘC):
         const userPrompt = `Tên tài liệu: ${fileName || 'Tài liệu học tập'}\n\nNội dung bài giảng trích xuất:\n\n${textSample}`;
 
         const payload = {
-          model: cfg.model || 'gemini-2.5-flash',
+          model: cfg.model || 'gemini-2.5-flash-lite',
           messages: [
             { role: 'system', content: systemPrompt },
             { role: 'user', content: userPrompt }
@@ -7846,7 +7846,7 @@ QUY TẮC BÓC TÁCH & ĐẶT TÊN SƯ PHẠM (BẮT BUỘC):
         const data = await res.json();
         let content = (data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) || '{}';
         content = content.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
-        const parsed = JSON.parse(content);
+        const parsed = this.safeJsonParse(content) || {};
 
         if (!parsed.chapters || !Array.isArray(parsed.chapters) || parsed.chapters.length === 0) {
           throw new Error('LLM không trả về danh sách chapters hợp lệ.');
@@ -9779,8 +9779,8 @@ QUY TẮC PHẢN HỒI QUAN TRỌNG:
     // ─────────────────────────────────────────────────────────────
     // HÀM BÓC TÁCH HYBRID TOC-ANCHORED (ƯU TIÊN HÀNG ĐẦU TUYỆT ĐỐI)
     async function extractPdfHybridTOC(pdf, totalPages, fileName = "") {
-      // 1. Quét 5% trang đầu (tối thiểu 2-3 trang cho slide bài giảng để bắt slide Agenda/Mục lục)
-      const frontLimit = Math.min(totalPages, Math.max(2, Math.ceil(totalPages * 0.05)));
+      // 1. Quét 5% trang đầu (tối thiểu 3 trang cho slide bài giảng để bắt slide Agenda/Mục lục)
+      const frontLimit = Math.min(totalPages, Math.max(3, Math.ceil(totalPages * 0.05)));
       let tocStartPage = -1;
       let tocEndPage = -1;
       let tocText = '';
@@ -9796,15 +9796,14 @@ QUY TẮC PHẢN HỒI QUAN TRỌNG:
           // Heading mục lục rõ ràng
           const hasTocHeading = /\b(contents|table of contents|mục lục|table des matières|agenda|outline|nội dung chính|nội dung bài giảng|overview|topics)\b/i.test(topWords);
           
-          // Hoặc slide liệt kê các phần 1. ... 2. ... 3. ... trong slide bài giảng (như slide 2 của lecture)
-          const hasSeqOutline = /(?:^|\n|\s{2,})\s*1[\.\)]\s+[A-Za-zÀ-ỹ]+.*?(?:\n|\s{2,})\s*2[\.\)]\s+[A-Za-zÀ-ỹ]+.*?(?:\n|\s{2,})\s*3[\.\)]\s+[A-Za-zÀ-ỹ]+/s.test(pageStr) && !topWords.includes('last lecture');
+          // Hoặc slide liệt kê tuần tự các phần 1. ... 2. ... 3. ... trong slide bài giảng (như slide 2 của lecture)
+          const hasSeqOutline = /\b1[\.\)]\s+[A-Za-zÀ-ỹ]+.*?\b2[\.\)]\s+[A-Za-zÀ-ỹ]+.*?\b3[\.\)]\s+[A-Za-zÀ-ỹ]+/i.test(pageStr) && !topWords.includes('last lecture') && !pageStr.toLowerCase().includes('last lecture');
 
           let isTocPage = false;
           if (hasTocHeading || hasSeqOutline) {
             isTocPage = true;
           } else if (tocStartPage > 0 && (p - tocEndPage === 1)) {
             // Trang mục lục kéo dài (chứa nhiều số trang in, ít đoạn văn xuôi)
-            const rawLines = [pageStr];
             const numCount = (pageStr.match(/\b\d+\s*($|\n)/g) || []).length;
             const hasProse = /In this chapter|Throughout this book|We introduce/i.test(pageStr);
             if (numCount >= 4 && !hasProse) isTocPage = true;
@@ -9843,7 +9842,7 @@ QUY TẮC PHẢN HỒI QUAN TRỌNG:
         }
       }
 
-      if (tocStartPage > 0 && tocText.trim().length >= 50) {
+      if (tocStartPage > 0 && tocText.trim().length >= 40) {
         console.log(`[TOC Extractor] 🎯 Phát hiện Mục lục tại trang PDF ${tocStartPage} -> ${tocEndPage}`);
         window._lastExtractedTocText = tocText;
         updateLoading("Đang phân tích...", "Vui lòng chờ trong giây lát...");
@@ -9856,50 +9855,76 @@ QUY TẮC PHẢN HỒI QUAN TRỌNG:
             if (!ch.title) ch.title = ch.name || `Chương ${idx + 1}`;
           });
 
-          // Tính Offset trang PDF:
-          let pageOffset = 0;
-          let firstPrintedStart = 1;
-          try {
-            firstPrintedStart = outlineRes.chapters[0]?.sections?.[0]?.items?.[0]?.printed_start || 1;
-            for (let checkP = tocEndPage + 1; checkP <= Math.min(totalPages, tocEndPage + 25); checkP++) {
-              const page = await pdf.getPage(checkP);
-              const content = await page.getTextContent();
-              const pStr = (content.items || []).map(it => it.str).join(' ');
-              if (/\b(1\.\s+Introduction|Chapter\s+1|Chương\s+1)\b/i.test(pStr) || (checkP >= 15 && /\b1\.1\b/i.test(pStr))) {
-                pageOffset = checkP - firstPrintedStart;
-                console.log(`[TOC Extractor] 📐 Tính được Offset trang: PDF ${checkP} - In ${firstPrintedStart} = ${pageOffset} trang`);
-                break;
-              }
-            }
-          } catch(e) {}
+          // Kiểm tra xem có số trang in thực tế từ sách giáo trình không
+          const hasPrintedPages = outlineRes.chapters.some(ch => 
+            (ch.sections || []).some(sec => (sec.items || []).some(it => it.printed_start && it.printed_start > 5))
+          );
 
-          // Gán startPage, endPage thực tế trong PDF cho từng node
-          outlineRes.chapters.forEach(ch => {
-            (ch.sections || []).forEach(sec => {
-              (sec.items || []).forEach(it => {
-                const pStart = it.printed_start || 1;
-                const pEnd = it.printed_end || (pStart + 4);
-                it.pdfStart = Math.min(totalPages, Math.max(1, pStart + pageOffset));
-                it.pdfEnd = Math.min(totalPages, Math.max(it.pdfStart, pEnd + pageOffset));
-                it.pageRange = `Trang ${pStart} - ${pEnd}`;
+          if (hasPrintedPages) {
+            // Sách giáo trình dày: Tính Offset trang PDF
+            let pageOffset = 0;
+            let firstPrintedStart = 1;
+            try {
+              firstPrintedStart = outlineRes.chapters[0]?.sections?.[0]?.items?.[0]?.printed_start || 1;
+              for (let checkP = tocEndPage + 1; checkP <= Math.min(totalPages, tocEndPage + 25); checkP++) {
+                const page = await pdf.getPage(checkP);
+                const content = await page.getTextContent();
+                const pStr = (content.items || []).map(it => it.str).join(' ');
+                if (/\b(1\.\s+Introduction|Chapter\s+1|Chương\s+1)\b/i.test(pStr) || (checkP >= 15 && /\b1\.1\b/i.test(pStr))) {
+                  pageOffset = checkP - firstPrintedStart;
+                  console.log(`[TOC Extractor] 📐 Tính được Offset trang: PDF ${checkP} - In ${firstPrintedStart} = ${pageOffset} trang`);
+                  break;
+                }
+              }
+            } catch(e) {}
+
+            // Gán startPage, endPage thực tế trong PDF cho từng node
+            outlineRes.chapters.forEach(ch => {
+              (ch.sections || []).forEach(sec => {
+                (sec.items || []).forEach(it => {
+                  const pStart = it.printed_start || 1;
+                  const pEnd = it.printed_end || (pStart + 4);
+                  it.pdfStart = Math.min(totalPages, Math.max(1, pStart + pageOffset));
+                  it.pdfEnd = Math.min(totalPages, Math.max(it.pdfStart, pEnd + pageOffset));
+                  it.pageRange = `Trang ${pStart} - ${pEnd}`;
+                });
               });
             });
-          });
+          } else {
+            // Slide bài giảng / tài liệu không có số trang in trong mục lục:
+            // Phân bổ đều và chuẩn xác các slide trong PDF cho từng chương và từng mục
+            const numChapters = outlineRes.chapters.length;
+            const chStep = Math.max(1, Math.floor(totalPages / numChapters));
+            outlineRes.chapters.forEach((ch, chIdx) => {
+              const chStart = Math.min(totalPages, 1 + chIdx * chStep);
+              const chEnd = (chIdx === numChapters - 1) ? totalPages : Math.min(totalPages, (chIdx + 1) * chStep);
+              const allItems = (ch.sections || []).flatMap(s => s.items || []);
+              const numItems = allItems.length || 1;
+              const itemStep = Math.max(1, Math.floor((chEnd - chStart + 1) / numItems));
+              
+              allItems.forEach((it, itIdx) => {
+                it.pdfStart = Math.min(totalPages, chStart + itIdx * itemStep);
+                it.pdfEnd = (itIdx === numItems - 1) ? chEnd : Math.min(totalPages, chStart + (itIdx + 1) * itemStep - 1);
+                if (it.pdfEnd < it.pdfStart) it.pdfEnd = it.pdfStart;
+                it.pageRange = `Slide ${it.pdfStart} - ${it.pdfEnd}`;
+              });
+            });
+          }
 
           return {
             title: (fileName || '').replace(/\.[^/.]+$/, ""),
             totalPages,
             chapters: outlineRes.chapters,
-            pageOffset,
-            tocText,
-            method: 'hybrid-toc-gemini'
+            method: 'toc-hybrid'
           };
         }
       }
+
       return null;
     }
 
     async function extractPdfStructure(arrayBuffer, fileName = "") {
+
       if (typeof pdfjsLib === 'undefined') {
         console.warn('[PDF Extractor] pdf.js chưa tải xong');
         return null;
