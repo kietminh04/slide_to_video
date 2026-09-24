@@ -9913,34 +9913,41 @@ QUY TẮC PHẢN HỒI QUAN TRỌNG:
 
         let res = null;
 
-        // 1. Thử gọi qua server proxy (nếu đang chạy trên local http://127.0.0.1:8765 có sẵn .env)
+        // 1. Thử gọi qua server proxy với AbortController (Timeout 5.5s)
         try {
           const serverUrl = (window.location.origin.startsWith('http') && !window.location.origin.includes('file:'))
             ? `${window.location.origin}/api/llm/chat`
             : 'http://127.0.0.1:8765/api/llm/chat';
           const proxyPayload = { ...payload, apiKey: cfg.apiKey || '', baseUrl: cfg.baseUrl || '', provider: cfg.provider || 'openai' };
+          const ctl = new AbortController();
+          const tId = setTimeout(() => ctl.abort(), 5500);
           res = await fetch(serverUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(proxyPayload)
+            body: JSON.stringify(proxyPayload),
+            signal: ctl.signal
           });
+          clearTimeout(tId);
         } catch (e) {
-          // Bỏ qua nếu server proxy không có (ví dụ đang mở trên Vercel)
+          console.warn("[Copilot] Server proxy không khả dụng hoặc timeout:", e);
         }
 
-        // 2. Nếu server proxy không phản hồi, thử gọi trực tiếp endpoint (OpenAI / Gemini)
-        if (!res || !res.ok) {
+        // 2. Nếu server proxy lỗi hoặc không có, thử gọi trực tiếp endpoint nếu có API key
+        if ((!res || !res.ok) && cfg.apiKey) {
           try {
             const endpoint = `${cfg.baseUrl.replace(/\/+$/, '')}/chat/completions`;
-            const headers = { 'Content-Type': 'application/json' };
-            if (cfg.apiKey) headers['Authorization'] = `Bearer ${cfg.apiKey}`;
+            const headers = { 'Content-Type': 'application/json', 'Authorization': `Bearer ${cfg.apiKey}` };
+            const ctl = new AbortController();
+            const tId = setTimeout(() => ctl.abort(), 6000);
             res = await fetch(endpoint, {
               method: 'POST',
               headers,
-              body: JSON.stringify(payload)
+              body: JSON.stringify(payload),
+              signal: ctl.signal
             });
+            clearTimeout(tId);
           } catch (e) {
-            // Sẽ rơi xuống khối fallback cục bộ bên dưới
+            console.warn("[Copilot] Direct endpoint error:", e);
           }
         }
 
@@ -9998,7 +10005,8 @@ QUY TẮC PHẢN HỒI QUAN TRỌNG:
       }
 
       // FALLBACK LOCAL HEURISTIC (Chạy mượt 100% khi mất mạng hoặc chưa cấu hình API key)
-      const localActions = parseLocalCopilotCommand(msg);
+      try {
+        const localActions = parseLocalCopilotCommand(msg);
       let localReply = "";
       if (localActions.length > 0) {
         CopilotEngine.executeBatch(localActions);
@@ -10115,7 +10123,14 @@ QUY TẮC PHẢN HỒI QUAN TRỌNG:
 
       clsgChatSessionHistory.push({ role: 'user', content: msg });
       clsgChatSessionHistory.push({ role: 'assistant', content: localReply });
+    } catch (fallbackErr) {
+      console.error("[Copilot Fallback Error]:", fallbackErr);
+      bubbleEl.style.opacity = '1';
+      bubbleEl.style.fontStyle = 'normal';
+      bubbleEl.innerHTML = `⚠️ <strong>Trợ lý AI:</strong> Đã tiếp nhận yêu cầu <em>"${escapeHtml(msg)}"</em> nhưng gặp sự cố khi xử lý lệnh. Vui lòng thử lại!`;
+      chatContainer.scrollTop = chatContainer.scrollHeight;
     }
+  }
 
     function sendQuickPrompt(promptText) {
       sendChatMessage(promptText);
