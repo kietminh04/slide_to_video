@@ -4,6 +4,15 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>CLSG Studio Pro - Hệ Thống Sinh Kịch Bản Sư Phạm Đa Phương Thức</title>
+    <!-- KaTeX & Mathematical Formula Rendering Engine -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+
+  <!-- Google Fonts: Outfit, Inter, Plus Jakarta Sans, JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Outfit:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -2945,6 +2954,16 @@
         </button>
         <span style="color: var(--border-subtle);">/</span>
         <span class="ws-title" id="ws-current-title">Phân Cụm Dữ Liệu (Clustering Analysis)</span>
+        <div class="font-selector-wrap" style="display: inline-flex; align-items: center; gap: 4px; margin-left: 6px;" title="Thay đổi kiểu chữ toàn giao diện">
+          <span style="font-size: 11px; color: var(--text-dim);">🔤 Font:</span>
+          <select id="select-app-font" onchange="changeAppFont(this.value)" style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.15); color: var(--text-main); font-size: 11px; padding: 3px 8px; border-radius: 4px; cursor: pointer; outline: none;">
+            <option value="'Plus Jakarta Sans', sans-serif">Plus Jakarta Sans (Mặc định)</option>
+            <option value="'Outfit', sans-serif">Outfit (Hiện đại)</option>
+            <option value="'Inter', sans-serif">Inter (Sắc nét)</option>
+            <option value="'JetBrains Mono', monospace">JetBrains Mono (Code/Toán)</option>
+            <option value="'KaTeX_Main', 'Cambria', serif">Academic Serif (Giáo trình)</option>
+          </select>
+        </div>
         <button class="btn-ws-delete-project" id="btn-ws-open-ai-config" title="Cấu hình mô hình AI & API Key" style="border-color: rgba(56, 189, 248, 0.3); color: var(--cyan); margin-left: 6px; display: inline-flex; align-items: center; gap: 6px;">
           <span style="display:inline-block; width:7px; height:7px; border-radius:50%; background:#10b981; box-shadow: 0 0 6px #10b981;"></span>
           <span id="lbl-active-ai-badge">⚙️ AI: gemini-2.5-flash</span>
@@ -6699,7 +6718,7 @@
       if (btnAiSummarize) {
         btnAiSummarize.onclick = async (e) => {
           e.stopPropagation();
-          btnAiSummarize.innerHTML = '<span>⏳</span> <span>Đang suy luận...</span>';
+          btnAiSummarize.innerHTML = '<span>⏳</span> <span>Đang bóc tách chuyên sâu...</span>';
           btnAiSummarize.disabled = true;
           try {
             const res = await LLMClient.summarizeNode({
@@ -6710,27 +6729,35 @@
               nodeText: nodeText
             });
             if (res) {
-              const newSumm = res.summary || res['Khái niệm cốt lõi'] || res.concept;
-              const newMech = res.mechanism || res['Cơ chế & Giải thuật'] || res.method;
-              const newKey = res.key_point || res['Điểm chốt quan trọng'] || res.keypoint;
+              const newSumm = res.summary || res['Khái niệm cốt lõi'] || res.concept || '';
+              const newMech = res.mechanism || res['Cơ chế & Giải thuật'] || res.method || '';
+              const newKey = res.key_point || res['Điểm chốt quan trọng'] || res.keypoint || '';
+              const newDetails = res.details || res['Nội dung chi tiết'] || '';
+              const newExamples = res.examples || res['Ví dụ & Ứng dụng'] || '';
 
-              if (newSumm) {
-                node.data.summary = newSumm;
-                node.data.mechanism = newMech;
-                node.data.key_point = newKey;
-                node.data.details = res.details || '';
-                node.data.examples = res.examples || '';
-                setNodeParam(node.key, 'summary', newSumm);
-                setNodeParam(node.key, 'mechanism', newMech);
-                setNodeParam(node.key, 'key_point', newKey);
-                setNodeParam(node.key, 'details', res.details || '');
-                setNodeParam(node.key, 'examples', res.examples || '');
+              if (newSumm || newMech) {
+                node.data.summary = newSumm || node.data.summary;
+                node.data.mechanism = newMech || node.data.mechanism;
+                node.data.key_point = newKey || node.data.key_point;
+                node.data.details = newDetails;
+                node.data.examples = newExamples;
+
+                setNodeParam(node.key, 'summary', node.data.summary);
+                setNodeParam(node.key, 'mechanism', node.data.mechanism);
+                setNodeParam(node.key, 'key_point', node.data.key_point);
+                setNodeParam(node.key, 'details', newDetails);
+                setNodeParam(node.key, 'examples', newExamples);
 
                 updateContentInspector(node, cardEl);
-                showToast('✨ Đã sinh tóm tắt sư phạm chuyên sâu thành công từ AI!');
+                renderMathFormulas(document.getElementById('insp-section-summary'));
+                showToast('✨ Đã nâng cấp bóc tách chuyên sâu 5 tầng từ AI thành công!');
+              } else {
+                showToast('⚠️ AI không trả về đủ cấu trúc tóm tắt.');
               }
+            } else {
+              showToast('⚠️ Không nhận được phản hồi từ AI, vui lòng thử lại.');
             }
-          } catch(err) {
+          } catch (err) {
             showToast('⚠️ Không thể sinh tóm tắt: ' + err.message);
           } finally {
             btnAiSummarize.innerHTML = '<span>✨</span> <span>AI Bóc Tách Chuyên Sâu</span>';
@@ -6744,16 +6771,17 @@
 
       if (summaryList) {
         let html = `
-          <li style="margin-bottom: 8px;"><strong>📌 Khái niệm cốt lõi:</strong> ${coreSummary}</li>
-          <li style="margin-bottom: 8px;"><strong>⚙️ Cơ chế & Giải thuật:</strong> ${coreMech}</li>
-          <li style="margin-bottom: 8px;"><strong>💡 Điểm then chốt:</strong> ${coreKeyPoint}</li>`;
+          <li style="margin-bottom: 8px;"><strong>📌 Khái niệm cốt lõi:</strong> <span class="math-tex">${formatMathInText(coreSummary)}</span></li>
+          <li style="margin-bottom: 8px;"><strong>⚙️ Cơ chế & Giải thuật:</strong> <span class="math-tex">${formatMathInText(coreMech)}</span></li>
+          <li style="margin-bottom: 8px;"><strong>💡 Điểm then chốt:</strong> <span class="math-tex">${formatMathInText(coreKeyPoint)}</span></li>`;
         if (coreDetails) {
-          html += `<li style="margin-bottom: 8px;"><strong>📋 Nội dung chi tiết:</strong> ${coreDetails}</li>`;
+          html += `<li style="margin-bottom: 8px;"><strong>📋 Nội dung chi tiết:</strong> <span class="math-tex">${formatMathInText(coreDetails)}</span></li>`;
         }
         if (coreExamples) {
-          html += `<li><strong>🧪 Ví dụ & Ứng dụng:</strong> ${coreExamples}</li>`;
+          html += `<li style="margin-bottom: 8px;"><strong>🧪 Ví dụ & Ứng dụng:</strong> <span class="math-tex">${formatMathInText(coreExamples)}</span></li>`;
         }
         summaryList.innerHTML = html;
+        renderMathFormulas(summaryList);
       }
 
       // 2. DIỄN GIẢI KIẾN THỨC TOÀN DIỆN (KHÔNG SÁO RỖNG SƯ PHẠM, ĐI THẲNG VÀO NỘI DUNG BÀI HỌC)
@@ -7412,64 +7440,46 @@ Phân đoạn: [${nodeCode}] "${nodeText}".
 BỎ QUA thông tin rác (tên tác giả, trường đại học, nhà xuất bản, số trang, copyright).
 
 NHIỆM VỤ: Viết BẢN TÓM TẮT HỌC THUẬT CHUYÊN SÂU giúp người học nắm bắt TOÀN BỘ nội dung của phân đoạn này. Không viết qua loa cho có, mà phải ĐỦ CHI TIẾT để người đọc hiểu được bản chất mà KHÔNG CẦN mở giáo trình gốc.
+CÔNG THỨC TOÁN HỌC: Mọi công thức toán học, ký hiệu ma trận, hàm số BẮT BUỘC viết dưới dạng LaTeX chuẩn kẹp giữa cặp dấu đô la $...$ (ví dụ: $P(\\alpha_1 Y_1 + \\alpha_2 Y_2 | Z)$, $\\phi(B)X_t = \\theta(B)W_t$, $\\gamma(h)$, $\\mathbb{R}^d$) để hệ thống tự động biên dịch sang công thức trực quan.
 
-Trả về JSON với 5 trường sau (mỗi trường TỐI THIỂU 2-3 câu, càng chi tiết càng tốt):
+Trả về DUY NHẤT JSON hợp lệ với 5 trường sau (mỗi trường TỐI THIỂU 2-3 câu, phân tích sâu bản chất toán học):
 {
   "summary": "KHÁI NIỆM CỐT LÕI: Giải thích rõ ràng bản chất lý thuyết, định nghĩa toán học chính thức, ý nghĩa trực quan của khái niệm. Nêu rõ phân đoạn này nằm ở đâu trong bức tranh tổng thể của bài giảng.",
-  "mechanism": "CƠ CHẾ & GIẢI THUẬT: Mô tả chi tiết quy trình, các bước thực hiện, công thức toán học cốt lõi (nếu có), cách biến đổi dữ liệu, input/output. Giải thích TẠI SAO phương pháp này hoạt động.",
+  "mechanism": "CƠ CHẾ & GIẢI THUẬT: Mô tả chi tiết quy trình, các bước thực hiện, công thức toán học cốt lõi $...$, cách biến đổi dữ liệu, input/output. Giải thích TẠI SAO phương pháp này hoạt động.",
   "key_point": "ĐIỂM THEN CHỐT: Các lưu ý quan trọng khi áp dụng, điều kiện tiên quyết, giới hạn phương pháp, sai lầm thường gặp cần tránh, và mối liên hệ với các khái niệm khác trong bài.",
-  "details": "NỘI DUNG CHI TIẾT: Liệt kê và giải thích từng thành phần con, định lý, tính chất, hoặc trường hợp đặc biệt được đề cập trong phân đoạn. Nếu có bảng, biểu đồ, ví dụ minh họa thì mô tả nội dung của chúng.",
-  "examples": "VÍ DỤ & ỨNG DỤNG: Đưa ra ít nhất 1 ví dụ cụ thể minh họa khái niệm. Nêu các ứng dụng thực tế trong phân tích dữ liệu, tài chính, dự báo, hoặc kỹ thuật."
+  "details": "NỘI DUNG CHI TIẾT: Liệt kê và giải thích từng thành phần con, định lý, tính chất, hoặc trường hợp đặc biệt được đề cập trong phân đoạn. Diễn giải chi tiết từng ký hiệu.",
+  "examples": "VÍ DỤ & ỨNG DỤNG: Đưa ra ít nhất 1 ví dụ cụ thể minh họa khái niệm và ứng dụng thực tiễn trong phân tích dữ liệu, tài chính, dự báo, hoặc kỹ thuật."
 }`;
+
         const payload = {
-          model: cfg.model,
+          model: cfg.model || 'gemini-2.5-flash-lite',
           messages: [
-            { role: 'system', content: 'Bạn là chuyên gia bóc tách tài liệu học thuật. Trả lời CHI TIẾT, ĐẦY ĐỦ, KHÔNG tóm tắt qua loa. Output chuẩn JSON.' },
+            { role: 'system', content: 'Bạn là chuyên gia bóc tách tài liệu học thuật Toán - Tin. Trả lời CHI TIẾT, ĐẦY ĐỦ, CÔNG THỨC DÙNG LATEX $...$. Output chuẩn JSON hợp lệ duy nhất.' },
             { role: 'user', content: prompt }
           ],
-          max_tokens: 1200,
-          temperature: 0.35
+          max_tokens: 2500,
+          temperature: 0.3,
+          provider: cfg.provider || 'gemini_local',
+          apiKey: cfg.apiKey || ''
         };
 
-        let rawText = '';
         try {
           const serverUrl = (window.location.origin.startsWith('http') && !window.location.origin.includes('file:'))
             ? `${window.location.origin}/api/llm/chat`
-            : 'http://127.0.0.1:8765/api/llm/chat';
-          const proxyPayload = { ...payload, apiKey: cfg.apiKey || '', baseUrl: cfg.baseUrl || '', provider: cfg.provider || 'gemini_local' };
+            : 'https://slide-to-video-sigma.vercel.app/api/llm/chat';
           const res = await fetch(serverUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(proxyPayload)
+            body: JSON.stringify(payload)
           });
           if (res.ok) {
             const data = await res.json();
-            rawText = data.choices?.[0]?.message?.content || '';
+            const raw = data.choices?.[0]?.message?.content || '';
+            const parsed = this.safeJsonParse(raw);
+            if (parsed) return parsed;
           }
-        } catch(e) {}
-
-        if (!rawText) {
-          try {
-            const endpoint = `${cfg.baseUrl.replace(/\/+$/, '')}/chat/completions`;
-            const headers = { 'Content-Type': 'application/json' };
-            if (cfg.apiKey) headers['Authorization'] = `Bearer ${cfg.apiKey}`;
-            const res = await fetch(endpoint, {
-              method: 'POST',
-              headers,
-              body: JSON.stringify(payload)
-            });
-            if (res.ok) {
-              const data = await res.json();
-              rawText = data.choices?.[0]?.message?.content || '';
-            }
-          } catch(e) {}
-        }
-
-        if (rawText) {
-          try {
-            const clean = rawText.replace(/```json\s*|\s*```/g, '').trim();
-            return JSON.parse(clean);
-          } catch(e) {}
+        } catch (e) {
+          console.warn('[LLMClient] Lỗi summarizeNode qua proxy:', e);
         }
         return null;
       },
@@ -7655,7 +7665,7 @@ Hãy viết lời giảng sư phạm hoàn chỉnh theo từng phân đoạn [m�
         return null;
       },
       // BÓC TÁCH MỤC LỤC & AGENDA SLIDE BẰNG GEMINI AI (HYBRID TOC/AGENDA ARCHITECTURE)
-      // BÓC TÁCH CẤU TRÚC SLIDE BÀI GIẢNG BẰNG AI CATALOG ARCHITECTURE (FULL LLM SLIDE EXTRACTION)
+      // BÓC TÁCH CẤU TRÚC SLIDE BÀI GIẢNG BẰNG AI CATALOG ARCHITECTURE (MẶC ĐỊNH BÓC TÁCH CHUYÊN SÂU 5 TRƯỜNG & BIÊN DỊCH TOÁN HỌC LATEX)
       async extractSlideDeckStructure(deckCatalog, totalPages, fileName = "") {
         const cfg = this.getConfig();
         if (!deckCatalog || deckCatalog.trim().length < 30) return null;
@@ -7665,17 +7675,20 @@ Dưới đây là DANH MỤC TOÀN BỘ SLIDE CỦA BÀI GIẢNG (kèm tiêu đ�
 
 NHIỆM VỤ: Hãy phân tích toàn bộ tiến trình bài giảng và gom các slide thành 4 ĐẾN 6 CHƯƠNG SƯ PHẠM HOÀN HẢO.
 
-QUY TẮC BẮT BUỘC:
+QUY TẮC BÓC TÁCH CHUYÊN SÂU ĐẲNG CẤP (BẮT BUỘC):
 1. ĐẶT TÊN CHƯƠNG CHUẨN MỰC HỌC THUẬT:
    - Tên chương phải đại diện đúng cho chủ đề kiến thức của phân đoạn slide đó.
    - Tuyệt đối không sinh tên rác, không để tên lặp lại cụt lủn (như "Lecture" hay lặp lại cùng một tiêu đề slide thô).
 2. XÁC ĐỊNH RÕ RÀNG SLIDE BẮT ĐẦU VÀ KẾT THÚC CỦA TỪNG MỤC:
    - "pdfStart": số slide bắt đầu thực tế.
    - "pdfEnd": số slide kết thúc thực tế.
-3. MỖI CHƯƠNG GỒM 1-2 Sections và 2-3 Items. Mỗi Item có:
-   - "summary": Tóm tắt bản chất lý thuyết (2-3 câu phân tích sâu).
-   - "mechanism": Cơ chế toán học / giải thuật tương ứng.
-   - "key_point": Điểm then chốt cần ghi nhớ khi áp dụng.
+3. CÔNG THỨC TOÁN HỌC: Mọi công thức toán học, ký hiệu ma trận, hàm số BẮT BUỘC viết dưới dạng LaTeX chuẩn kẹp giữa cặp dấu đô la $...$ (ví dụ: $P(\\alpha_1 Y_1 + \\alpha_2 Y_2 | Z)$, $\\phi(B)X_t = \\theta(B)W_t$, $\\gamma(h)$, $\\mathbb{R}^d$) để hệ thống tự động biên dịch sang công thức trực quan.
+4. MỖI CHƯƠNG GỒM 1-2 Sections và 2-3 Items. MẶC ĐỊNH TỪNG MỤC CON BẮT BUỘC CÓ ĐỦ 5 TRƯỜNG BÓC TÁCH CHUYÊN SÂU CHI TIẾT:
+   - "summary": KHÁI NIỆM CỐT LÕI (2-3 câu phân tích sâu bản chất lý thuyết, định nghĩa toán học chính thức).
+   - "mechanism": CƠ CHẾ & GIẢI THUẬT (Mô tả chi tiết giải thuật, công thức toán học $...$, các bước tính toán).
+   - "key_point": ĐIỂM THEN CHỐT (Các lưu ý quan trọng, điều kiện tiên quyết, giới hạn phương pháp).
+   - "details": NỘI DUNG CHI TIẾT (Liệt kê và giải thích từng thành phần con, định lý, tính chất cụ thể).
+   - "examples": VÍ DỤ & ỨNG DỤNG (Đưa ra ít nhất 1 ví dụ cụ thể minh họa và ứng dụng thực tiễn).
 
 ĐỊNH DẠNG ĐẦU RA: Trả về DUY NHẤT JSON hợp lệ (không kèm markdown):
 {
@@ -7695,9 +7708,11 @@ QUY TẮC BẮT BUỘC:
               "text": "Tên mục kiến thức",
               "pdfStart": 1,
               "pdfEnd": 6,
-              "summary": "Tóm tắt bản chất lý thuyết...",
-              "mechanism": "Cơ chế hoặc công thức cốt lõi...",
-              "key_point": "Điểm quan trọng..."
+              "summary": "Khái niệm cốt lõi đầy đủ...",
+              "mechanism": "Cơ chế hoặc công thức cốt lõi $...$...",
+              "key_point": "Điểm quan trọng cần nhớ...",
+              "details": "Nội dung chi tiết từng trường hợp...",
+              "examples": "Ví dụ cụ thể và ứng dụng..."
             }
           ]
         }
@@ -10062,6 +10077,8 @@ QUY TẮC PHẢN HỒI QUAN TRỌNG:
               it.pdfStart = Math.min(totalPages, Math.max(1, pStart));
               it.pdfEnd = Math.min(totalPages, Math.max(it.pdfStart, pEnd));
               it.pageRange = `Slide ${it.pdfStart} - ${it.pdfEnd}`;
+              it.details = it.details || '';
+              it.examples = it.examples || '';
             });
           });
         });
