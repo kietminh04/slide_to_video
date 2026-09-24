@@ -9991,7 +9991,8 @@ OUTPUT: Valid JSON only.
       get(q) {
         try {
           const cache = JSON.parse(localStorage.getItem(this.STORAGE_KEY) || '{}');
-          const norm = this.normalize(q);
+          const prefix = (typeof currentProjectId !== 'undefined' && currentProjectId) ? currentProjectId + '_' : '';
+          const norm = prefix + this.normalize(q);
           return cache[norm]?.answer || null;
         } catch(e) { return null; }
       },
@@ -9999,7 +10000,8 @@ OUTPUT: Valid JSON only.
         if (!answer || answer.length < 20) return;
         try {
           const cache = JSON.parse(localStorage.getItem(this.STORAGE_KEY) || '{}');
-          const norm = this.normalize(q);
+          const prefix = (typeof currentProjectId !== 'undefined' && currentProjectId) ? currentProjectId + '_' : '';
+          const norm = prefix + this.normalize(q);
           cache[norm] = { answer, timestamp: Date.now() };
           localStorage.setItem(this.STORAGE_KEY, JSON.stringify(cache));
         } catch(e) {}
