@@ -9927,6 +9927,13 @@ OUTPUT: Valid JSON only.
       const actions = [];
       const lower = msg.toLowerCase();
 
+      // Guard: Nếu câu hỏi là yêu cầu hỏi đáp/tóm tắt kiến thức thuần túy (không chứa ý định can thiệp ẩn/chỉ giữ giao diện)
+      const isPureKnowledgeQuery = /(?:tóm\s*tắt|bản\s*tóm\s*tắt|nội\s*dung\s*(?:của)?|giải\s*thích|đọc\s*hộ|cho\s*biết|là\s*gì|như\s*thế\s*nào)/i.test(msg) &&
+                                   !/(?:bỏ\s*hết|chỉ\s*giữ|chỉ\s*lấy|để\s*lại\s*mình|ẩn\s*đi|bỏ\s*đi|xóa\s*đi|tắt\s*đi)/i.test(msg);
+      if (isPureKnowledgeQuery) {
+        return actions;
+      }
+
       // Check tri thức đã học trước (Learned Rules)
       const learned = CopilotLearningEngine.match(msg);
       if (learned && Array.isArray(learned.actions) && learned.actions.length > 0) {
@@ -9939,7 +9946,7 @@ OUTPUT: Valid JSON only.
 
       // A. CHỈ GIỮ LẠI MÃ PHÂN CẤP: "chỉ giữ 1.1", "để lại mục 1.1", "bỏ hết chỉ giữ 1.1", "chỉ lấy 1.1.1"
       const mOnlyCode = msg.match(/(?:chỉ\s*(?:cần|lấy|giữ(?:\s*lại)?|chọn|để\s*lại|chừa(?:\s*lại)?)|giữ\s*lại|để\s*lại|chừa\s*lại)\s*(?:mỗi\s*|duy\s*nhất\s*)?(?:mục|phần|nhánh|node)?\s*([0-9]+(?:\.[0-9]+)+(?:[\s,và]+[0-9]+(?:\.[0-9]+)+)*)/i) ||
-                        msg.match(/(?:ẩn|bỏ|xóa|tắt)\s+(?:hết|tất\s*cả|toàn\s*bộ).*?(?:chỉ\s*giữ|chỉ\s*lấy|để\s*lại)\s*(?:mục|phần|nhánh)?\s*([0-9]+(?:\.[0-9]+)+(?:[\s,và]+[0-9]+(?:\.[0-9]+)+)*)/i);
+                        msg.match(/(?:ẩn|bỏ|xóa|(?<!tóm\s*)tắt)\s+(?:hết|tất\s*cả|toàn\s*bộ).*?(?:chỉ\s*giữ|chỉ\s*lấy|để\s*lại)\s*(?:mục|phần|nhánh)?\s*([0-9]+(?:\.[0-9]+)+(?:[\s,và]+[0-9]+(?:\.[0-9]+)+)*)/i);
       if (mOnlyCode) {
         const raw = mOnlyCode[1];
         const codes = (raw.match(/[0-9]+(?:\.[0-9]+)+/g) || []);
@@ -9950,7 +9957,7 @@ OUTPUT: Valid JSON only.
       }
 
       // B. ẨN / BỎ / TẮT / XÓA MÃ PHÂN CẤP: "ẩn 1.1 đi", "bỏ 1.1", "ẩn mục 1.1", "ẩn phần 1.1", "ẩn 1.1.1 đi", "tắt 1.1"
-      const mExCode = msg.match(/(?:ẩn|bỏ|loại\s*bỏ|xóa|tắt)\s*(?:các\s*)?(?:mục|phần|nhánh|node)?\s*([0-9]+(?:\.[0-9]+)+(?:[\s,và]+[0-9]+(?:\.[0-9]+)+)*)\s*(?:đi|nhé|nha|thôi|này)?/i);
+      const mExCode = msg.match(/(?:ẩn|bỏ|loại\s*bỏ|xóa|(?<!tóm\s*)tắt)\s*(?:các\s*)?(?:mục|phần|nhánh|node)?\s*([0-9]+(?:\.[0-9]+)+(?:[\s,và]+[0-9]+(?:\.[0-9]+)+)*)\s*(?:đi|nhé|nha|thôi|này)?/i);
       if (mExCode) {
         const raw = mExCode[1];
         const codes = (raw.match(/[0-9]+(?:\.[0-9]+)+/g) || []);
@@ -10031,8 +10038,8 @@ OUTPUT: Valid JSON only.
       }
 
       // 0. Bỏ / Ẩn / Tắt / Xóa / Ấn tất cả chỉ để lại / chỉ giữ lại / trừ chương X (Ví dụ: "ấn tất cả chỉ để lại chương 2 này", "ẩn tất cả chỉ giữ chương 3")
-      const mKeepOnly = msg.match(/(?:bỏ|loại\s*bỏ|xóa|ẩn|tắt|ấn)\s+(?:(?:hết|tất\s*cả|mọi\s*(?:thứ|chương)|toàn\s*bộ)\s*)*(?:(?:chỉ\s*)?(?:trừ|giữ(?:\s*lại)?|để\s*lại|chừa(?:\s*lại)?)|ngoại\s*trừ)\s*(?:các\s*)?(?:chương|phần)?\s*([0-9\s,và]+)/i) ||
-                        msg.match(/(?:(?:ẩn|ấn|bỏ|loại\s*bỏ|xóa|tắt)\s+)?(?:tất\s*cả|toàn\s*bộ)\s*.*?(?:chỉ\s*để\s*lại|chỉ\s*giữ|chỉ\s*lấy|để\s*lại|giữ\s*lại)\s*(?:các\s*)?(?:chương|phần)?\s*([0-9\s,và]+)/i) ||
+      const mKeepOnly = msg.match(/(?:bỏ|loại\s*bỏ|xóa|ẩn|(?<!tóm\s*)tắt|ấn)\s+(?:(?:hết|tất\s*cả|mọi\s*(?:thứ|chương)|toàn\s*bộ)\s*)*(?:(?:chỉ\s*)?(?:trừ|giữ(?:\s*lại)?|để\s*lại|chừa(?:\s*lại)?)|ngoại\s*trừ)\s*(?:các\s*)?(?:chương|phần)?\s*([0-9\s,và]+)/i) ||
+                        msg.match(/(?:(?:ẩn|ấn|bỏ|loại\s*bỏ|xóa|(?<!tóm\s*)tắt)\s+)?(?:tất\s*cả|toàn\s*bộ)\s*.*?(?:chỉ\s*để\s*lại|chỉ\s*giữ|chỉ\s*lấy|để\s*lại|giữ\s*lại)\s*(?:các\s*)?(?:chương|phần)?\s*([0-9\s,và]+)/i) ||
                         msg.match(/(?:chỉ\s*(?:cần|lấy|giữ(?:\s*lại)?|chọn|để\s*lại|chừa(?:\s*lại)?)|giữ\s*lại|để\s*lại|chừa\s*lại)\s*(?:mỗi\s*|duy\s*nhất\s*)?(?:chương|phần)?\s*([0-9\s,và]+)/i);
       if (mKeepOnly) {
         const rawGroup = mKeepOnly[1] || mKeepOnly[2] || mKeepOnly[3];
@@ -10045,7 +10052,7 @@ OUTPUT: Valid JSON only.
         }
       }
       // 2. Bỏ / ẩn / loại bỏ chương X Y
-      const mEx = msg.match(/(?:bỏ|loại\s*bỏ|xóa|ẩn|tắt)\s*(?:các\s*)?(?:chương|phần)?\s*([0-9\s,và]+)/i);
+      const mEx = msg.match(/(?:bỏ|loại\s*bỏ|xóa|ẩn|(?<!tóm\s*)tắt)\s*(?:các\s*)?(?:chương|phần)?\s*([0-9\s,và]+)/i);
       if (mEx) {
         const nums = (mEx[1].match(/\b\d+\b/g) || []).map(n => parseInt(n));
         if (nums.length > 0) actions.push({ type: 'exclude_chapters', chapters: nums });
@@ -10348,9 +10355,10 @@ DANH MỤC CÁC LỆNH ĐIỀU KHIỂN GIAO DIỆN BẠN CÓ THỂ RA LỆNH:
 
 QUY TẮC PHẢN HỒI QUAN TRỌNG:
 1. ĐỌC HỘ & TÓM TẮT HỘ:
-   - Khi người dùng hỏi về bất kỳ nội dung nào (ví dụ: "bản tóm tắt của chương 1 phần d a1 là gì?", "đọc hộ tôi phân đoạn..."):
+   - Khi người dùng hỏi về bất kỳ nội dung nào (ví dụ: "bản tóm tắt của chương 1 phần d a1 là gì?", "đọc hộ tôi phân đoạn...", "tóm tắt phần 4.b.a2"):
    - BẮT BUỘC ĐỌC THẲNG NỘI DUNG VÀ TRẢ LỜI ĐẦY ĐỦ, giải thích cặn kẽ, rõ ràng, sư phạm cho newbie.
    - TUYỆT ĐỐI KHÔNG BAO GIỜ NÓI "tôi không có quyền truy cập", vì bạn ĐANG NẮM GIỮ 100% TRI THỨC BÀI GIẢNG Ở TRÊN!
+   - KHI NGƯỜI DÙNG CHỈ YÊU CẦU TÓM TẮT/ĐỌC HỘ: TUYỆT ĐỐI KHÔNG TỰ Ý ẨN HAY LOẠI BỎ BẤT KỲ CHƯƠNG/MỤC NÀO TRÊN SƠ ĐỒ (Không sinh JSON exclude_chapters, set_only_chapters, keep_only_target)! Chỉ sinh action khi người dùng nói rõ "ẩn đi", "bỏ đi", "chỉ giữ lại".
 2. ĐIỀU KHIỂN HỘ (ACTION COPILOT):
    - Nếu người dùng có yêu cầu thao tác (ví dụ: "với bỏ hết chỉ giữ lại mình phần đó thôi", "chỉ giữ chương 2", "chỉnh 10 phút"):
    - Hãy trả lời xác nhận thân thiện + KÈM KHỐI JSON LỆNH Ở CUỐI:
