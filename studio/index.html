@@ -7744,17 +7744,20 @@ Hãy viết lời giảng sư phạm hoàn chỉnh theo từng phân đoạn [m�
         const systemPrompt = `Bạn là Giáo sư & Chuyên gia Sư phạm Giảng dạy Đại học môn Toán - Tin và Khoa học Dữ liệu.
 Dưới đây là DANH MỤC TOÀN BỘ SLIDE CỦA BÀI GIẢNG (kèm tiêu đề và trích đoạn nội dung).
 
-NHIỆM VỤ: Hãy phân tích toàn bộ tiến trình bài giảng và gom các slide thành 4 ĐẾN 6 CHƯƠNG SƯ PHẠM HOÀN HẢO.
+NHIỆM VỤ: Hãy phân tích toàn bộ tiến trình bài giảng và gom các slide thành các CHƯƠNG SƯ PHẠM HOÀN HẢO THEO ĐÚNG MẠCH KIẾN THỨC THỰC TẾ.
 
-QUY TẮC BÓC TÁCH CHUYÊN SÂU ĐẲNG CẤP (BẮT BUỘC):
-1. ĐẶT TÊN CHƯƠNG CHUẨN MỰC HỌC THUẬT:
-   - Tên chương phải đại diện đúng cho chủ đề kiến thức của phân đoạn slide đó.
-   - Tuyệt đối không sinh tên rác, không để tên lặp lại cụt lủn (như "Lecture" hay lặp lại cùng một tiêu đề slide thô).
-2. XÁC ĐỊNH RÕ RÀNG SLIDE BẮT ĐẦU VÀ KẾT THÚC CỦA TỪNG MỤC:
+QUY TẮC BÓC TÁCH LINH HOẠT & CHUẨN MỰC HỌC THUẬT:
+1. ĐẶT TÊN CHƯƠNG & PHÂN CẤP CHUẨN MỰC:
+   - Số lượng chương linh hoạt bám sát nội dung slide thực tế (không ép cứng số lượng).
+   - Tên chương đại diện đúng cho chủ đề kiến thức của phân đoạn slide đó.
+2. TRÍCH XUẤT ĐẦY ĐỦ CÁC MỤC CON (SECTIONS):
+   - Đánh số linh hoạt: Nếu slide có số mục 1.1, 1.2, 1.3... thì dùng đúng "code": "1.1", "1.2"...
+   - Tuyệt đối không tự ý cắt bớt các phần hay ép cứng chỉ 1-2 phần.
+3. PHÂN ĐOẠN SLIDE CHÍNH XÁC:
    - "pdfStart": số slide bắt đầu thực tế.
    - "pdfEnd": số slide kết thúc thực tế.
-3. CÔNG THỨC TOÁN HỌC: Mọi công thức toán học, ký hiệu ma trận, hàm số BẮT BUỘC viết dưới dạng LaTeX chuẩn kẹp giữa cặp dấu đô la $...$ (ví dụ: $P(\\alpha_1 Y_1 + \\alpha_2 Y_2 | Z)$, $\\phi(B)X_t = \\theta(B)W_t$, $\\gamma(h)$, $\\mathbb{R}^d$) để hệ thống tự động biên dịch sang công thức trực quan.
-4. MỖI CHƯƠNG GỒM 1-2 Sections và 2-3 Items. MẶC ĐỊNH TỪNG MỤC CON BẮT BUỘC CÓ ĐỦ 5 TRƯỜNG BÓC TÁCH CHUYÊN SÂU CHI TIẾT:
+4. CÔNG THỨC TOÁN HỌC: Mọi công thức toán học, ký hiệu ma trận, hàm số BẮT BUỘC viết dưới dạng LaTeX chuẩn kẹp giữa cặp dấu đô la $...$ (ví dụ: $P(\\alpha_1 Y_1 + \\alpha_2 Y_2 | Z)$, $\\phi(B)X_t = \\theta(B)W_t$, $\\gamma(h)$, $\\mathbb{R}^d$) để hệ thống tự động biên dịch sang công thức trực quan.
+5. TỪNG MỤC CON BẮT BUỘC CÓ ĐỦ 5 TRƯỜNG BÓC TÁCH CHUYÊN SÂU CHI TIẾT:
    - "summary": KHÁI NIỆM CỐT LÕI (2-3 câu phân tích sâu bản chất lý thuyết, định nghĩa toán học chính thức).
    - "mechanism": CƠ CHẾ & GIẢI THUẬT (Mô tả chi tiết giải thuật, công thức toán học $...$, các bước tính toán).
    - "key_point": ĐIỂM THEN CHỐT (Các lưu ý quan trọng, điều kiện tiên quyết, giới hạn phương pháp).
@@ -7771,11 +7774,11 @@ QUY TẮC BÓC TÁCH CHUYÊN SÂU ĐẲNG CẤP (BẮT BUỘC):
       "visual_type": "split_screen",
       "sections": [
         {
-          "code": "Phần a",
+          "code": "1.1",
           "title": "Tên phân đoạn",
           "items": [
             {
-              "code": "a1",
+              "code": "1.1.1",
               "text": "Tên mục kiến thức",
               "pdfStart": 1,
               "pdfEnd": 6,
@@ -7791,14 +7794,13 @@ QUY TẮC BÓC TÁCH CHUYÊN SÂU ĐẲNG CẤP (BẮT BUỘC):
     }
   ]
 }`;
-
         const payload = {
           model: cfg.model || 'gemini-2.5-flash-lite',
           messages: [
             { role: 'system', content: systemPrompt },
             { role: 'user', content: `Tài liệu: ${fileName || 'Bài giảng đại học'}\nTổng số slide: ${totalPages}\n\nDANH MỤC TOÀN BỘ SLIDE:\n${deckCatalog}` }
           ],
-          max_tokens: 4000,
+          max_tokens: 8000,
           temperature: 0.2,
           provider: cfg.provider || 'gemini_local',
           apiKey: cfg.apiKey || ''
@@ -7832,39 +7834,137 @@ QUY TẮC BÓC TÁCH CHUYÊN SÂU ĐẲNG CẤP (BẮT BUỘC):
         if (!tocText || tocText.trim().length < 40) return null;
 
         const systemPrompt = `Bạn là Chuyên gia Sư phạm Giảng dạy Đại học môn Toán - Tin & Khoa học Dữ liệu.
-Dưới đây là BẢNG MỤC LỤC (Table of Contents) hoặc NỘI DUNG AGENDA / OUTLINE của bài giảng slide / tài liệu học thuật.
+Dưới đây là BẢNG MỤC LỤC (Table of Contents) hoặc AGENDA / OUTLINE của tài liệu học thuật / bài giảng.
 
-NHIỆM VỤ: Dựa vào Mục lục hoặc Agenda được cung cấp, hãy thiết kế CẤU TRÚC SƠ ĐỒ BÀI GIẢNG SƯ PHẠM HOÀN HẢO gồm 4 đến 6 Chương rõ ràng.
+NHIỆM VỤ CỐT LÕI:
+Dựa vào Mục lục hoặc Agenda được cung cấp, hãy trích xuất và thiết kế CẤU TRÚC SƠ ĐỒ BÀI GIẢNG SƯ PHẠM HOÀN CHỈNH, ĐẦY ĐỦ VÀ CHÍNH XÁC 100%.
 
-QUY TẮC BÓC TÁCH (BẮT BUỘC):
-1. GIỮ ĐÚNG TIÊU ĐỀ HỌC THUẬT: Lấy đúng nội dung các chủ đề từ mục lục / agenda.
-   - TUYỆT ĐỐI KHÔNG sinh tên cụt lủn hay rác OCR.
-   - Ví dụ với Time Series: 'Chương 1: Review: Forecasting', 'Chương 2: Partial Autocorrelation Function (PACF)', 'Chương 3: Recursive Methods: Durbin-Levinson Algorithm', 'Chương 4: The Innovations Representation & Algorithm', 'Chương 5: Example: Innovations Algorithm for Forecasting an MA(1)'.
-2. MỖI CHƯƠNG CÓ 1 ĐẾN 2 PHẦN (Sections) và 2 ĐẾN 3 MỤC CON (Items).
-3. ĐỐI VỚI SÁCH CÓ SỐ TRANG: Ghi rõ "printed_start", "printed_end" cho từng mục. ĐỐI VỚI SLIDE: Ghi các chủ đề chính xác.
-4. TỪNG MỤC CON PHẢI CÓ TÓM TẮT SÂU: "summary" (2-3 câu), "mechanism" (giải thuật/toán học), "key_point".
+QUY TẮC BÓC TÁCH LINH HOẠT & CHUẨN MỰC HỌC THUẬT (BẮT BUỘC):
+1. TRÍCH XUẤT ĐẦY ĐỦ TẤT CẢ CÁC CHƯƠNG / PHẦN CHÍNH:
+   - Giữ nguyên số lượng chương thực tế của tài liệu. Nếu tài liệu có 5 chương, 8 chương hay 12 chương thì BẮT BUỘC trích xuất đủ bấy nhiêu chương. TUYỆT ĐỐI KHÔNG tự ý cắt bớt chương.
+   - Định dạng: "chapter": "CHƯƠNG 1", "CHƯƠNG 2"... kèm "title" là tên chuẩn học thuật (loại bỏ từ rác).
 
-ĐỊNH DẠNG ĐẦU RA: Trả về duy nhất JSON hợp lệ (không kèm markdown):
+2. TRÍCH XUẤT ĐẦY ĐỦ 100% TẤT CẢ CÁC MỤC CON (SECTIONS) TRONG TỪNG CHƯƠNG:
+   - TUYỆT ĐỐI KHÔNG giới hạn số lượng mục. Nếu Chương 1 có các mục 1.1, 1.2, 1.3, 1.4, 1.5, 1.6 thì BẮT BUỘC phải trích xuất ĐỦ CẢ 6 MỤC (từ 1.1 đến 1.6). Không được bỏ sót bất kỳ mục nào.
+   - ĐÁNH SỐ LINH HOẠT THEO TÀI LIỆU ("code"):
+     + Nếu tài liệu đánh số thập phân (1.1, 1.2, 1.3... hoặc 2.1, 2.2...): Gán đúng "code": "1.1", "code": "1.2"... và "title" là phần tên không chứa số.
+     + Nếu tài liệu dùng La Mã (I, II, III), chữ cái (A, B, C) hoặc tên phân đoạn: Giữ nguyên mã đó ("I", "II", "Phần 1"...).
+     + TUYỆT ĐỐI KHÔNG tự ý đổi mã số "1.1", "1.2" thành "Phần a", "Phần b".
+
+3. PHÂN CẤP NHÁNH LÁ (ITEMS) THỰC CHẤT, TRÁNH TRÙNG LẶP:
+   - Dưới mỗi Section (mục con), tạo 1 đến 3 Items là các khái niệm / bài toán / định lý toán học cụ thể thực tế.
+   - TUYỆT ĐỐI KHÔNG đặt tên Item con trùng lặp lại y hệt tiêu đề của Section cha.
+   - Ví dụ:
+     + Mục "1.1 Examples of Time Series" -> items: [{"code": "1.1.1", "text": "Dữ liệu Chuỗi thời gian Kinh tế & Tài chính"}, {"code": "1.1.2", "text": "Dữ liệu Vật lý, Khí hậu & Kỹ thuật"}]
+     + Mục "1.4 Stationary Time Series" -> items: [{"code": "1.4.1", "text": "Định nghĩa Tính dừng ngặt & Tính dừng yếu"}, {"code": "1.4.2", "text": "Hàm tự hiệp phương sai ACVF và Tự tương quan ACF"}]
+     + Mục "1.5 Estimation of Trend and Seasonal Components" -> items: [{"code": "1.5.1", "text": "Lọc trung bình trượt khử Trend"}, {"code": "1.5.2", "text": "Phương pháp sai phân (Differencing) khử tính mùa vụ"}]
+     + Mục "1.6 Autocorrelation Function" -> items: [{"code": "1.6.1", "text": "Hàm ACF mẫu (Sample ACF)"}, {"code": "1.6.2", "text": "Kiểm định Nhiễu trắng (Portmanteau / Ljung-Box Test)"}]
+
+4. CÔNG THỨC TOÁN HỌC & TÓM TẮT:
+   - Mọi công thức toán học viết bằng LaTeX chuẩn kẹp giữa cặp $...$ (ví dụ: $\\gamma(h)$, $\\rho(h)$, $\\nabla X_t = X_t - X_{t-1}$, $\\phi(B)X_t = \\theta(B)W_t$).
+   - Mỗi item có:
+     + "summary": Tóm tắt 1-2 câu về bản chất khái niệm.
+     + "mechanism": Công thức toán học hoặc giải thuật cốt lõi.
+     + "key_point": Điểm quan trọng cần ghi nhớ.
+     + "printed_start": Số trang in bắt đầu (nếu có trong mục lục).
+     + "printed_end": Số trang in kết thúc (nếu có trong mục lục).
+
+ĐỊNH DẠNG ĐẦU RA: Trả về DUY NHẤT JSON hợp lệ (không kèm bất kỳ văn bản markdown nào ngoài JSON):
 {
   "chapters": [
     {
       "chapter": "CHƯƠNG 1",
-      "title": "Tên chương chuẩn",
+      "title": "Introduction",
       "depth": "bridge",
       "visual_type": "split_screen",
       "sections": [
         {
-          "code": "Phần a",
-          "title": "Tên phân đoạn",
+          "code": "1.1",
+          "title": "Examples of Time Series",
           "items": [
             {
-              "code": "a1",
-              "text": "Tên mục chuẩn",
+              "code": "1.1.1",
+              "text": "Dữ liệu Kinh tế & Tài chính",
               "printed_start": 1,
               "printed_end": 6,
-              "summary": "...",
-              "mechanism": "...",
-              "key_point": "..."
+              "summary": "Chuỗi thời gian là dãy quan sát theo thứ tự thời gian...",
+              "mechanism": "Mô hình hóa $X_t = m_t + s_t + Y_t$...",
+              "key_point": "Nhận diện tính phụ thuộc tương quan giữa các thời điểm."
+            }
+          ]
+        },
+        {
+          "code": "1.2",
+          "title": "Objectives of Time Series Analysis",
+          "items": [
+            {
+              "code": "1.2.1",
+              "text": "Mục tiêu Dự báo & Điều khiển",
+              "printed_start": 6,
+              "printed_end": 8,
+              "summary": "Mục tiêu cốt lõi là giải thích cơ chế sinh dữ liệu và dự báo tương lai...",
+              "mechanism": "Sử dụng hàm tổn thất sai số bình phương trung bình $MSE$...",
+              "key_point": "Dự báo tối ưu dựa trên kỳ vọng có điều kiện."
+            }
+          ]
+        },
+        {
+          "code": "1.3",
+          "title": "Simple Descriptive Techniques",
+          "items": [
+            {
+              "code": "1.3.1",
+              "text": "Phân rã Xu thế & Tính mùa",
+              "printed_start": 8,
+              "printed_end": 14,
+              "summary": "Kỹ thuật mô tả và phân rã các thành phần trong chuỗi...",
+              "mechanism": "Bộ lọc trung bình trượt và làm mịn hàm spline...",
+              "key_point": "Khử xu thế trước khi phân tích tính dừng."
+            }
+          ]
+        },
+        {
+          "code": "1.4",
+          "title": "Stationary Time Series",
+          "items": [
+            {
+              "code": "1.4.1",
+              "text": "Tính dừng ngặt & Dừng yếu",
+              "printed_start": 14,
+              "printed_end": 23,
+              "summary": "Định nghĩa tính dừng yếu thông qua kỳ vọng không đổi và hiệp phương sai chỉ phụ thuộc khoảng cách $h$...",
+              "mechanism": "Hàm tự hiệp phương sai $\\gamma(h) = Cov(X_{t+h}, X_t)$ và $\\rho(h) = \\gamma(h)/\\gamma(0)$...",
+              "key_point": "Tính không âm xác định của ma trận tự hiệp phương sai."
+            }
+          ]
+        },
+        {
+          "code": "1.5",
+          "title": "Estimation of Trend and Seasonal Components",
+          "items": [
+            {
+              "code": "1.5.1",
+              "text": "Ước lượng Trend & Sai phân",
+              "printed_start": 23,
+              "printed_end": 37,
+              "summary": "Ước lượng đa thức xu thế và phương pháp sai phân $\\nabla X_t$...",
+              "mechanism": "Toán tử trễ lùi $B$ và toán tử sai phân $(1-B)^d$...",
+              "key_point": "Khử tính không dừng bằng phép lấy sai phân."
+            }
+          ]
+        },
+        {
+          "code": "1.6",
+          "title": "Autocorrelation Function",
+          "items": [
+            {
+              "code": "1.6.1",
+              "text": "Hàm ACF mẫu & Kiểm định White Noise",
+              "printed_start": 37,
+              "printed_end": 43,
+              "summary": "Tính toán tự tương quan mẫu $\\hat{\\rho}(h)$ để nhận diện mô hình...",
+              "mechanism": "Phân phối tiệm cận chuẩn $N(0, 1/n)$ và kiểm định Ljung-Box $Q$...",
+              "key_point": "Khoảng tin cậy $\\pm 1.96/\\sqrt{n}$ để kiểm tra nhiễu trắng."
             }
           ]
         }
@@ -7877,9 +7977,9 @@ QUY TẮC BÓC TÁCH (BẮT BUỘC):
           model: cfg.model || 'gemini-2.5-flash-lite',
           messages: [
             { role: 'system', content: systemPrompt },
-            { role: 'user', content: `Tên tài liệu: ${fileName || 'Tài liệu học tập'}\n\nNỘI DUNG MỤC LỤC / AGENDA TRÍCH XUẤT:\n${tocText.slice(0, 16000)}` }
+            { role: 'user', content: `Tên tài liệu: ${fileName || 'Tài liệu học tập'}\n\nNỘI DUNG MỤC LỤC / AGENDA TRÍCH XUẤT ĐẦY ĐỦ:\n${tocText.slice(0, 32000)}` }
           ],
-          max_tokens: 4000,
+          max_tokens: 8000,
           temperature: 0.2,
           provider: cfg.provider || 'gemini_local',
           apiKey: cfg.apiKey || ''
@@ -7888,7 +7988,7 @@ QUY TẮC BÓC TÁCH (BẮT BUỘC):
         try {
           const serverUrl = (window.location.origin.startsWith('http') && !window.location.origin.includes('file:'))
             ? `${window.location.origin}/api/llm/chat`
-            : 'http://127.0.0.1:8765/api/llm/chat';
+            : 'https://slide-to-video-sigma.vercel.app/api/llm/chat';
           const res = await fetch(serverUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -7918,19 +8018,15 @@ QUY TẮC BÓC TÁCH (BẮT BUỘC):
         const systemPrompt = `Bạn là Chuyên gia Sư phạm Đại học và Giảng viên cấp cao ngành Toán - Tin và Khoa học Dữ liệu.
 NHIỆM VỤ: Đọc toàn bộ nội dung tài liệu / bài giảng được cung cấp và thiết kế một CẤU TRÚC SƠ ĐỒ BÀI GIẢNG SƯ PHẠM ĐẲNG CẤP, CHUẨN MỰC.
 
-QUY TẮC BÓC TÁCH & ĐẶT TÊN SƯ PHẠM (BẮT BUỘC):
-1. LỌC BỎ 100% RÁC: Tuyệt đối không để sót số trang bị cắt cụt (như "18 Chapter 1...", "Definition 1.4.4 Let x 1..."), tên tác giả (Peter Brockwell, Richard Davis), trường đại học, nhà xuất bản, copyright.
-2. CẤU TRÚC 3 ĐẾN 5 CHƯƠNG RÕ RÀNG: Mỗi chương đại diện cho một phân đoạn tri thức lớn theo luồng sư phạm mạch lạc (Bối cảnh/Định nghĩa -> Mô hình toán học -> Phương pháp ước lượng & thuật toán -> Đánh giá & Ứng dụng thực tiễn).
-3. TIÊU ĐỀ CHƯƠNG CHUẨN TIẾNG VIỆT HOẶC SONG NGỮ HỌC THUẬT:
-   Ví dụ bài giảng Time Series:
-   - "Chương 1: Tổng Quan & Khái Niệm Cốt Lõi Chuỗi Thời Gian"
-   - "Chương 2: Mô Hình Dừng & Hàm Tự Tương Quan (ACF / PACF)"
-   - "Chương 3: Kỹ Thuật Ước Lượng & Khử Xu Hướng, Tính Mùa Vụ"
-   - "Chương 4: Các Mô Hình Tuyến Tính Cốt Lõi (AR, MA, ARMA, ARIMA)"
-   - "Chương 5: Đánh Giá Dự Báo & Ứng Dụng Thực Tế"
-4. MỖI CHƯƠNG GỒM:
-   - 1-2 Phân đoạn (Sections): Tiêu đề ngắn gọn, rõ ràng ("Phần a: Bản chất lý thuyết", "Phần b: Cơ chế tính toán").
-   - 2-3 Mục con (Items): Tên mục gãy gọn, học thuật (dưới 70 ký tự).
+QUY TẮC BÓC TÁCH & ĐẶT TÊN SƯ PHẠM LINH HOẠT (BẮT BUỘC):
+1. LỌC BỎ RÁC: Tuyệt đối không để sót số trang vụn vặt, tên tác giả, trường đại học, nhà xuất bản, copyright.
+2. SỐ LƯỢNG CHƯƠNG LINH HOẠT: Bám sát mạch kiến thức thực tế của tài liệu (không gò ép số chương). Mỗi chương đại diện cho một phân đoạn tri thức học thuật mạch lạc.
+3. TRÍCH XUẤT ĐẦY ĐỦ CÁC MỤC CON (SECTIONS) VÀ ĐÁNH SỐ CHUẨN:
+   - Nếu tài liệu đánh số 1.1, 1.2, 1.3... thì dùng đúng "code": "1.1", "1.2"... Tuyệt đối không tự đổi thành "Phần a", "Phần b".
+   - Trích xuất đầy đủ tất cả các mục thực tế, không tự ý cắt bớt.
+4. MỖI MỤC CON CÓ CÁC LUẬN ĐIỂM THỰC CHẤT:
+   - Tuyệt đối không đặt tên Item con trùng lặp y hệt tiêu đề của Section cha.
+   - Công thức toán học bắt buộc viết dạng LaTeX kẹp giữa $...$.
 5. TỪNG MỤC CON PHẢI CÓ ĐỦ BẢN TÓM TẮT SÂU SẮC 5 MỤC (TUYỆT ĐỐI KHÔNG ĐƯỢC VIẾT "Nội dung trích xuất từ trang..."):
    - "summary": Khái niệm cốt lõi (2-3 câu phân tích sâu bản chất toán học).
    - "mechanism": Cơ chế vận hành, quy trình thuật toán hoặc công thức cốt lõi.
@@ -9951,8 +10047,8 @@ QUY TẮC PHẢN HỒI QUAN TRỌNG:
     // ─────────────────────────────────────────────────────────────
     // HÀM BÓC TÁCH HYBRID TOC-ANCHORED (ƯU TIÊN HÀNG ĐẦU TUYỆT ĐỐI)
     async function extractPdfHybridTOC(pdf, totalPages, fileName = "") {
-      // 1. Quét 5% trang đầu (tối thiểu 3 trang cho slide bài giảng để bắt slide Agenda/Mục lục)
-      const frontLimit = Math.min(totalPages, Math.max(3, Math.ceil(totalPages * 0.05)));
+      // 1. Quét 8% trang đầu (tối đa 35 trang cho sách dày như 449 trang để bắt trọn vẹn toàn bộ các trang mục lục vii - xii)
+      const frontLimit = Math.min(totalPages, Math.max(5, Math.ceil(totalPages * 0.08), 35));
       let tocStartPage = -1;
       let tocEndPage = -1;
       let tocText = '';
@@ -9962,23 +10058,44 @@ QUY TẮC PHẢN HỒI QUAN TRỌNG:
           const page = await pdf.getPage(p);
           const content = await page.getTextContent();
           const items = content.items || [];
-          const pageStr = items.map(it => it.str).join(' ');
-          const topWords = items.slice(0, 30).map(it => it.str).join(' ').toLowerCase();
 
-          // Heading mục lục rõ ràng
+          // Ghép văn bản giữ cấu trúc dòng (phát hiện ngắt dòng theo toạ độ Y)
+          let pageLines = [];
+          let curLine = '';
+          let lastY = null;
+          items.forEach(it => {
+            const str = it.str || '';
+            const y = it.transform ? Math.round(it.transform[5]) : null;
+            if (lastY !== null && y !== null && Math.abs(y - lastY) > 4) {
+              if (curLine.trim()) pageLines.push(curLine.trim());
+              curLine = '';
+            }
+            curLine += (curLine ? ' ' : '') + str;
+            lastY = y;
+          });
+          if (curLine.trim()) pageLines.push(curLine.trim());
+
+          const pageStr = pageLines.join('\n');
+          const topWords = pageLines.slice(0, 5).join(' ').toLowerCase();
+
+          // Dấu hiệu nhận diện trang Mục lục:
           const hasTocHeading = /\b(contents|table of contents|mục lục|table des matières|agenda|outline|nội dung chính|nội dung bài giảng|overview|topics)\b/i.test(topWords);
           
-          // Hoặc slide liệt kê tuần tự các phần 1. ... 2. ... 3. ... trong slide bài giảng (như slide 2 của lecture)
-          const hasSeqOutline = /\b1[\.\)]\s+[A-Za-zÀ-ỹ]+.*?\b2[\.\)]\s+[A-Za-zÀ-ỹ]+.*?\b3[\.\)]\s+[A-Za-zÀ-ỹ]+/i.test(pageStr) && !topWords.includes('last lecture') && !pageStr.toLowerCase().includes('last lecture');
+          // Hoặc trang chứa đề mục và số trang (ví dụ "1.1 ... 1", "Chapter 1 ... 1")
+          const hasDenseTocRows = (pageStr.match(/^\s*(?:\d+\.\d+|\bChapter\s+\d+|\bChương\s+\d+).*?(?:\.{2,}|\s{3,}|\t)\s*\d+\s*$/gmi) || []).length >= 3;
+          const hasSeqOutline = /\b1[\.\)]\s+[A-Za-zÀ-ỹ]+.*?\b2[\.\)]\s+[A-Za-zÀ-ỹ]+.*?\b3[\.\)]\s+[A-Za-zÀ-ỹ]+/i.test(pageStr) && !topWords.includes('last lecture');
 
           let isTocPage = false;
-          if (hasTocHeading || hasSeqOutline) {
+          if (hasTocHeading || hasDenseTocRows || hasSeqOutline) {
             isTocPage = true;
           } else if (tocStartPage > 0 && (p - tocEndPage === 1)) {
-            // Trang mục lục kéo dài (chứa nhiều số trang in, ít đoạn văn xuôi)
-            const numCount = (pageStr.match(/\b\d+\s*($|\n)/g) || []).length;
-            const hasProse = /In this chapter|Throughout this book|We introduce/i.test(pageStr);
-            if (numCount >= 4 && !hasProse) isTocPage = true;
+            // Trang mục lục kéo dài (trang tiếp theo của mục lục đa trang)
+            const numAtLineEnd = (pageStr.match(/\b\d+\s*$/gm) || []).length;
+            const hasSectionNum = (pageStr.match(/\b\d+\.\d+\b/g) || []).length;
+            const isMainBodyStart = /\b(1\.\s+Introduction|Chapter\s+1|Chương\s+1)\b/i.test(topWords) && !pageStr.includes('...');
+            if ((numAtLineEnd >= 3 || hasSectionNum >= 3) && !isMainBodyStart) {
+              isTocPage = true;
+            }
           }
 
           if (isTocPage) {
@@ -9989,29 +10106,6 @@ QUY TẮC PHẢN HỒI QUAN TRỌNG:
             break; // Đã qua hết các trang mục lục liên tiếp
           }
         } catch (e) {}
-      }
-
-      // 2. Quét 5% trang cuối nếu chưa tìm thấy ở 5% đầu
-      const backStart = Math.max(frontLimit + 1, Math.floor(totalPages * 0.95));
-      if (tocStartPage === -1 && backStart <= totalPages) {
-        for (let p = backStart; p <= totalPages; p++) {
-          try {
-            const page = await pdf.getPage(p);
-            const content = await page.getTextContent();
-            const items = content.items || [];
-            const pageStr = items.map(it => it.str).join(' ');
-            const topWords = items.slice(0, 30).map(it => it.str).join(' ').toLowerCase();
-            const hasTocHeading = /\b(contents|table of contents|mục lục|agenda|outline)\b/i.test(topWords);
-
-            if (hasTocHeading || (tocStartPage > 0 && p - tocEndPage <= 1)) {
-              if (tocStartPage === -1) tocStartPage = p;
-              tocEndPage = p;
-              tocText += `\n--- TRANG MỤC LỤC ${p} ---\n` + pageStr;
-            } else if (tocStartPage > 0 && (p - tocEndPage >= 2)) {
-              break;
-            }
-          } catch(e) {}
-        }
       }
 
       if (tocStartPage > 0 && tocText.trim().length >= 40) {
@@ -10397,16 +10491,30 @@ QUY TẮC PHẢN HỒI QUAN TRỌNG:
         if (entry.items && entry.items.length > 0) {
           for (let j = 0; j < entry.items.length; j++) {
             const sub = entry.items[j];
-            const subTitle = (sub.title || '').trim();
+            let subTitle = (sub.title || '').trim();
             if (!subTitle) continue;
+
+            // Tách mã số đề mục (ví dụ "1.1 Examples of Time Series" -> code: "1.1", title: "Examples of Time Series")
+            let secCode = `${i + 1}.${j + 1}`;
+            const secMatch = subTitle.match(/^(\d+(?:\.\d+)+)[\s:\.\-]+(.*)$/);
+            if (secMatch) {
+              secCode = secMatch[1];
+              if (secMatch[2] && secMatch[2].trim()) subTitle = secMatch[2].trim();
+            }
 
             const items = [];
             if (sub.items && sub.items.length > 0) {
               sub.items.forEach((leaf, leafIdx) => {
-                const leafTitle = (leaf.title || '').trim();
+                let leafTitle = (leaf.title || '').trim();
                 if (leafTitle) {
+                  let leafCode = `${secCode}.${leafIdx + 1}`;
+                  const leafMatch = leafTitle.match(/^(\d+(?:\.\d+)+)[\s:\.\-]+(.*)$/);
+                  if (leafMatch) {
+                    leafCode = leafMatch[1];
+                    if (leafMatch[2] && leafMatch[2].trim()) leafTitle = leafMatch[2].trim();
+                  }
                   items.push({
-                    code: `a${leafIdx + 1}`,
+                    code: leafCode,
                     text: leafTitle,
                     summary: leafTitle,
                     mechanism: '',
@@ -10417,7 +10525,7 @@ QUY TẮC PHẢN HỒI QUAN TRỌNG:
             }
 
             sections.push({
-              code: `Phần ${String.fromCharCode(97 + j)}`,
+              code: secCode,
               title: subTitle,
               items: items
             });
