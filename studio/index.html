@@ -3088,8 +3088,8 @@
             <button class="mindmap-ctrl-btn" id="btn-zoom-out" title="Thu nhỏ (hoặc lăn chuột xuống)">➖</button>
             <span class="mindmap-zoom-label" id="label-zoom">85%</span>
             <button class="mindmap-ctrl-btn" id="btn-zoom-reset" title="Đặt lại góc nhìn">⟲ Căn Giữa</button>
-            <button class="mindmap-ctrl-btn" id="btn-ai-refactor-mindmap" style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.4), rgba(168, 85, 247, 0.4)); border: 1px solid rgba(168, 85, 247, 0.7); color: #fff; font-weight: 700; padding: 0 14px; gap: 6px; display: flex; align-items: center;" title="Dùng Gemini AI phân tích lại toàn bộ bài giảng và tái tạo sơ đồ tư duy chuẩn sư phạm">
-              <span>✨</span> AI Tái Cấu Trúc Sơ Đồ & Tóm Tắt (LLM)
+            <button class="mindmap-ctrl-btn" id="btn-ai-refactor-mindmap" style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.4), rgba(168, 85, 247, 0.4)); border: 1px solid rgba(168, 85, 247, 0.7); color: #fff; font-weight: 700; padding: 0 14px; gap: 6px; display: flex; align-items: center;" title="Phân tích lại toàn bộ bài giảng và chuẩn hóa sơ đồ tư duy">
+              <span>✨</span> Tái Cấu Trúc Sơ Đồ
             </button>
           </div>
 
@@ -9795,7 +9795,7 @@ QUY TẮC PHẢN HỒI QUAN TRỌNG:
 
       if (tocStartPage > 0 && tocText.trim().length >= 80) {
         console.log(`[TOC Extractor] 🎯 Phát hiện Mục lục tại trang PDF ${tocStartPage} -> ${tocEndPage}`);
-        updateLoading("Đang Dùng Gemini AI Phân Tích Mục Lục...", `Phát hiện mục lục tại trang ${tocStartPage}-${tocEndPage}. Đang lập sơ đồ chuẩn sư phạm...`);
+        updateLoading("Đang phân tích...", "Vui lòng chờ trong giây lát...");
 
         const outlineRes = await LLMClient.extractTOCWithAI(tocText, fileName);
         if (outlineRes && outlineRes.chapters && outlineRes.chapters.length > 0) {
@@ -9853,7 +9853,7 @@ QUY TẮC PHẢN HỒI QUAN TRỌNG:
 
       // ƯU TIÊN SỐ 1 TUYỆT ĐỐI: BÓC TÁCH HYBRID THEO MỤC LỤC (TIẾT KIỆM TOKEN, CHUẨN TỪNG TRANG)
       try {
-        updateLoading("Đang Dò Tìm Mục Lục Bài Giảng...", `Đang quét 5% trang đầu để nhận diện Table of Contents...`);
+        updateLoading("Đang phân tích...", "Vui lòng chờ trong giây lát...");
         const tocResult = await extractPdfHybridTOC(pdf, totalPages, fileName);
         if (tocResult && tocResult.chapters && tocResult.chapters.length > 0) {
           console.log(`[PDF Extractor] 🌟 Bóc tách thành công qua Mục lục Hybrid TOC: ${tocResult.chapters.length} chương!`);
@@ -9868,7 +9868,7 @@ QUY TẮC PHẢN HỒI QUAN TRỌNG:
       // ƯU TIÊN SỐ 2: GỌI LLM CHO OUTLINE TỔNG THỂ NẾU KHÔNG CÓ MỤC LỤC
       if (rawText && rawText.trim().length >= 50) {
         try {
-          updateLoading("Đang Dùng AI Lập Sơ Đồ & Tóm Tắt...", `Đang phân tích cấu trúc bài giảng từ ${fileName || 'PDF'} qua LLM...`);
+          updateLoading("Đang phân tích...", "Vui lòng chờ trong giây lát...");
           const aiResult = await LLMClient.extractDocumentOutlineWithAI(rawText, fileName);
           if (aiResult && aiResult.chapters && aiResult.chapters.length > 0) {
             console.log(`[PDF Extractor] ✨ LLM đã bóc tách thành công ${aiResult.chapters.length} chương chuẩn sư phạm cho ${fileName}`);
@@ -10477,7 +10477,7 @@ QUY TẮC PHẢN HỒI QUAN TRỌNG:
 
       // ƯU TIÊN SỐ 1: GỌI LLM 1 LẦN MẶC ĐỊNH ĐỂ TRÍCH XUẤT TÓM TẮT & SƠ ĐỒ CHUẨN SƯ PHẠM
       try {
-        updateLoading("Đang Dùng AI Lập Sơ Đồ & Tóm Tắt...", `Đang phân tích cấu trúc bài giảng từ ${file.name} qua LLM...`);
+        updateLoading("Đang phân tích...", "Vui lòng chờ trong giây lát...");
         const aiResult = await LLMClient.extractDocumentOutlineWithAI(text, file.name);
         if (aiResult && aiResult.chapters && aiResult.chapters.length > 0) {
           console.log(`[Plain Text Extractor] ✨ LLM đã bóc tách thành công ${aiResult.chapters.length} chương cho ${file.name}`);
@@ -10585,7 +10585,7 @@ QUY TẮC PHẢN HỒI QUAN TRỌNG:
 
     // CLIENT-SIDE PEDAGOGICAL GENERATOR (TỰ ĐỘNG CHẠY KHI MỞ TRỰC TIẾP TỆP FILE:///)
     async function clientSidePedagogicalGenerate(file, name, desc, duration = 300, wpm = 140) {
-      updateLoading("Đang Bóc Tách Tệp Trực Tiếp...", `Đang phân tích cấu trúc bài giảng từ ${file.name}...`);
+      updateLoading("Đang phân tích...", "Vui lòng chờ trong giây lát...");
 
       // ƯU TIÊN SỐ 1: Bóc tách cấu trúc thực sự từ file (PDF outline/font, DOCX heading, PPTX slides)
       try {
@@ -11173,7 +11173,7 @@ QUY TẮC PHẢN HỒI QUAN TRỌNG:
       const dur = parseInt(document.getElementById('slider-duration').value) || 300;
       const wpm = parseInt(document.getElementById('slider-wpm').value) || 140;
 
-      showLoading("Đang Tái Cấu Trúc Kịch Bản Với Multi-Agent...", `Đang thiết lập lại bài giảng cho thời lượng ${Math.floor(dur/60)} phút (${dur}s) và nhịp độ ${wpm} WPM...`);
+      showLoading("Đang phân tích...", "Vui lòng chờ trong giây lát...");
 
       try {
         const sourceName = (activeProject.sources && activeProject.sources[0]) ? activeProject.sources[0].name : (activeProject.title + ".pdf");
@@ -11870,14 +11870,11 @@ ${tableRows}
       const btn = document.getElementById('btn-ai-refactor-mindmap');
       const originalHtml = btn ? btn.innerHTML : '<span>✨</span> AI Tái Cấu Trúc Sơ Đồ';
       if (btn) {
-        btn.innerHTML = '<span>⏳</span> <span>Gemini AI Đang Quét Mục Lục...</span>';
+        btn.innerHTML = '<span>⏳</span> <span>Đang phân tích...</span>';
         btn.disabled = true;
       }
 
-      showLoading(
-        "✨ Gemini AI Đang Tái Cấu Trúc Toàn Bộ Sơ Đồ Theo Mục Lục (TOC)...",
-        "Đang quét 5% trang đầu để nhận diện Table of Contents, khóa chặt ranh giới từng chương và viết tóm tắt học thuật chuyên sâu..."
-      );
+      showLoading("Đang phân tích...", "Vui lòng chờ trong giây lát...");
 
       try {
         // Thu thập toàn bộ các đề mục và trích đoạn từ các scenes hiện tại
