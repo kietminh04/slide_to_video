@@ -3801,10 +3801,15 @@
               </div>
             </div>
 
-            <!-- NÚT MỞ TERMINAL CHỈNH SỬA & GHI CHÚ NHANH -->
-            <button class="btn-primary" id="btn-insp-open-terminal" style="padding: 7px; font-size: 11.5px; justify-content: center; margin-top: 2px;">
-              <span>✎</span> Tinh Chỉnh & Ghi Chú Riêng Cho Nhánh Này
-            </button>
+            <!-- NÚT HÀNH ĐỘNG INSPECTOR (CHỈNH SỬA & TẢI RIÊNG SLIDE MỤC NÀY) -->
+            <div style="display: flex; gap: 8px; margin-top: 6px;">
+              <button class="btn-primary" id="btn-insp-open-terminal" style="padding: 7px; font-size: 11px; justify-content: center; flex: 1;">
+                <span>✎</span> Tinh Chỉnh Tham Số
+              </button>
+              <button class="btn-secondary" id="btn-insp-download-slide" onclick="downloadSingleNodeSlide()" style="padding: 7px 11px; font-size: 11px; justify-content: center; background: rgba(56, 189, 248, 0.15); border: 1px solid rgba(56, 189, 248, 0.4); color: var(--cyan); cursor: pointer; border-radius: var(--radius-sm); font-weight: 700; display: inline-flex; align-items: center; gap: 4px;" title="Tải riêng slide PowerPoint (.pptx) cho mục kiến thức đang xem">
+                <span>📥</span> Tải Slide Này
+              </button>
+            </div>
           </div>
         </div>
       </aside>
@@ -10850,15 +10855,21 @@ QUY TẮC PHẢN HỒI QUAN TRỌNG:
               ${src.name}
             </label>
             <div class="source-actions-group">
+              <button class="btn-source-action btn-download-src" title="Tải riêng slide/tài liệu này (.pptx)" onclick="downloadSingleSourceSlide(${idx})" style="color: var(--cyan); border-color: rgba(56, 189, 248, 0.4);">📥</button>
               <button class="btn-source-action btn-move-up" title="Đẩy lên trước trong kịch bản" ${idx === 0 || !canReorder ? 'disabled' : ''} onclick="moveSourceItem(${idx}, -1)">▲</button>
               <button class="btn-source-action btn-move-down" title="Đẩy xuống sau trong kịch bản" ${idx === sources.length - 1 || !canReorder ? 'disabled' : ''} onclick="moveSourceItem(${idx}, 1)">▼</button>
               <button class="btn-source-action btn-delete-src" title="Xoá slide này khỏi dự án" onclick="deleteSourceItem(${idx})">🗑️</button>
             </div>
           </div>
-          <div class="source-meta-row">
-            <span>${src.pages || 10} trang / slide</span>
-            <span>${src.size || '1.0 MB'}</span>
-            <span style="color: ${isChecked ? 'var(--emerald)' : 'var(--text-muted)'};">${isChecked ? '● Đang chọn' : '○ Đã bỏ qua'}</span>
+          <div class="source-meta-row" style="display: flex; align-items: center; justify-content: space-between;">
+            <div style="display: flex; gap: 8px; align-items: center;">
+              <span>${src.pages || 10} trang / slide</span>
+              <span>${src.size || '1.0 MB'}</span>
+              <span style="color: ${isChecked ? 'var(--emerald)' : 'var(--text-muted)'};">${isChecked ? '● Đang chọn' : '○ Đã bỏ qua'}</span>
+            </div>
+            <button class="btn-source-dl-pill" onclick="downloadSingleSourceSlide(${idx})" title="Tải slide PowerPoint (.pptx) riêng cho tài liệu này" style="font-size: 10px; padding: 2px 8px; border-radius: 4px; background: rgba(56, 189, 248, 0.12); border: 1px solid rgba(56, 189, 248, 0.35); color: var(--cyan); cursor: pointer; display: inline-flex; align-items: center; gap: 4px; font-weight: 600;">
+              📥 Tải riêng slide
+            </button>
           </div>
         `;
         // Sự kiện checkbox bật/tắt slide
@@ -13430,6 +13441,190 @@ ${foreshadowText}`;
       }
     });
 
+
+    // =========================================================================
+    // HỆ THỐNG XUẤT TẢI RIÊNG TỪNG SLIDE (SINGLE SLIDE / SOURCE PPTX EXPORT)
+    // =========================================================================
+    async function downloadSingleSourceSlide(idx) {
+      const sources = activeProject ? (activeProject.sources || []) : [];
+      const src = sources[idx];
+      if (!src) {
+        showToast('⚠️ Không tìm thấy tài liệu/slide này!');
+        return;
+      }
+
+      showToast(`⏳ Đang tạo slide riêng cho [${src.name}]...`);
+      try {
+        if (typeof PptxGenJS === 'undefined') {
+          throw new Error('Thư viện tạo slide PptxGenJS chưa sẵn sàng');
+        }
+
+        let pres = new PptxGenJS();
+        pres.layout = 'LAYOUT_16x9';
+        pres.author = 'CLSG Studio Pro';
+        pres.company = 'CLSG';
+        pres.title = src.name || 'Slide Bài Giảng';
+
+        // 1. Slide bìa cho riêng tài liệu này
+        let coverSlide = pres.addSlide();
+        coverSlide.background = { color: '0F172A' };
+        coverSlide.addText(src.name.replace(/\.[^/.]+$/, ""), {
+          x: 1, y: 1.8, w: '80%', h: 1.6, fontSize: 32, bold: true, color: '38BDF8', align: 'center'
+        });
+        coverSlide.addText(`Slide học liệu chi tiết • ${src.pages || 1} trang/slide`, {
+          x: 1.5, y: 3.5, w: '70%', h: 0.8, fontSize: 16, color: '94A3B8', align: 'center'
+        });
+
+        // 2. Lấy các chương/mục thuộc nguồn này
+        const sourceScenes = (src.scenes && src.scenes.length > 0)
+          ? src.scenes
+          : (idx === 0 ? currentScenes : (activeProject.scenes || []));
+        const chapters = (typeof getProjectHierarchy === 'function')
+          ? getProjectHierarchy(activeProject, sourceScenes, src, idx)
+          : (sourceScenes || []);
+
+        let slideCount = 0;
+
+        chapters.forEach((ch, cIdx) => {
+          const chTitle = ch.title || `Chương ${cIdx + 1}`;
+          const sections = ch.sections || [];
+          if (sections.length === 0) {
+            let s = pres.addSlide();
+            s.background = { color: 'FFFFFF' };
+            s.addText(chTitle, {
+              x: 0.6, y: 0.4, w: '88%', h: 0.8, fontSize: 24, bold: true, color: '0F172A',
+              border: [0, 0, { pt: 2, color: '3B82F6' }, 0]
+            });
+            if (ch.narration) {
+              s.addText(`• Lời giảng: ${ch.narration}`, { x: 0.6, y: 1.5, w: '88%', h: 3.5, fontSize: 16, color: '334155' });
+              s.addNotes(ch.narration);
+            }
+            slideCount++;
+          } else {
+            sections.forEach((sec, sIdx) => {
+              const secTitle = sec.title || sec.code || `Phần ${sIdx + 1}`;
+              const items = sec.items || [];
+              if (items.length === 0) {
+                let s = pres.addSlide();
+                s.background = { color: 'FFFFFF' };
+                s.addText(`${chTitle} — ${secTitle}`, {
+                  x: 0.6, y: 0.4, w: '88%', h: 0.8, fontSize: 22, bold: true, color: '0F172A',
+                  border: [0, 0, { pt: 2, color: '3B82F6' }, 0]
+                });
+                slideCount++;
+              } else {
+                items.forEach((it, iIdx) => {
+                  let s = pres.addSlide();
+                  s.background = { color: 'FFFFFF' };
+                  const itemTitle = it.text || it.title || it.code || `Mục ${iIdx + 1}`;
+                  s.addText(`[${sec.code || ''}] ${chTitle}`, {
+                    x: 0.6, y: 0.3, w: '88%', h: 0.4, fontSize: 13, bold: true, color: '64748B'
+                  });
+                  s.addText(itemTitle, {
+                    x: 0.6, y: 0.7, w: '88%', h: 0.8, fontSize: 22, bold: true, color: '0F172A',
+                    border: [0, 0, { pt: 2, color: '3B82F6' }, 0]
+                  });
+
+                  let content = [];
+                  const summary = it.summary || (typeof getNodeParam === 'function' ? getNodeParam(`item-${cIdx}-${sIdx}-${iIdx}`, 'summary', '') : '');
+                  const mechanism = it.mechanism || (typeof getNodeParam === 'function' ? getNodeParam(`item-${cIdx}-${sIdx}-${iIdx}`, 'mechanism', '') : '');
+                  const keyPoint = it.key_point || (typeof getNodeParam === 'function' ? getNodeParam(`item-${cIdx}-${sIdx}-${iIdx}`, 'key_point', '') : '');
+                  const details = it.details || (typeof getNodeParam === 'function' ? getNodeParam(`item-${cIdx}-${sIdx}-${iIdx}`, 'details', '') : '');
+
+                  if (summary) content.push({ text: `📌 Khái niệm: ${summary}`, options: { bullet: true, color: '1E293B', breakLine: true } });
+                  if (keyPoint) content.push({ text: `🎯 Trọng tâm: ${keyPoint}`, options: { bullet: true, color: '1E293B', breakLine: true } });
+                  if (mechanism) content.push({ text: `⚙️ Phân tích: ${mechanism}`, options: { bullet: true, color: '334155', breakLine: true } });
+                  if (details) content.push({ text: `📋 Chi tiết: ${details}`, options: { bullet: true, color: '475569', breakLine: true } });
+
+                  if (content.length > 0) {
+                    s.addText(content, { x: 0.6, y: 1.6, w: '88%', h: 3.6, fontSize: 15, align: 'left', valign: 'top' });
+                  }
+
+                  const narration = it.narration || (typeof getNodeParam === 'function' ? getNodeParam(`item-${cIdx}-${sIdx}-${iIdx}`, 'narration', '') : '');
+                  if (narration) {
+                    s.addNotes(narration);
+                  }
+                  slideCount++;
+                });
+              }
+            });
+          }
+        });
+
+        const safeName = (src.name || 'Slide').replace(/\.[^/.]+$/, "").replace(/[^a-zA-Z0-9_\u00C0-\u1EF9]/gi, '_');
+        await pres.writeFile({ fileName: `Slide_${safeName}.pptx` });
+        showToast(`🎉 Đã tải riêng slide [${src.name}] (${slideCount} slide)!`);
+      } catch (err) {
+        console.error("Lỗi xuất slide riêng:", err);
+        showToast(`❌ Lỗi tạo slide: ${err.message}`);
+      }
+    }
+
+    async function downloadSingleNodeSlide(nodeOrKey) {
+      let node = null;
+      if (!nodeOrKey) {
+        node = (typeof selectedLeafNode !== 'undefined') ? selectedLeafNode : null;
+      } else if (typeof nodeOrKey === 'string') {
+        node = (typeof currentNodesMap !== 'undefined' && currentNodesMap) ? currentNodesMap[nodeOrKey] : null;
+      } else {
+        node = nodeOrKey;
+      }
+
+      if (!node) {
+        showToast('⚠️ Vui lòng nhấp chọn một mục slide trên sơ đồ trước khi tải!');
+        return;
+      }
+
+      const nodeTitle = node.data?.title || node.data?.text || node.data?.code || 'Slide';
+      showToast(`⏳ Đang tạo slide riêng cho [${nodeTitle}]...`);
+      try {
+        if (typeof PptxGenJS === 'undefined') {
+          throw new Error('Thư viện PptxGenJS chưa sẵn sàng');
+        }
+
+        let pres = new PptxGenJS();
+        pres.layout = 'LAYOUT_16x9';
+        pres.author = 'CLSG Studio Pro';
+        pres.title = nodeTitle;
+
+        let s = pres.addSlide();
+        s.background = { color: 'FFFFFF' };
+
+        const code = node.data?.code || '';
+        s.addText(code ? `[${code}] ${nodeTitle}` : nodeTitle, {
+          x: 0.6, y: 0.4, w: '88%', h: 0.9, fontSize: 24, bold: true, color: '0F172A',
+          border: [0, 0, { pt: 3, color: '3B82F6' }, 0]
+        });
+
+        let content = [];
+        const summary = node.data?.summary || (typeof getNodeParam === 'function' ? getNodeParam(node.key, 'summary', '') : '');
+        const keyPoint = node.data?.key_point || (typeof getNodeParam === 'function' ? getNodeParam(node.key, 'key_point', '') : '');
+        const mechanism = node.data?.mechanism || (typeof getNodeParam === 'function' ? getNodeParam(node.key, 'mechanism', '') : '');
+        const details = node.data?.details || (typeof getNodeParam === 'function' ? getNodeParam(node.key, 'details', '') : '');
+
+        if (summary) content.push({ text: `📌 Khái niệm cốt lõi: ${summary}`, options: { bullet: true, color: '1E293B', breakLine: true } });
+        if (keyPoint) content.push({ text: `🎯 Trọng tâm: ${keyPoint}`, options: { bullet: true, color: '1E293B', breakLine: true } });
+        if (mechanism) content.push({ text: `⚙️ Phân tích chuyên sâu: ${mechanism}`, options: { bullet: true, color: '334155', breakLine: true } });
+        if (details) content.push({ text: `📋 Nội dung chi tiết: ${details}`, options: { bullet: true, color: '475569', breakLine: true } });
+
+        if (content.length > 0) {
+          s.addText(content, { x: 0.6, y: 1.6, w: '88%', h: 3.6, fontSize: 16, align: 'left', valign: 'top' });
+        }
+
+        const narration = node.data?.narration || (typeof getNodeParam === 'function' ? getNodeParam(node.key, 'narration', '') : '');
+        if (narration) {
+          s.addNotes(narration);
+        }
+
+        const safeName = (nodeTitle || 'Slide').replace(/[^a-zA-Z0-9_\u00C0-\u1EF9]/gi, '_');
+        await pres.writeFile({ fileName: `Slide_${safeName}.pptx` });
+        showToast(`🎉 Đã tải riêng slide [${nodeTitle}] thành công!`);
+      } catch (err) {
+        console.error("Lỗi xuất slide riêng:", err);
+        showToast(`❌ Lỗi tạo slide: ${err.message}`);
+      }
+    }
+
     // RE-GENERATE BUTTON HANDLER
     document.getElementById('btn-re-generate')?.addEventListener('click', async () => {
       const dur = parseInt(document.getElementById('slider-duration').value) || 300;
@@ -14277,8 +14472,15 @@ ${foreshadowText}`;
     });
 
     document.getElementById('btn-download-slide-toolbar')?.addEventListener('click', async () => {
-      // Redirect to the same PPTX export logic
-      document.getElementById('btn-export-pptx')?.click();
+      // Nếu có mục slide đang chọn trên sơ đồ/inspector -> tải riêng slide đó
+      if (typeof selectedLeafNode !== 'undefined' && selectedLeafNode) {
+        downloadSingleNodeSlide(selectedLeafNode);
+      } else if (activeProject && activeProject.sources && activeProject.sources.length > 0) {
+        // Tải riêng slide của tài liệu đang chọn
+        downloadSingleSourceSlide(0);
+      } else {
+        document.getElementById('btn-export-pptx')?.click();
+      }
     });
 
     document.getElementById('btn-export-pptx')?.addEventListener('click', async () => {
