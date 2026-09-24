@@ -2969,6 +2969,231 @@
       box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
     }
 
+  
+    /* KHUNG XƯƠNG KỊCH BẢN TỪNG NHÁNH CON (SCRIPT SKELETON) */
+    .script-segment-skeleton {
+      background: rgba(15, 23, 42, 0.75);
+      border: 1px solid rgba(56, 189, 248, 0.22);
+      border-left: 4px solid var(--cyan);
+      border-radius: var(--radius-sm);
+      padding: 14px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      transition: all 0.2s ease;
+      margin-bottom: 14px;
+      backdrop-filter: blur(12px);
+    }
+    .script-segment-skeleton:hover {
+      border-color: rgba(56, 189, 248, 0.45);
+      background: rgba(15, 23, 42, 0.9);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+    }
+    .script-segment-skeleton.is-generating {
+      border-color: rgba(99, 102, 241, 0.8) !important;
+      box-shadow: 0 0 20px rgba(99, 102, 241, 0.3) !important;
+    }
+    .segment-header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+    .segment-title-wrap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .segment-code-badge {
+      background: rgba(56, 189, 248, 0.18);
+      color: var(--cyan);
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      font-size: 11.5px;
+      font-weight: 800;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .segment-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: #fff;
+    }
+    .segment-breadcrumb {
+      font-size: 11px;
+      color: var(--text-dim);
+    }
+    .segment-params-grid {
+      display: grid;
+      grid-template-columns: 85px 95px 180px 1fr;
+      gap: 8px;
+      background: rgba(8, 12, 20, 0.5);
+      padding: 8px 12px;
+      border-radius: 6px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      align-items: center;
+    }
+    @media (max-width: 900px) {
+      .segment-params-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+    .segment-param-item {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .segment-param-label {
+      font-size: 9.5px;
+      font-weight: 700;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .segment-param-input {
+      background: rgba(15, 23, 42, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 4px;
+      padding: 3px 6px;
+      font-size: 11.5px;
+      color: var(--text-main);
+      width: 100%;
+    }
+    .segment-param-input:focus {
+      outline: none;
+      border-color: var(--cyan);
+    }
+    .segment-media-box {
+      background: rgba(99, 102, 241, 0.05);
+      border: 1px dashed rgba(99, 102, 241, 0.28);
+      border-radius: 6px;
+      padding: 8px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .segment-media-top {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .btn-attach-media {
+      background: rgba(99, 102, 241, 0.18);
+      border: 1px solid rgba(99, 102, 241, 0.35);
+      color: #c7d2fe;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.2s;
+    }
+    .btn-attach-media:hover {
+      background: rgba(99, 102, 241, 0.35);
+      color: #fff;
+    }
+    .media-note-input {
+      flex: 1;
+      min-width: 200px;
+      background: rgba(8, 12, 20, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 4px;
+      padding: 3px 8px;
+      font-size: 11px;
+      color: var(--text-main);
+    }
+    .media-note-input:focus {
+      outline: none;
+      border-color: #818cf8;
+    }
+    .media-preview-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .media-thumb-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      border-radius: 4px;
+      padding: 3px 8px;
+      font-size: 11px;
+      color: #e2e8f0;
+    }
+    .media-thumb-img {
+      width: 24px;
+      height: 24px;
+      object-fit: cover;
+      border-radius: 3px;
+    }
+    .btn-del-media {
+      color: #f87171;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 800;
+      padding: 0 3px;
+    }
+    .segment-script-editor {
+      width: 100%;
+      min-height: 85px;
+      background: rgba(8, 12, 20, 0.75);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 6px;
+      padding: 10px 12px;
+      font-size: 12.5px;
+      line-height: 1.65;
+      color: #f1f5f9;
+      font-family: 'Inter', 'Be Vietnam Pro', sans-serif;
+      resize: vertical;
+      transition: all 0.2s;
+    }
+    .segment-script-editor:focus {
+      outline: none;
+      border-color: var(--cyan);
+      box-shadow: 0 0 12px rgba(56, 189, 248, 0.2);
+      background: rgba(8, 12, 20, 0.95);
+    }
+    .segment-footer-stats {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 11px;
+      color: var(--text-dim);
+      flex-wrap: wrap;
+      gap: 6px;
+      padding-top: 4px;
+    }
+    .btn-gen-single-script {
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.25), rgba(56, 189, 248, 0.25));
+      border: 1px solid rgba(99, 102, 241, 0.5);
+      color: #e0e7ff;
+      padding: 4px 12px;
+      font-size: 11px;
+      font-weight: 700;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .btn-gen-single-script:hover {
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.45), rgba(56, 189, 248, 0.45));
+      border-color: var(--cyan);
+      color: #fff;
+      box-shadow: 0 2px 10px rgba(99, 102, 241, 0.35);
+    }
+
   </style>
 </head>
 <body>
@@ -3284,7 +3509,8 @@
                   <button class="view-mode-pill" data-mode="ssml" onclick="setScriptViewMode('ssml')" title="Hiển thị định dạng chuẩn W3C SSML cho TTS">🔊 Chuẩn W3C SSML</button>
                   <button class="view-mode-pill" data-mode="plain" onclick="setScriptViewMode('plain')" title="Hiển thị văn bản thuần cho phụ đề">📄 Văn Bản Thuần</button>
                 </div>
-                <button class="script-action-btn" id="btn-ai-generate-all" style="background: rgba(99, 102, 241, 0.2); border-color: rgba(99, 102, 241, 0.5); color: #c7d2fe;" title="Dùng LLM viết lại toàn bộ kịch bản bài giảng dựa trên các slide đã chọn">
+                <!-- Nút AI Viết Toàn Bộ đã được gộp lên nút chính 'Sinh Kịch Bản (Các Phần Đã Chọn)' ở góc trên -->
+                <button class="script-action-btn" id="btn-ai-generate-all" style="display: none;">
                   <span>✨</span> AI Viết Toàn Bộ
                 </button>
                 <button class="script-action-btn" id="btn-copy-full-script" title="Sao chép toàn bộ văn bản kịch bản">
@@ -7771,6 +7997,96 @@ Trả về DUY NHẤT JSON hợp lệ với 5 trường sau (mỗi trường T�
         throw new Error('Không thể kết nối tới máy chủ AI hoặc hệ thống đang bận. Vui lòng thử lại sau giây lát.');
       },
 
+      
+      async generateSegmentNarration({ nodeCode, nodeText, chapterTitle, sectionTitle, duration, wpm, visualType, summary, mechanism, keyPoint, notes, mediaAttachments, mediaNote }) {
+        const cfg = this.getConfig();
+        const dur = Math.max(10, parseInt(duration) || 30);
+        const pace = Math.max(80, parseInt(wpm) || 140);
+        const targetWords = Math.round((dur * pace) / 60);
+
+        let mediaInstruction = '';
+        if (Array.isArray(mediaAttachments) && mediaAttachments.length > 0) {
+          const names = mediaAttachments.map(a => `${a.type === 'video' ? 'Video' : 'Hình ảnh'}: "${a.name}"`).join(', ');
+          mediaInstruction = `Tư liệu minh họa có sẵn: ${names}.`;
+          if (mediaNote) mediaInstruction += ` Chỉ dẫn của giảng viên: "${mediaNote}".`;
+          mediaInstruction += ` HÃY LỒNG GHÉP CHỈ DẪN THỊ GIÁC [HIỂN THỊ HÌNH ẢNH: ...] hoặc [PHÁT VIDEO: ...] vào thời điểm phù hợp trong kịch bản.`;
+        } else if (mediaNote) {
+          mediaInstruction = `Chỉ dẫn tư liệu: "${mediaNote}".`;
+        }
+
+        const systemPrompt = `Bạn là Chuyên gia Giảng dạy Đại học môn Toán - Tin & Khoa học Dữ liệu.
+Nhiệm vụ: Viết KỊCH BẢN LỜI THOẠI GIẢNG DẠY SƯ PHẠM (Narration Script) cho một phân đoạn kiến thức cụ thể.
+
+QUY TẮC BẮT BUỘC:
+1. Lời thoại tự nhiên, hấp dẫn, giải thích sâu sắc bản chất toán học/thuật toán, không sáo rỗng chào hỏi ("Chào các bạn...", "Hôm nay chúng ta...").
+2. Chèn các thẻ nhịp ngắt chuẩn sư phạm để giọng đọc AI truyền cảm:
+   - [P1] (ngắt ngắn 0.5s giữa các mệnh đề hoặc công thức)
+   - [P2] (ngắt 1.0s khi chuyển ý quan trọng hoặc kết thúc luận điểm)
+   - [P3] (ngắt 1.5s để người học ngẫm nghĩ sau định lý/công thức cốt lõi)
+3. Độ dài kịch bản phải khớp sát khoảng ${targetWords} từ (tương ứng ${dur} giây ở tốc độ đọc ${pace} WPM).
+4. Các công thức toán dùng dạng LaTeX kẹp giữa $...$.
+${mediaInstruction ? '5. ' + mediaInstruction : ''}
+
+Trả về DUY NHẤT văn bản kịch bản lời thoại hoàn chỉnh (không trả về JSON, không thêm lời chào ngoài lề).`;
+
+        const userPrompt = `Chương: "${chapterTitle || ''}" • Phần: "${sectionTitle || ''}"
+Mục kiến thức: [${nodeCode}] "${nodeText}"
+Thời lượng: ${dur} giây (~${targetWords} từ)
+Kiểu trực quan: [${visualType || 'split_screen'}]
+${summary ? `Khái niệm trọng tâm: ${summary}` : ''}
+${mechanism ? `Cơ chế/Công thức: ${mechanism}` : ''}
+${keyPoint ? `Điểm then chốt: ${keyPoint}` : ''}
+${notes ? `GHI CHÚ RIÊNG CỦA GIẢNG VIÊN (BẮT BUỘC LÀM THEO): "${notes}"` : ''}
+
+Hãy viết kịch bản lời thoại giảng dạy:`;
+
+        const payload = {
+          model: cfg.model || 'gemini-2.5-flash',
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: userPrompt }
+          ],
+          max_tokens: 1500,
+          temperature: 0.3,
+          provider: cfg.provider || 'gemini_local',
+          apiKey: cfg.apiKey || ''
+        };
+
+        try {
+          const serverUrl = (window.location.origin.startsWith('http') && !window.location.origin.includes('file:'))
+            ? `${window.location.origin}/api/llm/chat`
+            : 'https://slide-to-video-sigma.vercel.app/api/llm/chat';
+          const res = await fetch(serverUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+          if (res.ok) {
+            const data = await res.json();
+            const text = data.choices?.[0]?.message?.content || '';
+            if (text && text.trim().length > 10) return text.trim();
+          }
+        } catch (e) {
+          console.warn('[LLMClient] generateSegmentNarration proxy error:', e);
+        }
+
+        try {
+          const endpoint = `${cfg.baseUrl.replace(/\/+$/, '')}/chat/completions`;
+          const headers = { 'Content-Type': 'application/json' };
+          if (cfg.apiKey) headers['Authorization'] = `Bearer ${cfg.apiKey}`;
+          const res = await fetch(endpoint, { method: 'POST', headers, body: JSON.stringify(payload) });
+          if (res.ok) {
+            const data = await res.json();
+            const text = data.choices?.[0]?.message?.content || '';
+            if (text && text.trim().length > 10) return text.trim();
+          }
+        } catch (e) {
+          console.warn('[LLMClient] generateSegmentNarration direct error:', e);
+        }
+
+        return null;
+      },
+
       async generateNarration({ title, depth, duration, wpm, visualDesc, sections, notes }) {
         const cfg = this.getConfig();
         const targetWords = Math.round((duration * (wpm || 140)) / 60);
@@ -9301,6 +9617,525 @@ QUY TẮC PHẢN HỒI QUAN TRỌNG:
       const totalChaps = countTotalActiveScriptChapters();
       badge.textContent = `${activeSources.length} slide • ${totalChaps} mục`;
     }
+
+    
+    // =========================================================================
+    // HỆ THỐNG KỊCH BẢN ĐA PHƯƠNG THỨC: KHUNG XƯƠNG TỪNG NHÁNH CON & ĐỒNG BỘ 2 CHIỀU
+    // =========================================================================
+
+    // 1. Đồng bộ 2 chiều các tham số từ ô kịch bản sang Sơ Đồ & Dự án
+    window.syncSegmentParam = function(itKey, paramName, value) {
+      if (!itKey) return;
+      setNodeParam(itKey, paramName, value);
+
+      // Đồng bộ thời lượng
+      if (paramName === 'duration') {
+        const newDur = Math.max(5, parseInt(value) || 30);
+        const node = currentNodesMap[itKey];
+        if (node) {
+          if (node.data) node.data.duration = newDur;
+          propagateDurationUp(node);
+          renderMindmap();
+        }
+      }
+
+      // Đồng bộ ghi chú AI / Custom instruction
+      if (paramName === 'notes') {
+        const terminalNotes = document.getElementById('terminal-node-notes');
+        if (terminalNotes && currentTuningTarget && currentTuningTarget.nodeKey === itKey) {
+          terminalNotes.value = value;
+        }
+      }
+
+      // Đồng bộ kịch bản lời thoại
+      if (paramName === 'narration') {
+        const node = currentNodesMap[itKey];
+        if (node && node.data) node.data.narration = value;
+        // Cập nhật thống kê số từ và thời gian đọc trên thẻ
+        updateSegmentCardStats(itKey, value);
+      }
+
+      updateScriptHeaderStats();
+    };
+
+    function updateSegmentCardStats(itKey, narrText) {
+      const card = document.getElementById(`seg-card-${itKey}`);
+      if (!card) return;
+      const wpm = parseInt(getNodeParam(itKey, 'wpm', activeProject?.wpm || 140)) || 140;
+      const dur = parseInt(getNodeParam(itKey, 'duration', 30)) || 30;
+      const words = (narrText || '').trim() ? (narrText.trim().split(/\s+/).length) : 0;
+      const estSec = words > 0 ? Math.round((words / wpm) * 60) : 0;
+
+      const wordsEl = card.querySelector('.stat-words-val');
+      const estEl = card.querySelector('.stat-est-val');
+      const statusEl = card.querySelector('.stat-status-badge');
+
+      if (wordsEl) wordsEl.textContent = `${words} từ`;
+      if (estEl) estEl.textContent = `${estSec}s (Mục tiêu: ${dur}s)`;
+      if (statusEl) {
+        if (words > 0) {
+          statusEl.innerHTML = '🟢 Đã có kịch bản';
+          statusEl.style.color = '#34d399';
+        } else {
+          statusEl.innerHTML = '⚪ Chưa sinh kịch bản';
+          statusEl.style.color = '#94a3b8';
+        }
+      }
+    }
+
+    // 2. Đính kèm và xóa file ảnh/video minh họa cho từng ô
+    window.attachMediaToSegment = function(itKey, fileInput) {
+      const file = fileInput.files?.[0];
+      if (!file) return;
+
+      const isVideo = file.type.startsWith('video');
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const dataUrl = e.target.result;
+        const att = {
+          name: file.name,
+          type: isVideo ? 'video' : 'image',
+          size: `${(file.size / 1024).toFixed(1)} KB`,
+          dataUrl: dataUrl
+        };
+
+        let currentAtts = getNodeParam(itKey, 'attachments', []);
+        if (!Array.isArray(currentAtts)) currentAtts = [];
+        currentAtts.push(att);
+        setNodeParam(itKey, 'attachments', currentAtts);
+
+        showToast(`📎 Đã đính kèm ${isVideo ? 'video' : 'ảnh'}: ${file.name}`);
+        renderScriptDocument();
+      };
+      reader.readAsDataURL(file);
+    };
+
+    window.removeSegmentAttachment = function(itKey, attIdx) {
+      let currentAtts = getNodeParam(itKey, 'attachments', []);
+      if (Array.isArray(currentAtts)) {
+        currentAtts.splice(attIdx, 1);
+        setNodeParam(itKey, 'attachments', currentAtts);
+        renderScriptDocument();
+        showToast('Đã gỡ tệp đính kèm.');
+      }
+    };
+
+    // 3. Sinh kịch bản riêng cho một mục con cụ thể
+    window.generateSingleSegmentScript = async function(itKey) {
+      const card = document.getElementById(`seg-card-${itKey}`);
+      const btn = document.getElementById(`btn-gen-${itKey}`);
+      if (!card) return;
+
+      card.classList.add('is-generating');
+      let originalBtnText = '';
+      if (btn) {
+        originalBtnText = btn.innerHTML;
+        btn.innerHTML = `<span style="display:inline-block; animation: spin 1s linear infinite;">⏳</span> Đang Viết...`;
+        btn.disabled = true;
+      }
+
+      try {
+        const node = currentNodesMap[itKey];
+        const itemData = node ? (node.data || {}) : {};
+
+        const nodeCode = getNodeParam(itKey, 'code', itemData.code || '•');
+        const nodeText = getNodeParam(itKey, 'title', itemData.text || itemData.title || itKey);
+        const duration = getNodeParam(itKey, 'duration', itemData.duration || 30);
+        const wpm = getNodeParam(itKey, 'wpm', activeProject?.wpm || 140);
+        const visualType = getNodeParam(itKey, 'visualType', itemData.visual_type || 'split_screen');
+        const notes = getNodeParam(itKey, 'notes', '');
+        const mediaNote = getNodeParam(itKey, 'mediaNote', '');
+        const mediaAttachments = getNodeParam(itKey, 'attachments', []);
+
+        // Tìm thông tin Chương & Phần
+        let chapterTitle = '';
+        let sectionTitle = '';
+        if (node && node.parentKey) {
+          const pNode = currentNodesMap[node.parentKey];
+          if (pNode) {
+            sectionTitle = pNode.data?.title || '';
+            if (pNode.parentKey) {
+              const chNode = currentNodesMap[pNode.parentKey];
+              if (chNode) chapterTitle = chNode.data?.title || '';
+            }
+          }
+        }
+
+        const summary = itemData.summary || '';
+        const mechanism = itemData.mechanism || '';
+        const keyPoint = itemData.key_point || '';
+
+        const scriptText = await LLMClient.generateSegmentNarration({
+          nodeCode,
+          nodeText,
+          chapterTitle,
+          sectionTitle,
+          duration,
+          wpm,
+          visualType,
+          summary,
+          mechanism,
+          keyPoint,
+          notes,
+          mediaAttachments,
+          mediaNote
+        });
+
+        if (scriptText) {
+          setNodeParam(itKey, 'narration', scriptText);
+          if (node && node.data) node.data.narration = scriptText;
+
+          // Cập nhật textarea ngay lập tức
+          const textarea = card.querySelector('.segment-script-editor');
+          if (textarea) textarea.value = scriptText;
+
+          updateSegmentCardStats(itKey, scriptText);
+          updateScriptHeaderStats();
+          showToast(`✨ Đã sinh kịch bản cho mục: ${nodeCode} - ${nodeText.substring(0, 20)}...`);
+        } else {
+          showToast('⚠️ AI không thể tạo kịch bản lúc này, vui lòng kiểm tra API key!');
+        }
+      } catch (err) {
+        console.error("Lỗi sinh kịch bản đơn lẻ:", err);
+        showToast('⚠️ Lỗi sinh kịch bản: ' + err.message);
+      } finally {
+        card.classList.remove('is-generating');
+        if (btn) {
+          btn.innerHTML = originalBtnText;
+          btn.disabled = false;
+        }
+      }
+    };
+
+    // 4. Sinh kịch bản hàng loạt cho TẤT CẢ các phần đã chọn
+    window.generateScriptFromSelection = async function() {
+      const allSources = activeProject?.sources || [];
+      const activeSources = allSources.filter(s => s.active !== false);
+      if (activeSources.length === 0) {
+        showToast('⚠️ Hãy chọn ít nhất 1 tài liệu để sinh kịch bản!');
+        return;
+      }
+
+      // Chuyển sang tab kịch bản
+      switchCenterTab('script');
+
+      // Thu thập tất cả các item con đang active
+      const pendingItems = [];
+      activeSources.forEach((src, srcIdx) => {
+        const originalIdx = allSources.indexOf(src);
+        const rootKey = getSourceKey(src, originalIdx >= 0 ? originalIdx : srcIdx);
+        if (isNodeExcluded(rootKey)) return;
+
+        const sourceScenes = (src.scenes && src.scenes.length > 0) ? src.scenes : (originalIdx === 0 ? currentScenes : []);
+        const hierarchyChapters = getProjectHierarchy(activeProject, sourceScenes, src, originalIdx >= 0 ? originalIdx : srcIdx);
+
+        hierarchyChapters.forEach((ch, chIdx) => {
+          const chKey = `ch-${rootKey}-${chIdx}`;
+          if (isNodeExcluded(chKey, [rootKey])) return;
+
+          (ch.sections || []).forEach((sec, secIdx) => {
+            const secKey = `sec-${rootKey}-${chIdx}-${secIdx}`;
+            if (isNodeExcluded(secKey, [chKey, rootKey])) return;
+
+            (sec.items || []).forEach((it, itIdx) => {
+              const itKey = `item-${rootKey}-${chIdx}-${secIdx}-${itIdx}`;
+              if (!isNodeExcluded(itKey, [secKey, chKey, rootKey])) {
+                pendingItems.push(itKey);
+              }
+            });
+          });
+        });
+      });
+
+      if (pendingItems.length === 0) {
+        showToast('⚠️ Không có mục nào được chọn để sinh kịch bản!');
+        return;
+      }
+
+      showLoading("Đang Sinh Kịch Bản Hàng Loạt...", `Chuẩn bị sinh kịch bản cho ${pendingItems.length} mục kiến thức...`);
+
+      let completed = 0;
+      for (const itKey of pendingItems) {
+        completed++;
+        updateLoading(`Đang sinh mục ${completed}/${pendingItems.length}...`, `Hệ thống đang viết lời thoại sư phạm & lồng ghép tư liệu...`);
+        try {
+          await generateSingleSegmentScript(itKey);
+        } catch(e) {
+          console.warn(`Lỗi khi sinh cho ${itKey}:`, e);
+        }
+      }
+
+      hideLoading();
+      showToast(`🎉 Đã hoàn tất sinh kịch bản cho toàn bộ ${pendingItems.length} mục!`);
+    };
+
+    // 5. Cập nhật thống kê header của tab Kịch Bản
+    function updateScriptHeaderStats() {
+      const metaEl = document.getElementById('doc-summary-meta');
+      const titleEl = document.getElementById('doc-active-title');
+      if (titleEl && activeProject) titleEl.textContent = activeProject.title || 'Dự Án Bài Giảng';
+
+      if (metaEl && activeProject) {
+        const allSources = activeProject.sources || [];
+        const activeSources = allSources.filter(s => s.active !== false);
+
+        let totalSec = 0;
+        let totalWords = 0;
+        let totalSegments = 0;
+        let completedSegments = 0;
+
+        activeSources.forEach((src, srcIdx) => {
+          const originalIdx = allSources.indexOf(src);
+          const rootKey = getSourceKey(src, originalIdx >= 0 ? originalIdx : srcIdx);
+          if (isNodeExcluded(rootKey)) return;
+
+          const sourceScenes = (src.scenes && src.scenes.length > 0) ? src.scenes : (originalIdx === 0 ? currentScenes : []);
+          const hierarchyChapters = getProjectHierarchy(activeProject, sourceScenes, src, originalIdx >= 0 ? originalIdx : srcIdx);
+
+          hierarchyChapters.forEach((ch, chIdx) => {
+            const chKey = `ch-${rootKey}-${chIdx}`;
+            if (isNodeExcluded(chKey, [rootKey])) return;
+
+            (ch.sections || []).forEach((sec, secIdx) => {
+              const secKey = `sec-${rootKey}-${chIdx}-${secIdx}`;
+              if (isNodeExcluded(secKey, [chKey, rootKey])) return;
+
+              (sec.items || []).forEach((it, itIdx) => {
+                const itKey = `item-${rootKey}-${chIdx}-${secIdx}-${itIdx}`;
+                if (!isNodeExcluded(itKey, [secKey, chKey, rootKey])) {
+                  totalSegments++;
+                  const dur = parseInt(getNodeParam(itKey, 'duration', it.duration || 30)) || 30;
+                  totalSec += dur;
+                  const narr = getNodeParam(itKey, 'narration', it.narration || '');
+                  if (narr && narr.trim().length > 0) {
+                    completedSegments++;
+                    totalWords += narr.trim().split(/\s+/).length;
+                  }
+                }
+              });
+            });
+          });
+        });
+
+        const totalM = Math.floor(totalSec / 60);
+        const totalS = totalSec % 60;
+
+        metaEl.innerHTML = `
+          <div class="meta-stat-row">⏱️ Thời lượng: <strong>${totalM}p ${totalS < 10 ? '0' : ''}${totalS}s</strong> (${totalSec}s)</div>
+          <div class="meta-stat-row">🎬 <strong>${completedSegments}/${totalSegments}</strong> mục có kịch bản (~${totalWords} từ)</div>
+        `;
+      }
+    }
+
+    // 6. HÀM CHÍNH: RENDER TOÀN BỘ KHUNG XƯƠNG KỊCH BẢN CHO TỪNG NHÁNH CON
+    function renderScriptDocument() {
+      const paper = document.getElementById('script-paper-view');
+      if (!paper) return;
+      paper.innerHTML = '';
+
+      const allSources = activeProject?.sources || [
+        { name: (activeProject?.title || 'Tài Liệu') + '.pdf', pages: 35, size: '1.2 MB', active: true }
+      ];
+      const activeSources = allSources.filter(s => s.active !== false);
+
+      if (activeSources.length === 0) {
+        paper.innerHTML = `
+          <div style="text-align: center; padding: 60px 20px; color: var(--text-dim); background: rgba(15, 23, 42, 0.5); border-radius: var(--radius-md); border: 1px dashed rgba(244, 63, 94, 0.4);">
+            <div style="font-size: 40px; margin-bottom: 12px;">📁</div>
+            <div style="font-size: 15px; font-weight: 700; color: #f87171; margin-bottom: 6px;">Chưa chọn tài liệu nào để xây dựng kịch bản!</div>
+            <div style="font-size: 12px; color: var(--text-muted);">Hãy tích chọn ít nhất 1 tài liệu ở danh sách bên trái để tạo kịch bản bài giảng.</div>
+          </div>
+        `;
+        updateScriptHeaderStats();
+        return;
+      }
+
+      let totalSegmentCount = 0;
+
+      activeSources.forEach((src, srcIdx) => {
+        const originalIdx = allSources.indexOf(src);
+        const rootKey = getSourceKey(src, originalIdx >= 0 ? originalIdx : srcIdx);
+        if (isNodeExcluded(rootKey)) return;
+
+        const sourceScenes = (src.scenes && src.scenes.length > 0)
+          ? src.scenes
+          : (originalIdx === 0 ? currentScenes : []);
+        const hierarchyChapters = getProjectHierarchy(activeProject, sourceScenes, src, originalIdx >= 0 ? originalIdx : srcIdx);
+
+        // Hiển thị phân cách nếu có nhiều nguồn tài liệu
+        if (activeSources.length > 1) {
+          const srcDivider = document.createElement('div');
+          srcDivider.className = 'script-source-divider';
+          srcDivider.innerHTML = `
+            <div style="display: flex; align-items: center; gap: 10px; margin: 24px 0 12px 0; padding-bottom: 8px; border-bottom: 2px solid rgba(56, 189, 248, 0.35);">
+              <span style="background: rgba(56, 189, 248, 0.2); color: var(--cyan); border: 1px solid rgba(56, 189, 248, 0.4); font-size: 11px; font-weight: 800; padding: 2px 8px; border-radius: 4px; font-family: 'JetBrains Mono', monospace;">
+                TÀI LIỆU #${srcIdx + 1}
+              </span>
+              <span style="font-size: 14px; font-weight: 800; color: #fff;">📄 ${src.name}</span>
+            </div>
+          `;
+          paper.appendChild(srcDivider);
+        }
+
+        hierarchyChapters.forEach((ch, chIdx) => {
+          const chKey = `ch-${rootKey}-${chIdx}`;
+          if (isNodeExcluded(chKey, [rootKey])) return;
+
+          const chTitle = getNodeParam(chKey, 'title', ch.title || `Chương ${chIdx + 1}`);
+
+          // Tạo container chương
+          const chapterSection = document.createElement('div');
+          chapterSection.className = 'script-chapter-section';
+          chapterSection.style.marginBottom = '20px';
+
+          const chHeader = document.createElement('div');
+          chHeader.className = 'script-chapter-header';
+          chHeader.innerHTML = `
+            <div class="script-chapter-title-group">
+              <span class="depth-tag depth-${ch.depth || 'core'}">CHƯƠNG ${chIdx + 1}</span>
+              <span class="script-chapter-name">${chTitle}</span>
+            </div>
+          `;
+          chapterSection.appendChild(chHeader);
+
+          // Duyệt qua từng phần và nhánh con
+          (ch.sections || []).forEach((sec, secIdx) => {
+            const secKey = `sec-${rootKey}-${chIdx}-${secIdx}`;
+            if (isNodeExcluded(secKey, [chKey, rootKey])) return;
+
+            const secTitle = sec.title || `Phần ${sec.code || (secIdx + 1)}`;
+
+            (sec.items || []).forEach((it, itIdx) => {
+              const itKey = `item-${rootKey}-${chIdx}-${secIdx}-${itIdx}`;
+              if (isNodeExcluded(itKey, [secKey, chKey, rootKey])) return;
+
+              totalSegmentCount++;
+
+              // Lấy các tham số đã đồng bộ 2 chiều
+              const itCode = getNodeParam(itKey, 'code', it.code || `1.${itIdx + 1}`);
+              const itTitle = getNodeParam(itKey, 'title', it.text || it.title || `Mục ${itIdx + 1}`);
+              const itDur = getNodeParam(itKey, 'duration', it.duration || 30);
+              const itWpm = getNodeParam(itKey, 'wpm', activeProject.wpm || 140);
+              const itVisual = getNodeParam(itKey, 'visualType', it.visual_type || 'split_screen');
+              const itNotes = getNodeParam(itKey, 'notes', '');
+              const itNarr = getNodeParam(itKey, 'narration', it.narration || '');
+              const itMediaNote = getNodeParam(itKey, 'mediaNote', '');
+              const itAtts = getNodeParam(itKey, 'attachments', []);
+
+              const wordsCount = itNarr ? itNarr.trim().split(/\s+/).length : 0;
+              const estTime = wordsCount > 0 ? Math.round((wordsCount / itWpm) * 60) : 0;
+
+              // Render danh sách thumbnail đính kèm
+              let attachmentsHtml = '';
+              if (Array.isArray(itAtts) && itAtts.length > 0) {
+                attachmentsHtml = `
+                  <div class="media-preview-list">
+                    ${itAtts.map((att, attIdx) => `
+                      <div class="media-thumb-chip">
+                        ${att.type === 'image' ? `<img src="${att.dataUrl}" class="media-thumb-img" alt="${att.name}">` : '🎥'}
+                        <span>${att.name} (${att.size})</span>
+                        <span class="btn-del-media" onclick="removeSegmentAttachment('${itKey}', ${attIdx})" title="Xóa tệp đính kèm">✕</span>
+                      </div>
+                    `).join('')}
+                  </div>
+                `;
+              }
+
+              const card = document.createElement('div');
+              card.className = 'script-segment-skeleton';
+              card.id = `seg-card-${itKey}`;
+              card.innerHTML = `
+                <!-- HÀNG 1: HEADER PHÂN ĐOẠN & NÚT SINH KỊCH BẢN RIÊNG -->
+                <div class="segment-header-row">
+                  <div class="segment-title-wrap">
+                    <span class="segment-code-badge">${itCode}</span>
+                    <span class="segment-title">${itTitle}</span>
+                    <span class="segment-breadcrumb">(${chTitle} • ${secTitle})</span>
+                  </div>
+                  <button type="button" class="btn-gen-single-script" id="btn-gen-${itKey}" onclick="generateSingleSegmentScript('${itKey}')" title="Dùng AI sinh kịch bản lời thoại chuẩn sư phạm riêng cho phân đoạn này">
+                    <span>✨</span> Sinh Kịch Bản Cho Mục Này
+                  </button>
+                </div>
+
+                <!-- HÀNG 2: THÔNG SỐ ĐỒNG BỘ 2 CHIỀU VỚI SƠ ĐỒ -->
+                <div class="segment-params-grid">
+                  <div class="segment-param-item">
+                    <span class="segment-param-label">⏱️ Thời lượng:</span>
+                    <input type="number" class="segment-param-input" min="5" max="300" step="5" value="${itDur}" onchange="syncSegmentParam('${itKey}', 'duration', this.value)" title="Thời lượng (giây)">
+                  </div>
+                  <div class="segment-param-item">
+                    <span class="segment-param-label">🎙️ Tốc độ:</span>
+                    <input type="number" class="segment-param-input" min="80" max="220" step="5" value="${itWpm}" onchange="syncSegmentParam('${itKey}', 'wpm', this.value)" title="Tốc độ đọc (WPM)">
+                  </div>
+                  <div class="segment-param-item">
+                    <span class="segment-param-label">👁️ Thị giác / Slide:</span>
+                    <select class="segment-param-input" onchange="syncSegmentParam('${itKey}', 'visualType', this.value)">
+                      <option value="split_screen" ${itVisual === 'split_screen' ? 'selected' : ''}>So sánh song song (Split Screen)</option>
+                      <option value="process_visualization" ${itVisual === 'process_visualization' ? 'selected' : ''}>Mô phỏng động (Process Animation)</option>
+                      <option value="highlight_box" ${itVisual === 'highlight_box' ? 'selected' : ''}>Khoanh vùng điểm nhấn (Highlight Box)</option>
+                      <option value="animated_diagram" ${itVisual === 'animated_diagram' ? 'selected' : ''}>Lưới sơ đồ tô-pô (Animated Diagram)</option>
+                      <option value="concept_map" ${itVisual === 'concept_map' ? 'selected' : ''}>Bản đồ khái niệm (Concept Map)</option>
+                    </select>
+                  </div>
+                  <div class="segment-param-item">
+                    <span class="segment-param-label">📝 Ghi chú AI (Custom Instruction):</span>
+                    <input type="text" class="segment-param-input" placeholder="Ghi chú riêng cho AI khi sinh mục này..." value="${escapeHtml(itNotes)}" onchange="syncSegmentParam('${itKey}', 'notes', this.value)" title="Ghi chú riêng đồng bộ 2 chiều với Sơ đồ">
+                  </div>
+                </div>
+
+                <!-- HÀNG 3: KHU VỰC ĐÍNH KÈM TƯ LIỆU ẢNH / VIDEO & CHỈ DẪN -->
+                <div class="segment-media-box">
+                  <div class="segment-media-top">
+                    <label class="btn-attach-media" title="Tải lên ảnh sơ đồ, ảnh minh họa hoặc video ngắn cho đoạn này">
+                      <input type="file" accept="image/*,video/*" style="display:none;" onchange="attachMediaToSegment('${itKey}', this)">
+                      <span>📎</span> Đính Kèm Ảnh / Video
+                    </label>
+                    <input type="text" class="media-note-input" placeholder="Chỉ dẫn tư liệu (ví dụ: 'Ảnh CNN minh họa cấu trúc', 'Phát video demo sau đoạn này')..." value="${escapeHtml(itMediaNote)}" onchange="syncSegmentParam('${itKey}', 'mediaNote', this.value)">
+                  </div>
+                  ${attachmentsHtml}
+                </div>
+
+                <!-- HÀNG 4: KHOẢNG HIỂN THỊ & SOẠN THẢO KỊCH BẢN -->
+                <div>
+                  <textarea class="segment-script-editor" placeholder="Chưa có kịch bản cho mục này. Bạn có thể tự gõ lời thoại giảng dạy tại đây hoặc bấm nút [✨ Sinh Kịch Bản Cho Mục Này] ở trên để AI tự động viết..." onchange="syncSegmentParam('${itKey}', 'narration', this.value)" oninput="updateSegmentCardStats('${itKey}', this.value)">${escapeHtml(itNarr)}</textarea>
+                </div>
+
+                <!-- HÀNG 5: THỐNG KÊ SỐ TỪ & THỜI GIAN ĐỌC -->
+                <div class="segment-footer-stats">
+                  <div>
+                    <span class="stat-status-badge" style="font-weight: 700; color: ${wordsCount > 0 ? '#34d399' : '#94a3b8'};">
+                      ${wordsCount > 0 ? '🟢 Đã có kịch bản' : '⚪ Chưa sinh kịch bản'}
+                    </span>
+                    <span style="margin-left: 10px;">Số từ: <strong class="stat-words-val" style="color: #fff;">${wordsCount} từ</strong></span>
+                    <span style="margin-left: 10px;">Ước tính: <strong class="stat-est-val" style="color: var(--cyan);">${estTime}s (Mục tiêu: ${itDur}s)</strong></span>
+                  </div>
+                  <div style="font-size: 10.5px; color: var(--text-dim);">
+                    Tip: Dùng <code>[P1]</code> (0.5s), <code>[P2]</code> (1.0s), <code>[P3]</code> (1.5s) để căn nhịp ngắt sư phạm
+                  </div>
+                </div>
+              `;
+
+              chapterSection.appendChild(card);
+            });
+          });
+
+          paper.appendChild(chapterSection);
+        });
+      });
+
+      if (totalSegmentCount === 0) {
+        paper.innerHTML = `
+          <div style="text-align: center; padding: 60px 20px; color: var(--text-dim); background: rgba(15, 23, 42, 0.5); border-radius: var(--radius-md); border: 1px dashed rgba(244, 63, 94, 0.4);">
+            <div style="font-size: 40px; margin-bottom: 12px;">📑</div>
+            <div style="font-size: 15px; font-weight: 700; color: #f87171; margin-bottom: 6px;">Không có phân đoạn nào trên sơ đồ!</div>
+            <div style="font-size: 12px; color: var(--text-muted);">Hãy nạp tài liệu hoặc bấm [✨ Tái Cấu Trúc Sơ Đồ] để tạo cấu trúc bài giảng.</div>
+          </div>
+        `;
+      }
+
+      updateScriptHeaderStats();
+    }
+
 
     // LOADING OVERLAY CONTROLLER
     const overlay = document.getElementById('ai-loading-overlay');
