@@ -8268,7 +8268,7 @@ Trả về DUY NHẤT JSON hợp lệ với 5 trường sau (mỗi trường T�
             : 'https://slide-to-video-sigma.vercel.app/api/llm/chat';
           const proxyPayload = { ...payload, apiKey: cfg.apiKey || '', baseUrl: cfg.baseUrl || '', provider: cfg.provider || 'openai' };
           const ctl = new AbortController();
-          const tId = setTimeout(() => ctl.abort(), 8000);
+          const tId = setTimeout(() => ctl.abort(), 45000);
           res = await fetch(serverUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -8285,7 +8285,7 @@ Trả về DUY NHẤT JSON hợp lệ với 5 trường sau (mỗi trường T�
             const endpoint = `${cfg.baseUrl.replace(/\/+$/, '')}/chat/completions`;
             const headers = { 'Content-Type': 'application/json', 'Authorization': `Bearer ${cfg.apiKey}` };
             const ctl = new AbortController();
-            const tId = setTimeout(() => ctl.abort(), 8000);
+            const tId = setTimeout(() => ctl.abort(), 45000);
             res = await fetch(endpoint, {
               method: 'POST',
               headers,
@@ -8537,7 +8537,7 @@ Trả về DUY NHẤT JSON hợp lệ:
             : 'https://slide-to-video-sigma.vercel.app/api/llm/chat';
           const proxyPayload = { ...payload, apiKey: cfg.apiKey || '', baseUrl: cfg.baseUrl || '', provider: cfg.provider || 'openai' };
           const ctl = new AbortController();
-          const tId = setTimeout(() => ctl.abort(), 8000);
+          const tId = setTimeout(() => ctl.abort(), 45000);
           res = await fetch(serverUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -8554,7 +8554,7 @@ Trả về DUY NHẤT JSON hợp lệ:
             const endpoint = `${cfg.baseUrl.replace(/\/+$/, '')}/chat/completions`;
             const headers = { 'Content-Type': 'application/json', 'Authorization': `Bearer ${cfg.apiKey}` };
             const ctl = new AbortController();
-            const tId = setTimeout(() => ctl.abort(), 8000);
+            const tId = setTimeout(() => ctl.abort(), 45000);
             res = await fetch(endpoint, {
               method: 'POST',
               headers,
@@ -8672,7 +8672,7 @@ Hãy viết kịch bản lời thoại giảng dạy:`;
             : 'https://slide-to-video-sigma.vercel.app/api/llm/chat';
           const proxyPayload = { ...payload, apiKey: cfg.apiKey || '', baseUrl: cfg.baseUrl || '', provider: cfg.provider || 'openai' };
           const ctl = new AbortController();
-          const tId = setTimeout(() => ctl.abort(), 8000);
+          const tId = setTimeout(() => ctl.abort(), 45000);
           res = await fetch(serverUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -8689,7 +8689,7 @@ Hãy viết kịch bản lời thoại giảng dạy:`;
             const endpoint = `${cfg.baseUrl.replace(/\/+$/, '')}/chat/completions`;
             const headers = { 'Content-Type': 'application/json', 'Authorization': `Bearer ${cfg.apiKey}` };
             const ctl = new AbortController();
-            const tId = setTimeout(() => ctl.abort(), 8000);
+            const tId = setTimeout(() => ctl.abort(), 45000);
             res = await fetch(endpoint, {
               method: 'POST',
               headers,
@@ -8897,7 +8897,7 @@ OUTPUT: Valid JSON only.
             : 'https://slide-to-video-sigma.vercel.app/api/llm/chat';
           const proxyPayload = { ...payload, apiKey: cfg.apiKey || '', baseUrl: cfg.baseUrl || '', provider: cfg.provider || 'openai' };
           const ctl = new AbortController();
-          const tId = setTimeout(() => ctl.abort(), 8000);
+          const tId = setTimeout(() => ctl.abort(), 45000);
           res = await fetch(serverUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -8914,7 +8914,7 @@ OUTPUT: Valid JSON only.
             const endpoint = `${cfg.baseUrl.replace(/\/+$/, '')}/chat/completions`;
             const headers = { 'Content-Type': 'application/json', 'Authorization': `Bearer ${cfg.apiKey}` };
             const ctl = new AbortController();
-            const tId = setTimeout(() => ctl.abort(), 8000);
+            const tId = setTimeout(() => ctl.abort(), 45000);
             res = await fetch(endpoint, {
               method: 'POST',
               headers,
@@ -8978,7 +8978,7 @@ OUTPUT: Valid JSON only, no markdown.
             : 'https://slide-to-video-sigma.vercel.app/api/llm/chat';
           const proxyPayload = { ...payload, apiKey: cfg.apiKey || '', baseUrl: cfg.baseUrl || '', provider: cfg.provider || 'openai' };
           const ctl = new AbortController();
-          const tId = setTimeout(() => ctl.abort(), 8000);
+          const tId = setTimeout(() => ctl.abort(), 45000);
           res = await fetch(serverUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -8995,7 +8995,7 @@ OUTPUT: Valid JSON only, no markdown.
             const endpoint = `${cfg.baseUrl.replace(/\/+$/, '')}/chat/completions`;
             const headers = { 'Content-Type': 'application/json', 'Authorization': `Bearer ${cfg.apiKey}` };
             const ctl = new AbortController();
-            const tId = setTimeout(() => ctl.abort(), 8000);
+            const tId = setTimeout(() => ctl.abort(), 45000);
             res = await fetch(endpoint, {
               method: 'POST',
               headers,
@@ -10225,7 +10225,7 @@ QUY TẮC PHẢN HỒI QUAN TRỌNG:
             : 'http://127.0.0.1:8765/api/llm/chat';
           const proxyPayload = { ...payload, apiKey: cfg.apiKey || '', baseUrl: cfg.baseUrl || '', provider: cfg.provider || 'openai' };
           const ctl = new AbortController();
-          const tId = setTimeout(() => ctl.abort(), 5500);
+          const tId = setTimeout(() => ctl.abort(), 45000);
           res = await fetch(serverUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -10243,7 +10243,7 @@ QUY TẮC PHẢN HỒI QUAN TRỌNG:
             const endpoint = `${cfg.baseUrl.replace(/\/+$/, '')}/chat/completions`;
             const headers = { 'Content-Type': 'application/json', 'Authorization': `Bearer ${cfg.apiKey}` };
             const ctl = new AbortController();
-            const tId = setTimeout(() => ctl.abort(), 6000);
+            const tId = setTimeout(() => ctl.abort(), 45000);
             res = await fetch(endpoint, {
               method: 'POST',
               headers,
