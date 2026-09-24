@@ -23,8 +23,20 @@ module.exports = async (req, res) => {
     // TRƯỜNG HỢP 1: NGƯỜI DÙNG DÙNG KEY RIÊNG (OpenAI hoặc Gemini)
     if (customKey) {
       const isOpenAI = customKey.startsWith('sk-');
-      const targetUrl = isOpenAI ? 'https://api.openai.com/v1/chat/completions' : 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions';
+      let targetUrl = isOpenAI ? 'https://api.openai.com/v1/chat/completions' : 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions';
+      if (body.baseUrl) {
+        targetUrl = `${body.baseUrl.replace(/\/+$/, '')}/chat/completions`;
+      }
       const targetModel = requestedModel || (isOpenAI ? 'gpt-4o-mini' : 'gemini-2.5-flash');
+
+      const reqHeaders = {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${customKey}`
+      };
+      if (body.baseUrl && body.baseUrl.includes('openrouter')) {
+        reqHeaders['HTTP-Referer'] = 'https://slide-to-video-sigma.vercel.app/';
+        reqHeaders['X-Title'] = 'Slide to Video';
+      }
 
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 9500); // 9.5s timeout cho Vercel
@@ -32,10 +44,7 @@ module.exports = async (req, res) => {
       try {
         const upstreamRes = await fetch(targetUrl, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${customKey}`
-          },
+          headers: reqHeaders,
           body: JSON.stringify({
             model: targetModel,
             messages: messages,

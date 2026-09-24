@@ -20,6 +20,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <!-- JSZip: Giải nén DOCX/PPTX (đều là ZIP chứa XML bên trong) -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
   <style>
     :root {
       --bg-base: #080c14;
@@ -3841,96 +3842,85 @@
   <!-- =========================================================================
        MODAL: AI & API KEY CONFIGURATION (TOKEN-FRUGAL ENGINE)
        ========================================================================= -->
-  <div class="modal-backdrop" id="modal-api-config" style="display: none;">
-    <div class="modal-content" style="max-width: 540px;">
-      <div class="modal-header">
-        <div class="modal-title" style="display: flex; align-items: center; gap: 8px;">
-          <span>⚙️</span> Cấu Hình Mô Hình & API Key
-        </div>
-        <button class="btn-close-modal" id="btn-close-ai-config">&times;</button>
-      </div>
-
-      <div style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.25); border-radius: var(--radius-sm); padding: 12px; margin-bottom: 16px;">
-        <div style="font-size: 12px; font-weight: 700; color: #34d399; margin-bottom: 4px;">🛡️ Cơ Chế Bảo Vệ & Tiết Kiệm Token</div>
-        <div style="font-size: 11.5px; color: var(--text-muted); line-height: 1.5;">
-          Hệ thống ưu tiên kết nối <strong>Google Gemini</strong> để trải nghiệm miễn phí tốc độ cao. Khi dùng <strong>OpenAI</strong>, model mặc định được chọn là <code>gpt-4o-mini</code> kèm bộ nhớ đệm cache chống gọi trùng.
-        </div>
-      </div>
-
-      <!-- SELECT PROVIDER -->
-      <div style="margin-bottom: 14px;">
-        <label class="form-label">Chọn Nguồn Cung Cấp (Provider)</label>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-          <label class="provider-radio-card" id="card-prov-gemini" style="padding: 10px 12px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.12); border-radius: var(--radius-sm); cursor: pointer; display: flex; align-items: flex-start; gap: 8px;">
-            <input type="radio" name="ai-provider" value="gemini_local" id="radio-prov-gemini" style="margin-top: 2px;">
-            <div>
-              <div style="font-size: 12px; font-weight: 700; color: #fff;">Google Gemini</div>
-              <div style="font-size: 11px; color: #34d399; font-weight: 600;">Miễn phí (Google AI Studio)</div>
-            </div>
-          </label>
-          <label class="provider-radio-card" id="card-prov-openai" style="padding: 10px 12px; background: rgba(56,189,248,0.1); border: 1px solid var(--cyan); border-radius: var(--radius-sm); cursor: pointer; display: flex; align-items: flex-start; gap: 8px;">
-            <input type="radio" name="ai-provider" value="openai" id="radio-prov-openai" style="margin-top: 2px;" checked>
-            <div>
-              <div style="font-size: 12px; font-weight: 700; color: #fff;">OpenAI Official</div>
-              <div style="font-size: 11px; color: var(--cyan); font-weight: 600;">gpt-4o-mini / gpt-4o</div>
-            </div>
-          </label>
-        </div>
-      </div>
-
-      <!-- MODEL SELECT -->
-      <div style="margin-bottom: 14px;">
-        <label class="form-label" for="cfg-model-select">Mô Hình (Model)</label>
-        <select class="form-input" id="cfg-model-select">
-          <option value="gemini-2.5-flash">gemini-2.5-flash (Khuyên dùng)</option>
-          <option value="gemini-pro-latest">gemini-pro-latest (Cao cấp)</option>
-        </select>
-      </div>
-
-      <!-- API KEY INPUT (TÙY CHỌN: DÀNH CHO NGƯỜI DÙNG NHẬP KEY RIÊNG) -->
-      <div style="margin-bottom: 14px;" id="wrapper-cfg-api-key">
-        <label class="form-label" for="cfg-api-key" style="display: flex; justify-content: space-between; align-items: center;">
-          <span>Khóa Truy Cập Riêng (Tùy chọn)</span>
-          <span style="color: #34d399; font-size: 11px; font-weight: 600;">🛡️ Mặc định đã có khóa hệ thống</span>
-        </label>
-        <div style="position: relative;">
-          <input type="password" class="form-input" id="cfg-api-key" placeholder="Để trống để dùng khóa mặc định hệ thống (hoặc dán key riêng sk-... / AIza...)" style="padding-right: 42px; font-family: 'JetBrains Mono', monospace; font-size: 12px;">
-          <button type="button" id="btn-toggle-cfg-key" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--text-dim); cursor: pointer; font-size: 14px;" title="Ẩn/Hiện khóa API">👁️</button>
-        </div>
-        <div style="font-size: 10.5px; color: var(--text-dim); margin-top: 4px; line-height: 1.4;">
-          * <strong>Khuyên dùng để trống:</strong> Hệ thống tự động sử dụng khóa Google Gemini đã cấu hình sẵn trên máy chủ (hoàn toàn miễn phí, bảo mật). Bạn chỉ cần dán khóa vào đây nếu muốn dùng hạn mức tài khoản cá nhân.
-        </div>
-      </div>
-
-      <!-- NGÔN NGỮ ĐẦU RA -->
-      <div style="margin-bottom: 14px;">
-        <label class="form-label" for="cfg-output-lang">Ngôn Ngữ Kịch Bản (Output Language)</label>
-        <select class="form-input" id="cfg-output-lang">
-          <option value="vi">🇻🇳 Tiếng Việt (Vietnamese)</option>
-          <option value="en">🇬🇧 Tiếng Anh (English)</option>
-        </select>
-        <div style="font-size: 10.5px; color: var(--text-dim); margin-top: 4px; line-height: 1.4;">
-          * Chọn ngôn ngữ đầu ra cho lời giảng. Tài liệu tiếng Anh nên chọn English để giữ nguyên thuật ngữ gốc.
-        </div>
-      </div>
-
-      <!-- BASE URL -->
-      <div style="margin-bottom: 14px;">
-        <label class="form-label" for="cfg-base-url">API Base URL</label>
-        <input type="text" class="form-input" id="cfg-base-url" placeholder="https://api.openai.com/v1" value="https://api.openai.com/v1">
-      </div>
-
-
-      <!-- PING TEST STATUS -->
-      <div id="cfg-ping-status" style="display: none; padding: 8px 12px; border-radius: 4px; font-size: 11.5px; margin-bottom: 14px; font-weight: 600;"></div>
-
-      <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px;">
-        <button class="btn-export" id="btn-ping-ai-test" style="font-size: 12px; padding: 6px 14px;">
-          <span>⚡</span> Kiểm Tra (Ping 1 Token)
+  <div class="modal-backdrop" id="modal-api-config" style="display: none; z-index: 9999;">
+    <div class="modal-content" style="max-width: 650px; padding: 0; background: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 40px rgba(0,0,0,0.1);">
+      
+      <!-- TABS HEADER -->
+      <div style="display: flex; background: #f8fafc; border-bottom: 1px solid #e2e8f0; position: relative;" id="ai-config-tabs">
+        <button class="ai-config-tab active" data-prov="gemini_local" style="flex: 1; padding: 14px 0; border: none; background: transparent; font-size: 13px; font-weight: 600; color: #3b82f6; cursor: pointer; border-bottom: 2px solid #3b82f6; display: flex; align-items: center; justify-content: center; gap: 6px;">
+          ⚡ Google <span style="display:inline-block; width:6px; height:6px; border-radius:50%; background:#10b981;"></span>
         </button>
-        <div style="display: flex; gap: 8px;">
-          <button class="btn-export" id="btn-cancel-ai-config">Hủy</button>
-          <button class="btn-primary" id="btn-save-ai-config">Lưu Cấu Hình</button>
+        <button class="ai-config-tab" data-prov="anthropic" style="flex: 1; padding: 14px 0; border: none; background: transparent; font-size: 13px; font-weight: 600; color: #64748b; cursor: pointer; border-bottom: 2px solid transparent; display: flex; align-items: center; justify-content: center; gap: 6px;">
+          🟣 Anthropic
+        </button>
+        <button class="ai-config-tab" data-prov="openai" style="flex: 1; padding: 14px 0; border: none; background: transparent; font-size: 13px; font-weight: 600; color: #64748b; cursor: pointer; border-bottom: 2px solid transparent; display: flex; align-items: center; justify-content: center; gap: 6px;">
+          🟢 OpenAI
+        </button>
+        <button class="ai-config-tab" data-prov="openrouter" style="flex: 1; padding: 14px 0; border: none; background: transparent; font-size: 13px; font-weight: 600; color: #64748b; cursor: pointer; border-bottom: 2px solid transparent; display: flex; align-items: center; justify-content: center; gap: 6px;">
+          🌐 OpenRouter
+        </button>
+        <button class="btn-close-modal" id="btn-close-ai-config" style="position: absolute; right: 8px; top: 8px; background: none; border: none; font-size: 20px; color: #94a3b8; cursor: pointer; padding: 4px 8px;">&times;</button>
+      </div>
+
+      <div style="padding: 24px; padding-top: 16px;">
+        
+        <!-- ENGINE ACTIVATION CARD -->
+        <div style="display: flex; align-items: center; justify-content: space-between; padding: 14px; border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 20px; background: #fff;">
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <div id="cfg-prov-icon" style="font-size: 24px;">⚡</div>
+            <div>
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span id="cfg-prov-title" style="font-weight: 700; color: #0f172a; font-size: 14px;">Google Gemini</span>
+                <span id="cfg-prov-badge" style="background: #f1f5f9; color: #64748b; font-size: 10.5px; padding: 2px 8px; border-radius: 12px; font-weight: 600;">Khuyên dùng</span>
+              </div>
+              <div id="cfg-prov-desc" style="font-size: 12px; color: #64748b; margin-top: 4px;">Miễn phí, tốc độ cao (Google AI Studio)</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- MODEL SELECTION -->
+        <div style="margin-bottom: 20px;">
+          <div style="font-size: 11px; font-weight: 700; color: #4f46e5; margin-bottom: 12px; display: flex; align-items: center; gap: 6px; text-transform: uppercase;">
+            <span style="color: #6366f1;">⚙️</span> MÔ HÌNH THỰC THI (<span id="cfg-lbl-model-group">GOOGLE GEMINI</span>)
+          </div>
+          
+          <div id="cfg-model-list" style="display: flex; flex-direction: column; gap: 8px;">
+            <!-- Rendered by JS -->
+          </div>
+        </div>
+
+        <!-- API KEY INPUT -->
+        <div style="margin-bottom: 24px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <div id="cfg-lbl-key-title" style="font-size: 11.5px; font-weight: 700; color: #475569; text-transform: uppercase;">
+              🔑 API KEY CHO GOOGLE GEMINI
+            </div>
+            <a href="https://aistudio.google.com/app/apikey" target="_blank" id="cfg-key-link" style="font-size: 11.5px; color: #4f46e5; text-decoration: none; font-weight: 600;">Lấy Key tại Google AI Studio &rarr;</a>
+          </div>
+          <div style="position: relative;">
+            <!-- DYNAMIC BASE URL (Mặc định ẩn, chỉ hiện ở OpenRouter/OpenAI Compatible) -->
+            <div id="cfg-base-url-container" style="display: none; margin-bottom: 12px;">
+              <input type="text" id="cfg-base-url" placeholder="VD: https://openrouter.ai/api/v1" style="width: 100%; padding: 12px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #0f172a; background: #fff; box-sizing: border-box;">
+            </div>
+
+            <input type="password" id="cfg-api-key" placeholder="Để trống để dùng khóa mặc định hệ thống" style="width: 100%; padding: 12px 14px; padding-right: 40px; border: 1px solid #cbd5e1; border-radius: 8px; font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #0f172a; background: #fff; box-sizing: border-box;">
+            <button type="button" id="btn-toggle-cfg-key" style="position: absolute; right: 12px; bottom: 0px; height: 43px; background: none; border: none; color: #94a3b8; cursor: pointer; font-size: 16px;">👁️</button>
+          </div>
+          <div id="cfg-key-hint" style="font-size: 11.5px; color: #64748b; margin-top: 10px; line-height: 1.4;">
+            Khuyên dùng để trống: Hệ thống tự động sử dụng khóa Google Gemini đã cấu hình sẵn trên máy chủ.
+          </div>
+        </div>
+
+        <!-- FOOTER ACTIONS -->
+        <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #f1f5f9; padding-top: 16px;">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <button id="btn-ping-ai-test" style="background: #fff; border: 1px solid #e2e8f0; color: #64748b; cursor: pointer; display: flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 600; padding: 8px 12px; border-radius: 6px;">⚡ Kiểm tra kết nối</button>
+            <span id="cfg-ping-status" style="font-size: 12px; font-weight: 500; color: #10b981;"></span>
+          </div>
+          <div style="display: flex; gap: 10px;">
+            <button id="btn-cancel-ai-config" style="background: none; border: none; color: #475569; font-weight: 600; font-size: 13px; cursor: pointer; padding: 8px 16px;">Hủy</button>
+            <button id="btn-save-ai-config" style="background: #4f46e5; color: #fff; border: none; padding: 8px 20px; border-radius: 6px; font-weight: 600; font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 6px;"><span>✓</span> Lưu & Kích hoạt</button>
+          </div>
         </div>
       </div>
     </div>
@@ -14064,6 +14054,59 @@ ${foreshadowText}`;
       showToast(`Đã xuất hồ sơ dữ liệu JSON toàn diện: ${filename}`);
     });
 
+    document.getElementById('btn-export-pptx').addEventListener('click', async () => {
+      const data = getActiveScriptDocumentData();
+      if (!data || !data.flatSegments || data.flatSegments.length === 0) {
+        showToast('⚠️ Không có dữ liệu để tải slide!');
+        return;
+      }
+      showToast('⏳ Đang tạo slide PowerPoint...');
+      try {
+        let pres = new PptxGenJS();
+        pres.layout = 'LAYOUT_16x9';
+        pres.author = 'CLSG Studio Pro';
+        pres.company = 'CLSG';
+        pres.title = data.meta.title || 'Slide Bài Giảng';
+
+        // Title slide
+        let slide = pres.addSlide();
+        slide.background = { color: 'F8FAFC' };
+        slide.addText(data.meta.title || 'BÀI GIẢNG', { x: 1, y: 2, w: '80%', h: 1.5, fontSize: 40, bold: true, color: '0F172A', align: 'center' });
+        if (data.meta.desc) {
+             slide.addText(data.meta.desc, { x: 1.5, y: 3.5, w: '70%', h: 1, fontSize: 20, color: '475569', align: 'center' });
+        }
+
+        data.flatSegments.forEach(seg => {
+             let s = pres.addSlide();
+             // Header
+             s.addText(seg.title || 'Mục Mới', { x: 0.5, y: 0.3, w: '90%', h: 0.8, fontSize: 28, bold: true, color: '1E293B', border: [0, 0, {pt:2, color:'3B82F6'}, 0] });
+             
+             // Body
+             let content = [];
+             if (seg.summary) content.push({ text: `Khái niệm: ${seg.summary}`, options: { bullet: true, color: '334155', breakLine: true } });
+             if (seg.keyPoint) content.push({ text: `Trọng tâm: ${seg.keyPoint}`, options: { bullet: true, color: '334155', breakLine: true } });
+             if (seg.mechanism) content.push({ text: `Cơ chế: ${seg.mechanism}`, options: { bullet: true, color: '334155', breakLine: true } });
+             if (seg.details) content.push({ text: `Chi tiết: ${seg.details}`, options: { bullet: true, color: '334155', breakLine: true } });
+             
+             if (content.length > 0) {
+                 s.addText(content, { x: 0.5, y: 1.5, w: '90%', h: 3.5, fontSize: 18, align: 'left', valign: 'top' });
+             }
+
+             // Narration Notes
+             if (seg.narration) {
+                 s.addNotes(seg.narration);
+             }
+        });
+
+        const filename = `${(data.meta.title || 'Slide').replace(/[^a-z0-9]/gi, '_')}.pptx`;
+        await pres.writeFile({ fileName: filename });
+        showToast('🎉 Đã tải slide thành công!');
+      } catch (e) {
+        showToast(`❌ Lỗi tạo slide: ${e.message}`);
+        console.error(e);
+      }
+    });
+
     // SEARCH FILTER PROJECTS
     document.getElementById('project-search').addEventListener('input', (e) => {
       renderProjectsGrid(e.target.value);
@@ -14088,7 +14131,7 @@ ${foreshadowText}`;
     });
 
     // =========================================================================
-    // MODAL: AI & API KEY CONFIGURATION CONTROLLER
+    // MODAL: AI & API KEY CONFIGURATION CONTROLLER (MULTI-PROVIDER)
     // =========================================================================
     const modalAiConfig = document.getElementById('modal-api-config');
     const btnOpenAiCfg = document.getElementById('btn-open-ai-config');
@@ -14098,144 +14141,229 @@ ${foreshadowText}`;
     const btnSaveAiCfg = document.getElementById('btn-save-ai-config');
     const btnPingAiTest = document.getElementById('btn-ping-ai-test');
 
-    const radioProvGemini = document.getElementById('radio-prov-gemini');
-    const radioProvOpenai = document.getElementById('radio-prov-openai');
-    const cardProvGemini = document.getElementById('card-prov-gemini');
-    const cardProvOpenai = document.getElementById('card-prov-openai');
-
-    const cfgModelSelect = document.getElementById('cfg-model-select');
+    const cfgModelSelect = document.getElementById('cfg-model-list');
     const cfgBaseUrl = document.getElementById('cfg-base-url');
+    const cfgBaseUrlContainer = document.getElementById('cfg-base-url-container');
+    const cfgApiKey = document.getElementById('cfg-api-key');
     const cfgPingStatus = document.getElementById('cfg-ping-status');
+    const cfgKeyHint = document.getElementById('cfg-key-hint');
+    const cfgLblKeyTitle = document.getElementById('cfg-lbl-key-title');
+    const cfgKeyLink = document.getElementById('cfg-key-link');
+    
+    const cfgProvIcon = document.getElementById('cfg-prov-icon');
+    const cfgProvTitle = document.getElementById('cfg-prov-title');
+    const cfgProvBadge = document.getElementById('cfg-prov-badge');
+    const cfgProvDesc = document.getElementById('cfg-prov-desc');
+    const cfgLblModelGroup = document.getElementById('cfg-lbl-model-group');
+    const aiConfigTabs = document.querySelectorAll('.ai-config-tab');
 
-    const PROVIDER_MODELS = {
-      gemini_local: [
-        { value: 'gemini-2.5-flash', label: 'gemini-2.5-flash (Khuyên dùng)' },
-        { value: 'gemini-pro-latest', label: 'gemini-pro-latest (Cao cấp)' }
-      ],
-      openai: [
-        { value: 'gpt-4o-mini', label: 'gpt-4o-mini (Khuyên dùng)' },
-        { value: 'gpt-4o', label: 'gpt-4o (Cao cấp)' }
-      ]
+    // PROVIDER CONFIGURATIONS
+    const PROVIDERS_INFO = {
+      openrouter: {
+        id: 'openrouter',
+        icon: '🌐', title: 'OpenRouter (Tất cả mô hình)', badge: 'Đề xuất', desc: '1 API Key dùng được Claude 3.5, GPT-4o, DeepSeek, Llama mà không lo chặn CORS.',
+        baseUrl: 'https://openrouter.ai/api/v1',
+        models: [
+          { value: 'google/gemini-2.5-flash', label: 'Gemini 2.5 Flash' },
+          { value: 'anthropic/claude-3.5-sonnet', label: 'Claude 3.5 Sonnet' },
+          { value: 'openai/gpt-4o-mini', label: 'GPT-4o Mini' },
+          { value: 'deepseek/deepseek-chat', label: 'DeepSeek V3' }
+        ],
+        keyLabel: '🔑 API KEY CHO OPENROUTER', keyLink: 'https://openrouter.ai/keys', keyLinkText: 'Lấy Key tại OpenRouter.ai &rarr;',
+        keyPlaceholder: 'sk-or-v1-...',
+        keyHint: 'Mã khóa được lưu trữ an toàn trong LocalStorage. Dùng OpenRouter giúp loại bỏ hoàn toàn lỗi CORS.'
+      },
+      gemini_local: {
+        id: 'gemini_local',
+        icon: '⚡', title: 'Google Gemini', badge: 'Mặc định', desc: 'Miễn phí, tốc độ cao (Google AI Studio)',
+        baseUrl: 'https://generativelanguage.googleapis.com/v1beta/openai',
+        models: [
+          { value: 'gemini-2.5-flash', label: 'gemini-2.5-flash (Khuyên dùng)' },
+          { value: 'gemini-pro-latest', label: 'gemini-pro-latest (Cao cấp)' }
+        ],
+        keyLabel: '🔑 API KEY CHO GOOGLE GEMINI', keyLink: 'https://aistudio.google.com/app/apikey', keyLinkText: 'Lấy Key tại Google AI Studio &rarr;',
+        keyPlaceholder: 'Để trống để dùng khóa mặc định hệ thống',
+        keyHint: 'Khuyên dùng để trống: Hệ thống tự động sử dụng khóa Google Gemini đã cấu hình sẵn trên máy chủ.'
+      },
+      anthropic: {
+        id: 'anthropic',
+        icon: '🟣', title: 'Anthropic Claude', badge: 'Chính hãng', desc: 'Cần thiết lập proxy nếu bị lỗi CORS trên trình duyệt.',
+        baseUrl: 'https://api.anthropic.com/v1', // Proxy usually needed
+        models: [
+          { value: 'claude-3-5-sonnet-20241022', label: 'Claude 3.5 Sonnet' },
+          { value: 'claude-3-5-haiku-20241022', label: 'Claude 3.5 Haiku' }
+        ],
+        keyLabel: '🔑 API KEY CHO ANTHROPIC', keyLink: 'https://console.anthropic.com/settings/keys', keyLinkText: 'Lấy Key tại Anthropic Console &rarr;',
+        keyPlaceholder: 'sk-ant-api03-...',
+        keyHint: 'Lưu ý: API chính hãng của Anthropic chặn CORS trên trình duyệt. Hãy điền Base URL của proxy nếu bạn có (hoặc dùng OpenRouter).'
+      },
+      openai: {
+        id: 'openai',
+        icon: '🟢', title: 'OpenAI', badge: 'Chính hãng', desc: 'Truy cập trực tiếp API của OpenAI.',
+        baseUrl: 'https://api.openai.com/v1',
+        models: [
+          { value: 'gpt-4o-mini', label: 'gpt-4o-mini (Khuyên dùng)' },
+          { value: 'gpt-4o', label: 'gpt-4o (Cao cấp)' }
+        ],
+        keyLabel: '🔑 API KEY CHO OPENAI', keyLink: 'https://platform.openai.com/api-keys', keyLinkText: 'Lấy Key tại OpenAI Platform &rarr;',
+        keyPlaceholder: 'sk-proj-...',
+        keyHint: 'Lưu ý: OpenAI yêu cầu tài khoản đã nạp thẻ (tier 1+).'
+      }
     };
 
-    const PROVIDER_BASE_URLS = {
-      gemini_local: 'https://generativelanguage.googleapis.com/v1beta/openai',
-      openai: 'https://api.openai.com/v1'
+    let tempKeys = {
+      openrouter: '',
+      gemini_local: '',
+      anthropic: '',
+      openai: ''
     };
+    let currentActiveTabProvider = 'openrouter';
 
-    function updateModelOptions(provider, targetModel = null) {
+    function renderModels(providerKey, targetModel = null) {
       if (!cfgModelSelect) return;
-      const models = PROVIDER_MODELS[provider] || PROVIDER_MODELS.openai;
+      const provInfo = PROVIDERS_INFO[providerKey];
       cfgModelSelect.innerHTML = '';
-      models.forEach(m => {
-        const opt = document.createElement('option');
-        opt.value = m.value;
-        opt.textContent = m.label;
-        cfgModelSelect.appendChild(opt);
+      
+      provInfo.models.forEach((m, idx) => {
+        const isSelected = (targetModel === m.value) || (!targetModel && idx === 0);
+        const div = document.createElement('div');
+        div.style.cssText = `display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border: 1px solid ${isSelected ? '#818cf8' : '#e2e8f0'}; border-radius: 8px; background: ${isSelected ? '#eef2ff' : '#f8fafc'}; cursor: pointer; transition: all 0.2s;`;
+        div.innerHTML = `
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <div style="width: 16px; height: 16px; border-radius: 50%; border: 2px solid ${isSelected ? '#4f46e5' : '#cbd5e1'}; display: flex; align-items: center; justify-content: center; background: ${isSelected ? '#4f46e5' : 'transparent'};">
+              ${isSelected ? '<div style="width: 6px; height: 6px; border-radius: 50%; background: #fff;"></div>' : ''}
+            </div>
+            <span style="font-size: 13px; font-weight: ${isSelected ? '600' : '500'}; color: ${isSelected ? '#312e81' : '#475569'};">${m.label}</span>
+          </div>
+        `;
+        div.addEventListener('click', () => {
+          renderModels(providerKey, m.value);
+        });
+        div.dataset.value = m.value;
+        if (isSelected) div.classList.add('selected-model');
+        cfgModelSelect.appendChild(div);
+      });
+    }
+    
+    function getSelectedModel() {
+      const selected = cfgModelSelect.querySelector('.selected-model');
+      return selected ? selected.dataset.value : null;
+    }
+
+    function switchTab(providerKey, targetModel = null) {
+      currentActiveTabProvider = providerKey;
+      const provInfo = PROVIDERS_INFO[providerKey];
+      
+      // Tabs Styling
+      aiConfigTabs.forEach(tab => {
+        if (tab.dataset.prov === providerKey) {
+          tab.classList.add('active');
+          tab.style.borderBottom = '2px solid #3b82f6';
+          tab.style.color = '#3b82f6';
+        } else {
+          tab.classList.remove('active');
+          tab.style.borderBottom = '2px solid transparent';
+          tab.style.color = '#64748b';
+        }
       });
 
-      const validValues = models.map(m => m.value);
-      if (targetModel && validValues.includes(targetModel)) {
-        cfgModelSelect.value = targetModel;
+      // Update Card
+      if (cfgProvIcon) cfgProvIcon.textContent = provInfo.icon;
+      if (cfgProvTitle) cfgProvTitle.textContent = provInfo.title;
+      if (cfgProvBadge) cfgProvBadge.textContent = provInfo.badge;
+      if (cfgProvDesc) cfgProvDesc.textContent = provInfo.desc;
+      if (cfgLblModelGroup) cfgLblModelGroup.textContent = provInfo.title.toUpperCase();
+
+      // Render Models
+      renderModels(providerKey, targetModel);
+
+      // API Key & URL Section
+      if (cfgLblKeyTitle) cfgLblKeyTitle.textContent = provInfo.keyLabel;
+      if (cfgKeyLink) {
+        cfgKeyLink.href = provInfo.keyLink;
+        cfgKeyLink.innerHTML = provInfo.keyLinkText;
+      }
+      if (cfgApiKey) {
+        cfgApiKey.placeholder = provInfo.keyPlaceholder;
+        cfgApiKey.value = tempKeys[providerKey] || '';
+      }
+      if (cfgKeyHint) cfgKeyHint.innerHTML = provInfo.keyHint;
+
+      if (providerKey === 'openrouter' || providerKey === 'anthropic' || providerKey === 'openai') {
+        cfgBaseUrlContainer.style.display = 'block';
+        const cfg = LLMClient.getConfig();
+        // Giữ baseUrl custom nếu là provider hiện tại
+        cfgBaseUrl.value = (cfg.provider === providerKey && cfg.baseUrl) ? cfg.baseUrl : provInfo.baseUrl;
       } else {
-        cfgModelSelect.value = models[0].value;
+        cfgBaseUrlContainer.style.display = 'none';
+        cfgBaseUrl.value = provInfo.baseUrl;
+      }
+      
+      if (cfgPingStatus) {
+         cfgPingStatus.textContent = '';
+         cfgPingStatus.style.border = 'none';
+         cfgPingStatus.style.background = 'transparent';
       }
     }
 
-    function updateProviderCardStyles(selectedProvider) {
-      if (selectedProvider === 'gemini_local') {
-        if (cardProvGemini) {
-          cardProvGemini.style.background = 'rgba(16, 185, 129, 0.15)';
-          cardProvGemini.style.borderColor = '#10b981';
-        }
-        if (cardProvOpenai) {
-          cardProvOpenai.style.background = 'rgba(255, 255, 255, 0.04)';
-          cardProvOpenai.style.borderColor = 'rgba(255, 255, 255, 0.12)';
-        }
-      } else {
-        if (cardProvOpenai) {
-          cardProvOpenai.style.background = 'rgba(56, 189, 248, 0.15)';
-          cardProvOpenai.style.borderColor = 'var(--cyan)';
-        }
-        if (cardProvGemini) {
-          cardProvGemini.style.background = 'rgba(255, 255, 255, 0.04)';
-          cardProvGemini.style.borderColor = 'rgba(255, 255, 255, 0.12)';
-        }
-      }
-    }
+    aiConfigTabs.forEach(tab => {
+      tab.addEventListener('click', (e) => {
+        // Save current key typed before switching
+        if (cfgApiKey) tempKeys[currentActiveTabProvider] = cfgApiKey.value.trim();
+        switchTab(e.currentTarget.dataset.prov);
+      });
+    });
 
-    // BIẾN LƯU TẠM KEY TỪNG BÊN ĐỂ KHÔNG BỊ GHI ĐÈ LẪN NHAU
-    let tempGeminiApiKey = '';
-    let tempOpenaiApiKey = '';
+    document.getElementById('btn-toggle-cfg-key')?.addEventListener('click', () => {
+      if (cfgApiKey.type === 'password') {
+        cfgApiKey.type = 'text';
+      } else {
+        cfgApiKey.type = 'password';
+      }
+    });
 
     function updateAiBadge() {
       const badge = document.getElementById('lbl-active-ai-badge');
       const dot = document.getElementById('top-ai-dot');
       if (!badge) return;
       const cfg = LLMClient.getConfig();
-      if (cfg.provider === 'openai') {
-        const hasKey = Boolean(cfg.openaiApiKey || (cfg.apiKey && cfg.apiKey.startsWith('sk-')));
-        badge.textContent = `⚙️ AI: ${cfg.model || 'gpt-4o-mini'} (${hasKey ? 'OpenAI riêng' : 'OpenAI'})`;
-        if (dot) {
-          dot.style.background = '#10b981';
-          dot.style.boxShadow = '0 0 8px #10b981';
-        }
-      } else {
-        const hasKey = Boolean(cfg.geminiApiKey || (cfg.apiKey && !cfg.apiKey.startsWith('sk-')));
-        badge.textContent = `⚙️ AI: ${cfg.model || 'gemini-2.5-flash'} (${hasKey ? 'Gemini riêng' : 'Gemini'})`;
-        if (dot) {
-          dot.style.background = '#38bdf8';
-          dot.style.boxShadow = '0 0 6px #38bdf8';
-        }
+      
+      let title = cfg.provider;
+      if (cfg.provider === 'openrouter') title = 'OpenRouter';
+      if (cfg.provider === 'gemini_local') title = 'Google Gemini';
+      if (cfg.provider === 'openai') title = 'OpenAI';
+      if (cfg.provider === 'anthropic') title = 'Anthropic';
+
+      badge.textContent = `⚙️ AI: ${cfg.model || 'gpt-4o-mini'} (${title})`;
+      if (dot) {
+        dot.style.background = '#10b981';
+        dot.style.boxShadow = '0 0 8px #10b981';
       }
     }
 
-    // Khởi tạo nhãn model trên nút header
     setTimeout(updateAiBadge, 100);
-
-    // NÚT CẤU HÌNH AI TRÊN TOP HEADER
     document.getElementById('btn-top-open-ai-config')?.addEventListener('click', openAiConfigModal);
-
-    function updateApiKeyField(provider) {
-      const keyInput = document.getElementById('cfg-api-key');
-      const keyLabel = document.getElementById('lbl-cfg-key-title');
-      const keyHint = document.getElementById('hint-cfg-key-text');
-      if (!keyInput) return;
-
-      if (provider === 'gemini_local') {
-        keyInput.value = tempGeminiApiKey;
-        keyInput.placeholder = "Để trống để dùng khóa mặc định hệ thống Google Gemini (hoặc dán key AIza...)";
-        if (keyLabel) keyLabel.textContent = "Khóa Google Gemini (Tùy chọn)";
-        if (keyHint) keyHint.innerHTML = "* <strong>Khuyên dùng:</strong> Có thể để trống để dùng khóa hệ thống miễn phí hoặc dán Google AI Studio API Key cá nhân.";
-      } else {
-        keyInput.value = tempOpenaiApiKey;
-        keyInput.placeholder = "Dán khóa OpenAI API cá nhân (bắt đầu bằng sk-...)";
-        if (keyLabel) keyLabel.textContent = "Khóa OpenAI API (Bắt buộc khi dùng OpenAI)";
-        if (keyHint) keyHint.innerHTML = "* <strong>Lưu ý:</strong> OpenAI yêu cầu API Key có số dư (credit). Khóa của bạn được bảo mật tuyệt đối trên trình duyệt.";
-      }
-    }
 
     function openAiConfigModal() {
       const cfg = LLMClient.getConfig();
-      tempGeminiApiKey = cfg.geminiApiKey || '';
-      tempOpenaiApiKey = cfg.openaiApiKey || (cfg.apiKey && cfg.apiKey.startsWith('sk-') ? cfg.apiKey : '');
-
-      const currentProvider = (cfg.provider === 'openai') ? 'openai' : 'gemini_local';
-
-      if (currentProvider === 'gemini_local') {
-        if (radioProvGemini) radioProvGemini.checked = true;
-      } else {
-        if (radioProvOpenai) radioProvOpenai.checked = true;
+      
+      tempKeys.gemini_local = cfg.geminiApiKey || '';
+      tempKeys.openrouter = cfg.openrouterApiKey || '';
+      tempKeys.anthropic = cfg.anthropicApiKey || '';
+      tempKeys.openai = cfg.openaiApiKey || '';
+      
+      // Migrate from old config format
+      if (cfg.apiKey && !cfg.openaiApiKey && !cfg.geminiApiKey) {
+          if (cfg.apiKey.startsWith('sk-or')) tempKeys.openrouter = cfg.apiKey;
+          else if (cfg.apiKey.startsWith('sk-ant')) tempKeys.anthropic = cfg.apiKey;
+          else if (cfg.apiKey.startsWith('sk-')) tempKeys.openai = cfg.apiKey;
+          else tempKeys.gemini_local = cfg.apiKey;
       }
-      updateProviderCardStyles(currentProvider);
-      updateModelOptions(currentProvider, cfg.model);
 
-      if (cfgBaseUrl) cfgBaseUrl.value = cfg.baseUrl || PROVIDER_BASE_URLS[currentProvider];
-      updateApiKeyField(currentProvider);
+      let currentProvider = cfg.provider || 'gemini_local';
+      if (!PROVIDERS_INFO[currentProvider]) currentProvider = 'openrouter';
 
-      const cfgOutputLang = document.getElementById('cfg-output-lang');
-      if (cfgOutputLang) cfgOutputLang.value = cfg.outputLang || 'vi';
-      if (cfgPingStatus) cfgPingStatus.style.display = 'none';
+      switchTab(currentProvider, cfg.model);
 
       if (modalAiConfig) modalAiConfig.style.display = 'flex';
     }
@@ -14252,75 +14380,33 @@ ${foreshadowText}`;
       if (e.target === modalAiConfig) closeAiConfigModal();
     });
 
-    radioProvGemini?.addEventListener('change', () => {
-      if (radioProvGemini.checked) {
-        // Lưu tạm key cũ trước khi chuyển
-        const keyInput = document.getElementById('cfg-api-key');
-        if (keyInput) tempOpenaiApiKey = keyInput.value.trim();
-
-        updateProviderCardStyles('gemini_local');
-        updateModelOptions('gemini_local', 'gemini-2.5-flash');
-        if (cfgBaseUrl) cfgBaseUrl.value = PROVIDER_BASE_URLS.gemini_local;
-        updateApiKeyField('gemini_local');
-        if (cfgPingStatus) cfgPingStatus.style.display = 'none';
-      }
-    });
-
-    cardProvGemini?.addEventListener('click', () => {
-      if (radioProvGemini && !radioProvGemini.checked) {
-        radioProvGemini.checked = true;
-        radioProvGemini.dispatchEvent(new Event('change'));
-      }
-    });
-
-    radioProvOpenai?.addEventListener('change', () => {
-      if (radioProvOpenai.checked) {
-        // Lưu tạm key cũ trước khi chuyển
-        const keyInput = document.getElementById('cfg-api-key');
-        if (keyInput) tempGeminiApiKey = keyInput.value.trim();
-
-        updateProviderCardStyles('openai');
-        updateModelOptions('openai', 'gpt-4o-mini');
-        if (cfgBaseUrl) cfgBaseUrl.value = PROVIDER_BASE_URLS.openai;
-        updateApiKeyField('openai');
-        if (cfgPingStatus) cfgPingStatus.style.display = 'none';
-      }
-    });
-
-    cardProvOpenai?.addEventListener('click', () => {
-      if (radioProvOpenai && !radioProvOpenai.checked) {
-        radioProvOpenai.checked = true;
-        radioProvOpenai.dispatchEvent(new Event('change'));
-      }
-    });
-
     btnPingAiTest?.addEventListener('click', async () => {
       if (!cfgPingStatus) return;
       cfgPingStatus.style.display = 'block';
       cfgPingStatus.style.background = 'rgba(56, 189, 248, 0.15)';
       cfgPingStatus.style.color = '#38bdf8';
       cfgPingStatus.style.border = '1px solid rgba(56, 189, 248, 0.3)';
-      cfgPingStatus.textContent = '⚡ Đang gửi thử 1 token kiểm tra kết nối...';
+      cfgPingStatus.style.padding = '4px 10px';
+      cfgPingStatus.style.borderRadius = '6px';
+      cfgPingStatus.textContent = '⚡ Đang gửi thử 1 token...';
 
-      const provider = radioProvGemini?.checked ? 'gemini_local' : 'openai';
-      const baseUrl = cfgBaseUrl?.value.trim() || PROVIDER_BASE_URLS[provider];
-      const model = cfgModelSelect?.value || (provider === 'openai' ? 'gpt-4o-mini' : 'gemini-2.5-flash');
-      const apiKey = document.getElementById('cfg-api-key')?.value.trim() || '';
+      const provider = currentActiveTabProvider;
+      const baseUrl = cfgBaseUrl?.value.trim() || PROVIDERS_INFO[provider].baseUrl;
+      const model = getSelectedModel() || PROVIDERS_INFO[provider].models[0].value;
+      const apiKey = cfgApiKey?.value.trim() || '';
 
       try {
         const res = await LLMClient.ping({ provider, baseUrl, model, apiKey });
         cfgPingStatus.style.background = 'rgba(16, 185, 129, 0.15)';
         cfgPingStatus.style.color = '#34d399';
         cfgPingStatus.style.border = '1px solid rgba(16, 185, 129, 0.3)';
-        const sourceLabel = apiKey ? 'Khóa cá nhân' : 'Khóa hệ thống (Máy chủ)';
         const respondingModel = res.model || model;
-        const fallbackNote = (res.model && res.model !== model) ? ` (Đã tự động dự phòng từ ${model})` : '';
-        cfgPingStatus.innerHTML = `✅ Kết nối thành công! Phản hồi từ <strong>${respondingModel}</strong> [${sourceLabel}] trong ${res.latency}ms.${fallbackNote}`;
+        cfgPingStatus.innerHTML = `✅ Kết nối thành công! Phản hồi từ <strong>${respondingModel}</strong> trong ${res.latency}ms.`;
       } catch (err) {
         cfgPingStatus.style.background = 'rgba(244, 63, 94, 0.15)';
         cfgPingStatus.style.color = '#fb7185';
         cfgPingStatus.style.border = '1px solid rgba(244, 63, 94, 0.3)';
-        cfgPingStatus.innerHTML = `❌ Kiểm tra thất bại: ${err.message}`;
+        cfgPingStatus.innerHTML = `❌ Lỗi: ${err.message}`;
       }
     });
 
@@ -14330,37 +14416,33 @@ ${foreshadowText}`;
       btnSaveAiCfg.disabled = true;
 
       setTimeout(() => {
-      const provider = radioProvGemini?.checked ? 'gemini_local' : 'openai';
-      const currentInputKey = document.getElementById('cfg-api-key')?.value.trim() || '';
-      if (provider === 'openai') {
-        tempOpenaiApiKey = currentInputKey;
-      } else {
-        tempGeminiApiKey = currentInputKey;
-      }
+        const provider = currentActiveTabProvider;
+        if (cfgApiKey) tempKeys[provider] = cfgApiKey.value.trim();
 
-      const baseUrl = cfgBaseUrl?.value.trim() || PROVIDER_BASE_URLS[provider];
-      const model = cfgModelSelect?.value || (provider === 'openai' ? 'gpt-4o-mini' : 'gemini-2.5-flash');
-      const outputLang = document.getElementById('cfg-output-lang')?.value || 'vi';
+        const baseUrl = cfgBaseUrl?.value.trim() || PROVIDERS_INFO[provider].baseUrl;
+        const model = getSelectedModel() || PROVIDERS_INFO[provider].models[0].value;
+        
+        LLMClient.saveConfig({
+          provider,
+          baseUrl,
+          model,
+          apiKey: tempKeys[provider], // Backward compatibility
+          openaiApiKey: tempKeys.openai,
+          geminiApiKey: tempKeys.gemini_local,
+          openrouterApiKey: tempKeys.openrouter,
+          anthropicApiKey: tempKeys.anthropic
+        });
 
-      LLMClient.saveConfig({
-        provider,
-        baseUrl,
-        model,
-        apiKey: currentInputKey,
-        openaiApiKey: tempOpenaiApiKey,
-        geminiApiKey: tempGeminiApiKey,
-        outputLang
-      });
+        updateAiBadge();
+        closeAiConfigModal();
 
-      updateAiBadge();
-      closeAiConfigModal();
+        btnSaveAiCfg.innerHTML = originalText;
+        btnSaveAiCfg.disabled = false;
 
-      btnSaveAiCfg.innerHTML = originalText;
-      btnSaveAiCfg.disabled = false;
-
-      showToast(`🎉 Đã lưu cấu hình AI thành công: Đang sử dụng [${model}] (${provider === 'openai' ? 'OpenAI Official' : 'Google Gemini'})!`);
-    }, 400);
+        showToast(`🎉 Đã lưu cấu hình AI thành công: Đang sử dụng [${model}]!`);
+      }, 400);
     });
+
 
     // NÚT LƯU ĐỒNG BỘ CLOUD (NEON POSTGRES)
     document.getElementById('btn-cloud-sync')?.addEventListener('click', async () => {
