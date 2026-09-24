@@ -5928,6 +5928,13 @@
       }
     }
 
+    // Bảo hiểm thoát trang hoặc F5 đột ngột: Lưu ngay lập tức vào localStorage
+    window.addEventListener('beforeunload', () => {
+      if (typeof autoSaveWorkspaceState === 'function') {
+        autoSaveWorkspaceState();
+      }
+    });
+
     function triggerAutoSave() {
       if (autoSaveTimer) clearTimeout(autoSaveTimer);
       autoSaveTimer = setTimeout(() => {
@@ -6189,6 +6196,37 @@
         nodeCustomParams[nodeKey] = {};
       }
       nodeCustomParams[nodeKey][paramName] = value;
+
+      // 1. Đồng bộ trực tiếp vào node.data nếu node đang tồn tại trên cây DOM
+      if (typeof currentNodesMap !== 'undefined' && currentNodesMap[nodeKey] && currentNodesMap[nodeKey].data) {
+        currentNodesMap[nodeKey].data[paramName] = value;
+      }
+
+      // 2. Đồng bộ ngược thẳng vào activeProject.scenes và currentScenes
+      if (nodeKey && nodeKey.startsWith('item-')) {
+        const parts = nodeKey.split('-');
+        if (parts.length >= 5) {
+          const itIdx = parseInt(parts.pop());
+          const secIdx = parseInt(parts.pop());
+          const chIdx = parseInt(parts.pop());
+          if (!isNaN(chIdx) && !isNaN(secIdx) && !isNaN(itIdx)) {
+            if (typeof currentScenes !== 'undefined' && currentScenes && currentScenes[chIdx]?.sections?.[secIdx]?.items?.[itIdx]) {
+              currentScenes[chIdx].sections[secIdx].items[itIdx][paramName] = value;
+            }
+            if (typeof activeProject !== 'undefined' && activeProject && activeProject.scenes && activeProject.scenes[chIdx]?.sections?.[secIdx]?.items?.[itIdx]) {
+              activeProject.scenes[chIdx].sections[secIdx].items[itIdx][paramName] = value;
+            }
+          }
+        }
+      }
+
+      // 3. ZERO-LATENCY PERSISTENCE: Lưu đồng bộ ngay vào localStorage không lo mất khi F5 nhanh
+      if (typeof currentProjectId !== 'undefined' && currentProjectId) {
+        try {
+          localStorage.setItem(`clsg_node_params_${currentProjectId}`, JSON.stringify(nodeCustomParams));
+        } catch (e) {}
+      }
+
       if (typeof triggerAutoSave === 'function') triggerAutoSave();
     }
 
@@ -6454,6 +6492,12 @@
               // MẶC ĐỊNH TẤT CẢ CÁC NHÁNH NHỎ NHẤT (LÁ) LÀ 30S
               const itemDur = getNodeParam(itemKey, 'duration', 30);
               const itemTitle = getNodeParam(itemKey, 'title', item.text || item.code);
+              const itemSummary = getNodeParam(itemKey, 'summary', item.summary || '');
+              const itemMech = getNodeParam(itemKey, 'mechanism', item.mechanism || '');
+              const itemKeyPoint = getNodeParam(itemKey, 'key_point', item.key_point || '');
+              const itemDetails = getNodeParam(itemKey, 'details', item.details || '');
+              const itemExamples = getNodeParam(itemKey, 'examples', item.examples || '');
+              const itemNarr = getNodeParam(itemKey, 'narration', item.narration || '');
               return {
                 key: itemKey,
                 parentKey: secKey,
@@ -6466,9 +6510,12 @@
                   text: itemTitle,
                   title: itemTitle,
                   duration: itemDur,
-                  summary: item.summary,
-                  mechanism: item.mechanism,
-                  key_point: item.key_point
+                  summary: itemSummary,
+                  mechanism: itemMech,
+                  key_point: itemKeyPoint,
+                  details: itemDetails,
+                  examples: itemExamples,
+                  narration: itemNarr
                 },
                 children: []
               };
@@ -10192,6 +10239,26 @@ QUY TẮC PHẢN HỒI QUAN TRỌNG:
         const savedParams = JSON.parse(localStorage.getItem(`clsg_node_params_${projId}`) || '{}');
         Object.keys(nodeCustomParams).forEach(k => delete nodeCustomParams[k]);
         Object.assign(nodeCustomParams, savedParams);
+
+        // Đồng bộ các tham số đã khôi phục ngược vào activeProject.scenes và currentScenes
+        Object.entries(nodeCustomParams).forEach(([k, params]) => {
+          if (k.startsWith('item-') && params && typeof params === 'object') {
+            const parts = k.split('-');
+            if (parts.length >= 5) {
+              const itIdx = parseInt(parts.pop());
+              const secIdx = parseInt(parts.pop());
+              const chIdx = parseInt(parts.pop());
+              if (!isNaN(chIdx) && !isNaN(secIdx) && !isNaN(itIdx)) {
+                if (currentScenes && currentScenes[chIdx]?.sections?.[secIdx]?.items?.[itIdx]) {
+                  Object.assign(currentScenes[chIdx].sections[secIdx].items[itIdx], params);
+                }
+                if (activeProject && activeProject.scenes && activeProject.scenes[chIdx]?.sections?.[secIdx]?.items?.[itIdx]) {
+                  Object.assign(activeProject.scenes[chIdx].sections[secIdx].items[itIdx], params);
+                }
+              }
+            }
+          }
+        });
       } catch (e) {}
 
       // Khôi phục danh sách các nhánh đang bị ẩn (excludedNodes) từ localStorage
@@ -10648,9 +10715,9 @@ QUY TẮC PHẢN HỒI QUAN TRỌNG:
           }
         }
 
-        const summary = itemData.summary || '';
-        const mechanism = itemData.mechanism || '';
-        const keyPoint = itemData.key_point || '';
+        const summary = getNodeParam(itKey, 'summary', itemData.summary || '');
+        const mechanism = getNodeParam(itKey, 'mechanism', itemData.mechanism || '');
+        const keyPoint = getNodeParam(itKey, 'key_point', itemData.key_point || '');
 
         const scriptText = await LLMClient.generateSegmentNarration({
           nodeCode,
@@ -10738,10 +10805,11 @@ QUY TẮC PHẢN HỒI QUAN TRỌNG:
                 group.items.push({
                   itKey,
                   code: it.code || `${chIdx + 1}.${secIdx + 1}.${itIdx + 1}`,
-                  title: it.text || it.title || itKey,
-                  summary: it.summary || '',
-                  mechanism: it.mechanism || '',
-                  duration: it.duration || 30
+                  title: getNodeParam(itKey, 'title', it.text || it.title || itKey),
+                  summary: getNodeParam(itKey, 'summary', it.summary || ''),
+                  mechanism: getNodeParam(itKey, 'mechanism', it.mechanism || ''),
+                  key_point: getNodeParam(itKey, 'key_point', it.key_point || ''),
+                  duration: getNodeParam(itKey, 'duration', it.duration || 30)
                 });
               }
             });
@@ -13130,11 +13198,11 @@ QUY TẮC PHẢN HỒI QUAN TRỌNG:
               const itAtts = getNodeParam(itKey, 'attachments', []);
 
               // Cơ chế công thức toán học và tóm tắt sư phạm
-              const itMechanism = it.mechanism || '';
-              const itSummary = it.summary || '';
-              const itKeyPoint = it.key_point || '';
-              const itDetails = it.details || '';
-              const itExamples = it.examples || '';
+              const itMechanism = getNodeParam(itKey, 'mechanism', it.mechanism || '');
+              const itSummary = getNodeParam(itKey, 'summary', it.summary || '');
+              const itKeyPoint = getNodeParam(itKey, 'key_point', it.key_point || '');
+              const itDetails = getNodeParam(itKey, 'details', it.details || '');
+              const itExamples = getNodeParam(itKey, 'examples', it.examples || '');
               const itPageRange = it.pageRange || (it.pdfStart ? `Slide ${it.pdfStart} - ${it.pdfEnd}` : '');
 
               const tStart = cumulativeSec;
