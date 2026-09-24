@@ -4503,7 +4503,7 @@
         }
 
         // Gửi tin nhắn xác nhận vào khung Chat AI Sư Phạm
-        const chatContainer = document.getElementById('ai-chat-messages');
+        var chatContainer = document.getElementById('ai-chat-messages');
         if (chatContainer) {
           const aiDiv = document.createElement('div');
           aiDiv.className = 'chat-msg msg-ai';
@@ -10012,11 +10012,11 @@ OUTPUT: Valid JSON only.
         localStorage.setItem('clsg_chat_history_' + currentProjectId, JSON.stringify(clsgChatSessionHistory));
         if (typeof activeProject !== 'undefined' && activeProject) {
             activeProject.chatHistory = clsgChatSessionHistory;
-            const chatContainer = document.getElementById('ai-chat-messages');
+            var chatContainer = document.getElementById('ai-chat-messages');
             if (chatContainer) activeProject.chatHtml = chatContainer.innerHTML;
             CloudDB.save(activeProject);
         }
-        const chatContainer = document.getElementById('ai-chat-messages');
+        var chatContainer = document.getElementById('ai-chat-messages');
         if (chatContainer) {
           localStorage.setItem('clsg_chat_html_' + currentProjectId, chatContainer.innerHTML);
         }
@@ -10055,7 +10055,7 @@ OUTPUT: Valid JSON only.
       const msg = text || document.getElementById('chat-input')?.value.trim();
       if (!msg) return;
 
-      const chatContainer = document.getElementById('ai-chat-messages');
+      var chatContainer = document.getElementById('ai-chat-messages');
       if (!chatContainer) return;
 
       // 1. Thêm tin nhắn của User
@@ -10481,7 +10481,7 @@ QUY TẮC PHẢN HỒI QUAN TRỌNG:
       if (typeof clsgChatSessionHistory !== 'undefined') {
         clsgChatSessionHistory.length = 0;
       }
-      const chatContainer = document.getElementById('ai-chat-messages');
+      var chatContainer = document.getElementById('ai-chat-messages');
       if (chatContainer) {
         chatContainer.innerHTML = '';
       }
@@ -10546,7 +10546,7 @@ QUY TẮC PHẢN HỒI QUAN TRỌNG:
 
       // [FIX] Chặn thông nhau Chat và Summary giữa các Project + Restore Session
       if (typeof clsgChatSessionHistory !== 'undefined') clsgChatSessionHistory.length = 0;
-      const chatContainer = document.getElementById('ai-chat-messages');
+      var chatContainer = document.getElementById('ai-chat-messages');
       if (chatContainer) {
         try {
           const savedHistory = JSON.parse(localStorage.getItem('clsg_chat_history_' + projId));
