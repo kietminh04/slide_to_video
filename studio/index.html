@@ -5914,6 +5914,35 @@
       return src.id;
     }
 
+    function getNodeHierarchicalCode(node) {
+      if (!node) return '';
+      if (node.data && node.data.code) return String(node.data.code).trim();
+      const k = String(node.key || '');
+      if (k.startsWith('item-')) {
+        const parts = k.split('-');
+        const iIdx = parseInt(parts[parts.length - 1]);
+        const sIdx = parseInt(parts[parts.length - 2]);
+        const cIdx = parseInt(parts[parts.length - 3]);
+        if (!isNaN(cIdx) && !isNaN(sIdx) && !isNaN(iIdx)) {
+          return `${cIdx + 1}.${sIdx + 1}.${iIdx + 1}`;
+        }
+      } else if (k.startsWith('sec-')) {
+        const parts = k.split('-');
+        const sIdx = parseInt(parts[parts.length - 1]);
+        const cIdx = parseInt(parts[parts.length - 2]);
+        if (!isNaN(cIdx) && !isNaN(sIdx)) {
+          return `${cIdx + 1}.${sIdx + 1}`;
+        }
+      } else if (k.startsWith('ch-')) {
+        const parts = k.split('-');
+        const cIdx = parseInt(parts[parts.length - 1]);
+        if (!isNaN(cIdx)) {
+          return `CH${cIdx + 1}`;
+        }
+      }
+      return '';
+    }
+
     function isNodeExcluded(nodeKey, parentKeys = []) {
       if (!nodeKey) return false;
       if (excludedNodes.has(nodeKey)) return true;
@@ -5925,17 +5954,57 @@
       for (const pKey of parentKeys) {
         if (pKey && excludedNodes.has(pKey)) return true;
       }
+      // NÂNG CẤP ĐA TẦNG: Tự động kiểm tra ngược chuỗi tổ tiên trong currentNodesMap
+      if (typeof currentNodesMap !== 'undefined' && currentNodesMap && currentNodesMap[nodeKey]) {
+        let curr = currentNodesMap[nodeKey];
+        while (curr && curr.parentKey) {
+          if (excludedNodes.has(curr.parentKey)) return true;
+          curr = currentNodesMap[curr.parentKey];
+        }
+      }
       return false;
     }
 
     function toggleNodeExclusion(nodeKey) {
       if (excludedNodes.has(nodeKey)) {
         excludedNodes.delete(nodeKey);
+        // Xóa con cháu khỏi danh sách loại trừ
+        if (typeof currentNodesMap !== 'undefined' && currentNodesMap && currentNodesMap[nodeKey]) {
+          function unex(n) {
+            if (n.children) {
+              n.children.forEach(ch => {
+                excludedNodes.delete(ch.key);
+                unex(ch);
+              });
+            }
+          }
+          unex(currentNodesMap[nodeKey]);
+          // Xóa tổ tiên nếu đang bị ẩn để node này hiển thị được
+          let curr = currentNodesMap[nodeKey];
+          while (curr && curr.parentKey) {
+            excludedNodes.delete(curr.parentKey);
+            curr = currentNodesMap[curr.parentKey];
+          }
+        }
       } else {
         excludedNodes.add(nodeKey);
+        // Thêm toàn bộ con cháu vào danh sách loại trừ
+        if (typeof currentNodesMap !== 'undefined' && currentNodesMap && currentNodesMap[nodeKey]) {
+          function ex(n) {
+            if (n.children) {
+              n.children.forEach(ch => {
+                excludedNodes.add(ch.key);
+                ex(ch);
+              });
+            }
+          }
+          ex(currentNodesMap[nodeKey]);
+        }
       }
       renderMindmap();
       renderScriptDocument();
+      if (typeof updateLockedBadge === 'function') updateLockedBadge();
+      if (typeof syncGlobalConfigFromProject === 'function') syncGlobalConfigFromProject();
     }
 
 
@@ -8774,7 +8843,7 @@ OUTPUT: Valid JSON only.
       set(q, answer) {
         if (!answer || answer.includes('không có quyền') || answer.includes('không thể') || answer.length < 20) return;
         const lower = q.toLowerCase();
-        if (/bỏ|giữ|ẩn|xóa|đổi|chỉnh|thời lượng|phút|wpm|tóm tắt|chương|phần|mục/i.test(lower)) return;
+        if (/bỏ|giữ|ẩn|xóa|đổi|chỉnh|thời lượng|phút|wpm|tóm tắt|chương|phần|mục|\d+\.\d+/i.test(lower)) return;
         try {
           const cache = JSON.parse(localStorage.getItem(this.STORAGE_KEY) || '{}');
           const norm = this.normalize(q);
@@ -8854,6 +8923,202 @@ OUTPUT: Valid JSON only.
 
     // CỖ MÁY THỰC THI TẤT ĐỊNH (DETERMINISTIC COPILOT UI ENGINE)
     const CopilotEngine = {
+      findNodesByCode(codeStr) {
+        if (!codeStr) return [];
+        const raw = String(codeStr).trim().toLowerCase();
+        const clean = raw.replace(/^(?:mục|phần|chương|nhánh|node|item|sec|section|chapter)\s*/i, '').trim();
+        const found = [];
+
+        // 1. Quét trong currentNodesMap
+        for (const [key, node] of Object.entries(currentNodesMap || {})) {
+          if (!node || !node.data) continue;
+          const nCode = (node.data.code || '').toLowerCase().trim();
+          const nAutoCode = getNodeHierarchicalCode(node).toLowerCase().trim();
+          const nChap = (node.data.chapter || '').toLowerCase().trim();
+          const nTitle = (node.data.title || node.data.text || '').toLowerCase().trim();
+
+          if (nCode && (nCode === clean || nCode === raw)) {
+            found.push(node);
+            continue;
+          }
+          if (nAutoCode && (nAutoCode === clean || nAutoCode === raw)) {
+            found.push(node);
+            continue;
+          }
+          if (nChap && (nChap === clean || nChap.includes(`chương ${clean}`) || nChap === `ch${clean}`)) {
+            found.push(node);
+            continue;
+          }
+          if (node.level === 1) {
+            const chIdx = node.data.chIdx !== undefined ? node.data.chIdx : (parseInt(clean) - 1);
+            if (String(chIdx + 1) === clean) {
+              found.push(node);
+              continue;
+            }
+          }
+        }
+
+        // 2. Fallback duyệt qua buildDecisionTree nếu currentNodesMap chưa nạp xong
+        if (found.length === 0 && typeof activeProject !== 'undefined' && activeProject) {
+          const roots = buildDecisionTree(activeProject, currentScenes);
+          function walk(n) {
+            if (!n || !n.data) return;
+            const nCode = (n.data.code || '').toLowerCase().trim();
+            const nAutoCode = getNodeHierarchicalCode(n).toLowerCase().trim();
+            if ((nCode && (nCode === clean || nCode === raw)) || (nAutoCode && (nAutoCode === clean || nAutoCode === raw))) {
+              found.push(n);
+            }
+            if (n.children) n.children.forEach(walk);
+          }
+          roots.forEach(walk);
+        }
+
+        return found;
+      },
+
+      excludeByCodes(codes) {
+        if (!Array.isArray(codes) || codes.length === 0) return false;
+        let changed = false;
+        codes.forEach(c => {
+          const nodes = this.findNodesByCode(c);
+          nodes.forEach(node => {
+            excludedNodes.add(node.key);
+            changed = true;
+            function exChildren(n) {
+              if (n.children) {
+                n.children.forEach(child => {
+                  excludedNodes.add(child.key);
+                  exChildren(child);
+                });
+              }
+            }
+            exChildren(node);
+          });
+        });
+        if (changed) {
+          this.refresh();
+          return true;
+        }
+        return false;
+      },
+
+      includeByCodes(codes) {
+        if (!Array.isArray(codes) || codes.length === 0) return false;
+        let changed = false;
+        codes.forEach(c => {
+          const nodes = this.findNodesByCode(c);
+          nodes.forEach(node => {
+            excludedNodes.delete(node.key);
+            changed = true;
+            function inChildren(n) {
+              if (n.children) {
+                n.children.forEach(child => {
+                  excludedNodes.delete(child.key);
+                  inChildren(child);
+                });
+              }
+            }
+            inChildren(node);
+            let curr = node;
+            while (curr && curr.parentKey) {
+              excludedNodes.delete(curr.parentKey);
+              curr = currentNodesMap[curr.parentKey];
+            }
+          });
+        });
+        if (changed) {
+          this.refresh();
+          return true;
+        }
+        return false;
+      },
+
+      setOnlyCodes(codes) {
+        if (!Array.isArray(codes) || codes.length === 0) return false;
+        const targetNodes = [];
+        codes.forEach(c => {
+          const ns = this.findNodesByCode(c);
+          targetNodes.push(...ns);
+        });
+        if (targetNodes.length === 0) return false;
+
+        const keepKeys = new Set();
+        targetNodes.forEach(node => {
+          keepKeys.add(node.key);
+          let curr = node;
+          while (curr && curr.parentKey) {
+            keepKeys.add(curr.parentKey);
+            curr = currentNodesMap[curr.parentKey];
+          }
+          function keepChildren(n) {
+            if (n.children) {
+              n.children.forEach(ch => {
+                keepKeys.add(ch.key);
+                keepChildren(ch);
+              });
+            }
+          }
+          keepChildren(node);
+        });
+
+        for (const [key, n] of Object.entries(currentNodesMap || {})) {
+          if (n.level === 0) continue;
+          if (keepKeys.has(key)) {
+            excludedNodes.delete(key);
+          } else {
+            excludedNodes.add(key);
+          }
+        }
+
+        this.refresh();
+        if (targetNodes[0]) {
+          this.focusNode(targetNodes[0].key);
+        }
+        return true;
+      },
+
+      focusCode(code) {
+        const nodes = this.findNodesByCode(code);
+        if (nodes.length > 0) {
+          const target = nodes[0];
+          let curr = target;
+          while (curr && curr.parentKey) {
+            const pNode = currentNodesMap[curr.parentKey];
+            if (pNode) pNode.isExpanded = true;
+            curr = pNode;
+          }
+          return this.focusNode(target.key);
+        }
+        return false;
+      },
+
+      openEditorCode(code) {
+        const nodes = this.findNodesByCode(code);
+        if (nodes.length > 0) {
+          const target = nodes[0];
+          this.switchTab('mindmap');
+          this.focusNode(target.key);
+          const card = document.getElementById(`node-${target.key}`);
+          setTimeout(() => {
+            if (typeof openNodeTuningTerminal === 'function') openNodeTuningTerminal(target, card);
+          }, 350);
+          return true;
+        }
+        return false;
+      },
+
+      speakCode(code) {
+        const nodes = this.findNodesByCode(code);
+        if (nodes.length > 0) {
+          const target = nodes[0];
+          const text = target.data?.narration || target.data?.summary || target.data?.title || '';
+          if (text) {
+            return this.speakNarration(text);
+          }
+        }
+        return false;
+      },
+
       switchTab(tabName) {
         if (['mindmap', 'script', 'video'].includes(tabName)) {
           switchCenterTab(tabName);
@@ -9189,7 +9454,13 @@ OUTPUT: Valid JSON only.
         let didSomething = false;
         actions.forEach(act => {
           const type = act.type || act.action;
-          if (type === 'set_only_chapters') didSomething = this.setOnlyChapters(act.chapters || []) || didSomething;
+          if (type === 'exclude_codes') didSomething = this.excludeByCodes(act.codes || []) || didSomething;
+          else if (type === 'include_codes') didSomething = this.includeByCodes(act.codes || []) || didSomething;
+          else if (type === 'set_only_codes') didSomething = this.setOnlyCodes(act.codes || []) || didSomething;
+          else if (type === 'focus_code') didSomething = this.focusCode(act.code) || didSomething;
+          else if (type === 'open_editor_code') didSomething = this.openEditorCode(act.code) || didSomething;
+          else if (type === 'speak_code') didSomething = this.speakCode(act.code) || didSomething;
+          else if (type === 'set_only_chapters') didSomething = this.setOnlyChapters(act.chapters || []) || didSomething;
           else if (type === 'exclude_chapters') didSomething = this.excludeChapters(act.chapters || []) || didSomething;
           else if (type === 'include_chapters') didSomething = this.includeChapters(act.chapters || []) || didSomething;
           else if (type === 'set_chapter_duration') didSomething = this.setChapterDuration(act.chapter, act.seconds) || didSomething;
@@ -9262,6 +9533,65 @@ OUTPUT: Valid JSON only.
         return learned.actions;
       }
 
+      // =======================================================================
+      // NHẬN DIỆN MÃ PHÂN CẤP THẬP PHÂN GIAO DIỆN MỚI (VÍ DỤ: 1.1, 1.2, 1.1.1...)
+      // =======================================================================
+
+      // A. CHỈ GIỮ LẠI MÃ PHÂN CẤP: "chỉ giữ 1.1", "để lại mục 1.1", "bỏ hết chỉ giữ 1.1", "chỉ lấy 1.1.1"
+      const mOnlyCode = msg.match(/(?:chỉ\s*(?:cần|lấy|giữ(?:\s*lại)?|chọn|để\s*lại|chừa(?:\s*lại)?)|giữ\s*lại|để\s*lại|chừa\s*lại)\s*(?:mỗi\s*|duy\s*nhất\s*)?(?:mục|phần|nhánh|node)?\s*([0-9]+(?:\.[0-9]+)+(?:[\s,và]+[0-9]+(?:\.[0-9]+)+)*)/i) ||
+                        msg.match(/(?:ẩn|bỏ|xóa|tắt)\s+(?:hết|tất\s*cả|toàn\s*bộ).*?(?:chỉ\s*giữ|chỉ\s*lấy|để\s*lại)\s*(?:mục|phần|nhánh)?\s*([0-9]+(?:\.[0-9]+)+(?:[\s,và]+[0-9]+(?:\.[0-9]+)+)*)/i);
+      if (mOnlyCode) {
+        const raw = mOnlyCode[1];
+        const codes = (raw.match(/[0-9]+(?:\.[0-9]+)+/g) || []);
+        if (codes.length > 0) {
+          actions.push({ type: 'set_only_codes', codes });
+          return actions;
+        }
+      }
+
+      // B. ẨN / BỎ / TẮT / XÓA MÃ PHÂN CẤP: "ẩn 1.1 đi", "bỏ 1.1", "ẩn mục 1.1", "ẩn phần 1.1", "ẩn 1.1.1 đi", "tắt 1.1"
+      const mExCode = msg.match(/(?:ẩn|bỏ|loại\s*bỏ|xóa|tắt)\s*(?:các\s*)?(?:mục|phần|nhánh|node)?\s*([0-9]+(?:\.[0-9]+)+(?:[\s,và]+[0-9]+(?:\.[0-9]+)+)*)\s*(?:đi|nhé|nha|thôi|này)?/i);
+      if (mExCode) {
+        const raw = mExCode[1];
+        const codes = (raw.match(/[0-9]+(?:\.[0-9]+)+/g) || []);
+        if (codes.length > 0) {
+          actions.push({ type: 'exclude_codes', codes });
+          return actions;
+        }
+      }
+
+      // C. BẬT LẠI / HIỆN / KHÔI PHỤC MÃ PHÂN CẤP: "bật lại 1.1", "hiện 1.1", "mở lại 1.1", "khôi phục 1.1", "hiện 1.1.1"
+      const mIncCode = msg.match(/(?:khôi\s*phục|bật\s*lại|mở\s*lại|thêm\s*lại|hiện(?:\s*lại)?|bật)\s*(?:các\s*)?(?:mục|phần|nhánh|node)?\s*([0-9]+(?:\.[0-9]+)+(?:[\s,và]+[0-9]+(?:\.[0-9]+)+)*)\s*(?:lại|đi|nhé|nha|thôi|này)?/i);
+      if (mIncCode) {
+        const raw = mIncCode[1];
+        const codes = (raw.match(/[0-9]+(?:\.[0-9]+)+/g) || []);
+        if (codes.length > 0) {
+          actions.push({ type: 'include_codes', codes });
+          return actions;
+        }
+      }
+
+      // D. XEM / LIA TỚI MÃ PHÂN CẤP: "cho tôi xem 1.1", "lia tới 1.1", "xem 1.1", "tập trung vào 1.1"
+      const mFocusCode = msg.match(/(?:cho\s*tôi\s*xem|xem|đưa\s*tôi\s*đến|lia\s*đến|lia\s*tới|tập\s*trung\s*vào)\s*(?:mục|phần|nhánh|node)?\s*([0-9]+(?:\.[0-9]+)+)/i);
+      if (mFocusCode) {
+        actions.push({ type: 'focus_code', code: mFocusCode[1] });
+        return actions;
+      }
+
+      // E. ĐỌC THỬ / NGHE MÃ PHÂN CẤP: "đọc thử 1.1", "đọc 1.1", "nghe 1.1", "đọc mục 1.1.1"
+      const mSpeakCode = msg.match(/(?:đọc\s*(?:thử|hộ|cho\s*nghe|to)?|nghe|phát\s*(?:giọng|âm\s*thanh)?)\s*(?:mục|phần|nhánh|nội\s*dung)?\s*([0-9]+(?:\.[0-9]+)+)/i);
+      if (mSpeakCode) {
+        actions.push({ type: 'speak_code', code: mSpeakCode[1] });
+        return actions;
+      }
+
+      // F. MỞ CHỈNH SỬA MÃ PHÂN CẤP: "mở chỉnh sửa 1.1", "sửa 1.1", "chỉnh 1.1"
+      const mEditCode = msg.match(/(?:mở\s*(?:chỉnh\s*sửa|bảng|ngăn\s*kéo|editor)|chỉnh\s*sửa|sửa|chỉnh)\s*(?:mục|phần|nhánh)?\s*([0-9]+(?:\.[0-9]+)+)/i);
+      if (mEditCode) {
+        actions.push({ type: 'open_editor_code', code: mEditCode[1] });
+        return actions;
+      }
+
       // 00. Câu lệnh lọc sâu tới từng mục/lá: "bản tóm tắt của chương 1, phần d, a1... bỏ hết chỉ giữ lại mình phần đó"
       const mSingleTarget = msg.match(/(?:bản\s*tóm\s*tắt\s*(?:của)?\s*)?chương\s*(\d+).*?phần\s*([a-z0-9]+).*?([a-z]\d+).*(?:bỏ\s*hết|chỉ\s*giữ|chỉ\s*lấy|để\s*lại\s*mình)/i) ||
                             msg.match(/(?:bỏ\s*hết|chỉ\s*giữ|chỉ\s*lấy).*?chương\s*(\d+).*?phần\s*([a-z0-9]+).*?([a-z]\d+)/i);
@@ -9316,7 +9646,7 @@ OUTPUT: Valid JSON only.
       }
       // 2. Bỏ / ẩn / loại bỏ chương X Y
       const mEx = msg.match(/(?:bỏ|loại\s*bỏ|xóa|ẩn|tắt)\s*(?:các\s*)?(?:chương|phần)?\s*([0-9\s,\bvà]+)/i);
-      if (mEx && !mExcept) {
+      if (mEx) {
         const nums = (mEx[1].match(/\b\d+\b/g) || []).map(n => parseInt(n));
         if (nums.length > 0) actions.push({ type: 'exclude_chapters', chapters: nums });
       }
@@ -9540,6 +9870,11 @@ DANH MỤC CÁC LỆNH ĐIỀU KHIỂN GIAO DIỆN BẠN CÓ THỂ RA LỆNH:
 9. "set_chapter_duration": {"type": "set_chapter_duration", "chapter": 1, "seconds": 180}
 10. "switch_tab": {"type": "switch_tab", "tab": "mindmap" | "script" | "video"}
 11. "speak_narration": {"type": "speak_narration", "text": "Lời thoại cần đọc to..."} (phát âm thanh đọc lời giảng)
+12. "exclude_codes": {"type": "exclude_codes", "codes": ["1.1"]} -> Ẩn mục/phần/chương có mã tương ứng (ví dụ: "ẩn 1.1 đi", "bỏ mục 1.2").
+13. "include_codes": {"type": "include_codes", "codes": ["1.1"]} -> Bật lại mục/phần có mã tương ứng (ví dụ: "bật lại 1.1", "hiện 1.2").
+14. "set_only_codes": {"type": "set_only_codes", "codes": ["1.1"]} -> Chỉ giữ lại duy nhất mục/phần này, ẩn toàn bộ các phần khác (ví dụ: "chỉ giữ 1.1", "để lại 1.1").
+15. "focus_code": {"type": "focus_code", "code": "1.1"} -> Lia camera và làm sáng nổi bật mục này (ví dụ: "cho tôi xem 1.1", "lia tới 1.1").
+16. "speak_code": {"type": "speak_code", "code": "1.1"} -> Đọc to lời giảng/tóm tắt của mục này (ví dụ: "đọc thử 1.1").
 
 QUY TẮC PHẢN HỒI QUAN TRỌNG:
 1. ĐỌC HỘ & TÓM TẮT HỘ:
@@ -9667,6 +10002,13 @@ QUY TẮC PHẢN HỒI QUAN TRỌNG:
       let localReply = "";
       if (localActions.length > 0) {
         CopilotEngine.executeBatch(localActions);
+        const exCodesAct = localActions.find(a => a.type === 'exclude_codes');
+        const inCodesAct = localActions.find(a => a.type === 'include_codes');
+        const onlyCodesAct = localActions.find(a => a.type === 'set_only_codes');
+        const focCodeAct = localActions.find(a => a.type === 'focus_code');
+        const speakCodeAct = localActions.find(a => a.type === 'speak_code');
+        const editCodeAct = localActions.find(a => a.type === 'open_editor_code');
+
         const comboAct = localActions.find(a => a.type === 'keep_chapters_and_sections');
         const onlyAct = localActions.find(a => a.type === 'set_only_chapters');
         const exAct = localActions.find(a => a.type === 'exclude_chapters');
@@ -9678,9 +10020,24 @@ QUY TẮC PHẢN HỒI QUAN TRỌNG:
         const tunAct = localActions.find(a => a.type === 'toggle_pane_tuning');
         const srcAct = localActions.find(a => a.type === 'toggle_pane_sources');
         const fsAct = localActions.find(a => a.type === 'fullscreen_mindmap');
-
         const targetAct = localActions.find(a => a.type === 'keep_only_target');
-        if (targetAct) {
+
+        if (exCodesAct) {
+          const codesStr = (exCodesAct.codes || []).join(', ');
+          localReply = `✅ <strong>Trợ lý AI:</strong> Đã ẩn mục/phần <strong>[${escapeHtml(codesStr)}]</strong> khỏi sơ đồ tư duy và kịch bản bài giảng!`;
+        } else if (inCodesAct) {
+          const codesStr = (inCodesAct.codes || []).join(', ');
+          localReply = `✅ <strong>Trợ lý AI:</strong> Đã bật lại mục/phần <strong>[${escapeHtml(codesStr)}]</strong> trên sơ đồ và kịch bản bài giảng!`;
+        } else if (onlyCodesAct) {
+          const codesStr = (onlyCodesAct.codes || []).join(', ');
+          localReply = `🎯 <strong>Trợ lý AI:</strong> Đã lọc sơ đồ, CHỈ GIỮ LẠI mục/phần <strong>[${escapeHtml(codesStr)}]</strong> (các mục khác đã được ẩn tạm thời)!`;
+        } else if (focCodeAct) {
+          localReply = `🎯 <strong>Trợ lý AI:</strong> Đã lia camera và làm nổi bật mục/phần <strong>[${escapeHtml(focCodeAct.code)}]</strong> trên sơ đồ!`;
+        } else if (speakCodeAct) {
+          localReply = `🔊 <strong>Trợ lý AI:</strong> Đang phát âm thanh đọc thử nội dung của mục <strong>[${escapeHtml(speakCodeAct.code)}]</strong>!`;
+        } else if (editCodeAct) {
+          localReply = `✏️ <strong>Trợ lý AI:</strong> Đã mở bảng tinh chỉnh chi tiết cho mục <strong>[${escapeHtml(editCodeAct.code)}]</strong>!`;
+        } else if (targetAct) {
           // Tìm tóm tắt thực tế của target item
           let foundTitle = `Chương ${targetAct.chapter} - Phần ${targetAct.section} - Mục ${targetAct.item}`;
           let foundSummary = "";
