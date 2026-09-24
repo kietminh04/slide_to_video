@@ -7515,7 +7515,7 @@
           // CHẾ ĐỘ CHI TIẾT: Hiển thị đầy đủ cả 5 mục
           html = `
             <li style="margin-bottom: 8px;"><strong>📌 Khái niệm cốt lõi:</strong> <span class="math-tex">${formatMathInText(coreSummary)}</span></li>
-            <li style="margin-bottom: 8px;"><strong>⚙️ Cơ chế & Giải thuật:</strong> <span class="math-tex">${formatMathInText(coreMech)}</span></li>
+            <li style="margin-bottom: 8px;"><strong>⚙️ Phân tích chuyên sâu:</strong> <span class="math-tex">${formatMathInText(coreMech)}</span></li>
             <li style="margin-bottom: 8px;"><strong>💡 Điểm then chốt:</strong> <span class="math-tex">${formatMathInText(coreKeyPoint)}</span></li>`;
           if (coreDetails) {
             html += `<li style="margin-bottom: 8px;"><strong>📋 Nội dung chi tiết:</strong> <span class="math-tex">${formatMathInText(coreDetails)}</span></li>`;
@@ -8230,29 +8230,31 @@
 
       async summarizeNode({ projectTitle, chapterName, sectionName, nodeCode, nodeText }) {
         const cfg = this.getConfig();
-        const prompt = `Bạn là Giảng viên Đại học / Chuyên gia học thuật cấp cao.
-Bài giảng: "${projectTitle}".
-Chương/Phần: "${chapterName} • ${sectionName}".
-Phân đoạn: [${nodeCode}] "${nodeText}".
+        const prompt = `Bài giảng: "${projectTitle}". Chương: "${chapterName} • ${sectionName}". Phân đoạn: [${nodeCode}] "${nodeText}".
 
-BỎ QUA thông tin rác (tên tác giả, trường đại học, nhà xuất bản, số trang, copyright, tài liệu tham khảo, lời mở đầu, mục lục).
+BỎ QUA thông tin rác (tên tác giả, trường đại học, nhà xuất bản, số trang, copyright).
 
-NHIỆM VỤ: Viết BẢN TÓM TẮT HỌC THUẬT CHUYÊN SÂU giúp người học nắm bắt TOÀN BỘ nội dung của phân đoạn này. Không viết qua loa cho có, mà phải ĐỦ CHI TIẾT để người đọc hiểu được bản chất mà KHÔNG CẦN mở giáo trình gốc.
-ĐỊNH DẠNG: Bóc tách nội dung chính xác. NẾU CÓ công thức toán học thì dùng định dạng LaTeX $...$, NHƯNG TUYỆT ĐỐI KHÔNG TỰ BỊA ĐẶT CÔNG THỨC VÀO VĂN BẢN (như Lịch sử Đảng, Xã hội học thì cấm dùng công thức).
+NHIỆM VỤ: Tóm tắt NỘI DUNG THỰC SỰ của phân đoạn trên. Viết tự nhiên, đi thẳng vào nội dung, KHÔNG lặp lại tên trường.
+- Nếu là môn KHOA HỌC TỰ NHIÊN (Toán, Lý, Tin...): dùng LaTeX $...$ cho công thức.
+- Nếu là môn XÃ HỘI (Lịch sử, Triết học, Chính trị...): viết văn xuôi phân tích, TUYỆT ĐỐI KHÔNG dùng thuật ngữ thuật toán/giải thuật/quy trình.
 
-Trả về DUY NHẤT JSON hợp lệ với 5 trường sau (mỗi trường TỐI THIỂU 2-3 câu, phân tích sâu bản chất, bám sát nội dung gốc):
+Trả về DUY NHẤT JSON (KHÔNG markdown, KHÔNG giải thích thêm):
 {
-  "summary": "KHÁI NIỆM CỐT LÕI: Giải thích rõ ràng bản chất lý thuyết, định nghĩa chính thức, ý nghĩa trực quan của khái niệm.",
-  "mechanism": "CƠ CHẾ & GIẢI THUẬT: Mô tả chi tiết quy trình, các bước thực hiện, công thức cốt lõi/nguyên lý hoạt động, cách biến đổi dữ liệu.",
-  "key_point": "ĐIỂM THEN CHỐT: Các lưu ý quan trọng khi áp dụng, điều kiện tiên quyết, giới hạn phương pháp.",
-  "details": "NỘI DUNG CHI TIẾT: Liệt kê và giải thích từng thành phần con, định lý, tính chất, hoặc trường hợp đặc biệt.",
-  "examples": "VÍ DỤ & ỨNG DỤNG: Đưa ra ví dụ cụ thể minh họa khái niệm và ứng dụng thực tiễn."
-}`;
+  "summary": "(2-3 câu) Nội dung cốt lõi: bản chất, ý nghĩa chính của phân đoạn.",
+  "mechanism": "(2-3 câu) Diễn giải sâu hơn: nguyên nhân, cách thức, mối liên hệ giữa các yếu tố.",
+  "key_point": "(2-3 câu) Điểm quan trọng nhất cần ghi nhớ, bài học rút ra.",
+  "details": "(2-3 câu) Các chi tiết bổ sung, số liệu, sự kiện, hoặc tính chất đặc biệt.",
+  "examples": "(2-3 câu) Ví dụ minh họa cụ thể hoặc ứng dụng thực tiễn."
+}
+
+LƯU Ý QUAN TRỌNG:
+- KHÔNG bắt đầu giá trị bằng tên trường (ví dụ KHÔNG viết "Nội dung cốt lõi: ...", mà viết thẳng nội dung).
+- Mỗi trường phải có NỘI DUNG KHÁC NHAU, không lặp ý giữa các trường.`;
 
         const payload = {
           model: cfg.model || 'gemini-2.5-flash-lite',
           messages: [
-            { role: 'system', content: 'Bạn là chuyên gia bóc tách tài liệu học thuật. Trả lời CHI TIẾT, ĐẦY ĐỦ. Bám sát nội dung gốc. Output chuẩn JSON hợp lệ duy nhất.' },
+            { role: 'system', content: 'Bạn là chuyên gia bóc tách tài liệu học thuật đa ngành. Viết tự nhiên, bám sát nội dung gốc. KHÔNG lặp lại tên trường trong giá trị. Output chuẩn JSON hợp lệ duy nhất.' },
             { role: 'user', content: prompt }
           ],
           max_tokens: 2500,
