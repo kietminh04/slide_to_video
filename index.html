@@ -8237,16 +8237,43 @@ Trả về DUY NHẤT JSON hợp lệ với 5 trường sau (mỗi trường T�
         };
 
         // 1. Thử gọi qua server proxy
+                let res = null;
         try {
           const serverUrl = (window.location.origin.startsWith('http') && !window.location.origin.includes('file:'))
             ? `${window.location.origin}/api/llm/chat`
             : 'https://slide-to-video-sigma.vercel.app/api/llm/chat';
-          const res = await fetch(serverUrl, {
+          const proxyPayload = { ...payload, apiKey: cfg.apiKey || '', baseUrl: cfg.baseUrl || '', provider: cfg.provider || 'openai' };
+          const ctl = new AbortController();
+          const tId = setTimeout(() => ctl.abort(), 8000);
+          res = await fetch(serverUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
+            body: JSON.stringify(proxyPayload),
+            signal: ctl.signal
           });
-          if (res.ok) {
+          clearTimeout(tId);
+        } catch (e) {
+          console.warn("[LLM] Server proxy error:", e);
+        }
+
+        if ((!res || !res.ok) && cfg.apiKey) {
+          try {
+            const endpoint = `${cfg.baseUrl.replace(/\/+$/, '')}/chat/completions`;
+            const headers = { 'Content-Type': 'application/json', 'Authorization': `Bearer ${cfg.apiKey}` };
+            const ctl = new AbortController();
+            const tId = setTimeout(() => ctl.abort(), 8000);
+            res = await fetch(endpoint, {
+              method: 'POST',
+              headers,
+              body: JSON.stringify(payload),
+              signal: ctl.signal
+            });
+            clearTimeout(tId);
+          } catch (e) {
+            console.warn("[LLM] Direct endpoint error:", e);
+          }
+        }
+        if (res && res.ok) {
             const data = await res.json();
             const raw = data.choices?.[0]?.message?.content || '';
             const parsed = this.safeJsonParse(raw);
@@ -8478,16 +8505,43 @@ Trả về DUY NHẤT JSON hợp lệ:
           apiKey: cfg.apiKey || ''
         };
 
+                let res = null;
         try {
           const serverUrl = (window.location.origin.startsWith('http') && !window.location.origin.includes('file:'))
             ? `${window.location.origin}/api/llm/chat`
             : 'https://slide-to-video-sigma.vercel.app/api/llm/chat';
-          const res = await fetch(serverUrl, {
+          const proxyPayload = { ...payload, apiKey: cfg.apiKey || '', baseUrl: cfg.baseUrl || '', provider: cfg.provider || 'openai' };
+          const ctl = new AbortController();
+          const tId = setTimeout(() => ctl.abort(), 8000);
+          res = await fetch(serverUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
+            body: JSON.stringify(proxyPayload),
+            signal: ctl.signal
           });
-          if (res.ok) {
+          clearTimeout(tId);
+        } catch (e) {
+          console.warn("[LLM] Server proxy error:", e);
+        }
+
+        if ((!res || !res.ok) && cfg.apiKey) {
+          try {
+            const endpoint = `${cfg.baseUrl.replace(/\/+$/, '')}/chat/completions`;
+            const headers = { 'Content-Type': 'application/json', 'Authorization': `Bearer ${cfg.apiKey}` };
+            const ctl = new AbortController();
+            const tId = setTimeout(() => ctl.abort(), 8000);
+            res = await fetch(endpoint, {
+              method: 'POST',
+              headers,
+              body: JSON.stringify(payload),
+              signal: ctl.signal
+            });
+            clearTimeout(tId);
+          } catch (e) {
+            console.warn("[LLM] Direct endpoint error:", e);
+          }
+        }
+        if (res && res.ok) {
             const data = await res.json();
             const raw = data.choices?.[0]?.message?.content || '';
             const parsed = this.safeJsonParse(raw);
@@ -8575,16 +8629,43 @@ Hãy viết kịch bản lời thoại giảng dạy:`;
           apiKey: cfg.apiKey || ''
         };
 
+                let res = null;
         try {
           const serverUrl = (window.location.origin.startsWith('http') && !window.location.origin.includes('file:'))
             ? `${window.location.origin}/api/llm/chat`
             : 'https://slide-to-video-sigma.vercel.app/api/llm/chat';
-          const res = await fetch(serverUrl, {
+          const proxyPayload = { ...payload, apiKey: cfg.apiKey || '', baseUrl: cfg.baseUrl || '', provider: cfg.provider || 'openai' };
+          const ctl = new AbortController();
+          const tId = setTimeout(() => ctl.abort(), 8000);
+          res = await fetch(serverUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
+            body: JSON.stringify(proxyPayload),
+            signal: ctl.signal
           });
-          if (res.ok) {
+          clearTimeout(tId);
+        } catch (e) {
+          console.warn("[LLM] Server proxy error:", e);
+        }
+
+        if ((!res || !res.ok) && cfg.apiKey) {
+          try {
+            const endpoint = `${cfg.baseUrl.replace(/\/+$/, '')}/chat/completions`;
+            const headers = { 'Content-Type': 'application/json', 'Authorization': `Bearer ${cfg.apiKey}` };
+            const ctl = new AbortController();
+            const tId = setTimeout(() => ctl.abort(), 8000);
+            res = await fetch(endpoint, {
+              method: 'POST',
+              headers,
+              body: JSON.stringify(payload),
+              signal: ctl.signal
+            });
+            clearTimeout(tId);
+          } catch (e) {
+            console.warn("[LLM] Direct endpoint error:", e);
+          }
+        }
+        if (res && res.ok) {
             const data = await res.json();
             const text = data.choices?.[0]?.message?.content || '';
             if (text && text.trim().length > 10) return text.trim();
@@ -8772,16 +8853,43 @@ OUTPUT: Valid JSON only.
           apiKey: cfg.apiKey || ''
         };
 
+                let res = null;
         try {
           const serverUrl = (window.location.origin.startsWith('http') && !window.location.origin.includes('file:'))
             ? `${window.location.origin}/api/llm/chat`
             : 'https://slide-to-video-sigma.vercel.app/api/llm/chat';
-          const res = await fetch(serverUrl, {
+          const proxyPayload = { ...payload, apiKey: cfg.apiKey || '', baseUrl: cfg.baseUrl || '', provider: cfg.provider || 'openai' };
+          const ctl = new AbortController();
+          const tId = setTimeout(() => ctl.abort(), 8000);
+          res = await fetch(serverUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
+            body: JSON.stringify(proxyPayload),
+            signal: ctl.signal
           });
-          if (res.ok) {
+          clearTimeout(tId);
+        } catch (e) {
+          console.warn("[LLM] Server proxy error:", e);
+        }
+
+        if ((!res || !res.ok) && cfg.apiKey) {
+          try {
+            const endpoint = `${cfg.baseUrl.replace(/\/+$/, '')}/chat/completions`;
+            const headers = { 'Content-Type': 'application/json', 'Authorization': `Bearer ${cfg.apiKey}` };
+            const ctl = new AbortController();
+            const tId = setTimeout(() => ctl.abort(), 8000);
+            res = await fetch(endpoint, {
+              method: 'POST',
+              headers,
+              body: JSON.stringify(payload),
+              signal: ctl.signal
+            });
+            clearTimeout(tId);
+          } catch (e) {
+            console.warn("[LLM] Direct endpoint error:", e);
+          }
+        }
+        if (res && res.ok) {
             const data = await res.json();
             const raw = data.choices?.[0]?.message?.content || '';
             const parsed = this.safeJsonParse(raw);
@@ -8825,16 +8933,43 @@ OUTPUT: Valid JSON only, no markdown.
           apiKey: cfg.apiKey || ''
         };
 
+                let res = null;
         try {
           const serverUrl = (window.location.origin.startsWith('http') && !window.location.origin.includes('file:'))
             ? `${window.location.origin}/api/llm/chat`
             : 'https://slide-to-video-sigma.vercel.app/api/llm/chat';
-          const res = await fetch(serverUrl, {
+          const proxyPayload = { ...payload, apiKey: cfg.apiKey || '', baseUrl: cfg.baseUrl || '', provider: cfg.provider || 'openai' };
+          const ctl = new AbortController();
+          const tId = setTimeout(() => ctl.abort(), 8000);
+          res = await fetch(serverUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
+            body: JSON.stringify(proxyPayload),
+            signal: ctl.signal
           });
-          if (res.ok) {
+          clearTimeout(tId);
+        } catch (e) {
+          console.warn("[LLM] Server proxy error:", e);
+        }
+
+        if ((!res || !res.ok) && cfg.apiKey) {
+          try {
+            const endpoint = `${cfg.baseUrl.replace(/\/+$/, '')}/chat/completions`;
+            const headers = { 'Content-Type': 'application/json', 'Authorization': `Bearer ${cfg.apiKey}` };
+            const ctl = new AbortController();
+            const tId = setTimeout(() => ctl.abort(), 8000);
+            res = await fetch(endpoint, {
+              method: 'POST',
+              headers,
+              body: JSON.stringify(payload),
+              signal: ctl.signal
+            });
+            clearTimeout(tId);
+          } catch (e) {
+            console.warn("[LLM] Direct endpoint error:", e);
+          }
+        }
+        if (res && res.ok) {
             const data = await res.json();
             const raw = data.choices?.[0]?.message?.content || '';
             const parsed = this.safeJsonParse(raw);
@@ -10032,7 +10167,7 @@ QUY TẮC PHẢN HỒI QUAN TRỌNG:
           }
         }
 
-        if (res.ok) {
+        if (res && res.ok) {
           const data = await res.json();
           const reply = (data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) || '';
           
@@ -13966,6 +14101,7 @@ QUY TẮC PHẢN HỒI QUAN TRỌNG:
       btnSaveAiCfg.innerHTML = '<span>⏳</span> Đang lưu...';
       btnSaveAiCfg.disabled = true;
 
+      setTimeout(() => {
       const provider = radioProvGemini?.checked ? 'gemini_local' : 'openai';
       const currentInputKey = document.getElementById('cfg-api-key')?.value.trim() || '';
       if (provider === 'openai') {
@@ -13995,6 +14131,7 @@ QUY TẮC PHẢN HỒI QUAN TRỌNG:
       btnSaveAiCfg.disabled = false;
 
       showToast(`🎉 Đã lưu cấu hình AI thành công: Đang sử dụng [${model}] (${provider === 'openai' ? 'OpenAI Official' : 'Google Gemini'})!`);
+    }, 400);
     });
 
     // NÚT LƯU ĐỒNG BỘ CLOUD (NEON POSTGRES)
