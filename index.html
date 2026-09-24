@@ -9767,26 +9767,34 @@ QUY TẮC PHẢN HỒI QUAN TRỌNG:
     // ─────────────────────────────────────────────────────────────
     // HÀM BÓC TÁCH HYBRID TOC-ANCHORED (ƯU TIÊN HÀNG ĐẦU TUYỆT ĐỐI)
     async function extractPdfHybridTOC(pdf, totalPages, fileName = "") {
-      const scanLimit = Math.min(totalPages, Math.max(15, Math.ceil(totalPages * 0.06)));
+      // 1. Quét 5% trang đầu (tối thiểu 2 trang cho slide/tài liệu ngắn để không bỏ sót slide Agenda/Mục lục)
+      const frontLimit = Math.min(totalPages, Math.max(2, Math.ceil(totalPages * 0.05)));
       let tocStartPage = -1;
       let tocEndPage = -1;
       let tocText = '';
 
-      // Quét tìm trang mục lục chuẩn xác bằng kiểm tra phần đầu trang
-      for (let p = 1; p <= scanLimit; p++) {
+      for (let p = 1; p <= frontLimit; p++) {
         try {
           const page = await pdf.getPage(p);
           const content = await page.getTextContent();
           const items = content.items || [];
           const pageStr = items.map(it => it.str).join(' ');
-          const topWords = items.slice(0, 25).map(it => it.str).join(' ').toLowerCase();
+          const topWords = items.slice(0, 30).map(it => it.str).join(' ').toLowerCase();
 
-          // Heading mục lục rõ ràng ở 25 từ đầu trang
-          const hasTocHeading = /\b(contents|table of contents|mục lục|table des matières)\b/i.test(topWords);
-          // Mật độ đề mục kết thúc bằng số trang in
-          const hasNumberedEntries = /(\.\s*|\s{2,})\d+\s*($|\n)/.test(pageStr) || /(\bChapter\s+\d+|\b\d+\.\d+).*?\d+/i.test(pageStr);
+          // Nhận diện heading Mục Lục / Agenda / Outline / Nội dung chính ở phần đầu trang
+          const hasTocHeading = /\b(contents|table of contents|mục lục|table des matières|agenda|outline|nội dung chính|nội dung bài giảng)\b/i.test(topWords);
 
-          if (hasTocHeading || (tocStartPage > 0 && hasNumberedEntries && p - tocEndPage <= 1)) {
+          let isTocPage = false;
+          if (hasTocHeading) {
+            isTocPage = true;
+          } else if (tocStartPage > 0 && (p - tocEndPage === 1)) {
+            // Kiểm tra các trang mục lục nối tiếp: chứa nhiều số trang in, không phải đoạn văn xuôi
+            const rawLines = pageStr.split(/\s{2,}|\n/);
+            const numCount = rawLines.filter(l => /\b\d+\s*$/.test(l.trim())).length;
+            if (numCount >= 4) isTocPage = true;
+          }
+
+          if (isTocPage) {
             if (tocStartPage === -1) tocStartPage = p;
             tocEndPage = p;
             tocText += `\n--- TRANG MỤC LỤC ${p} ---\n` + pageStr;
@@ -9796,29 +9804,42 @@ QUY TẮC PHẢN HỒI QUAN TRỌNG:
         } catch (e) {}
       }
 
-      // Quét thêm 3 trang cuối nếu chưa thấy
-      if (tocStartPage === -1 && totalPages > 10) {
-        for (let p = Math.max(1, totalPages - 3); p <= totalPages; p++) {
+      // 2. Quét 5% trang cuối nếu chưa tìm thấy ở 5% đầu (dành cho sách xếp mục lục ở cuối)
+      const backStart = Math.max(frontLimit + 1, Math.floor(totalPages * 0.95));
+      if (tocStartPage === -1 && backStart <= totalPages) {
+        for (let p = backStart; p <= totalPages; p++) {
           try {
             const page = await pdf.getPage(p);
             const content = await page.getTextContent();
-            const pageStr = (content.items || []).map(it => it.str).join(' ');
-            if (/\b(contents|table of contents|mục lục)\b/i.test(pageStr.slice(0, 200))) {
-              tocStartPage = p;
+            const items = content.items || [];
+            const pageStr = items.map(it => it.str).join(' ');
+            const topWords = items.slice(0, 30).map(it => it.str).join(' ').toLowerCase();
+            const hasTocHeading = /\b(contents|table of contents|mục lục|agenda|outline)\b/i.test(topWords);
+
+            if (hasTocHeading || (tocStartPage > 0 && p - tocEndPage <= 1)) {
+              if (tocStartPage === -1) tocStartPage = p;
               tocEndPage = p;
               tocText += `\n--- TRANG MỤC LỤC ${p} ---\n` + pageStr;
+            } else if (tocStartPage > 0 && (p - tocEndPage >= 2)) {
+              break;
             }
           } catch(e) {}
         }
       }
 
-      if (tocStartPage > 0 && tocText.trim().length >= 80) {
+      if (tocStartPage > 0 && tocText.trim().length >= 60) {
         console.log(`[TOC Extractor] 🎯 Phát hiện Mục lục tại trang PDF ${tocStartPage} -> ${tocEndPage}`);
         window._lastExtractedTocText = tocText;
         updateLoading("Đang phân tích...", "Vui lòng chờ trong giây lát...");
 
         const outlineRes = await LLMClient.extractTOCWithAI(tocText, fileName);
         if (outlineRes && outlineRes.chapters && outlineRes.chapters.length > 0) {
+          // Chuẩn hóa tên chương nếu thiếu
+          outlineRes.chapters.forEach((ch, idx) => {
+            if (!ch.chapter) ch.chapter = `CHƯƠNG ${idx + 1}`;
+            if (!ch.title) ch.title = ch.name || `Chương ${idx + 1}`;
+          });
+
           // Tính Offset trang PDF:
           let pageOffset = 0;
           let firstPrintedStart = 1;
@@ -11905,56 +11926,21 @@ ${tableRows}
       showLoading("Đang phân tích...", "Vui lòng chờ trong giây lát...");
 
       try {
-        // Ưu tiên 1: Lấy TOC text thực sự đã được bóc tách từ file PDF
+        // Ưu tiên 1: Lấy TOC text đã bóc tách từ file trong session hoặc project
         let tocTextToUse = window._lastExtractedTocText 
           || (activeProject && activeProject.tocText) 
           || (activeProject && activeProject.sources && activeProject.sources[0] && activeProject.sources[0].tocText);
-
-        // Nếu là giáo trình Chuỗi thời gian (Brockwell & Davis) mà chưa kịp lưu TOC, dùng chuẩn TOC sách:
-        const isTs = /time\s*series|chuỗi thời gian|arma|giao\s*trinh|brockwell/i.test((activeProject.title || '') + ' ' + (activeProject.desc || ''));
-        if (!tocTextToUse && isTs) {
-          tocTextToUse = `Contents
-1. Introduction 1
-1.1. Examples of Time Series 1
-1.2. Objectives of Time Series Analysis 6
-1.3. Some Simple Time Series Models 7
-1.4. Stationary Models and the Autocorrelation Function 15
-1.5. Estimation and Elimination of Trend and Seasonal Components 23
-1.6. Testing the Estimated Noise Sequence 35
-2. Stationary Processes 45
-2.1. Basic Properties 45
-2.2. Linear Processes 51
-2.3. Introduction to ARMA Processes 55
-2.4. Properties of the Sample Mean and ACF 57
-2.5. Forecasting Stationary Time Series 65
-2.6. The Wold Decomposition 77
-3. ARMA Models 83
-3.1. ARMA(p, q) Processes 83
-3.2. The ACF and PACF of an ARMA(p, q) Process 88
-3.3. Forecasting ARMA Processes 98
-4. Spectral Analysis 111
-4.1. Spectral Densities 112
-4.2. The Periodogram 119
-4.3. Time-Invariant Linear Filters 125
-4.4. The Spectral Density of an ARMA Process 130
-5. Modeling and Forecasting with ARMA Processes 137
-5.1. Preliminary Estimation 138
-5.2. Maximum Likelihood Estimation 146
-5.3. Diagnostic Checking 152
-5.4. Forecasting 158
-5.5. Order Selection 161`;
-        }
 
         let aiResult = null;
         if (tocTextToUse && tocTextToUse.trim().length > 60) {
           aiResult = await LLMClient.extractTOCWithAI(tocTextToUse, activeProject.title);
         }
 
-        // Ưu tiên 2: Nếu không có TOC, lọc bỏ sạch sẽ rác từ scenes cũ
+        // Ưu tiên 2: Nếu chưa có TOC text lưu sẵn, tổng hợp lại các mục và gọi LLM tái cấu trúc sư phạm tổng quát
         if (!aiResult || !aiResult.chapters || aiResult.chapters.length === 0) {
           let textCorpus = `TÊN BÀI GIẢNG: ${activeProject.title}\n`;
           textCorpus += `MÔ TẢ: ${activeProject.desc || ''}\n\n`;
-          textCorpus += `CÁC MỤC ĐỀ BÀI HỌC:\n`;
+          textCorpus += `CÁC MỤC ĐỀ BÀI HỌC CẦN TÁI CẤU TRÚC:\n`;
 
           (currentScenes || []).forEach((sc, idx) => {
             const cleanTitle = (sc.title || '').replace(/\b(Contents|Chapter\s+\d+|Figure\s+\d+|Stephen\s+Fienberg|Springer|New\s+York|x\s+Contents).*$/gi, '').trim();
@@ -11967,17 +11953,23 @@ ${tableRows}
             });
           });
 
-          aiResult = await LLMClient.extractTOCWithAI(textCorpus, activeProject.title);
+          aiResult = await LLMClient.extractDocumentOutlineWithAI(textCorpus, activeProject.title);
         }
 
         if (aiResult && aiResult.chapters && aiResult.chapters.length > 0) {
+          // Chuẩn hóa tên chương
+          aiResult.chapters.forEach((ch, idx) => {
+            if (!ch.chapter) ch.chapter = `CHƯƠNG ${idx + 1}`;
+            if (!ch.title) ch.title = ch.name || `Chương ${idx + 1}`;
+          });
+
           activeProject.scenes = aiResult.chapters;
           currentScenes = JSON.parse(JSON.stringify(activeProject.scenes));
           if (activeProject.sources && activeProject.sources[0]) {
             activeProject.sources[0].extractedHierarchy = JSON.parse(JSON.stringify(aiResult.chapters));
           }
 
-          // Xóa bỏ hoàn toàn các ghi đè rác cũ
+          // Xóa bỏ các ghi đè rác cũ
           try {
             localStorage.removeItem('clsg_node_param_overrides');
             nodeParamOverrides = {};
