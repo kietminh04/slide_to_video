@@ -50,6 +50,10 @@
       padding: 0;
     }
 
+    html, body {
+      height: 100%;
+    }
+
     body {
       background-color: var(--bg-base);
       color: var(--text-main);
@@ -61,6 +65,12 @@
       background-image: 
         radial-gradient(circle at 15% 10%, rgba(99, 102, 241, 0.12) 0%, transparent 40%),
         radial-gradient(circle at 85% 90%, rgba(56, 189, 248, 0.08) 0%, transparent 40%);
+    }
+
+    body.is-workspace {
+      height: 100vh !important;
+      max-height: 100vh !important;
+      overflow: hidden !important;
     }
 
     /* GLOBAL HEADER */
@@ -554,6 +564,9 @@
       flex: 1;
       flex-direction: column;
       height: calc(100vh - 68px);
+      max-height: calc(100vh - 68px);
+      min-height: 0;
+      overflow: hidden;
     }
 
     /* WORKSPACE TOPBAR */
@@ -565,6 +578,7 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
+      flex-shrink: 0;
     }
 
     .ws-breadcrumb {
@@ -605,6 +619,9 @@
       display: flex;
       flex-direction: row;
       flex: 1;
+      height: calc(100% - 52px);
+      max-height: calc(100% - 52px);
+      min-height: 0;
       overflow: hidden;
       position: relative;
     }
@@ -615,6 +632,9 @@
       min-width: 180px;
       max-width: 520px;
       flex-shrink: 0;
+      height: 100%;
+      max-height: 100%;
+      min-height: 0;
       border-right: 1px solid var(--border-subtle);
       background: rgba(10, 15, 26, 0.65);
       display: flex;
@@ -649,6 +669,9 @@
     .pane-center {
       flex: 1;
       min-width: 320px;
+      height: 100%;
+      max-height: 100%;
+      min-height: 0;
       display: flex;
       flex-direction: column;
       overflow: hidden;
@@ -662,11 +685,16 @@
       min-width: 260px;
       max-width: 650px;
       flex-shrink: 0;
+      height: 100%;
+      max-height: 100%;
+      min-height: 0;
       border-left: 1px solid var(--border-subtle);
       background: rgba(10, 15, 26, 0.75);
       display: flex;
       flex-direction: column;
       overflow: hidden;
+      padding: 0;
+      gap: 0;
     }
 
     .pane-header {
@@ -1048,12 +1076,39 @@
     .center-tab-pane {
       display: none;
       flex: 1;
-      overflow-y: auto;
+      height: 100%;
+      max-height: 100%;
+      min-height: 0;
+      overflow: hidden;
       flex-direction: column;
     }
 
     .center-tab-pane.active {
       display: flex;
+    }
+
+    #tab-content-mindmap {
+      height: 100%;
+      max-height: 100%;
+      min-height: 0;
+      overflow: hidden !important;
+      position: relative;
+    }
+
+    #tab-content-script {
+      height: 100%;
+      max-height: 100%;
+      min-height: 0;
+      overflow: hidden !important;
+      position: relative;
+    }
+
+    #tab-content-video {
+      height: 100%;
+      max-height: 100%;
+      min-height: 0;
+      overflow: hidden !important;
+      position: relative;
     }
 
     /* =========================================================================
@@ -2158,13 +2213,12 @@
 
     /* PANE 3: BẢNG TINH CHỈNH THAM SỐ + Ô CHAT AI SƯ PHẠM (LLM CHAT BOX) */
     .pane-tuning {
-      border-left: 1px solid var(--border-subtle);
-      background: rgba(10, 15, 26, 0.75);
-      display: flex;
-      flex-direction: column;
-      overflow-y: auto;
-      padding: 16px;
-      gap: 12px;
+      height: 100%;
+      max-height: 100%;
+      min-height: 0;
+      overflow: hidden;
+      padding: 0;
+      gap: 0;
     }
 
     .tuning-card {
@@ -2450,36 +2504,46 @@
     }
   
     /* =========================================================================
-       BOTTOM DOCKED TERMINAL DRAWER (TUNING & CUSTOM PEDAGOGICAL NOTES)
+       BOTTOM ELEVATED FLOATING TERMINAL DRAWER (TUNING & CUSTOM PEDAGOGICAL NOTES)
        ========================================================================= */
     .mindmap-terminal-drawer {
       position: absolute;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      height: 255px;
-      background: rgba(11, 17, 32, 0.96);
-      backdrop-filter: blur(16px);
-      border-top: 1px solid var(--border-accent);
-      box-shadow: 0 -12px 36px rgba(0, 0, 0, 0.7), 0 0 20px rgba(56, 189, 248, 0.15);
+      bottom: 14px;
+      left: 18px;
+      right: 18px;
+      height: 380px;
+      max-height: calc(100% - 64px);
+      background: rgba(11, 17, 32, 0.98);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--border-accent);
+      border-radius: 12px;
+      box-shadow: 0 16px 48px rgba(0, 0, 0, 0.85), 0 0 25px rgba(56, 189, 248, 0.22);
       display: flex;
       flex-direction: column;
       z-index: 120;
-      transform: translateY(100%);
-      transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+      transform: translateY(calc(100% + 25px));
+      transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), height 0.22s ease;
+      overflow: hidden;
     }
 
     .mindmap-terminal-drawer.is-open {
       transform: translateY(0);
     }
 
+    .mindmap-terminal-drawer.is-expanded {
+      height: 530px;
+      max-height: calc(100% - 20px);
+    }
+
     .terminal-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 7px 14px;
-      background: rgba(15, 23, 42, 0.85);
+      padding: 9px 16px;
+      background: rgba(15, 23, 42, 0.9);
       border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 12px 12px 0 0;
+      flex-shrink: 0;
     }
 
     .terminal-title-group {
@@ -2492,11 +2556,11 @@
       font-family: 'JetBrains Mono', monospace;
       font-weight: 800;
       color: var(--cyan);
-      font-size: 13px;
+      font-size: 13.5px;
     }
 
     .terminal-title-text {
-      font-size: 12px;
+      font-size: 12.5px;
       font-weight: 700;
       color: var(--text-main);
       letter-spacing: 0.2px;
@@ -2505,11 +2569,11 @@
     .terminal-badge-key {
       font-family: 'JetBrains Mono', monospace;
       font-size: 10px;
-      padding: 1px 6px;
+      padding: 2px 7px;
       background: rgba(56, 189, 248, 0.15);
       border: 1px solid rgba(56, 189, 248, 0.3);
       color: var(--cyan);
-      border-radius: 3px;
+      border-radius: 4px;
     }
 
     .terminal-btn-icon {
@@ -2517,45 +2581,47 @@
       border: none;
       color: var(--text-muted);
       cursor: pointer;
-      font-size: 13px;
-      padding: 2px 6px;
-      border-radius: 4px;
+      font-size: 13.5px;
+      padding: 3px 7px;
+      border-radius: 5px;
       transition: all 0.15s;
     }
     .terminal-btn-icon:hover {
-      background: rgba(255, 255, 255, 0.1);
+      background: rgba(255, 255, 255, 0.12);
       color: #fff;
     }
 
     .terminal-body {
       display: flex;
       flex: 1;
-      padding: 10px 14px;
-      gap: 16px;
+      min-height: 0;
+      padding: 12px 18px;
+      gap: 20px;
       overflow: hidden;
     }
 
     .terminal-col-params {
-      flex: 1.1;
+      flex: 1;
       display: flex;
       flex-direction: column;
-      gap: 8px;
-      border-right: 1px solid rgba(255, 255, 255, 0.06);
-      padding-right: 14px;
+      gap: 12px;
+      border-right: 1px solid rgba(255, 255, 255, 0.08);
+      padding-right: 18px;
       overflow-y: auto;
     }
 
     .terminal-col-notes {
-      flex: 1.2;
+      flex: 1.3;
       display: flex;
       flex-direction: column;
-      gap: 6px;
+      gap: 8px;
+      min-height: 0;
     }
 
     .terminal-field {
       display: flex;
       flex-direction: column;
-      gap: 3px;
+      gap: 4px;
     }
 
     .terminal-label-row {
@@ -2565,14 +2631,14 @@
     }
 
     .terminal-label {
-      font-size: 11px;
+      font-size: 11.5px;
       font-weight: 600;
       color: var(--text-muted);
     }
 
     .terminal-val {
       font-family: 'JetBrains Mono', monospace;
-      font-size: 11px;
+      font-size: 11.5px;
       color: var(--cyan);
       font-weight: 700;
     }
@@ -2580,35 +2646,38 @@
     .terminal-param-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 10px;
+      gap: 12px;
     }
 
     .terminal-textarea {
       flex: 1;
+      min-height: 190px;
       background: #080c14;
       border: 1px solid var(--border-accent);
-      border-radius: 4px;
-      padding: 8px 10px;
+      border-radius: 6px;
+      padding: 10px 12px;
       color: var(--text-main);
-      font-size: 11.5px;
+      font-size: 12px;
       font-family: 'Inter', sans-serif;
       resize: none;
-      line-height: 1.45;
+      line-height: 1.55;
       outline: none;
-      transition: border-color 0.15s;
+      transition: border-color 0.15s, box-shadow 0.15s;
     }
     .terminal-textarea:focus {
       border-color: var(--cyan);
-      box-shadow: 0 0 8px rgba(56, 189, 248, 0.2);
+      box-shadow: 0 0 10px rgba(56, 189, 248, 0.25);
     }
 
     .terminal-footer {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 6px 14px;
-      background: rgba(10, 15, 26, 0.9);
-      border-top: 1px solid rgba(255, 255, 255, 0.06);
+      padding: 8px 18px;
+      background: rgba(10, 15, 26, 0.95);
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 0 0 12px 12px;
+      flex-shrink: 0;
     }
 
     .terminal-status {
@@ -2720,11 +2789,10 @@
       border-color: rgba(239, 68, 68, 0.4);
     }
 
-    /* Content Inspector in new lower position */
+    /* Content Inspector in new lower position (Cuộn nội bộ độc lập, không làm dãn chiều cao toàn trang) */
     .content-inspector-section {
-      flex: 1;
+      flex: 1.2;
       min-height: 160px;
-      max-height: 48%;
       border-top: 1px solid var(--border-subtle);
       border-bottom: none;
       background: rgba(15, 23, 42, 0.45);
@@ -2756,8 +2824,9 @@
 
     /* AI Chat Section in new upper position */
     .ai-chat-section {
-      flex: 1.4;
-      min-height: 240px;
+      flex: 1.1;
+      min-height: 160px;
+      max-height: 52%;
       display: flex;
       flex-direction: column;
       overflow: hidden;
@@ -3428,8 +3497,9 @@
                 <span class="terminal-title-text" id="terminal-target-title">CẤU HÌNH: CHƯƠNG 1</span>
                 <span class="terminal-badge-key" id="terminal-target-key">ch-0</span>
               </div>
-              <div class="terminal-actions">
-                <button class="terminal-btn-icon" id="btn-minimize-terminal" title="Thu nhỏ / Đóng terminal">✕</button>
+              <div class="terminal-actions" style="display: flex; align-items: center; gap: 6px;">
+                <button class="terminal-btn-icon" id="btn-expand-terminal" onclick="toggleTerminalDrawerExpand()" title="Mở rộng / Thu gọn chiều cao (380px ↔ 530px)">⛶</button>
+                <button class="terminal-btn-icon" id="btn-minimize-terminal" onclick="closeNodeTuningTerminal()" title="Thu nhỏ / Đóng terminal">✕</button>
               </div>
             </div>
 
@@ -4257,11 +4327,13 @@
         localStorage.setItem('clsg_active_view', viewName);
       } catch (e) {}
       if (viewName === 'projects') {
+        document.body.classList.remove('is-workspace');
         viewProjects.style.display = 'flex';
         viewWorkspace.style.display = 'none';
         renderProjectsGrid();
         window.scrollTo({ top: 0, behavior: 'smooth' });
       } else {
+        document.body.classList.add('is-workspace');
         if (!currentProjectId || !defaultProjects[currentProjectId]) {
           showToast('⚠️ Vui lòng chọn hoặc tạo 1 dự án để mở không gian làm việc!');
           switchView('projects');
@@ -6118,16 +6190,64 @@
         statusEl.style.color = 'var(--cyan)';
       }
 
-      // Trượt thanh terminal lên từ đáy ô giữa (chuẩn Image 2)
+      // Đảm bảo tab Sơ Đồ đang được kích hoạt khi mở terminal tinh chỉnh
+      if (typeof switchCenterTab === 'function') {
+        const mindmapTab = document.getElementById('tab-content-mindmap');
+        if (!mindmapTab || !mindmapTab.classList.contains('active')) {
+          switchCenterTab('mindmap');
+        }
+      }
+
+      // Trượt thanh terminal lên từ đáy ô giữa (chuẩn Image 2, chiều cao thoáng 380px)
       drawer.classList.add('is-open');
+
+      // Tự động căn chỉnh node lên phần nhìn thấy phía trên terminal nếu đang bị che khuất
+      if (nodeObj && typeof panY !== 'undefined' && typeof zoomScale !== 'undefined') {
+        const pane = document.getElementById('tab-content-mindmap');
+        if (pane) {
+          const paneRect = pane.getBoundingClientRect();
+          const nodeScreenY = panY + (nodeObj.y + (nodeObj.height || 60)) * zoomScale;
+          const drawerTopScreenY = paneRect.height - 390;
+          if (nodeScreenY > drawerTopScreenY) {
+            const diff = nodeScreenY - drawerTopScreenY + 50;
+            panY -= diff;
+            if (typeof applyTransform === 'function') applyTransform();
+          }
+        }
+      }
     }
 
     function closeNodeTuningTerminal() {
       const drawer = document.getElementById('mindmap-terminal-drawer');
-      if (drawer) drawer.classList.remove('is-open');
+      if (drawer) {
+        drawer.classList.remove('is-open');
+        drawer.classList.remove('is-expanded');
+        const expandBtn = document.getElementById('btn-expand-terminal');
+        if (expandBtn) expandBtn.textContent = '⛶';
+      }
       document.querySelectorAll('.is-being-edited').forEach(el => el.classList.remove('is-being-edited'));
       currentTuningTarget = null;
     }
+
+    function toggleTerminalDrawerExpand() {
+      const drawer = document.getElementById('mindmap-terminal-drawer');
+      if (!drawer) return;
+      drawer.classList.toggle('is-expanded');
+      const expandBtn = document.getElementById('btn-expand-terminal');
+      if (expandBtn) {
+        expandBtn.textContent = drawer.classList.contains('is-expanded') ? '🗗' : '⛶';
+        expandBtn.title = drawer.classList.contains('is-expanded') ? 'Thu về chiều cao chuẩn (380px)' : 'Mở rộng chiều cao (530px)';
+      }
+    }
+
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        const drawer = document.getElementById('mindmap-terminal-drawer');
+        if (drawer && drawer.classList.contains('is-open')) {
+          closeNodeTuningTerminal();
+        }
+      }
+    });
 
     // Tương thích ngược với các lệnh gọi cũ
     function openNodeTuning(nodeKey, nodeTitle, duration, wpm, visualType, cardEl) {
