@@ -5905,6 +5905,36 @@
     const excludedNodes = new Set();
     const nodeCustomParams = {}; // Lưu trữ duration, wpm, title, visual cho từng node
 
+    // =========================================================================
+    // HỆ THỐNG AUTO-SAVE VĨNH VIỄN VÀO LOCALSTORAGE (CHỐNG MẤT KỊCH BẢN & TÓM TẮT KHI F5)
+    // =========================================================================
+    let autoSaveTimer = null;
+    function autoSaveWorkspaceState() {
+      if (!currentProjectId || !activeProject) return;
+      try {
+        localStorage.setItem(`clsg_node_params_${currentProjectId}`, JSON.stringify(nodeCustomParams));
+        localStorage.setItem(`clsg_excluded_nodes_${currentProjectId}`, JSON.stringify(Array.from(excludedNodes)));
+
+        const userProjects = JSON.parse(localStorage.getItem('clsg_user_projects') || '{}');
+        activeProject.scenes = currentScenes;
+        userProjects[currentProjectId] = activeProject;
+        localStorage.setItem('clsg_user_projects', JSON.stringify(userProjects));
+
+        if (typeof ProjectStore !== 'undefined' && ProjectStore && typeof ProjectStore.save === 'function') {
+          ProjectStore.save(activeProject);
+        }
+      } catch (e) {
+        console.warn("[AutoSave] Lỗi lưu trữ vào localStorage:", e);
+      }
+    }
+
+    function triggerAutoSave() {
+      if (autoSaveTimer) clearTimeout(autoSaveTimer);
+      autoSaveTimer = setTimeout(() => {
+        autoSaveWorkspaceState();
+      }, 350);
+    }
+
     function getSourceKey(src, idx) {
       if (!src) return `src_${idx || 0}`;
       if (!src.id) {
@@ -6159,6 +6189,7 @@
         nodeCustomParams[nodeKey] = {};
       }
       nodeCustomParams[nodeKey][paramName] = value;
+      if (typeof triggerAutoSave === 'function') triggerAutoSave();
     }
 
     // =========================================================================
@@ -7386,14 +7417,14 @@
       }
       if (chapEl) chapEl.textContent = secName ? `PHÂN ĐOẠN • ${secName.substring(0, 24)}` : chapterName;
 
-      // 1. TẠO BẢN TÓM TẮT TRỌNG TÂM CỐT LÕI
+      // 1. TẠO BẢN TÓM TẮT TRỌNG TÂM CỐT LÕI (ƯU TIÊN BẢN ĐÃ LƯU TRONG NODECUSTOMPARAMS)
       const itemData = node.data || {};
       const isNoise = /colorado|state university|peter j|brockwell|richard a|davis|springer|all rights reserved|copyright/i.test(nodeText);
-      let coreSummary = itemData.summary;
-      let coreMech = itemData.mechanism;
-      let coreKeyPoint = itemData.key_point;
-      let coreDetails = itemData.details || '';
-      let coreExamples = itemData.examples || '';
+      let coreSummary = getNodeParam(node.key, 'summary', itemData.summary);
+      let coreMech = getNodeParam(node.key, 'mechanism', itemData.mechanism);
+      let coreKeyPoint = getNodeParam(node.key, 'key_point', itemData.key_point);
+      let coreDetails = getNodeParam(node.key, 'details', itemData.details || '');
+      let coreExamples = getNodeParam(node.key, 'examples', itemData.examples || '');
 
       if (isNoise && (!coreSummary || coreSummary.includes('Colorado'))) {
         coreSummary = `Tổng quan về chuỗi thời gian (Time Series): Tập hợp các quan sát số liệu $X_t$ được ghi nhận tuần tự theo các mốc thời gian đều đặn.`;
@@ -10147,8 +10178,28 @@ QUY TẮC PHẢN HỒI QUAN TRỌNG:
     // NẠP DỰ ÁN VÀO KHÔNG GIAN WORKSPACE
     function loadProjectIntoWorkspace(projId) {
       currentProjectId = projId;
-      activeProject = defaultProjects[projId];
-      currentScenes = JSON.parse(JSON.stringify(activeProject.scenes));
+      // Khôi phục dự án đã lưu từ localStorage nếu có, nếu chưa có mới dùng defaultProjects
+      const userProjects = JSON.parse(localStorage.getItem('clsg_user_projects') || '{}');
+      if (userProjects[projId]) {
+        activeProject = userProjects[projId];
+      } else {
+        activeProject = defaultProjects[projId];
+      }
+      currentScenes = JSON.parse(JSON.stringify(activeProject.scenes || []));
+
+      // Khôi phục toàn bộ kịch bản, tóm tắt và thông số nhánh (nodeCustomParams) từ localStorage
+      try {
+        const savedParams = JSON.parse(localStorage.getItem(`clsg_node_params_${projId}`) || '{}');
+        Object.keys(nodeCustomParams).forEach(k => delete nodeCustomParams[k]);
+        Object.assign(nodeCustomParams, savedParams);
+      } catch (e) {}
+
+      // Khôi phục danh sách các nhánh đang bị ẩn (excludedNodes) từ localStorage
+      try {
+        const savedExcluded = JSON.parse(localStorage.getItem(`clsg_excluded_nodes_${projId}`) || '[]');
+        excludedNodes.clear();
+        savedExcluded.forEach(k => excludedNodes.add(k));
+      } catch (e) {}
 
       document.getElementById('ws-current-title').textContent = activeProject.title;
       const docBadge = document.getElementById('ws-doc-badge');
@@ -10749,7 +10800,8 @@ QUY TẮC PHẢN HỒI QUAN TRỌNG:
 
       hideLoading();
       renderScriptDocument();
-      showToast(`🎉 Đã hoàn tất kịch bản hai tầng liền mạch cho toàn bộ ${totalItems} mục!`);
+      if (typeof autoSaveWorkspaceState === 'function') autoSaveWorkspaceState();
+      showToast(`🎉 Đã hoàn tất & tự động lưu vĩnh viễn kịch bản cho toàn bộ ${totalItems} mục!`);
     };
 
     // 5. Cập nhật thống kê header của tab Kịch Bản
