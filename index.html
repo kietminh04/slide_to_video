@@ -3681,7 +3681,16 @@
             <div style="display: flex; align-items: center; gap: 7px; font-size: 12.5px; font-weight: 700; color: var(--text-main);">
               <span>💬</span> Trợ Lý AI Bài Giảng
             </div>
-            <span class="badge-pro" style="font-size: 9px; padding: 1px 6px;">CLSG LLM</span>
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <span id="chat-sync-indicator" title="Trạng thái đồng bộ Cloud" style="font-size: 10px; color: #10b981; display: inline-flex; align-items: center; gap: 3px;">
+                <span style="display:inline-block; width:6px; height:6px; border-radius:50%; background:#10b981;"></span>
+                <span>☁️ Đã lưu Cloud</span>
+              </span>
+              <button class="chat-pill-btn" onclick="clearCurrentChatSession()" title="Làm mới đoạn chat này" style="font-size: 10px; padding: 1px 6px; cursor: pointer; color: var(--text-muted); border-color: var(--border-subtle); background: transparent;">
+                🔄 Mới
+              </button>
+              <span class="badge-pro" style="font-size: 9px; padding: 1px 6px;">CLSG LLM</span>
+            </div>
           </div>
 
           <!-- MESSAGES CONTAINER -->
@@ -4134,6 +4143,8 @@
     // =========================================================================
     const CloudDB = {
       isOnline: false,
+      _chatSaveTimer: null,
+      _summarySaveTimer: null,
 
       async ping() {
         try {
@@ -4153,17 +4164,28 @@
 
       updateBadge() {
         const badge = document.getElementById('cloud-db-badge');
-        if (!badge) return;
-        if (this.isOnline) {
-          badge.style.display = 'inline-flex';
-          badge.innerHTML = `<span style="display:inline-block; width:7px; height:7px; border-radius:50%; background:#10b981; box-shadow: 0 0 6px #10b981;"></span> <span>☁️ Neon Cloud (Đã kết nối)</span>`;
-          badge.style.borderColor = 'rgba(16, 185, 129, 0.3)';
-          badge.style.color = '#34d399';
-        } else {
-          badge.style.display = 'inline-flex';
-          badge.innerHTML = `<span style="display:inline-block; width:7px; height:7px; border-radius:50%; background:#f59e0b;"></span> <span>💾 Local Storage (Cục bộ)</span>`;
-          badge.style.borderColor = 'rgba(245, 158, 11, 0.3)';
-          badge.style.color = '#fbbf24';
+        if (badge) {
+          if (this.isOnline) {
+            badge.style.display = 'inline-flex';
+            badge.innerHTML = `<span style="display:inline-block; width:7px; height:7px; border-radius:50%; background:#10b981; box-shadow: 0 0 6px #10b981;"></span> <span>☁️ Neon Cloud (Đã kết nối)</span>`;
+            badge.style.borderColor = 'rgba(16, 185, 129, 0.3)';
+            badge.style.color = '#34d399';
+          } else {
+            badge.style.display = 'inline-flex';
+            badge.innerHTML = `<span style="display:inline-block; width:7px; height:7px; border-radius:50%; background:#f59e0b;"></span> <span>💾 Local Storage (Cục bộ)</span>`;
+            badge.style.borderColor = 'rgba(245, 158, 11, 0.3)';
+            badge.style.color = '#fbbf24';
+          }
+        }
+        const chatSync = document.getElementById('chat-sync-indicator');
+        if (chatSync) {
+          if (this.isOnline) {
+            chatSync.innerHTML = `<span style="display:inline-block; width:6px; height:6px; border-radius:50%; background:#10b981;"></span> <span>☁️ Đã lưu Cloud</span>`;
+            chatSync.style.color = '#10b981';
+          } else {
+            chatSync.innerHTML = `<span style="display:inline-block; width:6px; height:6px; border-radius:50%; background:#f59e0b;"></span> <span>💾 Bản cục bộ</span>`;
+            chatSync.style.color = '#f59e0b';
+          }
         }
       },
 
@@ -4177,6 +4199,15 @@
               list.forEach(row => {
                 if (row.id && row.data) {
                   defaultProjects[row.id] = row.data;
+                  if (typeof currentProjectId !== 'undefined' && row.id === currentProjectId && typeof activeProject !== 'undefined' && activeProject) {
+                    if (row.data.chatHistory && (!activeProject.chatHistory || activeProject.chatHistory.length === 0)) {
+                      activeProject.chatHistory = row.data.chatHistory;
+                      activeProject.chatHtml = row.data.chatHtml;
+                    }
+                    if (row.data.nodeCustomParams && typeof nodeCustomParams !== 'undefined') {
+                      Object.assign(nodeCustomParams, row.data.nodeCustomParams);
+                    }
+                  }
                   updated = true;
                 }
               });
@@ -4190,12 +4221,80 @@
         }
       },
 
+      // Lưu nhanh Lịch sử Chat lên Cloud Database (Debounced 400ms)
+      saveChat(projectId, chatHistory, chatHtml, title) {
+        if (!projectId) return;
+        const chatSync = document.getElementById('chat-sync-indicator');
+        if (chatSync) {
+          chatSync.innerHTML = `<span style="display:inline-block; width:6px; height:6px; border-radius:50%; background:#38bdf8; animation: pulse 1s infinite;"></span> <span style="color:#38bdf8;">Đang lưu...</span>`;
+        }
+        if (this._chatSaveTimer) clearTimeout(this._chatSaveTimer);
+        this._chatSaveTimer = setTimeout(async () => {
+          try {
+            const res = await fetch('/api/projects', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                id: projectId,
+                title: title || (typeof activeProject !== 'undefined' && activeProject ? activeProject.title : 'Dự Án Bài Giảng'),
+                action: 'save_chat',
+                chatHistory: chatHistory || [],
+                chatHtml: chatHtml || ''
+              })
+            });
+            if (res.ok) {
+              this.isOnline = true;
+              this.updateBadge();
+            }
+          } catch (e) {
+            console.warn('[CloudDB] Đồng bộ Chat lên Cloud thất bại:', e.message);
+          }
+        }, 400);
+      },
+
+      // Lưu nhanh Tóm tắt & Tham số nhánh lên Cloud Database (Debounced 400ms)
+      saveSummaries(projectId, customParams, scenes, title) {
+        if (!projectId) return;
+        if (this._summarySaveTimer) clearTimeout(this._summarySaveTimer);
+        this._summarySaveTimer = setTimeout(async () => {
+          try {
+            const res = await fetch('/api/projects', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                id: projectId,
+                title: title || (typeof activeProject !== 'undefined' && activeProject ? activeProject.title : 'Dự Án Bài Giảng'),
+                action: 'save_summaries',
+                nodeCustomParams: customParams || {},
+                scenes: scenes || null
+              })
+            });
+            if (res.ok) {
+              this.isOnline = true;
+              this.updateBadge();
+            }
+          } catch (e) {
+            console.warn('[CloudDB] Đồng bộ Tóm tắt lên Cloud thất bại:', e.message);
+          }
+        }, 400);
+      },
+
       async save(project) {
         if (!project || !project.id) return;
+        const chatContainer = document.getElementById('ai-chat-messages');
+        const fullProject = {
+          ...project,
+          scenes: (typeof currentScenes !== 'undefined' && currentScenes) ? currentScenes : (project.scenes || []),
+          nodeCustomParams: (typeof nodeCustomParams !== 'undefined' && nodeCustomParams) ? nodeCustomParams : (project.nodeCustomParams || {}),
+          excludedNodes: (typeof excludedNodes !== 'undefined') ? Array.from(excludedNodes) : (project.excludedNodes || []),
+          chatHistory: (typeof clsgChatSessionHistory !== 'undefined') ? clsgChatSessionHistory : (project.chatHistory || []),
+          chatHtml: (chatContainer ? chatContainer.innerHTML : (project.chatHtml || ''))
+        };
+
         // 1. Lưu LocalStorage trước (Offline-first)
         try {
           const userProjects = JSON.parse(localStorage.getItem('clsg_user_projects') || '{}');
-          userProjects[project.id] = project;
+          userProjects[project.id] = fullProject;
           localStorage.setItem('clsg_user_projects', JSON.stringify(userProjects));
         } catch (e) {}
 
@@ -4205,10 +4304,10 @@
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              id: project.id,
-              title: project.title,
-              description: project.desc || '',
-              data: project
+              id: fullProject.id,
+              title: fullProject.title,
+              description: fullProject.desc || '',
+              data: fullProject
             })
           });
           if (res.ok) {
@@ -5912,13 +6011,24 @@
         localStorage.setItem(`clsg_node_params_${currentProjectId}`, JSON.stringify(nodeCustomParams));
         localStorage.setItem(`clsg_excluded_nodes_${currentProjectId}`, JSON.stringify(Array.from(excludedNodes)));
 
-        const userProjects = JSON.parse(localStorage.getItem('clsg_user_projects') || '{}');
         activeProject.scenes = currentScenes;
+        activeProject.nodeCustomParams = JSON.parse(JSON.stringify(nodeCustomParams));
+        activeProject.excludedNodes = Array.from(excludedNodes);
+        if (typeof clsgChatSessionHistory !== 'undefined') {
+          activeProject.chatHistory = clsgChatSessionHistory;
+        }
+        var chatContainer = document.getElementById('ai-chat-messages');
+        if (chatContainer) {
+          activeProject.chatHtml = chatContainer.innerHTML;
+        }
+
+        const userProjects = JSON.parse(localStorage.getItem('clsg_user_projects') || '{}');
         userProjects[currentProjectId] = activeProject;
         localStorage.setItem('clsg_user_projects', JSON.stringify(userProjects));
 
-        if (typeof ProjectStore !== 'undefined' && ProjectStore && typeof ProjectStore.save === 'function') {
-          ProjectStore.save(activeProject);
+        // Đồng bộ Tóm tắt & Kịch bản lên Neon Cloud Database trên Vercel
+        if (typeof CloudDB !== 'undefined' && CloudDB && typeof CloudDB.saveSummaries === 'function') {
+          CloudDB.saveSummaries(currentProjectId, nodeCustomParams, currentScenes, activeProject.title);
         }
       } catch (e) {
         console.warn("[AutoSave] Lỗi lưu trữ vào localStorage:", e);
@@ -10019,17 +10129,62 @@ OUTPUT: Valid JSON only.
       if (typeof currentProjectId === 'undefined' || !currentProjectId) return;
       try {
         localStorage.setItem('clsg_chat_history_' + currentProjectId, JSON.stringify(clsgChatSessionHistory));
-        if (typeof activeProject !== 'undefined' && activeProject) {
-            activeProject.chatHistory = clsgChatSessionHistory;
-            var chatContainer = document.getElementById('ai-chat-messages');
-            if (chatContainer) activeProject.chatHtml = chatContainer.innerHTML;
-            CloudDB.save(activeProject);
-        }
         var chatContainer = document.getElementById('ai-chat-messages');
+        const chatHtml = chatContainer ? chatContainer.innerHTML : '';
         if (chatContainer) {
-          localStorage.setItem('clsg_chat_html_' + currentProjectId, chatContainer.innerHTML);
+          localStorage.setItem('clsg_chat_html_' + currentProjectId, chatHtml);
         }
+        if (typeof activeProject !== 'undefined' && activeProject) {
+          activeProject.chatHistory = [...clsgChatSessionHistory];
+          activeProject.chatHtml = chatHtml;
+          try {
+            const userProjects = JSON.parse(localStorage.getItem('clsg_user_projects') || '{}');
+            userProjects[currentProjectId] = activeProject;
+            localStorage.setItem('clsg_user_projects', JSON.stringify(userProjects));
+          } catch(e) {}
+        }
+        // Đồng bộ lên Neon Cloud Database trên Vercel
+        if (typeof CloudDB !== 'undefined' && CloudDB && typeof CloudDB.saveChat === 'function') {
+          CloudDB.saveChat(currentProjectId, clsgChatSessionHistory, chatHtml, activeProject?.title);
+        }
+      } catch(e) {
+        console.warn('[SaveChatState] Lỗi lưu chat:', e);
+      }
+    }
+
+    function clearCurrentChatSession() {
+      if (!currentProjectId) return;
+      if (typeof clsgChatSessionHistory !== 'undefined') clsgChatSessionHistory.length = 0;
+      var chatContainer = document.getElementById('ai-chat-messages');
+      if (chatContainer) {
+        chatContainer.innerHTML = `
+          <div class="chat-msg msg-ai">
+            <div class="msg-avatar">🤖</div>
+            <div class="msg-bubble">
+              Đã làm mới đoạn chat! Bạn có thể đặt câu hỏi hoặc yêu cầu AI tạo video, mở rộng nhánh sơ đồ tư duy hoặc tinh chỉnh kịch bản bài giảng.
+            </div>
+          </div>
+          <div class="chat-suggestions">
+            <div style="font-size: 10.5px; color: var(--text-dim); margin-bottom: 3px;">Gợi ý câu lệnh nhanh cho người mới:</div>
+            <button class="chat-pill-btn" onclick="sendQuickPrompt('📖 Tóm tắt toàn bộ bài giảng này và nêu các luận điểm cốt lõi')">📖 Tóm tắt bài giảng</button>
+            <button class="chat-pill-btn" onclick="sendQuickPrompt('🎙️ Đọc thử lời giảng kịch bản của Chương 1')">🎙️ Đọc thử Chương 1</button>
+            <button class="chat-pill-btn" onclick="sendQuickPrompt('🎯 Chỉ giữ lại các chương cốt lõi nhất, ẩn các phần phụ')">🎯 Giữ phần cốt lõi</button>
+            <button class="chat-pill-btn" onclick="sendQuickPrompt('⏱️ Cân đối tổng thời lượng bài giảng về đúng 10 phút')">⏱️ Cân đối 10 phút</button>
+          </div>
+        `;
+      }
+      try {
+        localStorage.removeItem('clsg_chat_history_' + currentProjectId);
+        localStorage.removeItem('clsg_chat_html_' + currentProjectId);
       } catch(e) {}
+      if (typeof activeProject !== 'undefined' && activeProject) {
+        activeProject.chatHistory = [];
+        activeProject.chatHtml = '';
+      }
+      if (typeof CloudDB !== 'undefined' && CloudDB && typeof CloudDB.saveChat === 'function') {
+        CloudDB.saveChat(currentProjectId, [], '', activeProject?.title);
+      }
+      if (typeof showToast === 'function') showToast('🔄 Đã làm mới đoạn chat!');
     }
 
     // TRÍ NHỚ CÂU HỎI ĐÁP COPILOT (COPILOT Q&A CACHE - 0 TOKEN, ZERO CRASH)
@@ -10307,9 +10462,10 @@ QUY TẮC PHẢN HỒI QUAN TRỌNG:
             `<div style="margin-top:8px;"><button class="chat-pill-btn" onclick="playVoiceNarration(this)" style="font-size:11px; padding:2px 8px; border-color:rgba(56,189,248,0.3); color:var(--cyan); cursor:pointer;">🔊 Nghe đọc</button></div>`;
           chatContainer.scrollTop = chatContainer.scrollHeight;
 
-          // Lưu vào lịch sử phiên
+          // Lưu vào lịch sử phiên và đồng bộ lên Database
           clsgChatSessionHistory.push({ role: 'user', content: msg });
           clsgChatSessionHistory.push({ role: 'assistant', content: cleanReply });
+          saveChatState();
 
           // Tự động học bổ sung mẫu lệnh mới hoặc cache câu hỏi tri thức
           if (jsonMatch) {
@@ -10448,6 +10604,7 @@ QUY TẮC PHẢN HỒI QUAN TRỌNG:
       try {
         clsgChatSessionHistory.push({ role: 'user', content: msg });
         clsgChatSessionHistory.push({ role: 'assistant', content: localReply });
+        saveChatState();
       } catch (e) {}
     } catch (fallbackErr) {
       console.error("[Copilot Fallback Error]:", fallbackErr);
@@ -10459,6 +10616,11 @@ QUY TẮC PHẢN HỒI QUAN TRỌNG:
         }
       }
       if (chatContainer) chatContainer.scrollTop = chatContainer.scrollHeight;
+      try {
+        clsgChatSessionHistory.push({ role: 'user', content: msg });
+        clsgChatSessionHistory.push({ role: 'assistant', content: bubbleEl?.innerHTML || 'Gặp sự cố' });
+        saveChatState();
+      } catch (e) {}
     }
   }
 
@@ -10495,11 +10657,33 @@ QUY TẮC PHẢN HỒI QUAN TRỌNG:
         chatContainer.innerHTML = '';
       }
 
-      // Khôi phục toàn bộ kịch bản, tóm tắt và thông số nhánh (nodeCustomParams) từ localStorage
+      // Khôi phục toàn bộ kịch bản, tóm tắt và thông số nhánh (nodeCustomParams) từ localStorage hoặc Cloud Database
       try {
-        const savedParams = JSON.parse(localStorage.getItem(`clsg_node_params_${projId}`) || '{}');
+        let savedParams = JSON.parse(localStorage.getItem(`clsg_node_params_${projId}`) || '{}');
+        // Nếu local chưa có hoặc rỗng mà activeProject (từ Cloud) có nodeCustomParams -> khôi phục từ Cloud
+        if ((!savedParams || Object.keys(savedParams).length === 0) && activeProject && activeProject.nodeCustomParams) {
+          savedParams = activeProject.nodeCustomParams;
+          localStorage.setItem(`clsg_node_params_${projId}`, JSON.stringify(savedParams));
+        }
         Object.keys(nodeCustomParams).forEach(k => delete nodeCustomParams[k]);
         Object.assign(nodeCustomParams, savedParams);
+
+        // Tự động khôi phục các tóm tắt đã lưu trong scenes vào nodeCustomParams nếu chưa có
+        if (currentScenes && Array.isArray(currentScenes)) {
+          currentScenes.forEach((ch, cIdx) => {
+            (ch.sections || []).forEach((sec, sIdx) => {
+              (sec.items || []).forEach((it, iIdx) => {
+                const k = `item-${cIdx}-${sIdx}-${iIdx}`;
+                if (!nodeCustomParams[k]) nodeCustomParams[k] = {};
+                if (it.summary && !nodeCustomParams[k].summary) nodeCustomParams[k].summary = it.summary;
+                if (it.mechanism && !nodeCustomParams[k].mechanism) nodeCustomParams[k].mechanism = it.mechanism;
+                if (it.key_point && !nodeCustomParams[k].key_point) nodeCustomParams[k].key_point = it.key_point;
+                if (it.details && !nodeCustomParams[k].details) nodeCustomParams[k].details = it.details;
+                if (it.examples && !nodeCustomParams[k].examples) nodeCustomParams[k].examples = it.examples;
+              });
+            });
+          });
+        }
 
         // Đồng bộ các tham số đã khôi phục ngược vào activeProject.scenes và currentScenes
         Object.entries(nodeCustomParams).forEach(([k, params]) => {
@@ -10553,41 +10737,62 @@ QUY TẮC PHẢN HỒI QUAN TRỌNG:
       if (exportActions) exportActions.style.display = (savedTab === 'script') ? 'flex' : 'none';
       switchCenterTab(savedTab);
 
-      // [FIX] Chặn thông nhau Chat và Summary giữa các Project + Restore Session
+      // [FIX] Khôi phục Chat Session theo từng dự án từ LocalStorage hoặc Cloud Database
       if (typeof clsgChatSessionHistory !== 'undefined') clsgChatSessionHistory.length = 0;
       var chatContainer = document.getElementById('ai-chat-messages');
       if (chatContainer) {
         try {
-          const savedHistory = JSON.parse(localStorage.getItem('clsg_chat_history_' + projId));
-          const savedHTML = localStorage.getItem('clsg_chat_html_' + projId);
-          if ((!savedHistory || savedHistory.length === 0) && activeProject && activeProject.chatHistory) {
-              localStorage.setItem('clsg_chat_history_' + projId, JSON.stringify(activeProject.chatHistory));
-              if (activeProject.chatHtml) localStorage.setItem('clsg_chat_html_' + projId, activeProject.chatHtml);
+          let savedHistory = JSON.parse(localStorage.getItem('clsg_chat_history_' + projId) || '[]');
+          let savedHTML = localStorage.getItem('clsg_chat_html_' + projId) || '';
+
+          // Nếu local chưa có hoặc rỗng mà activeProject (từ Cloud) có chatHistory -> khôi phục từ Cloud
+          if ((!savedHistory || savedHistory.length === 0) && activeProject && activeProject.chatHistory && activeProject.chatHistory.length > 0) {
+            savedHistory = activeProject.chatHistory;
+            localStorage.setItem('clsg_chat_history_' + projId, JSON.stringify(savedHistory));
           }
-          const finalHistory = savedHistory || (activeProject && activeProject.chatHistory);
-          const finalHTML = savedHTML || (activeProject && activeProject.chatHtml);
-          if (finalHistory && finalHistory.length > 0 && finalHTML) {
-             clsgChatSessionHistory.push(...finalHistory);
-             chatContainer.innerHTML = finalHTML;
-             setTimeout(() => { chatContainer.scrollTop = chatContainer.scrollHeight; }, 100);
+          if ((!savedHTML || savedHTML.trim().length === 0) && activeProject && activeProject.chatHtml) {
+            savedHTML = activeProject.chatHtml;
+            localStorage.setItem('clsg_chat_html_' + projId, savedHTML);
+          }
+
+          if (savedHistory && savedHistory.length > 0) {
+            clsgChatSessionHistory.push(...savedHistory);
+            if (savedHTML && savedHTML.trim().length > 0) {
+              chatContainer.innerHTML = savedHTML;
+            } else {
+              chatContainer.innerHTML = '';
+              savedHistory.forEach(m => {
+                const isUser = m.role === 'user';
+                const el = document.createElement('div');
+                el.className = `chat-msg ${isUser ? 'msg-user' : 'msg-ai'}`;
+                el.innerHTML = `
+                  <div class="msg-avatar">${isUser ? '👤' : '🤖'}</div>
+                  <div class="msg-bubble">${isUser ? escapeHtml(m.content) : m.content}</div>
+                `;
+                chatContainer.appendChild(el);
+              });
+            }
+            setTimeout(() => { chatContainer.scrollTop = chatContainer.scrollHeight; }, 100);
           } else {
-             chatContainer.innerHTML = `
-                <div class="chat-msg msg-ai">
-                  <div class="msg-avatar">🤖</div>
-                  <div class="msg-bubble">
-                    Chào bạn! Tôi là trợ lý AI sư phạm. Bạn có thể yêu cầu tạo video bài giảng, mở rộng nhánh sơ đồ tư duy hoặc tinh chỉnh kịch bản theo yêu cầu riêng.
-                  </div>
+            chatContainer.innerHTML = `
+              <div class="chat-msg msg-ai">
+                <div class="msg-avatar">🤖</div>
+                <div class="msg-bubble">
+                  Chào bạn! Tôi là trợ lý AI sư phạm. Bạn có thể yêu cầu tạo video bài giảng, mở rộng nhánh sơ đồ tư duy hoặc tinh chỉnh kịch bản theo yêu cầu riêng.
                 </div>
-                <div class="chat-suggestions">
-                  <div style="font-size: 10.5px; color: var(--text-dim); margin-bottom: 3px;">Gợi ý câu lệnh nhanh cho người mới:</div>
-                  <button class="chat-pill-btn" onclick="sendQuickPrompt('📖 Tóm tắt toàn bộ bài giảng này và nêu các luận điểm cốt lõi')">📖 Tóm tắt bài giảng</button>
-                  <button class="chat-pill-btn" onclick="sendQuickPrompt('🎙️ Đọc thử lời giảng kịch bản của Chương 1')">🎙️ Đọc thử Chương 1</button>
-                  <button class="chat-pill-btn" onclick="sendQuickPrompt('🎯 Chỉ giữ lại các chương cốt lõi nhất, ẩn các phần phụ')">🎯 Giữ phần cốt lõi</button>
-                  <button class="chat-pill-btn" onclick="sendQuickPrompt('⏱️ Cân đối tổng thời lượng bài giảng về đúng 10 phút')">⏱️ Cân đối 10 phút</button>
-                </div>
-             `;
+              </div>
+              <div class="chat-suggestions">
+                <div style="font-size: 10.5px; color: var(--text-dim); margin-bottom: 3px;">Gợi ý câu lệnh nhanh cho người mới:</div>
+                <button class="chat-pill-btn" onclick="sendQuickPrompt('📖 Tóm tắt toàn bộ bài giảng này và nêu các luận điểm cốt lõi')">📖 Tóm tắt bài giảng</button>
+                <button class="chat-pill-btn" onclick="sendQuickPrompt('🎙️ Đọc thử lời giảng kịch bản của Chương 1')">🎙️ Đọc thử Chương 1</button>
+                <button class="chat-pill-btn" onclick="sendQuickPrompt('🎯 Chỉ giữ lại các chương cốt lõi nhất, ẩn các phần phụ')">🎯 Giữ phần cốt lõi</button>
+                <button class="chat-pill-btn" onclick="sendQuickPrompt('⏱️ Cân đối tổng thời lượng bài giảng về đúng 10 phút')">⏱️ Cân đối 10 phút</button>
+              </div>
+            `;
           }
-        } catch(e) { }
+        } catch(e) {
+          console.warn('[ChatRestore] Lỗi khôi phục chat:', e);
+        }
       }
       
       const emptyState = document.getElementById('inspector-empty-state');

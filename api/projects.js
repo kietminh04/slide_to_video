@@ -73,11 +73,85 @@ module.exports = async (req, res) => {
       const id = body.id;
       const title = body.title || 'Dự Án Bài Giảng';
       const description = body.description || '';
-      const dataPayload = body.data || body;
 
       if (!id) {
         return res.status(400).json({ error: 'Thiếu ID dự án' });
       }
+
+      // Xử lý lưu riêng Lịch sử Chat (nhanh, nhẹ, không ghi đè kịch bản)
+      if (body.action === 'save_chat') {
+        const chatHistory = body.chatHistory || [];
+        const chatHtml = body.chatHtml || '';
+
+        const updated = await sql`
+          UPDATE clsg_projects
+          SET data = jsonb_set(
+            jsonb_set(COALESCE(data, '{}'::jsonb), '{chatHistory}', ${JSON.stringify(chatHistory)}::jsonb, true),
+            '{chatHtml}', ${JSON.stringify(chatHtml)}::jsonb, true
+          ),
+          updated_at = CURRENT_TIMESTAMP
+          WHERE id = ${id}
+          RETURNING id;
+        `;
+
+        if (updated.length === 0) {
+          const initialData = { id, title, description, chatHistory, chatHtml };
+          await sql`
+            INSERT INTO clsg_projects (id, title, description, data, updated_at)
+            VALUES (${id}, ${title}, ${description}, ${JSON.stringify(initialData)}, CURRENT_TIMESTAMP)
+            ON CONFLICT (id) DO UPDATE SET
+              data = jsonb_set(
+                jsonb_set(COALESCE(clsg_projects.data, '{}'::jsonb), '{chatHistory}', ${JSON.stringify(chatHistory)}::jsonb, true),
+                '{chatHtml}', ${JSON.stringify(chatHtml)}::jsonb, true
+              ),
+              updated_at = CURRENT_TIMESTAMP;
+          `;
+        }
+        return res.status(200).json({ status: 'ok', id, message: 'Đã lưu lịch sử chat lên Cloud Database' });
+      }
+
+      // Xử lý lưu riêng Tóm tắt & Tham số nhánh (nhanh, chuẩn xác)
+      if (body.action === 'save_summaries' || body.action === 'save_node_params') {
+        const nodeCustomParams = body.nodeCustomParams || {};
+        const scenes = body.scenes || null;
+
+        let updated;
+        if (scenes) {
+          updated = await sql`
+            UPDATE clsg_projects
+            SET data = jsonb_set(
+              jsonb_set(COALESCE(data, '{}'::jsonb), '{nodeCustomParams}', ${JSON.stringify(nodeCustomParams)}::jsonb, true),
+              '{scenes}', ${JSON.stringify(scenes)}::jsonb, true
+            ),
+            updated_at = CURRENT_TIMESTAMP
+            WHERE id = ${id}
+            RETURNING id;
+          `;
+        } else {
+          updated = await sql`
+            UPDATE clsg_projects
+            SET data = jsonb_set(COALESCE(data, '{}'::jsonb), '{nodeCustomParams}', ${JSON.stringify(nodeCustomParams)}::jsonb, true),
+            updated_at = CURRENT_TIMESTAMP
+            WHERE id = ${id}
+            RETURNING id;
+          `;
+        }
+
+        if (updated.length === 0) {
+          const initialData = { id, title, description, nodeCustomParams, scenes: scenes || [] };
+          await sql`
+            INSERT INTO clsg_projects (id, title, description, data, updated_at)
+            VALUES (${id}, ${title}, ${description}, ${JSON.stringify(initialData)}, CURRENT_TIMESTAMP)
+            ON CONFLICT (id) DO UPDATE SET
+              data = jsonb_set(COALESCE(clsg_projects.data, '{}'::jsonb), '{nodeCustomParams}', ${JSON.stringify(nodeCustomParams)}::jsonb, true),
+              updated_at = CURRENT_TIMESTAMP;
+          `;
+        }
+        return res.status(200).json({ status: 'ok', id, message: 'Đã lưu tóm tắt & tham số lên Cloud Database' });
+      }
+
+      // Lưu toàn bộ dự án
+      const dataPayload = body.data || body;
 
       await sql`
         INSERT INTO clsg_projects (id, title, description, data, updated_at)
@@ -85,7 +159,7 @@ module.exports = async (req, res) => {
         ON CONFLICT (id) DO UPDATE SET
           title = EXCLUDED.title,
           description = EXCLUDED.description,
-          data = EXCLUDED.data,
+          data = COALESCE(clsg_projects.data, '{}'::jsonb) || EXCLUDED.data,
           updated_at = CURRENT_TIMESTAMP;
       `;
 
