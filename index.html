@@ -15857,6 +15857,20 @@ ${foreshadowText}`;
     // TRÍCH XUẤT CHI TIẾT TỪNG TRANG (VISION AI)
     // =========================================================================
     
+    function formatDetailedExplanation(text) {
+      if (!text) return '';
+      let str = String(text);
+      // Escape HTML cơ bản để bảo mật
+      str = str.replace(/&/g, '&amp;')
+               .replace(/</g, '&lt;')
+               .replace(/>/g, '&gt;');
+      // Chuyển đổi **nội dung** thành thẻ in đậm tinh tế, xóa bỏ hoàn toàn dấu **
+      str = str.replace(/\*\*(.*?)\*\*/g, '<strong style="color: #fff; font-weight: 600;">$1</strong>');
+      // Loại bỏ triệt để mọi dấu ** lẻ hoặc còn sót lại
+      str = str.replace(/\*\*/g, '');
+      return str;
+    }
+
     function renderDetailedContentUI() {
       const container = document.getElementById('content-extraction-results');
       if (!container) return;
@@ -15882,7 +15896,7 @@ ${foreshadowText}`;
               </div>
               <div style="flex: 1; display: flex; flex-direction: column;">
                 <div style="font-size: 13px; color: #94a3b8; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 4px;">Nội dung chi tiết & Giải thích</div>
-                <div style="font-size: 15px; color: var(--text-main); line-height: 1.6; white-space: pre-wrap; font-family: 'Inter', sans-serif;">${page.explanation}</div>
+                <div style="font-size: 15px; color: var(--text-main); line-height: 1.6; white-space: pre-wrap; font-family: 'Inter', sans-serif;">${formatDetailedExplanation(page.explanation)}</div>
               </div>
             </div>
           `;
@@ -15948,7 +15962,11 @@ ${foreshadowText}`;
 Hãy đọc kỹ bức ảnh slide này và thực hiện 2 việc:
 1. Trích xuất CHÍNH XÁC toàn bộ nội dung văn bản (chữ) có trên slide.
 2. Nếu có hình ảnh, biểu đồ, phương trình, đoạn code... hãy mô tả và giải thích chi tiết ý nghĩa của chúng. 
-Mục tiêu là tạo ra một tài liệu văn bản đọc hiểu hoàn chỉnh thay thế cho việc nhìn hình slide.`;
+Mục tiêu là tạo ra một tài liệu văn bản đọc hiểu hoàn chỉnh thay thế cho việc nhìn hình slide.
+
+Yêu cầu trình bày:
+- Trình bày rõ ràng, mạch lạc, dễ đọc.
+- Tuyệt đối không dùng các ký hiệu markdown như dấu sao kép ** để in đậm, không dùng các ký tự thừa gây rối mắt.`;
 
           const llmPayload = {
             model: cfg.model || 'gemini-1.5-flash',
