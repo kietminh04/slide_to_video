@@ -635,22 +635,35 @@
       position: relative;
     }
 
-    /* PANE 1: TÀI LIỆU THÊM VÀO (SOURCES) */
-    .pane-sources {
-      width: 290px;
-      min-width: 180px;
+    /* PANE 1: TRỢ LÝ AI (CHATBOT KHUNG TRÁI) */
+    .pane-sources, .pane-chatbot {
+      width: 320px;
+      min-width: 250px;
       max-width: 520px;
       flex-shrink: 0;
       height: 100%;
       max-height: 100%;
       min-height: 0;
       border-right: 1px solid var(--border-subtle);
-      background: rgba(10, 15, 26, 0.65);
+      background: rgba(10, 15, 26, 0.75);
       display: flex;
       flex-direction: column;
-      overflow-y: auto;
-      padding: 18px;
-      gap: 16px;
+      overflow: hidden;
+      padding: 0;
+      gap: 0;
+    }
+
+    .pane-sources .ai-chat-section, .pane-chatbot .ai-chat-section {
+      flex: 1;
+      height: 100%;
+      min-height: 0;
+      max-height: 100%;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      background: transparent;
+      border: none;
+      border-radius: 0;
     }
 
     /* RESIZABLE SPLIT GUTTERS (ANTIGRAVITY STYLE) */
@@ -2910,11 +2923,12 @@
       display: none !important;
     }
 
-    /* AI Chat Section in new upper position */
+    /* AI Chat Section in Left Pane */
     .ai-chat-section {
-      flex: 1.1;
-      min-height: 160px;
-      max-height: 52%;
+      flex: 1;
+      height: 100%;
+      min-height: 0;
+      max-height: 100%;
       display: flex;
       flex-direction: column;
       overflow: hidden;
@@ -3521,55 +3535,68 @@
     <!-- 3-PANE WORKSPACE BODY -->
     <div class="workspace-body">
 
-      <!-- PANE 1: NGUỒN TÀI LIỆU (+ THÊM TÀI LIỆU Ở TRÊN, DƯỚI LÀ DANH SÁCH ĐÃ UP VÀO) -->
-      <aside class="pane-sources">
-        <div class="pane-header">
-          <span>Nguồn Tài Liệu</span>
-          <span style="color: var(--cyan); font-size: 11px;" id="source-active-count">1 tệp</span>
-        </div>
-
-        <!-- Ô THÊM TÀI LIỆU Ở TRÊN -->
-        <label class="source-drop-zone" id="source-drop-zone" for="source-file-input">
-          <div style="font-size: 26px; margin-bottom: 4px;">📂</div>
-          <div style="font-size: 12px; font-weight: 700; color: var(--text-main);">+ Thêm Tài Liệu</div>
-          <div style="font-size: 11px; color: var(--text-dim); margin-top: 4px;">Kéo thả hoặc bấm để nạp .pdf, .pptx,
-            .docx</div>
-          <input type="file" id="source-file-input" accept=".pptx,.pdf,.docx,.txt" style="display: none;">
-        </label>
-
-<!-- TOGGLE VISION OCR -->
-<div style="margin-top: 8px; display: flex; align-items: center; justify-content: center; background: rgba(56, 189, 248, 0.1); border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 6px; padding: 6px;">
-  <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;" title="Sử dụng Vision API để quét và bóc tách các file PDF/PPTX chứa ảnh tĩnh (không có text)">
-    <input type="checkbox" id="use-visual-ocr" style="accent-color: var(--cyan); width: 14px; height: 14px;" />
-    <span style="font-size: 11px; font-weight: 600; color: var(--cyan);">👁️ Quét Ảnh Slide (Vision AI)</span>
-  </label>
-</div>
-
-        <!-- BỘ CHỌN NGÔN NGỮ KỊCH BẢN -->
-        <div style="margin-top: 6px;">
-          <div
-            style="font-size: 10px; font-weight: 600; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">
-            Ngôn Ngữ Kịch Bản</div>
-          <div class="lang-switcher-row" id="lang-switcher-row">
-            <button class="lang-btn active" data-lang="vi" onclick="setScriptLanguage('vi')">🇻🇳 Tiếng Việt</button>
-            <button class="lang-btn" data-lang="en" onclick="setScriptLanguage('en')">🇬🇧 English</button>
+      <!-- PANE 1: TRỢ LÝ AI BÀI GIẢNG (CHATBOT KHUNG TRÁI) -->
+      <aside class="pane-sources pane-chatbot" id="pane-sources">
+        <div class="ai-chat-section">
+          <div class="ai-chat-header">
+            <div style="display: flex; align-items: center; gap: 7px; font-size: 13px; font-weight: 700; color: var(--text-main);">
+              <span>💬</span> Trợ Lý AI Bài Giảng
+            </div>
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <span id="chat-sync-indicator" title="Trạng thái đồng bộ Cloud"
+                style="font-size: 10px; color: #10b981; display: inline-flex; align-items: center; gap: 3px;">
+                <span style="display:inline-block; width:6px; height:6px; border-radius:50%; background:#10b981;"></span>
+                <span>☁️ Đã lưu Cloud</span>
+              </span>
+              <button class="chat-pill-btn" onclick="clearCurrentChatSession()" title="Làm mới đoạn chat này"
+                style="font-size: 10px; padding: 1px 6px; cursor: pointer; color: var(--text-muted); border-color: var(--border-subtle); background: transparent;">
+                🔄 Mới
+              </button>
+              <span class="badge-pro" style="font-size: 9px; padding: 1px 6px;">CLSG LLM</span>
+            </div>
           </div>
-          <div style="font-size: 9.5px; color: var(--text-dim); margin-top: 3px; line-height: 1.4;">VN: thuần Việt + mở
-            ngoặc thuật ngữ chuyên ngành</div>
-        </div>
 
-        <!-- DƯỚI ĐÓ LÀ DANH SÁCH CÁC TÀI LIỆU ĐÃ UP VÀO -->
-        <div
-          style="font-size: 11px; font-weight: 700; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 4px;">
-          Tài Liệu Đã Nạp
-        </div>
-        <div id="sources-list" style="display: flex; flex-direction: column; gap: 10px;">
-          <!-- Items will be injected dynamically -->
+          <!-- THANH CẤU HÌNH NHANH (VISION AI & NGÔN NGỮ KỊCH BẢN) -->
+          <div style="padding: 6px 12px; background: rgba(15, 23, 42, 0.45); border-bottom: 1px solid rgba(255, 255, 255, 0.05); display: flex; align-items: center; justify-content: space-between; font-size: 11px;">
+            <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;" title="Sử dụng Vision AI để quét và bóc tách slide ảnh">
+              <input type="checkbox" id="use-visual-ocr" style="accent-color: var(--cyan); width: 13px; height: 13px;" />
+              <span style="font-size: 11px; font-weight: 600; color: var(--cyan);">👁️ Quét Ảnh (Vision AI)</span>
+            </label>
+            <div class="lang-switcher-row" id="lang-switcher-row" style="margin: 0;">
+              <button class="lang-btn active" data-lang="vi" onclick="setScriptLanguage('vi')" style="padding: 2px 7px; font-size: 10px;">🇻🇳 VI</button>
+              <button class="lang-btn" data-lang="en" onclick="setScriptLanguage('en')" style="padding: 2px 7px; font-size: 10px;">🇬🇧 EN</button>
+            </div>
+          </div>
+
+          <!-- MESSAGES CONTAINER -->
+          <div class="ai-chat-messages" id="ai-chat-messages">
+            <div class="chat-msg msg-ai">
+              <div class="msg-avatar">🤖</div>
+              <div class="msg-bubble">
+                Chào bạn! Tôi là trợ lý AI sư phạm. Bạn có thể yêu cầu tạo video bài giảng, mở rộng nhánh sơ đồ tư duy hoặc tinh chỉnh kịch bản theo yêu cầu riêng.
+              </div>
+            </div>
+            <div class="chat-suggestions">
+              <div style="font-size: 10.5px; color: var(--text-dim); margin-bottom: 4px;">Gợi ý câu lệnh nhanh:</div>
+              <button class="chat-pill-btn" onclick="sendQuickPrompt('📖 Tóm tắt toàn bộ bài giảng này và nêu các luận điểm cốt lõi')">📖 Tóm tắt bài giảng</button>
+              <button class="chat-pill-btn" onclick="sendQuickPrompt('🎙️ Đọc thử lời giảng kịch bản của Chương 1')">🎙️ Đọc thử Chương 1</button>
+              <button class="chat-pill-btn" onclick="sendQuickPrompt('🎯 Chỉ giữ lại các chương cốt lõi nhất, ẩn các phần phụ')">🎯 Giữ phần cốt lõi</button>
+              <button class="chat-pill-btn" onclick="sendQuickPrompt('⏱️ Cân đối tổng thời lượng bài giảng về đúng 10 phút')">⏱️ Cân đối 10 phút</button>
+            </div>
+          </div>
+
+          <!-- CHAT INPUT -->
+          <div class="ai-chat-input-row">
+            <textarea class="chat-input" id="chat-input" placeholder="Yêu cầu AI tạo video, chỉnh kịch bản..." rows="1"></textarea>
+            <button class="btn-chat-send" id="btn-chat-send" title="Gửi yêu cầu">
+              <span>➤</span>
+            </button>
+          </div>
         </div>
       </aside>
 
-      <!-- RESIZER TRÁI: KÉO ĐỘ RỘNG CỘT TÀI LIỆU -->
-      <div class="layout-resizer" id="resizer-left" title="Kéo để thay đổi độ rộng cột nguồn tài liệu"></div>
+      <!-- RESIZER TRÁI: KÉO ĐỘ RỘNG CỘT TRỢ LÝ AI -->
+      <div class="layout-resizer" id="resizer-left" title="Kéo để thay đổi độ rộng cột trợ lý AI"></div>
 
       <!-- PANE 2: CENTER PANE WITH NOTEBOOK-STYLE TABS (SƠ ĐỒ TƯ DUY, KỊCH BẢN, VIDEO) -->
       <main class="pane-center">
@@ -3903,69 +3930,13 @@
           </div>
         </div>
 
-        <!-- PHẦN TRÊN: KHUNG CHAT AI SƯ PHẠM (ĐƯỢC ĐẶT TRÊN Ô TÓM TẮT ĐỂ TIỆN THAO TÁC) -->
-        <div class="ai-chat-section">
-          <div class="ai-chat-header">
-            <div
-              style="display: flex; align-items: center; gap: 7px; font-size: 12.5px; font-weight: 700; color: var(--text-main);">
-              <span>💬</span> Trợ Lý AI Bài Giảng
-            </div>
-            <div style="display: flex; align-items: center; gap: 6px;">
-              <span id="chat-sync-indicator" title="Trạng thái đồng bộ Cloud"
-                style="font-size: 10px; color: #10b981; display: inline-flex; align-items: center; gap: 3px;">
-                <span
-                  style="display:inline-block; width:6px; height:6px; border-radius:50%; background:#10b981;"></span>
-                <span>☁️ Đã lưu Cloud</span>
-              </span>
-              <button class="chat-pill-btn" onclick="clearCurrentChatSession()" title="Làm mới đoạn chat này"
-                style="font-size: 10px; padding: 1px 6px; cursor: pointer; color: var(--text-muted); border-color: var(--border-subtle); background: transparent;">
-                🔄 Mới
-              </button>
-              <span class="badge-pro" style="font-size: 9px; padding: 1px 6px;">CLSG LLM</span>
-            </div>
-          </div>
 
-          <!-- MESSAGES CONTAINER -->
-          <div class="ai-chat-messages" id="ai-chat-messages">
-            <div class="chat-msg msg-ai">
-              <div class="msg-avatar">🤖</div>
-              <div class="msg-bubble">
-                Chào bạn! Tôi là trợ lý AI sư phạm. Bạn có thể yêu cầu tạo video bài giảng, mở rộng nhánh sơ đồ tư duy
-                hoặc tinh chỉnh kịch bản theo yêu cầu riêng.
-              </div>
-            </div>
-            <div class="chat-suggestions">
-              <div style="font-size: 10.5px; color: var(--text-dim); margin-bottom: 3px;">Gợi ý câu lệnh nhanh cho người
-                mới:</div>
-              <button class="chat-pill-btn"
-                onclick="sendQuickPrompt('📖 Tóm tắt toàn bộ bài giảng này và nêu các luận điểm cốt lõi')">📖 Tóm tắt
-                bài giảng</button>
-              <button class="chat-pill-btn" onclick="sendQuickPrompt('🎙️ Đọc thử lời giảng kịch bản của Chương 1')">🎙️
-                Đọc thử Chương 1</button>
-              <button class="chat-pill-btn"
-                onclick="sendQuickPrompt('🎯 Chỉ giữ lại các chương cốt lõi nhất, ẩn các phần phụ')">🎯 Giữ phần cốt
-                lõi</button>
-              <button class="chat-pill-btn"
-                onclick="sendQuickPrompt('⏱️ Cân đối tổng thời lượng bài giảng về đúng 10 phút')">⏱️ Cân đối 10
-                phút</button>
-            </div>
-          </div>
 
-          <!-- NÚT PHỤC HỒI Ô TÓM TẮT NẾU ĐANG BỊ ẨN -->
-          <button class="chat-pill-btn" id="btn-restore-inspector" onclick="showInspector()"
-            style="display: none; font-size: 10px; margin: 4px 12px 6px; border-color: rgba(56, 189, 248, 0.4); color: var(--cyan); align-self: flex-start; cursor: pointer;">
-            📖 Mở lại ô Tóm Tắt Kiến Thức
-          </button>
-
-          <!-- CHAT INPUT -->
-          <div class="ai-chat-input-row">
-            <textarea class="chat-input" id="chat-input" placeholder="Yêu cầu AI tạo video, chỉnh kịch bản..."
-              rows="1"></textarea>
-            <button class="btn-chat-send" id="btn-chat-send" title="Gửi yêu cầu">
-              <span>➤</span>
-            </button>
-          </div>
-        </div>
+        <!-- NÚT PHỤC HỒI Ô TÓM TẮT NẾU ĐANG BỊ ẨN -->
+        <button class="chat-pill-btn" id="btn-restore-inspector" onclick="showInspector()"
+          style="display: none; font-size: 10px; margin: 6px 12px; border-color: rgba(56, 189, 248, 0.4); color: var(--cyan); align-self: flex-start; cursor: pointer;">
+          📖 Mở lại ô Tóm Tắt Kiến Thức
+        </button>
 
         <!-- PHẦN DƯỚI: CONTENT INSPECTOR (TÓM TẮT KIẾN THỨC ĐỌC NHANH - CÓ NÚT THU GỌN / ẨN TRỰC TIẾP TRÊN SƠ ĐỒ) -->
         <div class="content-inspector-section" id="content-inspector-section">
@@ -4913,13 +4884,18 @@
         exportActions.style.display = (tabName === 'script') ? 'flex' : 'none';
       }
 
-      // ẨN TÓM TẮT KIẾN THỨC KHI MỞ KỊCH BẢN / VIDEO, CHỈ ĐỂ CHATBOT AI CHIẾM TRỌN
+      // CỘT PHẢI (INSPECTOR & CẤU HÌNH NHANH) CHỈ HIỆN KHI Ở SƠ ĐỒ; CÁC TAB KHÁC DÀNH TOÀN BỘ KHÔNG GIAN CHO NỘI DUNG VÌ CHATBOT ĐÃ Ở CỘT TRÁI
+      const paneTuning = document.getElementById('pane-tuning');
+      const resizerRight = document.getElementById('resizer-right');
       const inspectorSection = document.getElementById('content-inspector-section');
-      if (inspectorSection) {
+      if (paneTuning) {
         if (tabName === 'mindmap') {
-          inspectorSection.style.display = (typeof isInspectorHidden !== 'undefined' && isInspectorHidden) ? 'none' : 'flex';
+          paneTuning.style.display = (typeof isTuningHidden !== 'undefined' && isTuningHidden) ? 'none' : 'flex';
+          if (resizerRight) resizerRight.style.display = (typeof isTuningHidden !== 'undefined' && isTuningHidden) ? 'none' : 'block';
+          if (inspectorSection) inspectorSection.style.display = (typeof isInspectorHidden !== 'undefined' && isInspectorHidden) ? 'none' : 'flex';
         } else {
-          inspectorSection.style.display = 'none';
+          paneTuning.style.display = 'none';
+          if (resizerRight) resizerRight.style.display = 'none';
         }
       }
 
@@ -7502,13 +7478,9 @@
           card.style.flexDirection = 'column';
           card.style.justifyContent = 'space-between';
       } else if (node.level === 0) {
-        const orderNum = (node.data.orderIdx !== undefined) ? (node.data.orderIdx + 1) : 1;
         contentHtml = `
-          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; padding: 0 4px;">
-            <span class="source-order-badge" style="background: rgba(56, 189, 248, 0.2); color: var(--cyan); border: 1px solid rgba(56, 189, 248, 0.4); font-size: 10px; font-weight: 800; padding: 2px 7px; border-radius: 4px; font-family: 'JetBrains Mono', monospace;">
-              #${orderNum}
-            </span>
-            <span style="font-size: 15px;">📄</span>
+          <div style="display: flex; align-items: center; justify-content: center; margin-bottom: 4px; padding: 0 4px;">
+            <span style="font-size: 16px;">📄</span>
           </div>
           <div style="font-size: 12.5px; font-weight: 800; color: #fff; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding: 0 4px;">
             ${node.data.title}
@@ -7775,12 +7747,12 @@
         pane.style.display = 'none';
         if (resizer) resizer.style.display = 'none';
         if (btn) btn.classList.remove('active');
-        showToast('◧ Đã ẩn cột Nguồn tài liệu!');
+        showToast('◧ Đã ẩn cột Trợ lý AI!');
       } else {
         pane.style.display = 'flex';
         if (resizer) resizer.style.display = 'block';
         if (btn) btn.classList.add('active');
-        showToast('◧ Đã hiển thị lại cột Nguồn tài liệu!');
+        showToast('◧ Đã hiển thị lại cột Trợ lý AI!');
       }
     }
 
@@ -8202,7 +8174,7 @@
 
           function onMouseMove(ev) {
             if (!isDraggingLeft) return;
-            const newW = Math.max(180, Math.min(520, startW + (ev.clientX - startX)));
+            const newW = Math.max(240, Math.min(550, startW + (ev.clientX - startX)));
             paneSources.style.width = newW + 'px';
           }
 
@@ -10889,7 +10861,7 @@ OUTPUT: Valid JSON only.
              const searchData = await searchRes.json();
              if (searchData.chunks && searchData.chunks.length > 0) {
                  contextText = searchData.chunks.map((c, i) => 
-                   `[Tài liệu ${i + 1}] Nguồn: ${c.chapter} - ${c.section}\nNội dung: ${c.text}`
+                   `[Mục ${i + 1}] ${c.chapter} - ${c.section}\nNội dung: ${c.text}`
                  ).join('\n\n');
              }
           }
@@ -11578,17 +11550,15 @@ QUY TẮC:
       return count;
     }
 
-    function updateBtnGenCountBadge(chapCount, srcCount) {
+    function updateBtnGenCountBadge(chapCount) {
       const badge = document.getElementById('btn-gen-count-badge');
       if (!badge) return;
-      if (chapCount !== undefined && srcCount !== undefined) {
-        badge.textContent = `${srcCount} slide • ${chapCount} mục`;
+      if (chapCount !== undefined) {
+        badge.textContent = `${chapCount} mục`;
         return;
       }
-      const allSources = activeProject ? (activeProject.sources || []) : [];
-      const activeSources = allSources.filter(s => s.active !== false);
       const totalChaps = countTotalActiveScriptChapters();
-      badge.textContent = `${activeSources.length} slide • ${totalChaps} mục`;
+      badge.textContent = `${totalChaps} mục`;
     }
 
 
@@ -12072,20 +12042,7 @@ ${foreshadowText}`;
           : (originalIdx === 0 ? currentScenes : []);
         const hierarchyChapters = getProjectHierarchy(activeProject, sourceScenes, src, originalIdx >= 0 ? originalIdx : srcIdx);
 
-        // Hiển thị phân cách nếu có nhiều nguồn tài liệu
-        if (activeSources.length > 1) {
-          const srcDivider = document.createElement('div');
-          srcDivider.className = 'script-source-divider';
-          srcDivider.innerHTML = `
-            <div style="display: flex; align-items: center; gap: 10px; margin: 24px 0 12px 0; padding-bottom: 8px; border-bottom: 2px solid rgba(56, 189, 248, 0.35);">
-              <span style="background: rgba(56, 189, 248, 0.2); color: var(--cyan); border: 1px solid rgba(56, 189, 248, 0.4); font-size: 11px; font-weight: 800; padding: 2px 8px; border-radius: 4px; font-family: 'JetBrains Mono', monospace;">
-                TÀI LIỆU #${srcIdx + 1}
-              </span>
-              <span style="font-size: 14px; font-weight: 800; color: #fff;">📄 ${src.name}</span>
-            </div>
-          `;
-          paper.appendChild(srcDivider);
-        }
+
 
         hierarchyChapters.forEach((ch, chIdx) => {
           const chKey = `ch-${rootKey}-${chIdx}`;
@@ -14084,7 +14041,7 @@ ${foreshadowText}`;
 
     // SOURCE UPLOAD INSIDE WORKSPACE (DRAG & DROP VÀ THÊM TÀI LIỆU ĐA NGUỒN)
     const sourceFileInput = document.getElementById('source-file-input');
-    sourceFileInput.addEventListener('change', async (e) => {
+    sourceFileInput?.addEventListener('change', async (e) => {
       if (e.target.files && e.target.files.length > 0) {
         const f = e.target.files[0];
         const targetDur = activeProject.duration_s || 300;
@@ -14134,7 +14091,7 @@ ${foreshadowText}`;
           console.error("Lỗi thêm tài liệu:", err);
           showToast(`Đã nạp tài liệu ${f.name} vào dự án!`);
         } finally {
-          sourceFileInput.value = ''; // Cho phép chọn lại cùng 1 file nếu cần
+          if (sourceFileInput) sourceFileInput.value = ''; // Cho phép chọn lại cùng 1 file nếu cần
         }
       }
     });
