@@ -3708,6 +3708,63 @@
       color: #fff;
       box-shadow: 0 2px 10px rgba(99, 102, 241, 0.35);
     }
+
+    .btn-test-script-voice {
+      background: rgba(16, 185, 129, 0.15);
+      border: 1px solid rgba(16, 185, 129, 0.4);
+      color: #6ee7b7;
+      padding: 4px 10px;
+      font-size: 11px;
+      font-weight: 600;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .btn-test-script-voice:hover {
+      background: rgba(16, 185, 129, 0.3);
+      border-color: #34d399;
+      color: #fff;
+      box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+    }
+
+    .btn-test-script-voice.is-playing {
+      background: rgba(239, 68, 68, 0.25) !important;
+      border-color: #ef4444 !important;
+      color: #fca5a5 !important;
+      box-shadow: 0 0 10px rgba(239, 68, 68, 0.4) !important;
+    }
+
+    .gcfg-test-voice-btn {
+      background: rgba(6, 182, 212, 0.15);
+      border: 1px solid rgba(6, 182, 212, 0.4);
+      color: var(--cyan);
+      padding: 3px 8px;
+      font-size: 10px;
+      font-weight: 700;
+      border-radius: 4px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      transition: all 0.15s ease;
+      white-space: nowrap;
+    }
+
+    .gcfg-test-voice-btn:hover {
+      background: rgba(6, 182, 212, 0.3);
+      border-color: var(--cyan);
+      color: #fff;
+      box-shadow: 0 0 8px rgba(6, 182, 212, 0.3);
+    }
+
+    .script-segment-skeleton.is-speaking {
+      border-color: var(--cyan) !important;
+      box-shadow: 0 0 16px rgba(6, 182, 212, 0.25) !important;
+    }
   </style>
 </head>
 
@@ -3946,6 +4003,7 @@
                 <option value="guy_en">Guy (Nam - UK English)</option>
               </optgroup>
             </select>
+            <button type="button" class="gcfg-test-voice-btn" id="btn-test-global-voice" onclick="testGlobalVoiceSample()" title="Nghe thử một câu mẫu với giọng đọc này">▶️ Thử</button>
           </div>
           <div class="gcfg-divider"></div>
           <div class="gcfg-group">
@@ -4132,6 +4190,9 @@
                   <span class="btn-gen-text">Sinh Tất Cả Kịch Bản</span>
                   <span class="btn-gen-badge" id="btn-gen-count-badge">0 mục</span>
                 </button>
+                <button class="script-action-btn" id="btn-play-all-script" onclick="togglePlayAllScript()" title="Nghe thử toàn bộ kịch bản bài giảng từ đầu đến cuối với giọng đọc đã chọn ở thanh trên">
+                  <span>🔊</span> <span id="btn-play-all-script-text">Nghe Toàn Bộ</span>
+                </button>
                 <button class="script-action-btn" id="btn-copy-full-script" title="Sao chép toàn bộ văn bản kịch bản">
                   <span>📋</span> Sao Chép Kịch Bản
                 </button>
@@ -4227,13 +4288,7 @@
                       <option value="60">60 FPS (Smooth)</option>
                     </select>
                   </div>
-                  <div class="video-config-item">
-                    <label>🎙️ Giọng đọc AI</label>
-                    <div class="video-voice-indicator" onclick="document.getElementById('gcfg-voice')?.focus(); document.getElementById('gcfg-voice')?.classList.add('gcfg-highlight'); setTimeout(() => document.getElementById('gcfg-voice')?.classList.remove('gcfg-highlight'), 1500);" title="Bấm để đổi giọng trên thanh cấu hình chung ở trên">
-                      <span id="video-cfg-voice-display" style="font-weight: 600; color: var(--cyan);">Quỳnh Anh (Nữ Bắc - Tự nhiên)</span>
-                      <span style="font-size: 10px; color: var(--text-dim); margin-left: auto;">(Thanh trên ↑)</span>
-                    </div>
-                  </div>
+
                   <div class="video-config-item">
                     <label>🎵 Nhạc nền</label>
                     <select id="video-bgm" class="gcfg-select">
@@ -12625,9 +12680,12 @@ QUY TẮC:
                 <span class="segment-title">${itTitle}</span>
                 <span class="segment-breadcrumb">(Slide ${i + 1} / ${totalPages})</span>
               </div>
-              <div style="display: flex; gap: 8px;">
+              <div style="display: flex; gap: 8px; flex-wrap: wrap;">
                 <button type="button" class="btn-gen-single-script" id="btn-gen-${itKey}" onclick="generateSingleSegmentScript('${itKey}')" title="Dùng AI sinh kịch bản lời thoại chuẩn sư phạm riêng cho trang này">
                   <span>✨</span> Sinh Kịch Bản Cho Trang Này
+                </button>
+                <button type="button" class="btn-test-script-voice" id="btn-test-voice-${itKey}" onclick="testSegmentScriptVoice('${itKey}')" title="Nghe thử giọng đọc AI đã chọn ở thanh trên cho trang này">
+                  <span>🔊</span> Nghe Thử Giọng
                 </button>
               </div>
             </div>
@@ -12774,9 +12832,12 @@ QUY TẮC:
                     <span class="segment-title">${itTitle}</span>
                     <span class="segment-breadcrumb">(${chTitle} • ${secTitle})</span>
                   </div>
-                  <div style="display: flex; gap: 8px;">
+                  <div style="display: flex; gap: 8px; flex-wrap: wrap;">
                     <button type="button" class="btn-gen-single-script" id="btn-gen-${itKey}" onclick="generateSingleSegmentScript('${itKey}')" title="Dùng AI sinh kịch bản lời thoại chuẩn sư phạm riêng cho phân đoạn này">
                       <span>✨</span> Sinh Kịch Bản Cho Mục Này
+                    </button>
+                    <button type="button" class="btn-test-script-voice" id="btn-test-voice-${itKey}" onclick="testSegmentScriptVoice('${itKey}')" title="Nghe thử giọng đọc AI đã chọn ở thanh trên cho mục này">
+                      <span>🔊</span> Nghe Thử Giọng
                     </button>
                   </div>
                 </div>
@@ -17160,7 +17221,207 @@ Yêu cầu trình bày:
       }
     }
 
-</script>
+
+    // ===== HỆ THỐNG NGHE THỬ GIỌNG ĐỌC AI TRỰC TIẾP TỪ KỊCH BẢN & THANH CHUNG =====
+    let _currentSpeakingSegKey = null;
+    let _isPlayingAllScript = false;
+    let _scriptPlayIndex = 0;
+    let _scriptPlayKeys = [];
+
+    function playSpeechWithVoice(text, voiceKey, onEnd) {
+      if (!('speechSynthesis' in window)) {
+        showToast('⚠️ Trình duyệt không hỗ trợ Web Speech API.');
+        if (onEnd) onEnd();
+        return;
+      }
+
+      window.speechSynthesis.cancel();
+
+      const isEnglish = (voiceKey === 'jenny_en' || voiceKey === 'guy_en');
+      const utter = new SpeechSynthesisUtterance(text);
+      utter.lang = isEnglish ? 'en-US' : 'vi-VN';
+
+      const voices = window.speechSynthesis.getVoices();
+      let matchedVoice = null;
+      if (isEnglish) {
+        matchedVoice = voices.find(v => v.lang.includes('en-') && (voiceKey === 'guy_en' ? v.name.toLowerCase().includes('male') || v.name.toLowerCase().includes('guy') || v.name.toLowerCase().includes('david') : true)) || voices.find(v => v.lang.includes('en'));
+      } else {
+        matchedVoice = voices.find(v => v.lang.includes('vi') || v.lang.includes('VI'));
+      }
+      if (matchedVoice) utter.voice = matchedVoice;
+
+      const speed = parseFloat(document.getElementById('gcfg-speed')?.value || '1.0');
+      utter.rate = speed;
+
+      if (voiceKey === 'nam_an' || voiceKey === 'minh_quang' || voiceKey === 'echo' || voiceKey === 'onyx' || voiceKey === 'guy_en') {
+        utter.pitch = 0.88;
+      } else if (voiceKey === 'quynh_anh' || voiceKey === 'mai_phuong' || voiceKey === 'nova' || voiceKey === 'shimmer' || voiceKey === 'jenny_en') {
+        utter.pitch = 1.05;
+      }
+
+      utter.onend = () => { if (onEnd) onEnd(); };
+      utter.onerror = (e) => { console.warn('Speech error:', e); if (onEnd) onEnd(); };
+
+      window.speechSynthesis.speak(utter);
+    }
+
+    function testGlobalVoiceSample() {
+      const sel = document.getElementById('gcfg-voice');
+      const voiceKey = sel?.value || 'quynh_anh';
+      const voiceName = sel?.options[sel?.selectedIndex]?.text || voiceKey;
+
+      if ('speechSynthesis' in window && window.speechSynthesis.speaking) {
+        window.speechSynthesis.cancel();
+        showToast('⏹️ Đã dừng nghe thử giọng.');
+        return;
+      }
+
+      const isEnglish = (voiceKey === 'jenny_en' || voiceKey === 'guy_en');
+      const sampleText = isEnglish
+        ? "Hello! This is a preview of the selected voice for your lecture script."
+        : `Xin chào! Đây là giọng đọc thử nghiệm ${voiceName.split('-')[0].trim()} cho bài giảng của bạn.`;
+
+      playSpeechWithVoice(sampleText, voiceKey);
+      showToast(`🎙️ Đang thử giọng: ${voiceName}`);
+    }
+
+    function testSegmentScriptVoice(segKey) {
+      const btn = document.getElementById(`btn-test-voice-${segKey}`);
+
+      if (_currentSpeakingSegKey === segKey && 'speechSynthesis' in window && window.speechSynthesis.speaking) {
+        window.speechSynthesis.cancel();
+        _currentSpeakingSegKey = null;
+        if (btn) {
+          btn.classList.remove('is-playing');
+          btn.innerHTML = `<span>🔊</span> Nghe Thử Giọng`;
+        }
+        showToast('⏹️ Đã dừng đọc đoạn này.');
+        return;
+      }
+
+      if ('speechSynthesis' in window && window.speechSynthesis.speaking) {
+        window.speechSynthesis.cancel();
+      }
+      if (window._currentAudioPlayer) {
+        window._currentAudioPlayer.pause();
+        window._currentAudioPlayer = null;
+      }
+
+      document.querySelectorAll('.btn-test-script-voice').forEach(b => {
+        b.classList.remove('is-playing');
+        b.innerHTML = `<span>🔊</span> Nghe Thử Giọng`;
+      });
+      document.querySelectorAll('.script-segment-skeleton').forEach(c => c.classList.remove('is-speaking'));
+
+      const narr = getNodeParam(segKey, 'narration', '');
+      if (!narr || narr.trim().length < 8) {
+        showToast('⚠️ Đoạn này chưa có kịch bản! Hãy gõ nội dung hoặc bấm [Sinh Kịch Bản] trước.');
+        return;
+      }
+
+      const cleanText = narr.replace(/\[P\d\]/g, '').replace(/\s+/g, ' ').trim();
+      const voiceKey = document.getElementById('gcfg-voice')?.value || 'quynh_anh';
+      const voiceName = document.getElementById('gcfg-voice')?.options[document.getElementById('gcfg-voice')?.selectedIndex]?.text || voiceKey;
+
+      _currentSpeakingSegKey = segKey;
+      const card = document.getElementById(`seg-card-${segKey}`);
+      if (card) card.classList.add('is-speaking');
+
+      if (btn) {
+        btn.classList.add('is-playing');
+        btn.innerHTML = `<span>⏹️</span> Dừng Đọc`;
+      }
+
+      showToast(`🎙️ Đang đọc thử với [${voiceName.split('-')[0].trim()}]...`);
+
+      playSpeechWithVoice(cleanText, voiceKey, () => {
+        if (_currentSpeakingSegKey === segKey) {
+          _currentSpeakingSegKey = null;
+          if (btn) {
+            btn.classList.remove('is-playing');
+            btn.innerHTML = `<span>🔊</span> Nghe Thử Giọng`;
+          }
+          if (card) card.classList.remove('is-speaking');
+        }
+      });
+    }
+
+    function togglePlayAllScript() {
+      const btnText = document.getElementById('btn-play-all-script-text');
+      if (_isPlayingAllScript) {
+        _isPlayingAllScript = false;
+        if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+        if (btnText) btnText.textContent = 'Nghe Toàn Bộ';
+        document.querySelectorAll('.script-segment-skeleton').forEach(c => c.classList.remove('is-speaking'));
+        showToast('⏹️ Đã dừng phát kịch bản.');
+        return;
+      }
+
+      _scriptPlayKeys = [];
+      if (window.isGridLayout) {
+        const allSources = activeProject?.sources || [];
+        let totalPages = 0;
+        allSources.filter(s => s.active !== false).forEach(s => { totalPages += (s.pages || 0); });
+        if (totalPages === 0) totalPages = activeProject?.detailedContent?.length || 1;
+        for (let i = 0; i < totalPages; i++) {
+          const key = `grid-page-${i}`;
+          const narr = getNodeParam(key, 'narration', '');
+          if (narr && narr.trim().length >= 8) _scriptPlayKeys.push(key);
+        }
+      } else {
+        document.querySelectorAll('.script-segment-skeleton').forEach(card => {
+          const id = card.id ? card.id.replace('seg-card-', '') : '';
+          if (id) {
+            const narr = getNodeParam(id, 'narration', '');
+            if (narr && narr.trim().length >= 8) _scriptPlayKeys.push(id);
+          }
+        });
+      }
+
+      if (_scriptPlayKeys.length === 0) {
+        showToast('⚠️ Chưa có đoạn nào có kịch bản để nghe! Hãy bấm [Sinh Kịch Bản] trước.');
+        return;
+      }
+
+      _isPlayingAllScript = true;
+      _scriptPlayIndex = 0;
+      if (btnText) btnText.textContent = `Dừng Nghe (${_scriptPlayKeys.length})`;
+      showToast(`🎙️ Bắt đầu phát kịch bản ${_scriptPlayKeys.length} đoạn theo giọng đọc đã chọn...`);
+      playNextScriptInSequence();
+    }
+
+    function playNextScriptInSequence() {
+      if (!_isPlayingAllScript || _scriptPlayIndex >= _scriptPlayKeys.length) {
+        _isPlayingAllScript = false;
+        const btnText = document.getElementById('btn-play-all-script-text');
+        if (btnText) btnText.textContent = 'Nghe Toàn Bộ';
+        document.querySelectorAll('.script-segment-skeleton').forEach(c => c.classList.remove('is-speaking'));
+        showToast('✅ Đã phát xong toàn bộ kịch bản bài giảng!');
+        return;
+      }
+
+      const key = _scriptPlayKeys[_scriptPlayIndex];
+      document.querySelectorAll('.script-segment-skeleton').forEach(c => c.classList.remove('is-speaking'));
+      const card = document.getElementById(`seg-card-${key}`);
+      if (card) {
+        card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        card.classList.add('is-speaking');
+      }
+
+      const narr = getNodeParam(key, 'narration', '');
+      const cleanText = narr.replace(/\[P\d\]/g, '').replace(/\s+/g, ' ').trim();
+      const voiceKey = document.getElementById('gcfg-voice')?.value || 'quynh_anh';
+
+      playSpeechWithVoice(cleanText, voiceKey, () => {
+        if (card) card.classList.remove('is-speaking');
+        _scriptPlayIndex++;
+        if (_isPlayingAllScript) {
+          setTimeout(playNextScriptInSequence, 400);
+        }
+      });
+    }
+
+  </script>
 </body>
 
 </html>
