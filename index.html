@@ -15881,94 +15881,7 @@ QUY TẮC:
               <h2 style="color:#0f172a;font-size:16px;border-bottom:2px solid #0284c7;padding-bottom:6px;margin-bottom:14px;">II. KỊCH BẢN CHI TIẾT LỜI THOẠI & DỰNG HÌNH</h2>
               ${detailedSectionsHtml}
             </div>
-            <!-- MODAL XUẤT VIDEO BÀI GIẢNG ĐA PHƯƠNG THỨC -->
-  <div class="export-modal-backdrop" id="modal-video-export" style="display: none;">
-    <div class="export-modal-card">
-      <div class="export-modal-header">
-        <div class="export-modal-title">
-          <span>🎬</span> Xuất Video Bài Giảng (WebM / MP4)
-        </div>
-        <button class="btn-close-modal" onclick="closeVideoExportModal()">&times;</button>
-      </div>
-
-      <div class="export-modal-body" id="export-modal-config-view">
-        <div class="export-option-group">
-          <label class="export-option-label">🎯 Phạm vi xuất video:</label>
-          <div class="export-pills-row">
-            <button type="button" class="export-pill active" data-range="fast5" onclick="setExportRange('fast5')">
-              ⚡ 5 Slide Đầu<br><span style="font-size: 10px; opacity: 0.7;">Bản xem thử (~10s)</span>
-            </button>
-            <button type="button" class="export-pill" data-range="current" onclick="setExportRange('current')">
-              📄 Slide Hiện Tại<br><span style="font-size: 10px; opacity: 0.7;">Xem thử 1 trang (~3s)</span>
-            </button>
-            <button type="button" class="export-pill" data-range="all" onclick="setExportRange('all')">
-              🎬 Toàn Bộ Slide<br><span style="font-size: 10px; opacity: 0.7;" id="export-total-slides-label">Tất cả trang</span>
-            </button>
-          </div>
-        </div>
-
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-          <div class="export-option-group">
-            <label class="export-option-label">📐 Độ phân giải:</label>
-            <select class="gcfg-select" id="export-modal-resolution">
-              <option value="1920x1080" selected>1920×1080 (Full HD 1080p)</option>
-              <option value="1280x720">1280×720 (HD 720p - Nhanh hơn)</option>
-            </select>
-          </div>
-          <div class="export-option-group">
-            <label class="export-option-label">🎙️ Giọng đọc:</label>
-            <div style="font-size: 12px; color: var(--cyan); padding: 7px 10px; background: rgba(15,23,42,0.6); border: 1px solid var(--border-subtle); border-radius: 6px; font-weight: 600;" id="export-modal-voice-label">
-              Quỳnh Anh (Nữ Bắc)
-            </div>
-          </div>
-        </div>
-
-        <div style="background: rgba(15, 23, 42, 0.4); border: 1px dashed rgba(255,255,255,0.12); border-radius: 8px; padding: 12px; font-size: 11.5px; color: var(--text-dim); line-height: 1.5;">
-          💡 Hệ thống sử dụng <strong>Canvas + MediaRecorder Engine</strong> chuẩn HTML5 để ghép khung hình slide, chuyển động Ken Burns và giọng đọc AI thành tệp video hoàn chỉnh tải thẳng về máy tính của bạn.
-        </div>
-
-        <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 8px;">
-          <button type="button" class="script-action-btn" onclick="closeVideoExportModal()">Hủy bỏ</button>
-          <button type="button" class="btn-generate-script-now" onclick="startVideoRenderPipeline()" style="padding: 8px 20px;">
-            <span>🚀</span> Bắt Đầu Xuất Video
-          </button>
-        </div>
-      </div>
-
-      <!-- VIEW TIẾN TRÌNH KHI ĐANG KẾT XUẤT -->
-      <div class="export-modal-body" id="export-modal-rendering-view" style="display: none;">
-        <div style="text-align: center; padding: 10px 0;">
-          <div style="font-size: 40px; margin-bottom: 8px; animation: bounce 1s infinite alternate;">📽️</div>
-          <div style="font-size: 16px; font-weight: 700; color: #fff;" id="export-status-title">Đang kết xuất video...</div>
-          <div style="font-size: 12px; color: var(--cyan); margin-top: 4px;" id="export-status-subtitle">Chuẩn bị dữ liệu hình ảnh và âm thanh...</div>
-        </div>
-
-        <div class="export-progress-container">
-          <div class="export-progress-bar" id="export-progress-bar"></div>
-        </div>
-        <div style="display: flex; justify-content: space-between; font-size: 11px; color: var(--text-dim);">
-          <span id="export-step-text">Khởi tạo Canvas...</span>
-          <span id="export-percent-text" style="font-weight: 700; color: var(--cyan);">0%</span>
-        </div>
-
-        <!-- MÀN HÌNH PREVIEW KHI XUẤT XONG -->
-        <div id="export-completed-view" style="display: none; flex-direction: column; gap: 12px; margin-top: 10px;">
-          <div style="background: rgba(16, 185, 129, 0.15); border: 1px solid #10b981; border-radius: 8px; padding: 10px 14px; color: #6ee7b7; font-size: 12.5px; font-weight: 600; text-align: center;">
-            🎉 Kết xuất video thành công! File video đã được tải về máy của bạn.
-          </div>
-          <video id="export-result-video" controls style="width: 100%; border-radius: 8px; background: #000; max-height: 260px; box-shadow: 0 4px 14px rgba(0,0,0,0.5);"></video>
-          <div style="display: flex; justify-content: flex-end; gap: 10px;">
-            <a id="export-download-link" class="btn-generate-script-now" href="#" download="Video_Bai_Giang.webm" style="text-decoration: none; padding: 8px 16px;">
-              <span>⬇️</span> Tải Lại Video
-            </a>
-            <button type="button" class="script-action-btn" onclick="closeVideoExportModal()">Đóng</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-</body>
+          </body>
           </html>
         `;
 
@@ -18082,6 +17995,93 @@ Yêu cầu trình bày:
     }
 
   </script>
+  <!-- MODAL XUẤT VIDEO BÀI GIẢNG ĐA PHƯƠNG THỨC -->
+  <div class="export-modal-backdrop" id="modal-video-export" style="display: none;">
+    <div class="export-modal-card">
+      <div class="export-modal-header">
+        <div class="export-modal-title">
+          <span>🎬</span> Xuất Video Bài Giảng (WebM / MP4)
+        </div>
+        <button class="btn-close-modal" onclick="closeVideoExportModal()">&times;</button>
+      </div>
+
+      <div class="export-modal-body" id="export-modal-config-view">
+        <div class="export-option-group">
+          <label class="export-option-label">🎯 Phạm vi xuất video:</label>
+          <div class="export-pills-row">
+            <button type="button" class="export-pill active" data-range="fast5" onclick="setExportRange('fast5')">
+              ⚡ 5 Slide Đầu<br><span style="font-size: 10px; opacity: 0.7;">Bản xem thử (~10s)</span>
+            </button>
+            <button type="button" class="export-pill" data-range="current" onclick="setExportRange('current')">
+              📄 Slide Hiện Tại<br><span style="font-size: 10px; opacity: 0.7;">Xem thử 1 trang (~3s)</span>
+            </button>
+            <button type="button" class="export-pill" data-range="all" onclick="setExportRange('all')">
+              🎬 Toàn Bộ Slide<br><span style="font-size: 10px; opacity: 0.7;" id="export-total-slides-label">Tất cả trang</span>
+            </button>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div class="export-option-group">
+            <label class="export-option-label">📐 Độ phân giải:</label>
+            <select class="gcfg-select" id="export-modal-resolution">
+              <option value="1920x1080" selected>1920×1080 (Full HD 1080p)</option>
+              <option value="1280x720">1280×720 (HD 720p - Nhanh hơn)</option>
+            </select>
+          </div>
+          <div class="export-option-group">
+            <label class="export-option-label">🎙️ Giọng đọc:</label>
+            <div style="font-size: 12px; color: var(--cyan); padding: 7px 10px; background: rgba(15,23,42,0.6); border: 1px solid var(--border-subtle); border-radius: 6px; font-weight: 600;" id="export-modal-voice-label">
+              Quỳnh Anh (Nữ Bắc)
+            </div>
+          </div>
+        </div>
+
+        <div style="background: rgba(15, 23, 42, 0.4); border: 1px dashed rgba(255,255,255,0.12); border-radius: 8px; padding: 12px; font-size: 11.5px; color: var(--text-dim); line-height: 1.5;">
+          💡 Hệ thống sử dụng <strong>Canvas + MediaRecorder Engine</strong> chuẩn HTML5 để ghép khung hình slide, chuyển động Ken Burns và giọng đọc AI thành tệp video hoàn chỉnh tải thẳng về máy tính của bạn.
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 8px;">
+          <button type="button" class="script-action-btn" onclick="closeVideoExportModal()">Hủy bỏ</button>
+          <button type="button" class="btn-generate-script-now" onclick="startVideoRenderPipeline()" style="padding: 8px 20px;">
+            <span>🚀</span> Bắt Đầu Xuất Video
+          </button>
+        </div>
+      </div>
+
+      <!-- VIEW TIẾN TRÌNH KHI ĐANG KẾT XUẤT -->
+      <div class="export-modal-body" id="export-modal-rendering-view" style="display: none;">
+        <div style="text-align: center; padding: 10px 0;">
+          <div style="font-size: 40px; margin-bottom: 8px; animation: bounce 1s infinite alternate;">📽️</div>
+          <div style="font-size: 16px; font-weight: 700; color: #fff;" id="export-status-title">Đang kết xuất video...</div>
+          <div style="font-size: 12px; color: var(--cyan); margin-top: 4px;" id="export-status-subtitle">Chuẩn bị dữ liệu hình ảnh và âm thanh...</div>
+        </div>
+
+        <div class="export-progress-container">
+          <div class="export-progress-bar" id="export-progress-bar"></div>
+        </div>
+        <div style="display: flex; justify-content: space-between; font-size: 11px; color: var(--text-dim);">
+          <span id="export-step-text">Khởi tạo Canvas...</span>
+          <span id="export-percent-text" style="font-weight: 700; color: var(--cyan);">0%</span>
+        </div>
+
+        <!-- MÀN HÌNH PREVIEW KHI XUẤT XONG -->
+        <div id="export-completed-view" style="display: none; flex-direction: column; gap: 12px; margin-top: 10px;">
+          <div style="background: rgba(16, 185, 129, 0.15); border: 1px solid #10b981; border-radius: 8px; padding: 10px 14px; color: #6ee7b7; font-size: 12.5px; font-weight: 600; text-align: center;">
+            🎉 Kết xuất video thành công! File video đã được tải về máy của bạn.
+          </div>
+          <video id="export-result-video" controls style="width: 100%; border-radius: 8px; background: #000; max-height: 260px; box-shadow: 0 4px 14px rgba(0,0,0,0.5);"></video>
+          <div style="display: flex; justify-content: flex-end; gap: 10px;">
+            <a id="export-download-link" class="btn-generate-script-now" href="#" download="Video_Bai_Giang.webm" style="text-decoration: none; padding: 8px 16px;">
+              <span>⬇️</span> Tải Lại Video
+            </a>
+            <button type="button" class="script-action-btn" onclick="closeVideoExportModal()">Đóng</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
 </body>
 
 </html>
