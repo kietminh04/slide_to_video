@@ -1,0 +1,188 @@
+    async function extractSlideDeckWithAI(pdf, totalPages, fileName = "") {
+      const scanLimit = Math.min(totalPages, 120);
+      const slidesInfo = [];
+
+      for (let p = 1; p <= scanLimit; p++) {
+        try {
+          const page = await pdf.getPage(p);
+          const textContent = await page.getTextContent();
+          const items = textContent.items || [];
+          const lines = [];
+          let curLine = "";
+          items.forEach(it => {
+            if (it.str && it.str.trim()) {
+              curLine += (curLine ? " " : "") + it.str.trim();
+              if (curLine.length > 70 || it.hasEOL) {
+                lines.push(curLine.trim());
+                curLine = "";
+              }
+            }
+          });
+          if (curLine && curLine.trim()) lines.push(curLine.trim());
+
+          // Lọc các dòng rác (số trang, header/footer lặp lại)
+          const meaningfulLines = lines.filter(l => {
+            if (l.length < 2) return false;
+            if (/^[0-9\s\-\.\/]+$/.test(l)) return false;
+            if (/^(trang|slide|page)\s*\d+/i.test(l)) return false;
+            if (/^\d+\s*\/\s*\d+$/.test(l)) return false;
+            return true;
+          });
+
+          const title = meaningfulLines[0] || `Slide ${p}`;
+          // Bóc tách sâu nội dung bài giảng (lên tới 350 ký tự), giữ nguyên công thức toán, thuật ngữ và bullet points
+          const bodySample = meaningfulLines.slice(1, 8).join(' • ').substring(0, 350);
+          slidesInfo.push(`Slide ${p}: [Tiêu đề: ${title}] | [Nội dung: ${bodySample}]`);
+        } catch (e) { }
+      }
+
+      if (slidesInfo.length === 0) return null;
+      const deckCatalog = slidesInfo.join('\n');
+
+      updateLoading("Đang phân tích slide bằng AI...", "Đang bóc tách kiến thức chuyên sâu và công thức toán học...");
+      const aiResult = await LLMClient.extractSlideDeckStructure(deckCatalog, totalPages, fileName);
+
+      if (aiResult && aiResult.chapters && aiResult.chapters.length > 0) {
+        // Chuẩn hóa tên chương và pageRange
+        aiResult.chapters.forEach((ch, idx) => {
+          if (!ch.chapter) ch.chapter = `CHƯƠNG ${idx + 1}`;
+          if (!ch.title) ch.title = ch.name || `Chương ${idx + 1}`;
+          if (!ch.visual_type) ch.visual_type = idx % 2 === 0 ? 'split_screen' : 'process_visualization';
+          (ch.sections || []).forEach((sec, sIdx) => {
+            if (!sec.code) sec.code = `${idx + 1}.${sIdx + 1}`;
+            if (!sec.title) sec.title = `Phần ${sec.code}`;
+            (sec.items || []).forEach((it, itIdx) => {
+              if (!it.code) it.code = `${idx + 1}.${sIdx + 1}.${itIdx + 1}`;
+              const pStart = it.pdfStart || 1;
+              const pEnd = it.pdfEnd || pStart;
+              it.pdfStart = Math.min(totalPages, Math.max(1, pStart));
+              it.pdfEnd = Math.min(totalPages, Math.max(it.pdfStart, pEnd));
+              it.pageRange = `Slide ${it.pdfStart} - ${it.pdfEnd}`;
+              it.duration = it.duration || 30;
+              it.details = it.details || '';
+              it.examples = it.examples || '';
+              it.mechanism = it.mechanism || '';
+              it.summary = it.summary || '';
+              it.key_point = it.key_point || '';
+            });
+          });
+        });
+
+        console.log(`[PDF Extractor] 🌟 Bóc tách Slide Deck thành công qua AI Catalog: ${aiResult.chapters.length} chương!`);
+        return {
+          title: (fileName || '').replace(/\.[^/.]+$/, ""),
+          totalPages,
+          chapters: aiResult.chapters,
+          method: 'ai-slide-catalog'
+        };
+      }
+      return null;
+    }
+
+    async function extractPdfStructure(arrayBuffer, fileName = "") {
+      if (typeof pdfjsLib === 'undefined') {
+        console.warn('[PDF Extractor] pdf.js chưa tải xong');
+        return null;
+      }
+      pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+      const totalPages = pdf.numPages;
+
+      // 1. KIỂM TRA ĐỊNH DẠNG TÀI LIỆU (SLIDE BÀI GIẢNG vs SÁCH / GIÁO TRÌNH)
+      let isSlideDeck = false;
+      try {
+        const page1 = await pdf.getPage(1);
+        const vp = page1.getViewport({ scale: 1.0 });
+        if (vp.width > vp.height || totalPages <= 60) {
+          isSlideDeck = true;
+        }
+      } catch (e) {
+        if (totalPages <= 60) isSlideDeck = true;
+      }
+
+      // ƯU TIÊN SỐ 1 CHO SLIDE BÀI GIẢNG: BÓC TÁCH TOÀN NĂNG BẰNG AI CATALOG
+      if (isSlideDeck) {
+        try {
+          updateLoading("Đang phân tích slide bằng AI...", "Đang bóc tách kiến thức toàn bộ bài giảng...");
+          const slideResult = await extractSlideDeckWithAI(pdf, totalPages, fileName);
+          if (slideResult && slideResult.chapters && slideResult.chapters.length > 0) {
+            return slideResult;
+          }
+        } catch (deckErr) {
+          console.warn('[PDF Extractor] Lỗi bóc tách Slide Deck qua AI Catalog, thử phương án tiếp theo:', deckErr);
+        }
+      }
+
+      // ƯU TIÊN SỐ 1 CHO SÁCH / GIÁO TRÌNH DÀY: BÓC TÁCH HYBRID THEO MỤC LỤC (TIẾT KIỆM TOKEN, CHUẨN TỪNG TRANG)
+      try {
+        updateLoading("Đang phân tích...", "Vui lòng chờ trong giây lát...");
+        const tocResult = await extractPdfHybridTOC(pdf, totalPages, fileName);
+        if (tocResult && tocResult.chapters && tocResult.chapters.length > 0) {
+          console.log(`[PDF Extractor] 🌟 Bóc tách thành công qua Mục lục Hybrid TOC: ${tocResult.chapters.length} chương!`);
+          return tocResult;
+        }
+      } catch (tocErr) {
+        console.warn('[PDF Extractor] Lỗi bóc tách TOC, chuyển sang bước tiếp theo:', tocErr);
+      }
+
+      const rawText = await extractAllPdfText(pdf, Math.min(totalPages, 50));
+
+      // ƯU TIÊN SỐ 2: GỌI LLM CHO OUTLINE TỔNG THỂ NẾU KHÔNG CÓ MỤC LỤC
+      if (rawText && rawText.trim().length >= 50) {
+        try {
+          updateLoading("Đang phân tích...", "Vui lòng chờ trong giây lát...");
+          const aiResult = await LLMClient.extractDocumentOutlineWithAI(rawText, fileName);
+          if (aiResult && aiResult.chapters && aiResult.chapters.length > 0) {
+            console.log(`[PDF Extractor] ✨ LLM đã bóc tách thành công ${aiResult.chapters.length} chương chuẩn sư phạm cho ${fileName}`);
+            return {
+              title: (fileName || '').replace(/\.[^/.]+$/, ""),
+              totalPages,
+              chapters: aiResult.chapters,
+              method: 'llm-openai'
+            };
+          }
+        } catch (aiErr) {
+          console.warn('[PDF Extractor] LLM không khả dụng hoặc lỗi mạng, tự động fallback sang bộ bóc tách tĩnh:', aiErr);
+        }
+      }
+
+      // ƯU TIÊN 2: PDF Outline/Bookmarks (LaTeX hyperref, Word Export, v.v.)
+      let outline = null;
+      try { outline = await pdf.getOutline(); } catch (e) { }
+
+      if (outline && outline.length > 0) {
+        const chapters = await buildChaptersFromOutline(pdf, outline, totalPages);
+        if (chapters.length > 0) {
+          return { title: '', totalPages, chapters, method: 'pdf-outline' };
+        }
+      }
+
+      // ƯU TIÊN 3: Font-size hierarchy (quét toàn bộ trang)
+      const chapters = await buildChaptersFromFontSize(pdf, totalPages);
+      if (chapters.length > 0) {
+        return { title: '', totalPages, chapters, method: 'pdf-fontsize' };
+      }
+
+      // ƯU TIÊN 4: Trích text thô + regex heading
+      const regexChapters = buildChaptersFromRegex(rawText);
+      if (regexChapters.length > 0) {
+        return { title: '', totalPages, chapters: regexChapters, method: 'pdf-regex' };
+      }
+
+      // ƯU TIÊN 5: BÓC TÁCH PHÂN ĐOẠN ĐA TRANG TOÀN NĂNG (Đảm bảo 100% PDF đều trích xuất thành công)
+      const pageChapters = await buildChaptersFromPages(pdf, totalPages, fileName);
+      if (pageChapters && pageChapters.length > 0) {
+        return {
+          title: (fileName || '').replace(/\.[^/.]+$/, ""),
+          totalPages,
+          chapters: pageChapters,
+          method: 'pdf-page-adaptive'
+        };
+      }
+
+      return null;
+    }
+
+    // Bộ bóc tách thích ứng đa trang (Universal Page-by-Page Smart Grouping)
+    async function buildChaptersFromPages(pdf, totalPages, fileName) {

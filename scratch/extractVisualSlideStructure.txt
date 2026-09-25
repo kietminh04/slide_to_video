@@ -1,0 +1,275 @@
+        async function extractVisualSlideStructure(file) {
+      updateLoading("Đang phân tích ảnh slide bằng Vision AI...", "Đang bóc tách kiến thức toàn bộ bài giảng qua API Backend...");
+      try {
+        const formData = new FormData();
+        formData.append('file', file);
+        const response = await fetch('http://localhost:8081/api/extract-visual-slides', {
+          method: 'POST',
+          body: formData
+        });
+        if (!response.ok) throw new Error("Lỗi API Vision OCR: " + response.statusText);
+        const data = await response.json();
+        if (data.success && data.chapters && data.chapters.length > 0) {
+          hideLoading();
+          return {
+            title: (file.name || '').replace(/\.[^/.]+$/, ""),
+            totalPages: data.total_pages,
+            chapters: data.chapters,
+            method: 'vision-ocr'
+          };
+        }
+      } catch (err) {
+        console.error("Lỗi extractVisualSlideStructure:", err);
+      }
+      hideLoading();
+      return null;
+    }
+
+        async function extractDocumentStructure(file) {
+      const useOcrChk = document.getElementById('use-visual-ocr');
+      if (useOcrChk && useOcrChk.checked) {
+          const visualData = await extractVisualSlideStructure(file);
+          if (visualData) return visualData;
+      }
+      const ext = (file.name.split('.').pop() || '').toLowerCase();
+      const buf = await file.arrayBuffer();
+
+      try {
+        if (ext === 'pdf') return await extractPdfStructure(buf, file.name);
+        if (ext === 'docx') return await extractDocxStructure(buf, file.name);
+        if (ext === 'pptx') return await extractPptxStructure(buf, file.name);
+        if (ext === 'txt' || ext === 'md') return await extractPlainTextStructure(file);
+      } catch (err) {
+        console.warn(`[Extractor] Lỗi bóc tách .${ext}:`, err);
+      }
+      return null; // Fallback → hệ thống cũ xử lý
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // 1. PDF EXTRACTOR (pdf.js): LLM AI Outline (Mặc định) → Outline → Font-size → Regex
+    // ─────────────────────────────────────────────────────────────
+    // HÀM BÓC TÁCH HYBRID TOC-ANCHORED (ƯU TIÊN HÀNG ĐẦU TUYỆT ĐỐI)
+    async function extractPdfHybridTOC(pdf, totalPages, fileName = "") {
+      // 1. Quét 8% trang đầu (tối đa 35 trang cho sách dày như 449 trang để bắt trọn vẹn toàn bộ các trang mục lục vii - xii)
+      const frontLimit = Math.min(totalPages, Math.max(5, Math.ceil(totalPages * 0.08), 35));
+      let tocStartPage = -1;
+      let tocEndPage = -1;
+      let tocText = '';
+
+      for (let p = 1; p <= frontLimit; p++) {
+        try {
+          const page = await pdf.getPage(p);
+          const content = await page.getTextContent();
+          const items = content.items || [];
+
+          // Ghép văn bản giữ cấu trúc dòng (phát hiện ngắt dòng theo toạ độ Y)
+          let pageLines = [];
+          let curLine = '';
+          let lastY = null;
+          items.forEach(it => {
+            const str = it.str || '';
+            const y = it.transform ? Math.round(it.transform[5]) : null;
+            if (lastY !== null && y !== null && Math.abs(y - lastY) > 4) {
+              if (curLine.trim()) pageLines.push(curLine.trim());
+              curLine = '';
+            }
+            curLine += (curLine ? ' ' : '') + str;
+            lastY = y;
+          });
+          if (curLine.trim()) pageLines.push(curLine.trim());
+
+          const pageStr = pageLines.join('\n');
+          const topWords = pageLines.slice(0, 5).join(' ').toLowerCase();
+
+          // Dấu hiệu nhận diện trang Mục lục:
+          const hasTocHeading = /\b(contents|table of contents|mục lục|table des matières|agenda|outline|nội dung chính|nội dung bài giảng|overview|topics)\b/i.test(topWords);
+
+          // Hoặc trang chứa đề mục và số trang (ví dụ "1.1 ... 1", "Chapter 1 ... 1")
+          const hasDenseTocRows = (pageStr.match(/^\s*(?:\d+\.\d+|\bChapter\s+\d+|\bChương\s+\d+).*?(?:\.{2,}|\s{3,}|\t)\s*\d+\s*$/gmi) || []).length >= 3;
+          const hasSeqOutline = /\b1[\.\)]\s+[A-Za-zÀ-ỹ]+.*?\b2[\.\)]\s+[A-Za-zÀ-ỹ]+.*?\b3[\.\)]\s+[A-Za-zÀ-ỹ]+/i.test(pageStr) && !topWords.includes('last lecture');
+
+          let isTocPage = false;
+          if (hasTocHeading || hasDenseTocRows || hasSeqOutline) {
+            isTocPage = true;
+          } else if (tocStartPage > 0 && (p - tocEndPage === 1)) {
+            // Trang mục lục kéo dài (trang tiếp theo của mục lục đa trang)
+            const numAtLineEnd = (pageStr.match(/\b\d+\s*$/gm) || []).length;
+            const hasSectionNum = (pageStr.match(/\b\d+\.\d+\b/g) || []).length;
+            const isMainBodyStart = /\b(1\.\s+Introduction|Chapter\s+1|Chương\s+1)\b/i.test(topWords) && !pageStr.includes('...');
+            if ((numAtLineEnd >= 3 || hasSectionNum >= 3) && !isMainBodyStart) {
+              isTocPage = true;
+            }
+          }
+
+          if (isTocPage) {
+            if (tocStartPage === -1) tocStartPage = p;
+            tocEndPage = p;
+            tocText += `\n--- TRANG MỤC LỤC ${p} ---\n` + pageStr;
+          } else if (tocStartPage > 0 && (p - tocEndPage >= 2)) {
+            break; // Đã qua hết các trang mục lục liên tiếp
+          }
+        } catch (e) { }
+      }
+
+      if (tocStartPage > 0 && tocText.trim().length >= 40) {
+        console.log(`[TOC Extractor] 🎯 Phát hiện Mục lục tại trang PDF ${tocStartPage} -> ${tocEndPage}`);
+        window._lastExtractedTocText = tocText;
+        updateLoading("Đang phân tích...", "Vui lòng chờ trong giây lát...");
+
+        const outlineRes = await LLMClient.extractTOCWithAI(tocText, fileName);
+        if (outlineRes && outlineRes.chapters && outlineRes.chapters.length > 0) {
+          // Chuẩn hóa tên chương
+          outlineRes.chapters.forEach((ch, idx) => {
+            if (!ch.chapter) ch.chapter = `CHƯƠNG ${idx + 1}`;
+            if (!ch.title) ch.title = ch.name || `Chương ${idx + 1}`;
+          });
+
+          // Kiểm tra xem có số trang in thực tế từ sách giáo trình không
+          const hasPrintedPages = outlineRes.chapters.some(ch =>
+            (ch.sections || []).some(sec => (sec.items || []).some(it => it.printed_start && it.printed_start > 5))
+          );
+
+          if (hasPrintedPages) {
+            // Sách giáo trình dày: Tính Offset trang PDF
+            let pageOffset = 0;
+            let firstPrintedStart = 1;
+            try {
+              firstPrintedStart = outlineRes.chapters[0]?.sections?.[0]?.items?.[0]?.printed_start || 1;
+              for (let checkP = tocEndPage + 1; checkP <= Math.min(totalPages, tocEndPage + 25); checkP++) {
+                const page = await pdf.getPage(checkP);
+                const content = await page.getTextContent();
+                const pStr = (content.items || []).map(it => it.str).join(' ');
+                if (/\b(1\.\s+Introduction|Chapter\s+1|Chương\s+1)\b/i.test(pStr) || (checkP >= 15 && /\b1\.1\b/i.test(pStr))) {
+                  pageOffset = checkP - firstPrintedStart;
+                  console.log(`[TOC Extractor] 📐 Tính được Offset trang: PDF ${checkP} - In ${firstPrintedStart} = ${pageOffset} trang`);
+                  break;
+                }
+              }
+            } catch (e) { }
+
+            // Gán startPage, endPage thực tế trong PDF cho từng node
+            outlineRes.chapters.forEach(ch => {
+              (ch.sections || []).forEach(sec => {
+                (sec.items || []).forEach(it => {
+                  const pStart = it.printed_start || 1;
+                  const pEnd = it.printed_end || (pStart + 4);
+                  it.pdfStart = Math.min(totalPages, Math.max(1, pStart + pageOffset));
+                  it.pdfEnd = Math.min(totalPages, Math.max(it.pdfStart, pEnd + pageOffset));
+                  it.pageRange = `Trang ${pStart} - ${pEnd}`;
+                });
+              });
+            });
+          } else {
+            // Slide bài giảng / tài liệu không có số trang in trong mục lục:
+            // Phân bổ đều và chuẩn xác các slide trong PDF cho từng chương và từng mục
+            const numChapters = outlineRes.chapters.length;
+            const chStep = Math.max(1, Math.floor(totalPages / numChapters));
+            outlineRes.chapters.forEach((ch, chIdx) => {
+              const chStart = Math.min(totalPages, 1 + chIdx * chStep);
+              const chEnd = (chIdx === numChapters - 1) ? totalPages : Math.min(totalPages, (chIdx + 1) * chStep);
+              const allItems = (ch.sections || []).flatMap(s => s.items || []);
+              const numItems = allItems.length || 1;
+              const itemStep = Math.max(1, Math.floor((chEnd - chStart + 1) / numItems));
+
+              allItems.forEach((it, itIdx) => {
+                it.pdfStart = Math.min(totalPages, chStart + itIdx * itemStep);
+                it.pdfEnd = (itIdx === numItems - 1) ? chEnd : Math.min(totalPages, chStart + (itIdx + 1) * itemStep - 1);
+                if (it.pdfEnd < it.pdfStart) it.pdfEnd = it.pdfStart;
+                it.pageRange = `Slide ${it.pdfStart} - ${it.pdfEnd}`;
+              });
+            });
+          }
+
+          return {
+            title: (fileName || '').replace(/\.[^/.]+$/, ""),
+            totalPages,
+            chapters: outlineRes.chapters,
+            method: 'toc-hybrid'
+          };
+        }
+      }
+
+      return null;
+    }
+
+    // BỘ BÓC TÁCH SLIDE TOÀN NĂNG (FULL LLM SLIDE CATALOG ARCHITECTURE)
+    async function extractSlideDeckWithAI(pdf, totalPages, fileName = "") {
+      const scanLimit = Math.min(totalPages, 120);
+      const slidesInfo = [];
+
+      for (let p = 1; p <= scanLimit; p++) {
+        try {
+          const page = await pdf.getPage(p);
+          const textContent = await page.getTextContent();
+          const items = textContent.items || [];
+          const lines = [];
+          let curLine = "";
+          items.forEach(it => {
+            if (it.str && it.str.trim()) {
+              curLine += (curLine ? " " : "") + it.str.trim();
+              if (curLine.length > 70 || it.hasEOL) {
+                lines.push(curLine.trim());
+                curLine = "";
+              }
+            }
+          });
+          if (curLine && curLine.trim()) lines.push(curLine.trim());
+
+          // Lọc các dòng rác (số trang, header/footer lặp lại)
+          const meaningfulLines = lines.filter(l => {
+            if (l.length < 2) return false;
+            if (/^[0-9\s\-\.\/]+$/.test(l)) return false;
+            if (/^(trang|slide|page)\s*\d+/i.test(l)) return false;
+            if (/^\d+\s*\/\s*\d+$/.test(l)) return false;
+            return true;
+          });
+
+          const title = meaningfulLines[0] || `Slide ${p}`;
+          // Bóc tách sâu nội dung bài giảng (lên tới 350 ký tự), giữ nguyên công thức toán, thuật ngữ và bullet points
+          const bodySample = meaningfulLines.slice(1, 8).join(' • ').substring(0, 350);
+          slidesInfo.push(`Slide ${p}: [Tiêu đề: ${title}] | [Nội dung: ${bodySample}]`);
+        } catch (e) { }
+      }
+
+      if (slidesInfo.length === 0) return null;
+      const deckCatalog = slidesInfo.join('\n');
+
+      updateLoading("Đang phân tích slide bằng AI...", "Đang bóc tách kiến thức chuyên sâu và công thức toán học...");
+      const aiResult = await LLMClient.extractSlideDeckStructure(deckCatalog, totalPages, fileName);
+
+      if (aiResult && aiResult.chapters && aiResult.chapters.length > 0) {
+        // Chuẩn hóa tên chương và pageRange
+        aiResult.chapters.forEach((ch, idx) => {
+          if (!ch.chapter) ch.chapter = `CHƯƠNG ${idx + 1}`;
+          if (!ch.title) ch.title = ch.name || `Chương ${idx + 1}`;
+          if (!ch.visual_type) ch.visual_type = idx % 2 === 0 ? 'split_screen' : 'process_visualization';
+          (ch.sections || []).forEach((sec, sIdx) => {
+            if (!sec.code) sec.code = `${idx + 1}.${sIdx + 1}`;
+            if (!sec.title) sec.title = `Phần ${sec.code}`;
+            (sec.items || []).forEach((it, itIdx) => {
+              if (!it.code) it.code = `${idx + 1}.${sIdx + 1}.${itIdx + 1}`;
+              const pStart = it.pdfStart || 1;
+              const pEnd = it.pdfEnd || pStart;
+              it.pdfStart = Math.min(totalPages, Math.max(1, pStart));
+              it.pdfEnd = Math.min(totalPages, Math.max(it.pdfStart, pEnd));
+              it.pageRange = `Slide ${it.pdfStart} - ${it.pdfEnd}`;
+              it.duration = it.duration || 30;
+              it.details = it.details || '';
+              it.examples = it.examples || '';
+              it.mechanism = it.mechanism || '';
+              it.summary = it.summary || '';
+              it.key_point = it.key_point || '';
+            });
+          });
+        });
+
+        console.log(`[PDF Extractor] 🌟 Bóc tách Slide Deck thành công qua AI Catalog: ${aiResult.chapters.length} chương!`);
+        return {
+          title: (fileName || '').replace(/\.[^/.]+$/, ""),
+          totalPages,
+          chapters: aiResult.chapters,
+          method: 'ai-slide-catalog'
+        };
+      }
+      return null;
+    }

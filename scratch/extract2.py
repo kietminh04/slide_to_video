@@ -8,7 +8,7 @@ for i, l in enumerate(lines):
         start = i
         break
 if start != -1:
-    end = start + 50
-    with open('scratch/buildChaptersFromPages.txt', 'w', encoding='utf-8') as out:
-        out.write('\n'.join(lines[start:end]))
+    end = start + 120
+    with open('scratch/buildChaptersFromPages2.txt', 'w', encoding='utf-8') as out:
+        out.write('\n'.join(lines[start+45:end]))
     print("Done")

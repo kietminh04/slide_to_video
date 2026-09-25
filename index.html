@@ -3648,11 +3648,7 @@
               title="Phân tích lại toàn bộ bài giảng và chuẩn hóa sơ đồ tư duy">
               <span>✨</span> Tái Cấu Trúc Sơ Đồ
             </button>
-            <button class="mindmap-ctrl-btn" id="btn-rag-ingest"
-              style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.4), rgba(5, 150, 105, 0.4)); border: 1px solid rgba(16, 185, 129, 0.7); color: #fff; font-weight: 700; padding: 0 14px; gap: 6px; display: flex; align-items: center; margin-left: 8px;"
-              title="Nạp kiến thức sơ đồ vào Cơ sở dữ liệu Vector để Chatbot hỏi đáp chuẩn xác">
-              <span>📚</span> Nạp Tri Thức RAG
-            </button>
+            
           </div>
 
           <!-- CANVAS VIEWPORT (HỖ TRỢ LĂN CHUỘT PHÓNG TO/THU NHỎ VÀ KÉO DI CHUYỂN NHƯ CVAT) -->
@@ -10655,34 +10651,113 @@ OUTPUT: Valid JSON only.
 
         let res = null;
 
+        const cfg = getLLMConfig();
         const payload = {
             projectId: currentProjectId,
             query: msg,
             history: rollingHistory,
-            treeSkeleton: treeSkeleton
+            treeSkeleton: treeSkeleton,
+            apiKey: cfg.apiKey
         };
         
         try {
-          const serverUrl = (window.location.origin.startsWith('http') && !window.location.origin.includes('file:'))
-            ? `${window.location.origin}/api/rag_chat`
-            : '/api/rag_chat';
-          const ctl = new AbortController();
-          const tId = setTimeout(() => ctl.abort(), 55000);
-          res = await fetch(serverUrl, {
+          const searchUrl = (window.location.origin.startsWith('http') && !window.location.origin.includes('file:'))
+            ? `${window.location.origin}/api/rag_search`
+            : '/api/rag_search';
+          const searchCtl = new AbortController();
+          const searchTId = setTimeout(() => searchCtl.abort(), 15000);
+          const searchRes = await fetch(searchUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload),
-            signal: ctl.signal
+            signal: searchCtl.signal
           });
-          clearTimeout(tId);
+          clearTimeout(searchTId);
+
+          let contextText = "Không tìm thấy kiến thức liên quan trong CSDL.";
+          if (searchRes && searchRes.ok) {
+             const searchData = await searchRes.json();
+             if (searchData.chunks && searchData.chunks.length > 0) {
+                 contextText = searchData.chunks.map((c, i) => 
+                   `[Tài liệu ${i + 1}] Nguồn: ${c.chapter} - ${c.section}\nNội dung: ${c.text}`
+                 ).join('\n\n');
+             }
+          }
+
+          const systemPrompt = `Bạn là SIÊU TRỢ LÝ AI & TRỢ GIẢNG ĐA NĂNG CỦA HỆ THỐNG CLSG STUDIO (HUST AI COPILOT).
+Người dùng là giảng viên hoặc học viên. Bạn phải thân thiện, thông thái: đọc hộ, giải thích hộ kiến thức và TRỰC TIẾP ĐIỀU KHIỂN GIAO DIỆN HỘ người dùng.
+
+[KIẾN THỨC BÀI GIẢNG ĐƯỢC RÚT TRÍCH TỪ DATABASE (RAG)]:
+${contextText}
+
+[CẤU TRÚC SƠ ĐỒ HIỆN TẠI ĐỂ ĐIỀU KHIỂN GIAO DIỆN]:
+${treeSkeleton}
+
+DANH MỤC CÁC LỆNH ĐIỀU KHIỂN GIAO DIỆN BẠN CÓ THỂ RA LỆNH:
+1. "keep_only_target": {"type": "keep_only_target", "chapter": 1, "section": "d", "item": "a1"} -> Giữ duy nhất mục này.
+2. "keep_chapters_and_sections": {"type": "keep_chapters_and_sections", "chapters": [4], "targetChapter": 1, "sections": ["a", "b"]}
+3. "set_only_chapters": {"type": "set_only_chapters", "chapters": [2, 3]}
+4. "exclude_chapters": {"type": "exclude_chapters", "chapters": [1]}
+5. "include_chapters": {"type": "include_chapters", "chapters": [1]}
+6. "focus_chapter": {"type": "focus_chapter", "chapter": 1}
+7. "open_editor": {"type": "open_editor", "chapter": 1}
+8. "set_total_minutes": {"type": "set_total_minutes", "minutes": 10}
+9. "set_chapter_duration": {"type": "set_chapter_duration", "chapter": 1, "seconds": 180}
+10. "switch_tab": {"type": "switch_tab", "tab": "mindmap" | "script" | "video"}
+11. "speak_narration": {"type": "speak_narration", "text": "Lời thoại..."}
+12. "exclude_codes": {"type": "exclude_codes", "codes": ["1.1"]}
+13. "include_codes": {"type": "include_codes", "codes": ["1.1"]}
+14. "set_only_codes": {"type": "set_only_codes", "codes": ["1.1"]}
+15. "focus_code": {"type": "focus_code", "code": "1.1"}
+16. "speak_code": {"type": "speak_code", "code": "1.1"}
+17. "set_node_config": {"type": "set_node_config", "code": "1.1", "voice": "Nam_MienNam", "speed": 1.25, "locked": true}
+18. "set_narration": {"type": "set_narration", "code": "1.1", "narration": "Kịch bản mới..."}
+19. "request_illustration": {"type": "request_illustration", "code": "1.1", "prompt": "mô tả hình ảnh"}
+
+QUY TẮC:
+1. NẾU NGƯỜI DÙNG HỎI KIẾN THỨC: Phải trả lời DỰA VÀO KIẾN THỨC ĐƯỢC RÚT TRÍCH ở trên. Nếu không tìm thấy, hãy nói là không tìm thấy. TUYỆT ĐỐI KHÔNG SINH RA JSON NẾU KHÔNG YÊU CẦU ĐIỀU KHIỂN UI!
+2. NẾU NGƯỜI DÙNG YÊU CẦU ĐIỀU KHIỂN UI ("ẩn", "hiện", "chỉ giữ", "viết kịch bản"): Kèm khối \`\`\`json chứa cấu trúc {"actions": [...]} ở cuối câu trả lời.`;
+
+          const llmPayload = {
+            model: cfg.model || 'gemini-2.5-flash',
+            messages: [
+              { role: 'system', content: systemPrompt },
+              ...rollingHistory,
+              { role: 'user', content: msg }
+            ],
+            max_tokens: 2500,
+            temperature: 0.3
+          };
+
+          // Gọi qua proxy /api/llm/chat để tránh lỗi CORS khi gọi trực tiếp OpenAI từ trình duyệt
+          const llmPayloadWithConfig = {
+            ...llmPayload,
+            apiKey: cfg.apiKey,
+            baseUrl: cfg.baseUrl,
+            provider: cfg.provider
+          };
+
+          const endpoint = (window.location.origin.startsWith('http') && !window.location.origin.includes('file:'))
+            ? `${window.location.origin}/api/llm/chat`
+            : '/api/llm/chat';
+            
+          const llmCtl = new AbortController();
+          const llmTId = setTimeout(() => llmCtl.abort(), 60000);
+          res = await fetch(endpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(llmPayloadWithConfig),
+            signal: llmCtl.signal
+          });
+          clearTimeout(llmTId);
+
         } catch (e) {
-          console.warn("[Copilot] Lỗi gọi Backend RAG:", e);
+          console.warn("[Copilot] Lỗi gọi Backend RAG / LLM:", e);
         }
 
         if (res && res.ok) {
           const data = await res.json();
-          // Hỗ trợ cả định dạng OpenAI chuẩn (choices) và định dạng RAG Backend trả về (answer)
-          let reply = data.answer || (data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) || '';
+          let reply = (data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) || '';
 
           let actionExecuted = false;
           let cleanReply = reply;
@@ -13770,6 +13845,11 @@ ${foreshadowText}`;
         loadProjectIntoWorkspace(projData.id);
         switchView('workspace');
         showToast(`Đã sinh kịch bản bài giảng thành công từ ${file.name}!`);
+        
+        // TỰ ĐỘNG NẠP RAG NGAY KHI PHÂN TÍCH XONG
+        setTimeout(() => {
+          if (typeof triggerRagIngestion === 'function') triggerRagIngestion();
+        }, 1000);
       } catch (err) {
         console.error("[Create Project Error]", err);
         hideLoading();
@@ -15508,12 +15588,14 @@ ${foreshadowText}`;
             return;
         }
 
+        const cfg = getLLMConfig();
         const response = await fetch('/api/rag_ingest', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ 
             projectId: currentProjectId, 
-            chunks: chunks 
+            chunks: chunks,
+            apiKey: cfg.apiKey
           })
         });
 

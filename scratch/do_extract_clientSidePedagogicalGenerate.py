@@ -7,7 +7,7 @@ with open(r'd:\Project\Slide to Video\Mã Nguồn Sudo\index.html', encoding='ut
 start = -1
 end = -1
 for i, l in enumerate(lines):
-    if 'async function extractPdfStructure' in l:
+    if 'async function clientSidePedagogicalGenerate' in l:
         start = i
         break
 
@@ -17,7 +17,7 @@ if start != -1:
             end = i
             break
             
-    with open(r'd:\Project\Slide to Video\Mã Nguồn Sudo\scratch\extractPdfStructure.txt', 'w', encoding='utf-8') as out:
+    with open(r'd:\Project\Slide to Video\Mã Nguồn Sudo\scratch\clientSidePedagogicalGenerate.txt', 'w', encoding='utf-8') as out:
         out.write('\n'.join(lines[start:end+1]))
     print(f"Extracted from {start} to {end}")
 else:

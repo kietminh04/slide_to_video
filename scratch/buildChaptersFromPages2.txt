@@ -1,0 +1,75 @@
+              return true;
+            });
+
+            if (!chTitle && meaningfulLines.length > 0) {
+              chTitle = meaningfulLines[0].substring(0, 80).replace(/^(\d+[\.\-\:]|chapter|chương)\s*/i, '');
+            }
+
+            meaningfulLines.slice(1, 5).forEach(txt => {
+              const cleanTxt = txt.substring(0, 90).trim();
+              if (cleanTxt.length > 8 && !candidateItems.some(it => it.text === cleanTxt)) {
+                // Nhận diện công thức toán học hoặc ký hiệu logic trong dòng
+                let mathFormula = "";
+                if (/[=<>\\\+\-\*\/\^\_\{\}\[\]\|\~]/.test(cleanTxt) || /\b(sum|int|lim|alpha|beta|theta|sigma|lambda|matrix|norm|loss|argmin|argmax)\b/i.test(cleanTxt)) {
+                  mathFormula = `$${cleanTxt.replace(/\$/g, '')}$`;
+                }
+                candidateItems.push({
+                  text: cleanTxt,
+                  pdfPage: p,
+                  formula: mathFormula
+                });
+              }
+            });
+          } catch (e) { }
+        }
+
+        if (!chTitle) {
+          const docBase = (fileName || 'Bài giảng').replace(/\.[^/.]+$/, "");
+          const fallbacks = [
+            `Tổng quan & Đặt vấn đề nghiên cứu`,
+            `Cơ sở lý thuyết & Mô hình hóa bài toán`,
+            `Cơ chế thuật toán & Phương pháp tính toán`,
+            `Đánh giá thực nghiệm & Phân tích tham số`,
+            `Tổng kết phương pháp & Ứng dụng thực tiễn`,
+            `Mở rộng bài toán & Hướng phát triển`
+          ];
+          chTitle = fallbacks[chIdx] || `Phân đoạn kiến thức ${chIdx + 1}`;
+        }
+
+        // Tạo cấu trúc chuẩn sư phạm: Mã số logic, không dùng 'Phần a' hay 'a1'
+        const items = [];
+        if (candidateItems.length > 0) {
+          candidateItems.forEach((cItem, itIdx) => {
+            items.push({
+              code: `${chIdx + 1}.1.${itIdx + 1}`,
+              text: cItem.text,
+              duration: 30,
+              pdfStart: cItem.pdfPage || startP,
+              pdfEnd: cItem.pdfPage || endP,
+              pageRange: `Slide ${cItem.pdfPage || startP}`,
+              summary: `Phân tích khái niệm và ứng dụng trọng tâm: ${cItem.text}`,
+              mechanism: cItem.formula || '',
+              key_point: `Điểm then chốt của ${cItem.text}`,
+              narration: '' // Để trống, người dùng hoặc hệ thống sẽ sinh
+            });
+          });
+        } else {
+          items.push(
+            {
+              code: `${chIdx + 1}.1.1`,
+              text: `${chTitle} - Khái niệm & Cơ sở lý thuyết`,
+              duration: 30,
+              pdfStart: startP,
+              pdfEnd: Math.min(totalPages, startP + 1),
+              pageRange: `Slide ${startP} - ${Math.min(totalPages, startP + 1)}`,
+              summary: `Trọng tâm cơ sở lý thuyết và định nghĩa chính của ${chTitle}.`,
+              mechanism: '',
+              key_point: `Nắm vững bản chất và điều kiện áp dụng của ${chTitle}.`,
+              narration: ''
+            },
+            {
+              code: `${chIdx + 1}.1.2`,
+              text: `${chTitle} - Phương pháp & Cơ chế vận hành`,
+              duration: 30,
+              pdfStart: Math.min(totalPages, startP + 2),
+              pdfEnd: endP,

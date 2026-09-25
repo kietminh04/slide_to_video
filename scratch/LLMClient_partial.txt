@@ -1,0 +1,300 @@
+    const LLMClient = {
+      safeJsonParse(rawStr) {
+        if (!rawStr) return null;
+        let clean = rawStr.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
+        const match = clean.match(/\{[\s\S]*\}/);
+        if (!match) return null;
+        const jsonStr = match[0];
+        try {
+          return JSON.parse(jsonStr);
+        } catch (e1) {
+          try {
+            const sanitized = jsonStr.replace(/\\(?![/"\\n]|u[0-9a-fA-F]{4})/g, '\\\\');
+            return JSON.parse(sanitized);
+          } catch (e2) {
+            let rep = jsonStr;
+            if (!rep.endsWith('}')) {
+              if (rep.lastIndexOf(']') > rep.lastIndexOf('}')) rep += '}';
+              else rep += ']}';
+            }
+            try {
+              const sanitizedRep = rep.replace(/\\(?![/"\\n]|u[0-9a-fA-F]{4})/g, '\\\\');
+              return JSON.parse(sanitizedRep);
+            } catch (e3) {
+              console.warn('[LLMClient] safeJsonParse thất bại:', e3);
+              return null;
+            }
+          }
+        }
+      },
+      STORAGE_KEY: 'clsg_ai_config',
+      CACHE_PREFIX: 'clsg_ai_cache_',
+
+      getConfig() {
+        try {
+          const saved = JSON.parse(localStorage.getItem(this.STORAGE_KEY) || '{}');
+          // Tôn trọng tuyệt đối lựa chọn Provider của người dùng! Không tự ý ghi đè
+          const provider = (saved.provider === 'openai') ? 'openai' : 'gemini_local';
+          const openaiApiKey = saved.openaiApiKey || (saved.apiKey && saved.apiKey.startsWith('sk-') ? saved.apiKey : '');
+          const geminiApiKey = saved.geminiApiKey || (saved.apiKey && !saved.apiKey.startsWith('sk-') ? saved.apiKey : '');
+          const apiKey = (provider === 'openai') ? openaiApiKey : geminiApiKey;
+
+          let baseUrl = saved.baseUrl;
+          let model = saved.model;
+
+          if (provider === 'gemini_local') {
+            if (!model || model.startsWith('gpt') || model.includes('1.5') || model.includes('2.0')) model = 'gemini-2.5-flash';
+            if (!baseUrl || baseUrl.includes('openai.com')) {
+              baseUrl = 'https://generativelanguage.googleapis.com/v1beta/openai';
+            }
+          } else {
+            if (!model || model.startsWith('gemini')) model = 'gpt-4o-mini';
+            if (!baseUrl || baseUrl.includes('googleapis.com')) baseUrl = 'https://api.openai.com/v1';
+          }
+
+          return {
+            provider,
+            baseUrl,
+            model,
+            apiKey,
+            openaiApiKey,
+            geminiApiKey,
+            outputLang: saved.outputLang || 'vi'
+          };
+        } catch (e) {
+          return {
+            provider: 'gemini_local',
+            baseUrl: 'https://generativelanguage.googleapis.com/v1beta/openai',
+            model: 'gemini-2.5-flash',
+            apiKey: '',
+            openaiApiKey: '',
+            geminiApiKey: '',
+            outputLang: 'vi'
+          };
+        }
+      },
+
+      saveConfig(cfg) {
+        try {
+          const existing = JSON.parse(localStorage.getItem(this.STORAGE_KEY) || '{}');
+          const merged = { ...existing, ...cfg };
+          if (cfg.provider === 'openai') {
+            merged.openaiApiKey = cfg.apiKey || merged.openaiApiKey || '';
+          } else {
+            merged.geminiApiKey = cfg.apiKey || merged.geminiApiKey || '';
+          }
+          localStorage.setItem(this.STORAGE_KEY, JSON.stringify(merged));
+        } catch (e) { }
+      },
+
+      // BỘ TỔNG HỢP KIẾN THỨC SƯ PHẠM HÀN LÂM DỰ PHÒNG (ZERO-FAILURE LOCAL ACADEMIC SYNTHESIZER)
+      synthesizeAcademicSummaryLocally({ projectTitle, chapterName, sectionName, nodeCode, nodeText }) {
+        const text = `${nodeText || ''} ${chapterName || ''} ${sectionName || ''} ${projectTitle || ''}`.toLowerCase();
+
+        let mechanismFormula = "";
+        let domainConcept = "nội dung chuyên môn tương ứng";
+        let defaultMechanism = `• Cơ chế & Trình tự logic: Phân tích theo cấu trúc diễn dịch, đi từ bức tranh toàn cảnh đến việc mổ xẻ các khía cạnh chi tiết của vấn đề, từ đó rút ra quy luật và bài học ứng dụng.`;
+
+        if (text.includes('cluster') || text.includes('phân cụm') || text.includes('gom cụm') || text.includes('k-means') || text.includes('gmm')) {
+          mechanismFormula = "$$J = \\sum_{k=1}^K \\sum_{x_i \\in S_k} \\|x_i - \\mu_k\\|^2 \\quad \\text{với} \\quad \\mu_k = \\frac{1}{|S_k|} \\sum_{x_i \\in S_k} x_i$$";
+          domainConcept = "phân cụm thống kê không giám sát (Unsupervised Clustering)";
+        } else if (text.includes('time') || text.includes('chuỗi thời gian') || text.includes('dự báo') || text.includes('arima') || text.includes('stationary')) {
+          mechanismFormula = "$$X_t = c + \\sum_{i=1}^p \\phi_i X_{t-i} + \\varepsilon_t + \\sum_{j=1}^q \\theta_j \\varepsilon_{t-j}, \\quad \\varepsilon_t \\sim \\mathcal{N}(0, \\sigma^2)$$";
+          domainConcept = "mô hình hóa quá trình dừng và chuỗi thời gian (Stochastic Time-Series)";
+        } else if (text.includes('attention') || text.includes('transformer') || text.includes('self-attention') || text.includes('long-tail') || text.includes('scenario') || text.includes('mining')) {
+          mechanismFormula = "$$\\text{Attention}(Q, K, V) = \\text{softmax}\\left(\\frac{QK^T}{\\sqrt{d_k}}\\right)V$$";
+          domainConcept = "cơ chế tự chú ý (Self-Attention) và khai phá kịch bản hiếm (Long-tail Scenario Mining)";
+        } else if (text.includes('loss') || text.includes('hàm mất mát') || text.includes('entropy') || text.includes('gradient')) {
+          mechanismFormula = "$$\\mathcal{L}_{CE} = -\\sum_{c=1}^C y_c \\log(\\hat{y}_c) + \\alpha \\sum_{j=1}^m \\|w_j\\|^2$$";
+          domainConcept = "tối ưu hóa hàm mục tiêu và lan truyền ngược gradient";
+        } else if (text.includes('lịch sử') || text.includes('đảng') || text.includes('chính trị') || text.includes('xã hội') || text.includes('triết học')) {
+          domainConcept = "bối cảnh lịch sử, triết học và nền tảng tư tưởng";
+          defaultMechanism = `• Cơ chế & Trình tự logic: Phân tích theo dòng thời gian (chronological) hoặc theo logic biện chứng (dialectical), đặt sự kiện vào đúng bối cảnh không gian - thời gian để đánh giá nguyên nhân và hệ quả.`;
+        }
+
+        if (mechanismFormula) {
+          defaultMechanism = `• Cơ chế & Công thức Toán học: Phương pháp giải quyết bài toán thông qua việc tối ưu hóa hàm mục tiêu và chuẩn hóa không gian véc-tơ:\n${mechanismFormula}\nQuy trình thực thi gồm các bước: chuẩn hóa dữ liệu đầu vào, ánh xạ qua hàm biến đổi không gian, và tính toán nghiệm tối ưu dựa trên đạo hàm riêng.`;
+        }
+
+        return {
+          summary: `• Khái niệm cốt lõi: Phân đoạn [${nodeCode}] "${nodeText}" là nội dung then chốt thuộc ${chapterName} (${sectionName}). Phân đoạn này tập trung phân tích bản chất lý thuyết của ${domainConcept}, thiết lập các tiền đề quan trọng cho toàn bộ hệ thống.`,
+          mechanism: defaultMechanism,
+          key_point: `• Điểm then chốt & Lưu ý: Cần đặc biệt lưu ý các giả định tiên quyết, bối cảnh áp dụng, và tính nhất quán của khung lý thuyết khi triển khai phân tích vào thực tế.`,
+          details: `• Bóc tách chuyên sâu: Khảo sát tường minh các thành phần cấu thành, diễn giải ý nghĩa và đánh giá tính chất tiệm cận của mô hình/hệ thống.`,
+          examples: `• Ứng dụng thực tiễn: Áp dụng trực tiếp trong bài toán phân tích hệ thống, giúp người học vận dụng tư duy để giải quyết các tình huống tương tự trong môi trường thực tế.`
+        };
+      },
+
+      async summarizeNode({ projectTitle, chapterName, sectionName, nodeCode, nodeText }) {
+        const cfg = this.getConfig();
+        const prompt = `Bài giảng: "${projectTitle}". Chương: "${chapterName} • ${sectionName}". Phân đoạn: [${nodeCode}] "${nodeText}".
+
+BỎ QUA thông tin rác (tên tác giả, trường đại học, nhà xuất bản, số trang, copyright).
+
+NHIỆM VỤ: Tóm tắt NỘI DUNG THỰC SỰ của phân đoạn trên. Viết tự nhiên, đi thẳng vào nội dung, KHÔNG lặp lại tên trường.
+- Nếu là môn KHOA HỌC TỰ NHIÊN (Toán, Lý, Tin...): dùng LaTeX $...$ cho công thức.
+- Nếu là môn XÃ HỘI (Lịch sử, Triết học, Chính trị...): viết văn xuôi phân tích, TUYỆT ĐỐI KHÔNG dùng thuật ngữ thuật toán/giải thuật/quy trình.
+
+Trả về DUY NHẤT JSON (KHÔNG markdown, KHÔNG giải thích thêm):
+{
+  "summary": "(2-3 câu) Nội dung cốt lõi: bản chất, ý nghĩa chính của phân đoạn.",
+  "mechanism": "(2-3 câu) Diễn giải sâu hơn: nguyên nhân, cách thức, mối liên hệ giữa các yếu tố.",
+  "key_point": "(2-3 câu) Điểm quan trọng nhất cần ghi nhớ, bài học rút ra.",
+  "details": "(2-3 câu) Các chi tiết bổ sung, số liệu, sự kiện, hoặc tính chất đặc biệt.",
+  "examples": "(2-3 câu) Ví dụ minh họa cụ thể hoặc ứng dụng thực tiễn."
+}
+
+LƯU Ý QUAN TRỌNG:
+- KHÔNG bắt đầu giá trị bằng tên trường (ví dụ KHÔNG viết "Nội dung cốt lõi: ...", mà viết thẳng nội dung).
+- Mỗi trường phải có NỘI DUNG KHÁC NHAU, không lặp ý giữa các trường.`;
+
+        const payload = {
+          model: cfg.model || 'gemini-2.5-flash-lite',
+          messages: [
+            { role: 'system', content: 'Bạn là chuyên gia bóc tách tài liệu học thuật đa ngành. Viết tự nhiên, bám sát nội dung gốc. KHÔNG lặp lại tên trường trong giá trị. Output chuẩn JSON hợp lệ duy nhất.' },
+            { role: 'user', content: prompt }
+          ],
+          max_tokens: 2500,
+          temperature: 0.3,
+          provider: cfg.provider || 'gemini_local',
+          apiKey: cfg.apiKey || ''
+        };
+
+        // 1. Thử gọi qua server proxy
+        let res = null;
+        try {
+          const serverUrl = (window.location.origin.startsWith('http') && !window.location.origin.includes('file:'))
+            ? `${window.location.origin}/api/llm/chat`
+            : 'https://slide-to-video-sigma.vercel.app/api/llm/chat';
+          const proxyPayload = { ...payload, apiKey: cfg.apiKey || '', baseUrl: cfg.baseUrl || '', provider: cfg.provider || 'openai' };
+          const ctl = new AbortController();
+          const tId = setTimeout(() => ctl.abort(), 55000);
+          res = await fetch(serverUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(proxyPayload),
+            signal: ctl.signal
+          });
+          clearTimeout(tId);
+        } catch (e) {
+          console.warn("[LLM] Server proxy error:", e);
+        }
+
+        if ((!res || !res.ok) && cfg.apiKey) {
+          try {
+            const endpoint = `${cfg.baseUrl.replace(/\/+$/, '')}/chat/completions`;
+            const headers = { 'Content-Type': 'application/json', 'Authorization': `Bearer ${cfg.apiKey}` };
+            const ctl = new AbortController();
+            const tId = setTimeout(() => ctl.abort(), 55000);
+            res = await fetch(endpoint, {
+              method: 'POST',
+              headers,
+              body: JSON.stringify(payload),
+              signal: ctl.signal
+            });
+            clearTimeout(tId);
+          } catch (e) {
+            console.warn("[LLM] Direct endpoint error:", e);
+          }
+        }
+        try {
+          if (res && res.ok) {
+            const data = await res.json();
+            const raw = data.choices?.[0]?.message?.content || '';
+            const parsed = this.safeJsonParse(raw);
+            if (parsed && (parsed.summary || parsed.mechanism)) return parsed;
+          }
+        } catch (e) {
+          console.warn('[LLMClient] Lỗi summarizeNode qua proxy:', e);
+        }
+
+        // 2. Thử gọi trực tiếp nếu người dùng có dán API Key riêng
+        if (cfg.apiKey) {
+          try {
+            const endpoint = `${cfg.baseUrl.replace(/\/+$/, '')}/chat/completions`;
+            const headers = { 'Content-Type': 'application/json', 'Authorization': `Bearer ${cfg.apiKey}` };
+            const res = await fetch(endpoint, { method: 'POST', headers, body: JSON.stringify(payload) });
+            if (res.ok) {
+              const data = await res.json();
+              const raw = data.choices?.[0]?.message?.content || '';
+              const parsed = this.safeJsonParse(raw);
+              if (parsed && (parsed.summary || parsed.mechanism)) return parsed;
+            }
+          } catch (e) {
+            console.warn('[LLMClient] Lỗi summarizeNode direct:', e);
+          }
+        }
+
+        // 3. ZERO-FAILURE FALLBACK: Tự động tổng hợp kiến thức sư phạm hàn lâm cục bộ
+        return this.synthesizeAcademicSummaryLocally({ projectTitle, chapterName, sectionName, nodeCode, nodeText });
+      },
+      async ping(customCfg = null) {
+        const cfg = customCfg || this.getConfig();
+        const customKey = cfg.apiKey || '';
+        const tStart = performance.now();
+
+        // 1. Luôn ping qua Serverless Backend (để dùng key hệ thống an toàn nếu ô key trống)
+        try {
+          const serverUrl = (window.location.origin.startsWith('http') && !window.location.origin.includes('file:'))
+            ? `${window.location.origin}/api/llm/ping`
+            : 'http://127.0.0.1:8765/api/llm/ping';
+          const res = await fetch(serverUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ provider: cfg.provider, apiKey: customKey, model: cfg.model })
+          });
+          const resData = await res.json().catch(() => null);
+          if (res.ok && resData && resData.status === 'ok') {
+            return {
+              data: resData,
+              latency: resData.latency || Math.round(performance.now() - tStart),
+              isSystemKey: resData.isSystemKey,
+              model: resData.model || cfg.model,
+              provider: resData.provider || cfg.provider
+            };
+          }
+          if (resData && resData.error) {
+            throw new Error(resData.error + (resData.details ? ` (${resData.details})` : ''));
+          }
+        } catch (e) {
+          if (e.message && !e.message.includes('Failed to fetch') && !e.message.includes('NetworkError') && !e.message.includes('Load failed')) {
+            throw e;
+          }
+          console.warn('[LLMClient] Server proxy ping không phản hồi, thử gọi trực tiếp...');
+        }
+
+        // 2. Fallback trực tiếp chỉ khi người dùng ĐÃ NHẬP KEY RIÊNG
+        if (customKey) {
+          const endpoint = `${cfg.baseUrl.replace(/\/+$/, '')}/chat/completions`;
+          const payload = {
+            model: cfg.model,
+            messages: [{ role: 'user', content: 'Ping' }],
+            max_tokens: 2
+          };
+          const res = await fetch(endpoint, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${customKey}`
+            },
+            body: JSON.stringify(payload)
+          });
+          const latency = Math.round(performance.now() - tStart);
+          if (!res.ok) {
+            const errText = await res.text();
+            throw new Error(`HTTP ${res.status}: ${errText.slice(0, 150)}`);
+          }
+          const data = await res.json();
+          return { data, latency, isSystemKey: false, model: cfg.model, provider: cfg.provider };
+        }
+
+        throw new Error('Không thể kết nối tới máy chủ AI hoặc hệ thống đang bận. Vui lòng thử lại sau giây lát.');
+      },
+
+
+      // TẦNG 1: SINH DÀN Ý DẪN CHUYỆN & CÂU CHUYỂN Ý SƯ PHẠM THEO CHƯƠNG (NARRATIVE STORYBOARD)
+      // DỰ PHÒNG DÀN Ý KỂ CHUYỆN CỤC BỘ (ZERO-FAILURE STORYBOARD)
+      synthesizeChapterNarrativeStoryboardLocally({ chapterTitle, items }) {
+        if (!items || items.length === 0) return { chapter_hook: '', bridges: {} };
+        const bridges = {};
+        const safeTitle = chapterTitle || 'Chương học phần';

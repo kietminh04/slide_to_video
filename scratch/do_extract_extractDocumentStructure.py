@@ -7,12 +7,12 @@ with open(r'd:\Project\Slide to Video\Mã Nguồn Sudo\index.html', encoding='ut
 start = -1
 end = -1
 for i, l in enumerate(lines):
-    if 'function extractDocumentStructure' in l:
+    if 'async function extractDocumentStructure' in l:
         start = i
         break
 
 if start != -1:
-    for i in range(start, len(lines)):
+    for i in range(start, min(start+400, len(lines))):
         if lines[i].startswith('    }'):
             end = i
             break
