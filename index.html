@@ -4551,7 +4551,7 @@
           scenes: (typeof currentScenes !== 'undefined' && currentScenes) ? currentScenes : (project.scenes || []),
           nodeCustomParams: (typeof nodeCustomParams !== 'undefined' && nodeCustomParams) ? nodeCustomParams : (project.nodeCustomParams || {}),
           excludedNodes: (typeof excludedNodes !== 'undefined') ? Array.from(excludedNodes) : (project.excludedNodes || []),
-          chatHistory: (typeof clsgChatSessionHistory !== 'undefined') ? clsgChatSessionHistory : (project.chatHistory || []),
+          chatHistory: (typeof clsgChatSessionHistory !== 'undefined') ? [...clsgChatSessionHistory] : (project.chatHistory ? [...project.chatHistory] : []),
           chatHtml: (chatContainer ? chatContainer.innerHTML : (project.chatHtml || ''))
         };
 
@@ -6279,7 +6279,7 @@
         activeProject.nodeCustomParams = JSON.parse(JSON.stringify(nodeCustomParams));
         activeProject.excludedNodes = Array.from(excludedNodes);
         if (typeof clsgChatSessionHistory !== 'undefined') {
-          activeProject.chatHistory = clsgChatSessionHistory;
+          activeProject.chatHistory = [...clsgChatSessionHistory];
         }
         var chatContainer = document.getElementById('ai-chat-messages');
         if (chatContainer) {
@@ -10487,6 +10487,7 @@ OUTPUT: Valid JSON only.
     };
 
     async function sendChatMessage(text) {
+      const originalProjectId = currentProjectId;
       const msg = text || document.getElementById('chat-input')?.value.trim();
       if (!msg) return;
 
@@ -10523,9 +10524,11 @@ OUTPUT: Valid JSON only.
         `;
         chatContainer.appendChild(aiMsg);
         chatContainer.scrollTop = chatContainer.scrollHeight;
-        clsgChatSessionHistory.push({ role: 'user', content: msg });
-        clsgChatSessionHistory.push({ role: 'assistant', content: cachedAnswer });
-        saveChatState();
+        if (currentProjectId === originalProjectId) {
+          clsgChatSessionHistory.push({ role: 'user', content: msg });
+          clsgChatSessionHistory.push({ role: 'assistant', content: cachedAnswer });
+          saveChatState();
+        }
         return;
       }
 
@@ -10735,9 +10738,11 @@ QUY TẮC PHẢN HỒI QUAN TRỌNG:
           chatContainer.scrollTop = chatContainer.scrollHeight;
 
           // Lưu vào lịch sử phiên và đồng bộ lên Database
-          clsgChatSessionHistory.push({ role: 'user', content: msg });
-          clsgChatSessionHistory.push({ role: 'assistant', content: cleanReply });
-          saveChatState();
+          if (currentProjectId === originalProjectId) {
+            clsgChatSessionHistory.push({ role: 'user', content: msg });
+            clsgChatSessionHistory.push({ role: 'assistant', content: cleanReply });
+            saveChatState();
+          }
 
           // Tự động học bổ sung mẫu lệnh mới hoặc cache câu hỏi tri thức
           if (jsonMatch) {
@@ -10874,9 +10879,11 @@ QUY TẮC PHẢN HỒI QUAN TRỌNG:
         chatContainer.scrollTop = chatContainer.scrollHeight;
 
         try {
-          clsgChatSessionHistory.push({ role: 'user', content: msg });
-          clsgChatSessionHistory.push({ role: 'assistant', content: localReply });
-          saveChatState();
+          if (currentProjectId === originalProjectId) {
+            clsgChatSessionHistory.push({ role: 'user', content: msg });
+            clsgChatSessionHistory.push({ role: 'assistant', content: localReply });
+            saveChatState();
+          }
         } catch (e) { }
       } catch (fallbackErr) {
         console.error("[Copilot Fallback Error]:", fallbackErr);
@@ -10889,9 +10896,11 @@ QUY TẮC PHẢN HỒI QUAN TRỌNG:
         }
         if (chatContainer) chatContainer.scrollTop = chatContainer.scrollHeight;
         try {
-          clsgChatSessionHistory.push({ role: 'user', content: msg });
-          clsgChatSessionHistory.push({ role: 'assistant', content: bubbleEl?.innerHTML || 'Gặp sự cố' });
-          saveChatState();
+          if (currentProjectId === originalProjectId) {
+            clsgChatSessionHistory.push({ role: 'user', content: msg });
+            clsgChatSessionHistory.push({ role: 'assistant', content: bubbleEl?.innerHTML || 'Gặp sự cố' });
+            saveChatState();
+          }
         } catch (e) { }
       }
     }
