@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="vi">
 
 <head>
@@ -4452,31 +4452,45 @@
       showToast(window.isGridLayout ? 'Chuyển sang chế độ Sơ Đồ Trang (Grid)' : 'Chuyển sang chế độ Sơ Đồ Cây (Tree)');
     }
 
-    function layoutGridTree(allNodes) {
+    function layoutGridTree() {
+      // Tạo N node phẳng trực tiếp từ totalPages của source, KHÔNG phụ thuộc vào cây decision tree
+      const sources = activeProject ? (activeProject.sources || []) : [];
+      let totalPages = 0;
+      sources.forEach(s => { totalPages += (s.pages || 0); });
+      if (totalPages === 0) totalPages = 1;
+      
       const leaves = [];
-      allNodes.forEach(n => {
-        // Coi các node ở tầng dưới cùng (không có children) là trang
-        if (!n.children || n.children.length === 0) {
-          if (n.type !== 'project') {
-            leaves.push(n);
-            n.isHidden = false;
-          } else {
-            n.isHidden = true;
+      for (let i = 0; i < totalPages; i++) {
+        leaves.push({
+          key: `grid-page-${i}`,
+          type: 'grid-page',
+          level: 3,
+          width: 220,
+          height: 180,
+          x: 0,
+          y: 0,
+          gridOrder: i,
+          isHidden: false,
+          isExpanded: false,
+          children: null,
+          data: {
+            code: `P${i + 1}`,
+            text: `Trang ${i + 1}`,
+            summary: '',
+            duration: 20
           }
-        } else {
-          n.isHidden = true;
-        }
-      });
+        });
+      }
       
       const N = leaves.length;
       let cols = 5;
       if (N < 10) cols = Math.ceil(N / 2);
       if (cols < 1) cols = 1;
       
-      const gapX = 350;
-      const gapY = 250;
+      const gapX = 280;
+      const gapY = 240;
       const startX = 100;
-      const startY = 150;
+      const startY = 100;
       
       for (let i = 0; i < N; i++) {
         let row = Math.floor(i / cols);
@@ -4486,7 +4500,6 @@
         }
         leaves[i].x = startX + col * gapX;
         leaves[i].y = startY + row * gapY;
-        leaves[i].gridOrder = i; // Save order for drawing paths
       }
       
       return leaves;
@@ -7129,28 +7142,29 @@
       if (!world) return;
       world.innerHTML = '';
 
-      const roots = buildDecisionTree(activeProject, currentScenes);
-      
-      // Thu thập toàn bộ các node
-      const allNodes = [];
-      function collectVisible(n) {
-        allNodes.push(n);
-        if (n.isExpanded && n.children) {
-          n.children.forEach(collectVisible);
-        }
-      }
-      roots.forEach(collectVisible);
-      
       let gridLeaves = [];
+      let visibleNodes = [];
+      
       if (window.isGridLayout) {
-        gridLeaves = layoutGridTree(allNodes);
+        // CHẾ ĐỘ GRID: Bỏ qua cây hoàn toàn, tạo N node phẳng trực tiếp
+        gridLeaves = layoutGridTree();
+        visibleNodes = gridLeaves;
       } else {
+        // CHẾ ĐỘ CÂY: Dùng cây decision tree như cũ
+        const roots = buildDecisionTree(activeProject, currentScenes);
+        const allNodes = [];
+        function collectVisible(n) {
+          allNodes.push(n);
+          if (n.isExpanded && n.children) {
+            n.children.forEach(collectVisible);
+          }
+        }
+        roots.forEach(collectVisible);
         allNodes.forEach(n => n.isHidden = false);
         layoutDecisionTree(roots);
+        visibleNodes = allNodes;
       }
 
-
-      const visibleNodes = allNodes.filter(n => !n.isHidden);
       if (visibleNodes.length === 0) return;
       const minX = Math.min(...visibleNodes.map(n => n.x));
       const maxX = Math.max(...visibleNodes.map(n => n.x + n.width));
