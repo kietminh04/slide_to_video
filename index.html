@@ -7689,6 +7689,7 @@
     };
 
     window.triggerManualDeepSummarize = async function () {
+      const originalProjectId = currentProjectId;
       if (!selectedLeafNode) return;
       const node = selectedLeafNode;
       const indicator = document.getElementById('insp-auto-indicator');
@@ -7741,7 +7742,8 @@
         }
 
         if (res && (res.summary || res.mechanism)) {
-          node.data.summary = res.summary || node.data.summary;
+          if (currentProjectId === originalProjectId) {
+            node.data.summary = res.summary || node.data.summary;
           node.data.mechanism = res.mechanism || node.data.mechanism;
           node.data.key_point = res.key_point || node.data.key_point;
           node.data.details = res.details || node.data.details;
@@ -7752,12 +7754,28 @@
           setNodeParam(node.key, 'key_point', node.data.key_point);
           setNodeParam(node.key, 'details', node.data.details);
           setNodeParam(node.key, 'examples', node.data.examples);
-
-          showToast('✨ Đã bóc tách chi tiết thành công!');
+            showToast('✨ Đã bóc tách chi tiết thành công!');
           // Tự động chuyển sang chế độ chi tiết
           window.summaryViewMode = 'detailed';
           localStorage.setItem('clsg_summary_mode', 'detailed');
           const cardEl = document.getElementById(`node-${node.key}`);
+          } else {
+            let savedParams = JSON.parse(localStorage.getItem(`clsg_node_params_${originalProjectId}`) || '{}');
+            if (!savedParams[node.key]) savedParams[node.key] = {};
+            if (res.summary) savedParams[node.key].summary = res.summary;
+            if (res.mechanism) savedParams[node.key].mechanism = res.mechanism;
+            if (res.key_point) savedParams[node.key].key_point = res.key_point;
+            if (res.details) savedParams[node.key].details = res.details;
+            if (res.examples) savedParams[node.key].examples = res.examples;
+            localStorage.setItem(`clsg_node_params_${originalProjectId}`, JSON.stringify(savedParams));
+            
+            const userProjects = JSON.parse(localStorage.getItem('clsg_user_projects') || '{}');
+            if (userProjects[originalProjectId]) {
+                userProjects[originalProjectId].nodeCustomParams = savedParams;
+                localStorage.setItem('clsg_user_projects', JSON.stringify(userProjects));
+            }
+          }
+
           selectLeafNodeForContent(node, cardEl, false);
         } else {
           showToast('⚠️ AI không trả về dữ liệu chi tiết, vui lòng thử lại!');
@@ -10528,7 +10546,19 @@ OUTPUT: Valid JSON only.
           clsgChatSessionHistory.push({ role: 'user', content: msg });
           clsgChatSessionHistory.push({ role: 'assistant', content: cachedAnswer });
           saveChatState();
-        }
+        } else {
+            let savedHistory = JSON.parse(localStorage.getItem('clsg_chat_history_' + originalProjectId) || '[]');
+            savedHistory.push({ role: 'user', content: msg });
+            savedHistory.push({ role: 'assistant', content: cachedAnswer });
+            localStorage.setItem('clsg_chat_history_' + originalProjectId, JSON.stringify(savedHistory));
+            localStorage.setItem('clsg_chat_html_' + originalProjectId, '');
+            const userProjects = JSON.parse(localStorage.getItem('clsg_user_projects') || '{}');
+            if (userProjects[originalProjectId]) {
+              userProjects[originalProjectId].chatHistory = savedHistory;
+              userProjects[originalProjectId].chatHtml = '';
+              localStorage.setItem('clsg_user_projects', JSON.stringify(userProjects));
+            }
+          }
         return;
       }
 
@@ -10742,6 +10772,18 @@ QUY TẮC PHẢN HỒI QUAN TRỌNG:
             clsgChatSessionHistory.push({ role: 'user', content: msg });
             clsgChatSessionHistory.push({ role: 'assistant', content: cleanReply });
             saveChatState();
+          } else {
+            let savedHistory = JSON.parse(localStorage.getItem('clsg_chat_history_' + originalProjectId) || '[]');
+            savedHistory.push({ role: 'user', content: msg });
+            savedHistory.push({ role: 'assistant', content: cleanReply });
+            localStorage.setItem('clsg_chat_history_' + originalProjectId, JSON.stringify(savedHistory));
+            localStorage.setItem('clsg_chat_html_' + originalProjectId, '');
+            const userProjects = JSON.parse(localStorage.getItem('clsg_user_projects') || '{}');
+            if (userProjects[originalProjectId]) {
+              userProjects[originalProjectId].chatHistory = savedHistory;
+              userProjects[originalProjectId].chatHtml = '';
+              localStorage.setItem('clsg_user_projects', JSON.stringify(userProjects));
+            }
           }
 
           // Tự động học bổ sung mẫu lệnh mới hoặc cache câu hỏi tri thức
@@ -10883,6 +10925,18 @@ QUY TẮC PHẢN HỒI QUAN TRỌNG:
             clsgChatSessionHistory.push({ role: 'user', content: msg });
             clsgChatSessionHistory.push({ role: 'assistant', content: localReply });
             saveChatState();
+          } else {
+            let savedHistory = JSON.parse(localStorage.getItem('clsg_chat_history_' + originalProjectId) || '[]');
+            savedHistory.push({ role: 'user', content: msg });
+            savedHistory.push({ role: 'assistant', content: localReply });
+            localStorage.setItem('clsg_chat_history_' + originalProjectId, JSON.stringify(savedHistory));
+            localStorage.setItem('clsg_chat_html_' + originalProjectId, '');
+            const userProjects = JSON.parse(localStorage.getItem('clsg_user_projects') || '{}');
+            if (userProjects[originalProjectId]) {
+              userProjects[originalProjectId].chatHistory = savedHistory;
+              userProjects[originalProjectId].chatHtml = '';
+              localStorage.setItem('clsg_user_projects', JSON.stringify(userProjects));
+            }
           }
         } catch (e) { }
       } catch (fallbackErr) {
