@@ -10580,24 +10580,19 @@ OUTPUT: Valid JSON only.
       const bubbleEl = aiMsg.querySelector('.msg-bubble');
 
       // XÂY DỰNG TOÀN BỘ KHO TRI THỨC BÀI GIẢNG ĐA PHƯƠNG THỨC CHO AI COPILOT
-      function buildFullLectureContext() {
+      function buildTreeSkeleton() {
         if (!activeProject) return '(Chưa có dự án bài giảng nào đang mở)';
         const roots = buildDecisionTree(activeProject, currentScenes);
         let out = `BÀI GIẢNG: "${activeProject.title}" (Tổng thời lượng: ${activeProject.duration_s || 300}s)\n`;
         out += `MÔ TẢ: ${activeProject.desc || 'Không có mô tả'}\n\n`;
-        out += `TOÀN BỘ CẤU TRÚC PHÂN CẢNH, NHÁNH, LÁ VÀ KỊCH BẢN CHI TIẾT:\n`;
+        out += `CẤU TRÚC PHÂN CẢNH, NHÁNH, LÁ:\n`;
 
         roots.forEach((root) => {
           (root.children || []).forEach((chNode, cIdx) => {
             const chNum = cIdx + 1;
             const chTitle = chNode.data?.title || `Chương ${chNum}`;
             const chEx = isNodeExcluded(chNode.key);
-            const chNarration = typeof getNodeParam === 'function' ? getNodeParam(chNode.key, 'narration', currentScenes[cIdx]?.narration || '') : (currentScenes[cIdx]?.narration || '');
-
-            out += `\n[CHƯƠNG ${chNum}]: "${chTitle}" (Thời lượng: ${chNode.data?.duration || 60}s | Trạng thái: ${chEx ? 'ĐÃ ẨN' : 'ĐANG DÙNG'})\n`;
-            if (chNarration) {
-              out += `  • Kịch bản tổng quan: "${chNarration.slice(0, 300)}..."\n`;
-            }
+            out += `\n[CHƯƠNG ${chNum}]: "${chTitle}" (Trạng thái: ${chEx ? 'ĐÃ ẨN' : 'ĐANG DÙNG'})\n`;
 
             (chNode.children || []).forEach((secNode, sIdx) => {
               const secCode = secNode.data?.code || `Phần ${String.fromCharCode(97 + sIdx)}`;
@@ -10608,17 +10603,8 @@ OUTPUT: Valid JSON only.
               (secNode.children || []).forEach((itNode, iIdx) => {
                 const itCode = itNode.data?.code || `item${iIdx + 1}`;
                 const itTitle = itNode.data?.title || '';
-                const itSummary = typeof getNodeParam === 'function' ? getNodeParam(itNode.key, 'summary', itNode.data?.summary || '') : (itNode.data?.summary || '');
-                const itMech = typeof getNodeParam === 'function' ? getNodeParam(itNode.key, 'mechanism', itNode.data?.mechanism || '') : (itNode.data?.mechanism || '');
-                const itKey = typeof getNodeParam === 'function' ? getNodeParam(itNode.key, 'key_point', itNode.data?.key_point || '') : (itNode.data?.key_point || '');
-                const itNarr = typeof getNodeParam === 'function' ? getNodeParam(itNode.key, 'narration', itNode.data?.narration || '') : (itNode.data?.narration || '');
                 const itEx = isNodeExcluded(itNode.key, [chNode.key, secNode.key]);
-
-                out += `      * Mục [${itCode}]: "${itTitle}" | Tóm tắt: ${itSummary || itTitle}`;
-                if (itMech) out += ` | Cơ chế: ${itMech}`;
-                if (itKey) out += ` | Điểm then chốt: ${itKey}`;
-                if (itNarr) out += ` | Lời thoại chi tiết: "${itNarr}"`;
-                out += ` (Trạng thái: ${itEx ? 'ẨN' : 'HIỆN'})\n`;
+                out += `      * Mục [${itCode}]: "${itTitle}" (Trạng thái: ${itEx ? 'ẨN' : 'HIỆN'})\n`;
               });
             });
           });
@@ -10626,114 +10612,40 @@ OUTPUT: Valid JSON only.
         return out;
       }
 
-      const fullLectureKnowledge = buildFullLectureContext();
-
-      const systemPrompt = `Bạn là SIÊU TRỢ LÝ AI & TRỢ GIẢNG ĐA NĂNG CỦA HỆ THỐNG CLSG STUDIO (HUST AI COPILOT).
-BẠN CÓ TOÀN QUYỀN TRUY CẬP VÀO 100% NỘI DUNG CHI TIẾT CỦA BÀI GIẢNG!
-Người dùng là giảng viên hoặc học viên (newbie). Bạn phải thân thiện, thông thái, tận tâm: đọc hộ, tóm tắt hộ, giải thích hộ kiến thức và TRỰC TIẾP ĐIỀU KHIỂN GIAO DIỆN HỘ người dùng.
-
-KHO TRI THỨC TOÀN BỘ BÀI GIẢNG HIỆN TẠI (ĐÃ TRÍCH XUẤT 100% CHI TIẾT TỪNG NHÁNH LÁ):
-${fullLectureKnowledge}
-
-DANH MỤC CÁC LỆNH ĐIỀU KHIỂN GIAO DIỆN BẠN CÓ THỂ RA LỆNH:
-1. "keep_only_target": {"type": "keep_only_target", "chapter": 1, "section": "d", "item": "a1"}
-   -> Ẩn toàn bộ các chương/phần khác, CHỈ GIỮ LẠI duy nhất mục được yêu cầu (ví dụ chương 1 phần d mục a1).
-2. "keep_chapters_and_sections": {"type": "keep_chapters_and_sections", "chapters": [4], "targetChapter": 1, "sections": ["a", "b"]}
-   -> Giữ chương 4 và chỉ giữ phần a, b của chương 1.
-3. "set_only_chapters": {"type": "set_only_chapters", "chapters": [2, 3]} (chỉ giữ lại các chương này)
-4. "exclude_chapters": {"type": "exclude_chapters", "chapters": [1]} (ẩn chương 1)
-5. "include_chapters": {"type": "include_chapters", "chapters": [1]} (bật lại chương 1)
-6. "focus_chapter": {"type": "focus_chapter", "chapter": 1} (lia camera tới chương và phát sáng viền)
-7. "open_editor": {"type": "open_editor", "chapter": 1} (mở bảng chỉnh sửa chi tiết)
-8. "set_total_minutes": {"type": "set_total_minutes", "minutes": 10} (đặt thời lượng tổng)
-9. "set_chapter_duration": {"type": "set_chapter_duration", "chapter": 1, "seconds": 180}
-10. "switch_tab": {"type": "switch_tab", "tab": "mindmap" | "script" | "video"}
-11. "speak_narration": {"type": "speak_narration", "text": "Lời thoại cần đọc to..."} (phát âm thanh đọc lời giảng)
-12. "exclude_codes": {"type": "exclude_codes", "codes": ["1.1"]} -> Ẩn mục/phần/chương có mã tương ứng (ví dụ: "ẩn 1.1 đi", "bỏ mục 1.2").
-13. "include_codes": {"type": "include_codes", "codes": ["1.1"]} -> Bật lại mục/phần có mã tương ứng (ví dụ: "bật lại 1.1", "hiện 1.2").
-14. "set_only_codes": {"type": "set_only_codes", "codes": ["1.1"]} -> Chỉ giữ lại duy nhất mục/phần này, ẩn toàn bộ các phần khác (ví dụ: "chỉ giữ 1.1", "để lại 1.1").
-15. "focus_code": {"type": "focus_code", "code": "1.1"} -> Lia camera và làm sáng nổi bật mục này (ví dụ: "cho tôi xem 1.1", "lia tới 1.1").
-16. "speak_code": {"type": "speak_code", "code": "1.1"} -> Đọc to lời giảng/tóm tắt của mục này (ví dụ: "đọc thử 1.1").
-
-QUY TẮC PHẢN HỒI QUAN TRỌNG:
-1. ĐỌC HỘ & TÓM TẮT HỘ:
-   - Khi người dùng hỏi về bất kỳ nội dung nào (ví dụ: "bản tóm tắt của chương 1 phần d a1 là gì?", "đọc hộ tôi phân đoạn...", "tóm tắt phần 4.b.a2"):
-   - BẮT BUỘC ĐỌC THẲNG NỘI DUNG VÀ TRẢ LỜI ĐẦY ĐỦ, giải thích cặn kẽ, rõ ràng, sư phạm cho newbie.
-   - TUYỆT ĐỐI KHÔNG BAO GIỜ NÓI "tôi không có quyền truy cập", vì bạn ĐANG NẮM GIỮ 100% TRI THỨC BÀI GIẢNG Ở TRÊN!
-   - KHI NGƯỜI DÙNG CHỈ YÊU CẦU TÓM TẮT/ĐỌC HỘ: TUYỆT ĐỐI KHÔNG TỰ Ý ẨN HAY LOẠI BỎ BẤT KỲ CHƯƠNG/MỤC NÀO TRÊN SƠ ĐỒ (Không sinh JSON exclude_chapters, set_only_chapters, keep_only_target)! Chỉ sinh action khi người dùng nói rõ "ẩn đi", "bỏ đi", "chỉ giữ lại".
-2. ĐIỀU KHIỂN HỘ (ACTION COPILOT):
-   - Nếu người dùng có yêu cầu thao tác (ví dụ: "với bỏ hết chỉ giữ lại mình phần đó thôi", "chỉ giữ chương 2", "chỉnh 10 phút"):
-   - Hãy trả lời xác nhận thân thiện + KÈM KHỐI JSON LỆNH Ở CUỐI:
-\`\`\`json
-{
-  "actions": [
-    {"type": "keep_only_target", "chapter": 1, "section": "d", "item": "a1"}
-  ]
-}
-\`\`\`
-3. Nếu chỉ hỏi đáp kiến thức thuần túy (không điều khiển giao diện):
-   - Trả lời đầy đủ, thân thiện, và KHÔNG kèm khối JSON.`;
-
       try {
-        const cfg = LLMClient.getConfig();
-        // Đưa ngữ cảnh ngắn hạn (Sliding window 6 tin nhắn gần nhất) vào prompt
+        const treeSkeleton = buildTreeSkeleton();
         const rollingHistory = clsgChatSessionHistory.slice(-6);
-        const payloadMessages = [
-          { role: 'system', content: systemPrompt },
-          ...rollingHistory,
-          { role: 'user', content: msg }
-        ];
-
-        const payload = {
-          model: cfg.model,
-          messages: payloadMessages,
-          max_tokens: 1200,
-          temperature: 0.5
-        };
 
         let res = null;
 
-        // 1. Thử gọi qua server proxy với AbortController (Timeout 5.5s)
+        const payload = {
+            projectId: currentProjectId,
+            query: msg,
+            history: rollingHistory,
+            treeSkeleton: treeSkeleton
+        };
+        
         try {
           const serverUrl = (window.location.origin.startsWith('http') && !window.location.origin.includes('file:'))
-            ? `${window.location.origin}/api/llm/chat`
-            : 'http://127.0.0.1:8765/api/llm/chat';
-          const proxyPayload = { ...payload, apiKey: cfg.apiKey || '', baseUrl: cfg.baseUrl || '', provider: cfg.provider || 'openai' };
+            ? `${window.location.origin}/api/rag_chat`
+            : '/api/rag_chat';
           const ctl = new AbortController();
           const tId = setTimeout(() => ctl.abort(), 55000);
           res = await fetch(serverUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(proxyPayload),
+            body: JSON.stringify(payload),
             signal: ctl.signal
           });
           clearTimeout(tId);
         } catch (e) {
-          console.warn("[Copilot] Server proxy không khả dụng hoặc timeout:", e);
-        }
-
-        // 2. Nếu server proxy lỗi hoặc không có, thử gọi trực tiếp endpoint nếu có API key
-        if ((!res || !res.ok) && cfg.apiKey) {
-          try {
-            const endpoint = `${cfg.baseUrl.replace(/\/+$/, '')}/chat/completions`;
-            const headers = { 'Content-Type': 'application/json', 'Authorization': `Bearer ${cfg.apiKey}` };
-            const ctl = new AbortController();
-            const tId = setTimeout(() => ctl.abort(), 55000);
-            res = await fetch(endpoint, {
-              method: 'POST',
-              headers,
-              body: JSON.stringify(payload),
-              signal: ctl.signal
-            });
-            clearTimeout(tId);
-          } catch (e) {
-            console.warn("[Copilot] Direct endpoint error:", e);
-          }
+          console.warn("[Copilot] Lỗi gọi Backend RAG:", e);
         }
 
         if (res && res.ok) {
           const data = await res.json();
-          const reply = (data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) || '';
+          // Hỗ trợ cả định dạng OpenAI chuẩn (choices) và định dạng RAG Backend trả về (answer)
+          let reply = data.answer || (data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) || '';
 
           let actionExecuted = false;
           let cleanReply = reply;
