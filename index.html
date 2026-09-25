@@ -11989,34 +11989,108 @@ ${foreshadowText}`;
     // =========================================================================
 
     // DISPATCHER: Phân loại file → gọi extractor chuyên biệt
-        async function extractVisualSlideStructure(file) {
-      updateLoading("Đang phân tích ảnh slide bằng Vision AI...", "Đang bóc tách kiến thức toàn bộ bài giảng qua API Backend...");
-      try {
-        const formData = new FormData();
-        formData.append('file', file);
-        const response = await fetch('http://localhost:8081/api/extract-visual-slides', {
-          method: 'POST',
-          body: formData
-        });
-        if (!response.ok) throw new Error("Lỗi API Vision OCR: " + response.statusText);
-        const data = await response.json();
-        if (data.success && data.chapters && data.chapters.length > 0) {
+            async function extractVisualSlideStructure(file) {
+      updateLoading("Đang phân tích ảnh slide bằng Vision AI...", "Đang quét và chuyển đổi slide thành hình ảnh...");
+      
+      const cfg = LLMClient.getConfig();
+      if (!cfg.apiKey) {
+          showToast("❌ Bạn cần nhập API Key (Gemini/OpenAI) trong phần Cấu Hình Chung để dùng tính năng Vision OCR trên trình duyệt.");
           hideLoading();
-          return {
-            title: (file.name || '').replace(/\.[^/.]+$/, ""),
-            totalPages: data.total_pages,
-            chapters: data.chapters,
-            method: 'vision-ocr'
-          };
+          return null;
+      }
+      
+      try {
+        // 1. Dùng pdf.js để chuyển đổi các trang PDF thành ảnh Base64
+        if (typeof pdfjsLib === 'undefined') {
+          console.warn('[Vision OCR] pdf.js chưa tải xong');
+          throw new Error("Thư viện PDF chưa sẵn sàng");
+        }
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+        
+        const buf = await file.arrayBuffer();
+        const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
+        const totalPages = pdf.numPages;
+        
+        // Giới hạn số trang quét để tránh payload quá to (OpenAI/Gemini thường nhận tối đa vài chục MB)
+        const scanLimit = Math.min(totalPages, 50); 
+        const imageParts = [];
+        
+        for (let p = 1; p <= scanLimit; p++) {
+          updateLoading("Đang quét trang...", `Trang ${p} / ${scanLimit}`);
+          const page = await pdf.getPage(p);
+          const viewport = page.getViewport({ scale: 1.5 }); // Scale 1.5 đủ nét cho OCR
+          
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+          canvas.height = viewport.height;
+          canvas.width = viewport.width;
+          
+          await page.render({ canvasContext: ctx, viewport: viewport }).promise;
+          const base64Img = canvas.toDataURL('image/jpeg', 0.85);
+          
+          imageParts.push({
+             type: "image_url",
+             image_url: { url: base64Img }
+          });
+        }
+        
+        updateLoading("Đang gửi lên máy chủ AI...", `Phân tích ${scanLimit} ảnh slide bằng ${cfg.model}...`);
+        
+        const endpoint = `${cfg.baseUrl.replace(/\/+$/, '')}/chat/completions`;
+        const headers = { 'Content-Type': 'application/json', 'Authorization': `Bearer ${cfg.apiKey}` };
+        
+        const promptText = `Bạn là Kỹ sư Trưởng Giáo dục AI (Chief AI Education Engineer). \nNhiệm vụ của bạn là bóc tách toàn bộ file ảnh slide bài giảng thành cây tri thức chuẩn sư phạm (Bridge-Core-Deep).\n\nYÊU CẦU ĐẦU RA (DUY NHẤT TRẢ VỀ JSON HỢP LỆ):\n{\n  "total_pages": <tổng số slide>,\n  "chapters": [\n    {\n      "chapter": "CHƯƠNG 1",\n      "title": "Tên chương",\n      "visual_type": "split_screen",\n      "sections": [\n        {\n          "code": "1.1",\n          "title": "Tên phần",\n          "items": [\n            {\n              "code": "1.1.1",\n              "pdfStart": <số thứ tự ảnh bắt đầu (từ 1)>,\n              "pdfEnd": <số thứ tự ảnh kết thúc>,\n              "details": "Nội dung chi tiết text bóc tách từ ảnh...",\n              "examples": "Ví dụ minh họa nếu có...",\n              "mechanism": "Công thức toán học hoặc quy trình...",\n              "summary": "Tóm tắt...",\n              "key_point": "Điểm then chốt..."\n            }\n          ]\n        }\n      ]\n    }\n  ]\n}\nBẮT BUỘC: pdfStart và pdfEnd phải chính xác theo thứ tự ảnh (từ 1 đến tổng số ảnh). Không được tự bịa ra thông tin không có trong ảnh. Đảm bảo cấu trúc JSON hợp lệ hoàn toàn.\n`;
+        
+        const payload = {
+          model: cfg.model,
+          messages: [
+            {
+              role: "user",
+              content: [
+                { type: "text", text: promptText },
+                ...imageParts
+              ]
+            }
+          ],
+          max_tokens: 4000,
+          temperature: 0.2
+        };
+        
+        const res = await fetch(endpoint, {
+           method: 'POST',
+           headers: headers,
+           body: JSON.stringify(payload)
+        });
+        
+        if (!res.ok) {
+            const errText = await res.text();
+            throw new Error(`API Error HTTP ${res.status}: ${errText.substring(0, 150)}`);
+        }
+        
+        const data = await res.json();
+        const raw = data.choices?.[0]?.message?.content || '';
+        const parsed = LLMClient.safeJsonParse(raw);
+        
+        if (parsed && parsed.chapters && parsed.chapters.length > 0) {
+           hideLoading();
+           return {
+              title: (file.name || '').replace(/\.[^/.]+$/, ""),
+              totalPages: totalPages, // Số trang thật của PDF
+              chapters: parsed.chapters,
+              method: 'vision-ocr-frontend'
+           };
+        } else {
+           throw new Error("AI không trả về cấu trúc hợp lệ.");
         }
       } catch (err) {
         console.error("Lỗi extractVisualSlideStructure:", err);
+        showToast("❌ Lỗi Vision OCR: " + err.message);
       }
       hideLoading();
       return null;
     }
 
-        async function extractDocumentStructure(file) {
+    async function extractDocumentStructure(file) {
       const useOcrChk = document.getElementById('use-visual-ocr');
       if (useOcrChk && useOcrChk.checked) {
           const visualData = await extractVisualSlideStructure(file);
