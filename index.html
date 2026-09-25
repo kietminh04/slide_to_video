@@ -3742,6 +3742,40 @@
           </div>
         </div>
 
+        <!-- TAB NỘI DUNG (CHI TIẾT TỪNG TRANG) -->
+        <div class="center-tab-pane" id="tab-content-content" style="background: var(--bg-card); overflow-y: auto;">
+          <div style="max-width: 900px; margin: 0 auto; width: 100%; padding: 32px 24px;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 2px solid var(--border-color); padding-bottom: 12px; margin-bottom: 24px;">
+              <div>
+                <h2 style="font-size: 24px; color: var(--text-main); margin: 0 0 8px 0; font-weight: 700;">📄 Trích xuất chi tiết Slide</h2>
+                <div style="font-size: 14px; color: var(--text-muted);">Phân tích chuyên sâu hình ảnh và văn bản trên từng trang slide bằng Vision AI.</div>
+              </div>
+              <label class="clsg-btn clsg-btn-primary" style="cursor: pointer; padding: 10px 16px; background: var(--cyan); color: #000; font-weight: 600; border-radius: 8px; font-size: 14px; box-shadow: 0 4px 10px rgba(6, 182, 212, 0.3);" id="btn-upload-content-pdf">
+                <input type="file" accept=".pdf,.pptx,.docx,.txt" style="display: none;" onchange="startDetailedContentExtraction(this)">
+                <span>📥 Nạp lại file (PDF/Khác) để AI quét</span>
+              </label>
+            </div>
+            
+            <div id="content-extraction-progress" style="display: none; background: rgba(56, 189, 248, 0.1); border: 1px solid var(--cyan); border-radius: 12px; padding: 16px; margin-bottom: 24px;">
+              <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-weight: 600; color: var(--cyan);">
+                <span id="content-progress-text">Đang phân tích trang 1/10...</span>
+                <span id="content-progress-percent">10%</span>
+              </div>
+              <div style="width: 100%; height: 6px; background: rgba(255,255,255,0.1); border-radius: 4px; overflow: hidden;">
+                <div id="content-progress-bar" style="width: 10%; height: 100%; background: var(--cyan); transition: width 0.3s ease;"></div>
+              </div>
+            </div>
+
+            <div id="content-extraction-results" style="display: flex; flex-direction: column; gap: 32px;">
+              <div style="text-align: center; padding: 60px 20px; color: var(--text-muted);">
+                <div style="font-size: 48px; margin-bottom: 16px;">🔍</div>
+                <div style="font-size: 16px; margin-bottom: 8px; color: var(--text-main);">Chưa có dữ liệu trích xuất cho dự án này.</div>
+                <div>Vui lòng bấm nút <b>Nạp lại file</b> ở góc trên bên phải để AI bắt đầu quét.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <!-- TAB 2: KỊCH BẢN (HIỂN THỊ KỊCH BẢN HOÀN CHỈNH ĐÃ BIÊN TẬP TỪ SƠ ĐỒ) -->
         <div class="center-tab-pane" id="tab-content-script">
           <div class="script-document-container">
