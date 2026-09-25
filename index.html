@@ -3537,6 +3537,14 @@
           <input type="file" id="source-file-input" accept=".pptx,.pdf,.docx,.txt" style="display: none;">
         </label>
 
+<!-- TOGGLE VISION OCR -->
+<div style="margin-top: 8px; display: flex; align-items: center; justify-content: center; background: rgba(56, 189, 248, 0.1); border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 6px; padding: 6px;">
+  <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;" title="Sử dụng Vision API để quét và bóc tách các file PDF/PPTX chứa ảnh tĩnh (không có text)">
+    <input type="checkbox" id="use-visual-ocr" style="accent-color: var(--cyan); width: 14px; height: 14px;" />
+    <span style="font-size: 11px; font-weight: 600; color: var(--cyan);">👁️ Quét Ảnh Slide (Vision AI)</span>
+  </label>
+</div>
+
         <!-- BỘ CHỌN NGÔN NGỮ KỊCH BẢN -->
         <div style="margin-top: 6px;">
           <div
@@ -11981,7 +11989,39 @@ ${foreshadowText}`;
     // =========================================================================
 
     // DISPATCHER: Phân loại file → gọi extractor chuyên biệt
-    async function extractDocumentStructure(file) {
+        async function extractVisualSlideStructure(file) {
+      updateLoading("Đang phân tích ảnh slide bằng Vision AI...", "Đang bóc tách kiến thức toàn bộ bài giảng qua API Backend...");
+      try {
+        const formData = new FormData();
+        formData.append('file', file);
+        const response = await fetch('http://localhost:8081/api/extract-visual-slides', {
+          method: 'POST',
+          body: formData
+        });
+        if (!response.ok) throw new Error("Lỗi API Vision OCR: " + response.statusText);
+        const data = await response.json();
+        if (data.success && data.chapters && data.chapters.length > 0) {
+          hideLoading();
+          return {
+            title: (file.name || '').replace(/\.[^/.]+$/, ""),
+            totalPages: data.total_pages,
+            chapters: data.chapters,
+            method: 'vision-ocr'
+          };
+        }
+      } catch (err) {
+        console.error("Lỗi extractVisualSlideStructure:", err);
+      }
+      hideLoading();
+      return null;
+    }
+
+        async function extractDocumentStructure(file) {
+      const useOcrChk = document.getElementById('use-visual-ocr');
+      if (useOcrChk && useOcrChk.checked) {
+          const visualData = await extractVisualSlideStructure(file);
+          if (visualData) return visualData;
+      }
       const ext = (file.name.split('.').pop() || '').toLowerCase();
       const buf = await file.arrayBuffer();
 
