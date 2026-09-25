@@ -3649,7 +3649,7 @@
             <button class="mindmap-ctrl-btn" id="btn-toggle-layout"
               style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.4), rgba(168, 85, 247, 0.4)); border: 1px solid rgba(168, 85, 247, 0.7); color: #fff; font-weight: 700; padding: 0 14px; gap: 6px; display: flex; align-items: center;"
               title="Chuyển đổi giữa sơ đồ trang (Grid) và sơ đồ cây (Tree)">
-              <span>📄</span> Sơ Đồ Trang
+              <span>✨</span> Đổi Cấu Trúc
             </button>
             
           </div>
@@ -4451,12 +4451,7 @@
       renderMindmap();
       centerMindmapView(true);
       // Cập nhật label nút
-      const btn = document.getElementById('btn-toggle-layout');
-      if (btn) {
-        btn.innerHTML = window.isGridLayout 
-          ? '<span>📄</span> Sơ Đồ Trang' 
-          : '<span>🌳</span> Sơ Đồ Cây';
-      }
+
       showToast(window.isGridLayout ? 'Chuyển sang chế độ Sơ Đồ Trang (Grid)' : 'Chuyển sang chế độ Sơ Đồ Cây (Tree)');
     }
 
@@ -7237,8 +7232,8 @@
         svg.appendChild(defs);
         
       } else {
-      allNodes.forEach(node => {
-        if (!node.isHidden && node.isExpanded && node.children && node.children.length > 0) {
+      visibleNodes.forEach(node => {
+        if (node.isExpanded && node.children && node.children.length > 0) {
           const pX = node.x + node.width / 2;
           const pY = node.y + node.height;
 
