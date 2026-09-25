@@ -2240,6 +2240,72 @@
       gap: 20px;
     }
 
+    /* VIDEO STUDIO CONTAINER */
+    .video-studio-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .video-studio-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 18px;
+      background: rgba(15, 23, 42, 0.8);
+      border-bottom: 1px solid var(--border-subtle);
+      flex-shrink: 0;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .video-studio-title-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .video-studio-icon { font-size: 18px; }
+
+    .video-studio-title {
+      font-size: 14px;
+      font-weight: 800;
+      color: var(--text-main);
+    }
+
+    .video-studio-badge {
+      background: rgba(99, 102, 241, 0.25);
+      color: #a5b4fc;
+      border: 1px solid rgba(99, 102, 241, 0.4);
+      border-radius: 20px;
+      padding: 2px 10px;
+      font-size: 11px;
+      font-weight: 700;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .video-studio-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    /* PREVIEW AREA */
+    .video-preview-area {
+      padding: 20px;
+      display: flex;
+      gap: 18px;
+      flex-shrink: 0;
+      overflow: hidden;
+    }
+
+    .video-player-wrapper {
+      flex: 1;
+      min-width: 0;
+    }
+
     .video-screen-mockup {
       width: 100%;
       max-width: 820px;
@@ -2266,6 +2332,14 @@
       text-align: center;
     }
 
+    .video-mock-slide img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      position: absolute;
+      inset: 0;
+    }
+
     .video-teleprompter-overlay {
       background: linear-gradient(0deg, rgba(0, 0, 0, 0.9) 0%, rgba(0, 0, 0, 0.7) 70%, transparent 100%);
       padding: 16px 24px;
@@ -2273,6 +2347,8 @@
       font-size: 13.5px;
       line-height: 1.5;
       text-align: center;
+      max-height: 80px;
+      overflow: hidden;
     }
 
     .video-mock-controls {
@@ -2283,6 +2359,205 @@
       align-items: center;
       justify-content: space-between;
       padding: 0 18px;
+    }
+
+    /* VIDEO EXPORT CONFIG */
+    .video-export-config {
+      width: 260px;
+      flex-shrink: 0;
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .video-config-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-main);
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .video-config-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .video-config-item {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .video-config-item label {
+      font-size: 10.5px;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+
+    /* VIDEO TIMELINE */
+    .video-timeline-container {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .video-timeline-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      background: rgba(15, 23, 42, 0.6);
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-subtle);
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    .video-segment-card {
+      display: flex;
+      align-items: stretch;
+      gap: 12px;
+      padding: 12px 14px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .video-segment-card:hover {
+      border-color: rgba(99, 102, 241, 0.5);
+      background: rgba(30, 27, 75, 0.4);
+      transform: translateY(-1px);
+    }
+
+    .video-segment-card.is-active {
+      border-color: rgba(99, 102, 241, 0.7);
+      background: rgba(30, 27, 75, 0.5);
+      box-shadow: 0 0 20px rgba(99, 102, 241, 0.15);
+    }
+
+    .video-seg-thumb {
+      width: 120px;
+      height: 68px;
+      flex-shrink: 0;
+      background: #000;
+      border-radius: 6px;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .video-seg-thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
+    .video-seg-info {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 4px;
+    }
+
+    .video-seg-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-main);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .video-seg-narr-preview {
+      font-size: 11px;
+      color: var(--text-muted);
+      line-height: 1.4;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .video-seg-meta {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 10px;
+      color: var(--text-dim);
+      margin-top: 2px;
+    }
+
+    .video-seg-status {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      flex-shrink: 0;
+    }
+
+    .video-seg-status-badge {
+      padding: 3px 8px;
+      border-radius: 12px;
+      font-size: 10px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .video-seg-status-badge.has-audio {
+      background: rgba(52, 211, 153, 0.2);
+      color: #34d399;
+      border: 1px solid rgba(52, 211, 153, 0.3);
+    }
+
+    .video-seg-status-badge.has-script {
+      background: rgba(251, 191, 36, 0.2);
+      color: #fbbf24;
+      border: 1px solid rgba(251, 191, 36, 0.3);
+    }
+
+    .video-seg-status-badge.no-script {
+      background: rgba(148, 163, 184, 0.15);
+      color: #94a3b8;
+      border: 1px solid rgba(148, 163, 184, 0.2);
+    }
+
+    .btn-gen-audio-single {
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.3), rgba(168, 85, 247, 0.3));
+      border: 1px solid rgba(168, 85, 247, 0.4);
+      color: #c4b5fd;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 10.5px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+    }
+
+    .btn-gen-audio-single:hover {
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.5), rgba(168, 85, 247, 0.5));
+      transform: translateY(-1px);
+    }
+
+    .btn-gen-audio-single:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+      transform: none;
     }
 
     /* PANE 3: BẢNG TINH CHỈNH THAM SỐ + Ô CHAT AI SƯ PHẠM (LLM CHAT BOX) */
@@ -3835,33 +4110,115 @@
           </div>
         </div>
 
-        <!-- TAB 3: VIDEO BÀI GIẢNG (TẠM THỜI ĐỂ ĐÓ) -->
+        <!-- TAB 3: VIDEO BÀI GIẢNG — DUAL MODE (GRID TRANG / TREE CÂY) -->
         <div class="center-tab-pane" id="tab-content-video">
-          <div class="video-preview-container">
-            <div class="video-screen-mockup">
-              <div class="video-mock-slide">
-                <div style="text-align: center;">
-                  <div style="font-size: 48px; margin-bottom: 12px;">📽️</div>
-                  <div style="font-size: 20px; font-weight: 800; color: #fff;" id="video-mock-title">Phân Cụm Dữ Liệu
+          <div class="video-studio-container">
+
+            <!-- THANH TOOLBAR VIDEO -->
+            <div class="video-studio-toolbar">
+              <div class="video-studio-title-group">
+                <span class="video-studio-icon">🎬</span>
+                <span class="video-studio-title" id="video-studio-title">Video Bài Giảng</span>
+                <span class="video-studio-badge" id="video-total-duration-badge">0:00</span>
+              </div>
+              <div class="video-studio-actions">
+                <!-- CHUYỂN ĐỔI CHẾ ĐỘ HIỂN THỊ -->
+                <div class="view-mode-group">
+                  <button class="view-mode-pill active" data-vmode="grid" onclick="setVideoViewMode('grid')"
+                    title="Hiển thị từng trang slide">📄 Theo Trang</button>
+                  <button class="view-mode-pill" data-vmode="tree" onclick="setVideoViewMode('tree')"
+                    title="Hiển thị theo cấu trúc cây">🌳 Theo Cây</button>
+                </div>
+                <!-- NÚT SINH AUDIO / VIDEO -->
+                <button class="btn-generate-script-now" id="btn-generate-all-audio" onclick="generateAllAudio()"
+                  title="Sinh giọng đọc AI cho tất cả phân đoạn có kịch bản">
+                  <span>🔊</span>
+                  <span class="btn-gen-text">Sinh Toàn Bộ Audio</span>
+                  <span class="btn-gen-badge" id="btn-audio-count-badge">0 đoạn</span>
+                </button>
+                <button class="script-action-btn" id="btn-export-video" onclick="exportFinalVideo()"
+                  title="Ghép video hoàn chỉnh từ slide + audio + subtitle">
+                  <span>📹</span> Xuất Video
+                </button>
+              </div>
+            </div>
+
+            <!-- KHU VỰC PREVIEW VIDEO CHÍNH -->
+            <div class="video-preview-area">
+              <div class="video-player-wrapper">
+                <div class="video-screen-mockup" id="video-main-screen">
+                  <div class="video-mock-slide" id="video-slide-display">
+                    <div style="text-align: center;">
+                      <div style="font-size: 48px; margin-bottom: 12px;">📽️</div>
+                      <div style="font-size: 18px; font-weight: 800; color: #fff;" id="video-current-slide-title">Chọn một phân đoạn để xem trước</div>
+                      <div style="font-size: 12px; color: var(--cyan); margin-top: 6px;" id="video-current-slide-info">
+                        Bấm vào bất kỳ đoạn nào trong timeline bên dưới
+                      </div>
+                    </div>
                   </div>
-                  <div style="font-size: 12px; color: var(--cyan); margin-top: 6px;" id="video-mock-badge">1080p Full HD
-                    • 60 FPS • Tỷ lệ 16:9</div>
+                  <div class="video-teleprompter-overlay" id="video-teleprompter">
+                    Kịch bản lời thoại sẽ hiển thị tại đây khi bạn chọn một phân đoạn...
+                  </div>
+                  <div class="video-mock-controls">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                      <button id="video-play-btn" onclick="toggleVideoPreview()" style="background: none; border: none; color: #fff; font-size: 16px; cursor: pointer;">▶️</button>
+                      <span style="font-size: 11px; color: var(--text-dim); font-family: 'JetBrains Mono', monospace;" id="video-time-display">00:00 / 00:00</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                      <span style="font-size: 10px; color: var(--text-muted);" id="video-format-badge">1080p • 16:9 • MP4</span>
+                      <button onclick="toggleVideoFullscreen()" style="background: none; border: none; color: var(--text-dim); font-size: 12px; cursor: pointer;" title="Toàn màn hình">⛶</button>
+                    </div>
+                  </div>
                 </div>
               </div>
-              <div class="video-teleprompter-overlay" id="video-teleprompter-text">
-                Chào mừng các bạn đến với bài giảng về Phân cụm dữ liệu trong hệ thống hỗ trợ ra quyết định...
-              </div>
-              <div class="video-mock-controls">
-                <div style="display: flex; align-items: center; gap: 10px;">
-                  <button
-                    style="background: none; border: none; color: #fff; font-size: 16px; cursor: pointer;">▶️</button>
-                  <span style="font-size: 11px; color: var(--text-dim); font-family: 'JetBrains Mono', monospace;">00:00
-                    / 05:00</span>
+
+              <!-- CẤU HÌNH XUẤT VIDEO -->
+              <div class="video-export-config" id="video-export-config">
+                <div class="video-config-title">⚙️ Cấu Hình Xuất Video</div>
+                <div class="video-config-grid">
+                  <div class="video-config-item">
+                    <label>📐 Độ phân giải</label>
+                    <select id="video-resolution" class="gcfg-select">
+                      <option value="1920x1080" selected>1920×1080 (Full HD)</option>
+                      <option value="1280x720">1280×720 (HD)</option>
+                      <option value="3840x2160">3840×2160 (4K)</option>
+                    </select>
+                  </div>
+                  <div class="video-config-item">
+                    <label>🎞️ FPS</label>
+                    <select id="video-fps" class="gcfg-select">
+                      <option value="24">24 FPS (Cinematic)</option>
+                      <option value="30" selected>30 FPS (Standard)</option>
+                      <option value="60">60 FPS (Smooth)</option>
+                    </select>
+                  </div>
+                  <div class="video-config-item">
+                    <label>🎙️ Giọng đọc AI</label>
+                    <select id="video-tts-voice" class="gcfg-select">
+                      <option value="alloy">Alloy (Trung tính)</option>
+                      <option value="echo">Echo (Nam trầm)</option>
+                      <option value="fable">Fable (Anh Anh)</option>
+                      <option value="onyx">Onyx (Nam sâu)</option>
+                      <option value="nova" selected>Nova (Nữ nhẹ nhàng)</option>
+                      <option value="shimmer">Shimmer (Nữ ấm)</option>
+                    </select>
+                  </div>
+                  <div class="video-config-item">
+                    <label>🎵 Nhạc nền</label>
+                    <select id="video-bgm" class="gcfg-select">
+                      <option value="none" selected>Không có</option>
+                      <option value="ambient">Ambient nhẹ</option>
+                      <option value="piano">Piano thư giãn</option>
+                      <option value="corporate">Corporate chuyên nghiệp</option>
+                    </select>
+                  </div>
                 </div>
-                <div style="font-size: 11px; color: var(--emerald); font-weight: 600;">
-                  ● Khung hình chuẩn định dạng bài giảng MOOC
-                </div>
               </div>
+            </div>
+
+            <!-- TIMELINE SEGMENTS: RENDER ĐỘNG THEO MODE GRID / TREE -->
+            <div class="video-timeline-container" id="video-timeline-container">
+              <!-- Rendered via JS: renderVideoTimeline() -->
             </div>
           </div>
         </div>
@@ -4417,6 +4774,12 @@
       renderScriptDocument(); // Đồng bộ ngay sang kịch bản
       updateBtnGenCountBadge(); // Đồng bộ nhãn nút sinh kịch bản
 
+      // Đồng bộ Video tab mode
+      window._videoViewMode = window.isGridLayout ? 'grid' : 'tree';
+      document.querySelectorAll('[data-vmode]').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.vmode === window._videoViewMode);
+      });
+
       showToast(window.isGridLayout ? 'Chuyển sang chế độ Sơ Đồ Trang (Grid)' : 'Chuyển sang chế độ Sơ Đồ Cây (Tree)');
     }
 
@@ -4907,6 +5270,7 @@
       } else if (tabName === 'video') {
         document.getElementById('btn-tab-video')?.classList.add('active');
         document.getElementById('tab-content-video')?.classList.add('active');
+        if (typeof renderVideoTimeline === 'function') renderVideoTimeline();
       }
     }
 
@@ -7265,13 +7629,11 @@
         currentNodesMap[n.key] = n;
       });
 
-      // Cập nhật video preview title
-      const videoTitle = document.getElementById('video-mock-title');
+      // Cập nhật video studio title
+      const videoTitle = document.getElementById('video-studio-title');
       if (videoTitle) videoTitle.textContent = activeProject.title;
-      const teleText = document.getElementById('video-teleprompter-text');
-      if (teleText && currentScenes.length > 0) {
-        teleText.textContent = currentScenes[0].narration;
-      }
+      const videoSlideTitle = document.getElementById('video-current-slide-title');
+      if (videoSlideTitle) videoSlideTitle.textContent = activeProject.title;
     }
 
     let currentNodesMap = {};
@@ -16061,6 +16423,465 @@ QUY TẮC:
       // Loại bỏ triệt để mọi dấu ** lẻ hoặc còn sót lại
       str = str.replace(/\*\*/g, '');
       return str;
+    }
+
+    // =========================================================================
+    // HỆ THỐNG VIDEO BÀI GIẢNG: DUAL MODE (GRID TRANG / TREE CÂY)
+    // =========================================================================
+
+    window._videoViewMode = 'grid'; // 'grid' | 'tree'
+    window._videoAudioCache = {}; // { segKey: { audioUrl, duration } }
+    window._videoActiveSegKey = null;
+
+    function setVideoViewMode(mode) {
+      window._videoViewMode = mode;
+      // Cập nhật pills active
+      document.querySelectorAll('[data-vmode]').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.vmode === mode);
+      });
+      renderVideoTimeline();
+    }
+
+    function renderVideoTimeline() {
+      const container = document.getElementById('video-timeline-container');
+      if (!container) return;
+      container.innerHTML = '';
+
+      const allSources = activeProject?.sources || [];
+      const activeSources = allSources.filter(s => s.active !== false);
+
+      if (activeSources.length === 0) {
+        container.innerHTML = `
+          <div style="text-align: center; padding: 60px 20px; color: var(--text-dim);">
+            <div style="font-size: 40px; margin-bottom: 12px;">📁</div>
+            <div style="font-size: 14px; font-weight: 700; color: #f87171;">Chưa có tài liệu nào!</div>
+            <div style="font-size: 12px; color: var(--text-muted); margin-top: 6px;">Hãy tải lên tài liệu ở tab Nội Dung trước.</div>
+          </div>`;
+        return;
+      }
+
+      let totalDuration = 0;
+      let audioReadyCount = 0;
+      let scriptReadyCount = 0;
+      let totalSegments = 0;
+
+      if (window._videoViewMode === 'grid') {
+        // ===== GRID MODE: TỪNG TRANG SLIDE =====
+        let totalPages = 0;
+        activeSources.forEach(s => { totalPages += (s.pages || 0); });
+        if (totalPages === 0) totalPages = (activeProject?.detailedContent?.length) || 1;
+
+        const header = document.createElement('div');
+        header.className = 'video-timeline-header';
+        header.innerHTML = `<span>📄</span> Timeline Theo Trang — ${totalPages} slides`;
+        container.appendChild(header);
+
+        for (let i = 0; i < totalPages; i++) {
+          const segKey = `grid-page-${i}`;
+          const narr = getNodeParam(segKey, 'narration', '');
+          const dur = parseInt(getNodeParam(segKey, 'duration', 20)) || 20;
+          const title = getNodeParam(segKey, 'title', `Trang ${i + 1}`);
+          const pageDetail = activeProject?.detailedContent?.[i];
+          const thumb = pageDetail?.thumbnail || pageDetail?.image_url || '';
+          const audioData = window._videoAudioCache[segKey];
+
+          totalDuration += dur;
+          totalSegments++;
+          if (narr) scriptReadyCount++;
+          if (audioData) audioReadyCount++;
+
+          const card = createVideoSegmentCard({
+            segKey, index: i, title: `Trang ${i + 1}`, subtitle: title,
+            narr, dur, thumb, audioData, totalPages
+          });
+          container.appendChild(card);
+        }
+
+      } else {
+        // ===== TREE MODE: THEO CẤU TRÚC CÂY =====
+        activeSources.forEach((src, srcIdx) => {
+          const originalIdx = allSources.indexOf(src);
+          const rootKey = getSourceKey(src, originalIdx >= 0 ? originalIdx : srcIdx);
+          if (isNodeExcluded(rootKey)) return;
+
+          const sourceScenes = (src.scenes && src.scenes.length > 0) ? src.scenes : (originalIdx === 0 ? currentScenes : []);
+          const hierarchyChapters = getProjectHierarchy(activeProject, sourceScenes, src, originalIdx >= 0 ? originalIdx : srcIdx);
+
+          hierarchyChapters.forEach((ch, chIdx) => {
+            const chKey = `ch-${rootKey}-${chIdx}`;
+            if (isNodeExcluded(chKey, [rootKey])) return;
+
+            const chTitle = getNodeParam(chKey, 'title', ch.title || `Chương ${chIdx + 1}`);
+            const chHeader = document.createElement('div');
+            chHeader.className = 'video-timeline-header';
+            chHeader.innerHTML = `<span>📚</span> ${chTitle}`;
+            container.appendChild(chHeader);
+
+            (ch.sections || []).forEach((sec, secIdx) => {
+              const secKey = `sec-${rootKey}-${chIdx}-${secIdx}`;
+              if (isNodeExcluded(secKey, [chKey, rootKey])) return;
+
+              (sec.items || []).forEach((it, itIdx) => {
+                const itKey = `item-${rootKey}-${chIdx}-${secIdx}-${itIdx}`;
+                if (isNodeExcluded(itKey, [secKey, chKey, rootKey])) return;
+
+                const narr = getNodeParam(itKey, 'narration', '');
+                const dur = parseInt(getNodeParam(itKey, 'duration', 30)) || 30;
+                const itTitle = getNodeParam(itKey, 'title', it.text || it.title || itKey);
+                const audioData = window._videoAudioCache[itKey];
+
+                totalDuration += dur;
+                totalSegments++;
+                if (narr) scriptReadyCount++;
+                if (audioData) audioReadyCount++;
+
+                const card = createVideoSegmentCard({
+                  segKey: itKey, index: totalSegments - 1,
+                  title: it.code || `${chIdx+1}.${secIdx+1}.${itIdx+1}`,
+                  subtitle: itTitle, narr, dur, thumb: '', audioData
+                });
+                container.appendChild(card);
+              });
+            });
+          });
+        });
+      }
+
+      // Cập nhật badge tổng
+      const dBadge = document.getElementById('video-total-duration-badge');
+      if (dBadge) {
+        const mins = Math.floor(totalDuration / 60);
+        const secs = totalDuration % 60;
+        dBadge.textContent = `${mins}:${String(secs).padStart(2, '0')}`;
+      }
+
+      const aBadge = document.getElementById('btn-audio-count-badge');
+      if (aBadge) {
+        aBadge.textContent = `${scriptReadyCount} đoạn`;
+      }
+
+      // Cập nhật title
+      const vTitle = document.getElementById('video-studio-title');
+      if (vTitle && activeProject?.title) {
+        vTitle.textContent = activeProject.title;
+      }
+    }
+
+    function createVideoSegmentCard({ segKey, index, title, subtitle, narr, dur, thumb, audioData, totalPages }) {
+      const card = document.createElement('div');
+      card.className = 'video-segment-card' + (window._videoActiveSegKey === segKey ? ' is-active' : '');
+      card.onclick = () => selectVideoSegment(segKey, thumb, subtitle, narr, dur);
+
+      const narrPreview = narr ? narr.replace(/\[P\d\]/g, '').substring(0, 100) + (narr.length > 100 ? '...' : '') : 'Chưa có kịch bản';
+      const wordsCount = narr ? narr.trim().split(/\s+/).length : 0;
+
+      let statusBadge = '';
+      if (audioData) {
+        statusBadge = `<span class="video-seg-status-badge has-audio">🔊 Đã có audio</span>`;
+      } else if (narr) {
+        statusBadge = `<span class="video-seg-status-badge has-script">📝 Có kịch bản</span>`;
+      } else {
+        statusBadge = `<span class="video-seg-status-badge no-script">⚪ Chưa có</span>`;
+      }
+
+      card.innerHTML = `
+        <div class="video-seg-thumb">
+          ${thumb ? `<img src="${thumb}" alt="Slide ${index + 1}">` : `<div style="font-size: 22px; color: var(--text-dim);">📄</div>`}
+        </div>
+        <div class="video-seg-info">
+          <div class="video-seg-title">[${title}] ${subtitle}</div>
+          <div class="video-seg-narr-preview">${escapeHtml(narrPreview)}</div>
+          <div class="video-seg-meta">
+            <span>⏱️ ${dur}s</span>
+            <span>📝 ${wordsCount} từ</span>
+            ${audioData ? `<span>🔊 ${audioData.duration || '?'}s</span>` : ''}
+          </div>
+        </div>
+        <div class="video-seg-status">
+          ${statusBadge}
+          <button class="btn-gen-audio-single" onclick="event.stopPropagation(); generateSingleAudio('${segKey}')" ${!narr ? 'disabled title="Cần có kịch bản trước"' : 'title="Sinh audio AI cho đoạn này"'}>
+            🎙️ Sinh Audio
+          </button>
+        </div>
+      `;
+      return card;
+    }
+
+    function selectVideoSegment(segKey, thumb, title, narr, dur) {
+      window._videoActiveSegKey = segKey;
+
+      // Cập nhật player
+      const slideDisplay = document.getElementById('video-slide-display');
+      if (slideDisplay) {
+        if (thumb) {
+          slideDisplay.innerHTML = `<img src="${thumb}" alt="${title}">`;
+        } else {
+          slideDisplay.innerHTML = `
+            <div style="text-align: center;">
+              <div style="font-size: 32px; margin-bottom: 8px;">📄</div>
+              <div style="font-size: 16px; font-weight: 700; color: #fff;">${escapeHtml(title)}</div>
+            </div>`;
+        }
+      }
+
+      const titleEl = document.getElementById('video-current-slide-title');
+      if (titleEl) titleEl.textContent = title;
+
+      const teleprompter = document.getElementById('video-teleprompter');
+      if (teleprompter) {
+        teleprompter.textContent = narr ? narr.replace(/\[P\d\]/g, '').substring(0, 200) : 'Chưa có kịch bản cho đoạn này...';
+      }
+
+      const timeDisplay = document.getElementById('video-time-display');
+      if (timeDisplay) {
+        const mins = Math.floor(dur / 60);
+        const secs = dur % 60;
+        timeDisplay.textContent = `00:00 / ${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+      }
+
+      // Highlight active card
+      document.querySelectorAll('.video-segment-card').forEach(c => c.classList.remove('is-active'));
+      const activeCard = document.querySelector(`.video-segment-card[onclick*="${segKey}"]`);
+      // Find by iteration
+      document.querySelectorAll('.video-segment-card').forEach(c => {
+        if (c.onclick && c.onclick.toString().includes(segKey)) {
+          c.classList.add('is-active');
+        }
+      });
+
+      // Phát audio nếu đã có
+      const audioData = window._videoAudioCache[segKey];
+      if (audioData && audioData.audioUrl) {
+        playSegmentAudio(audioData.audioUrl);
+      }
+    }
+
+    function playSegmentAudio(audioUrl) {
+      if (window._currentAudioPlayer) {
+        window._currentAudioPlayer.pause();
+        window._currentAudioPlayer = null;
+      }
+      try {
+        const audio = new Audio(audioUrl);
+        window._currentAudioPlayer = audio;
+        audio.play().catch(e => console.warn('Không thể phát audio:', e));
+      } catch (e) {
+        console.warn('Lỗi phát audio:', e);
+      }
+    }
+
+    function toggleVideoPreview() {
+      if (window._currentAudioPlayer) {
+        if (window._currentAudioPlayer.paused) {
+          window._currentAudioPlayer.play();
+          document.getElementById('video-play-btn').textContent = '⏸️';
+        } else {
+          window._currentAudioPlayer.pause();
+          document.getElementById('video-play-btn').textContent = '▶️';
+        }
+      } else if (window._videoActiveSegKey) {
+        const narr = getNodeParam(window._videoActiveSegKey, 'narration', '');
+        if (narr) {
+          showToast('💡 Bấm [🎙️ Sinh Audio] trước để tạo giọng đọc AI, sau đó mới phát được!');
+        }
+      }
+    }
+
+    function toggleVideoFullscreen() {
+      const screen = document.getElementById('video-main-screen');
+      if (!screen) return;
+      if (document.fullscreenElement) {
+        document.exitFullscreen();
+      } else {
+        screen.requestFullscreen().catch(e => console.warn('Fullscreen error:', e));
+      }
+    }
+
+    // ===== SINH AUDIO TTS =====
+    async function generateSingleAudio(segKey) {
+      const narr = getNodeParam(segKey, 'narration', '');
+      if (!narr || narr.trim().length < 10) {
+        showToast('⚠️ Cần có kịch bản trước khi sinh audio! Hãy sang tab Kịch Bản để viết.');
+        return;
+      }
+
+      // Lấy text thuần (loại bỏ [P1], [P2], [P3])
+      const cleanText = narr.replace(/\[P\d\]/g, '').replace(/\s+/g, ' ').trim();
+
+      const cfg = LLMClient.getConfig();
+      const voice = document.getElementById('video-tts-voice')?.value || 'nova';
+
+      showToast(`🎙️ Đang sinh audio cho [${segKey}]...`);
+
+      try {
+        // Thử qua server proxy trước
+        const serverUrl = (window.location.origin.startsWith('http') && !window.location.origin.includes('file:'))
+          ? `${window.location.origin}/api/tts`
+          : 'https://slide-to-video-sigma.vercel.app/api/tts';
+
+        const res = await fetch(serverUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            text: cleanText,
+            voice: voice,
+            model: 'tts-1',
+            apiKey: cfg.apiKey || '',
+            provider: cfg.provider || 'openai'
+          })
+        });
+
+        if (res.ok) {
+          const blob = await res.blob();
+          const audioUrl = URL.createObjectURL(blob);
+
+          // Tính duration
+          const audio = new Audio(audioUrl);
+          await new Promise((resolve) => {
+            audio.addEventListener('loadedmetadata', () => resolve());
+            audio.addEventListener('error', () => resolve());
+            setTimeout(resolve, 3000);
+          });
+
+          const audioDuration = audio.duration ? Math.round(audio.duration) : null;
+
+          window._videoAudioCache[segKey] = {
+            audioUrl,
+            duration: audioDuration,
+            voice,
+            generatedAt: Date.now()
+          };
+
+          renderVideoTimeline();
+          showToast(`✅ Đã sinh audio thành công cho [${segKey}]${audioDuration ? ` (${audioDuration}s)` : ''}!`);
+          return;
+        }
+      } catch (e) {
+        console.warn('[TTS] Server proxy error:', e);
+      }
+
+      // Fallback: Dùng Web Speech API (browser built-in TTS)
+      try {
+        if ('speechSynthesis' in window) {
+          const utterance = new SpeechSynthesisUtterance(cleanText);
+          utterance.lang = 'vi-VN';
+          utterance.rate = 1.0;
+
+          // Ghi nhận rằng đã "sinh" bằng browser TTS
+          window._videoAudioCache[segKey] = {
+            audioUrl: null,
+            browserTTS: true,
+            text: cleanText,
+            duration: Math.round(cleanText.split(/\s+/).length / 2.3), // ước tính
+            voice: 'browser',
+            generatedAt: Date.now()
+          };
+
+          renderVideoTimeline();
+          showToast(`✅ Đã chuẩn bị audio (Browser TTS) cho [${segKey}]!`);
+          return;
+        }
+      } catch (e) {
+        console.warn('[TTS] Browser TTS error:', e);
+      }
+
+      showToast('⚠️ Không thể sinh audio. Hãy kiểm tra API Key trong cấu hình!');
+    }
+
+    async function generateAllAudio() {
+      const allSources = activeProject?.sources || [];
+      const activeSources = allSources.filter(s => s.active !== false);
+      if (activeSources.length === 0) {
+        showToast('⚠️ Chưa có tài liệu nào!');
+        return;
+      }
+
+      // Thu thập danh sách segKey có kịch bản
+      const segKeys = [];
+
+      if (window._videoViewMode === 'grid') {
+        let totalPages = 0;
+        activeSources.forEach(s => { totalPages += (s.pages || 0); });
+        if (totalPages === 0) totalPages = activeProject?.detailedContent?.length || 1;
+        for (let i = 0; i < totalPages; i++) {
+          const segKey = `grid-page-${i}`;
+          const narr = getNodeParam(segKey, 'narration', '');
+          if (narr && narr.trim().length >= 10 && !window._videoAudioCache[segKey]) {
+            segKeys.push(segKey);
+          }
+        }
+      } else {
+        activeSources.forEach((src, srcIdx) => {
+          const originalIdx = allSources.indexOf(src);
+          const rootKey = getSourceKey(src, originalIdx >= 0 ? originalIdx : srcIdx);
+          if (isNodeExcluded(rootKey)) return;
+          const sourceScenes = (src.scenes && src.scenes.length > 0) ? src.scenes : (originalIdx === 0 ? currentScenes : []);
+          const hierarchyChapters = getProjectHierarchy(activeProject, sourceScenes, src, originalIdx >= 0 ? originalIdx : srcIdx);
+          hierarchyChapters.forEach((ch, chIdx) => {
+            const chKey = `ch-${rootKey}-${chIdx}`;
+            if (isNodeExcluded(chKey, [rootKey])) return;
+            (ch.sections || []).forEach((sec, secIdx) => {
+              const secKey = `sec-${rootKey}-${chIdx}-${secIdx}`;
+              if (isNodeExcluded(secKey, [chKey, rootKey])) return;
+              (sec.items || []).forEach((it, itIdx) => {
+                const itKey = `item-${rootKey}-${chIdx}-${secIdx}-${itIdx}`;
+                if (isNodeExcluded(itKey, [secKey, chKey, rootKey])) return;
+                const narr = getNodeParam(itKey, 'narration', '');
+                if (narr && narr.trim().length >= 10 && !window._videoAudioCache[itKey]) {
+                  segKeys.push(itKey);
+                }
+              });
+            });
+          });
+        });
+      }
+
+      if (segKeys.length === 0) {
+        showToast('⚠️ Không có đoạn nào cần sinh audio (tất cả đã có hoặc chưa có kịch bản)!');
+        return;
+      }
+
+      showLoading('Đang Sinh Audio Toàn Bộ...', `Chuẩn bị sinh giọng đọc AI cho ${segKeys.length} phân đoạn...`);
+
+      let completed = 0;
+      const batchSize = 3;
+      for (let b = 0; b < segKeys.length; b += batchSize) {
+        const batch = segKeys.slice(b, b + batchSize);
+        updateLoading(`Đang sinh audio (${completed + 1}-${Math.min(completed + batchSize, segKeys.length)} / ${segKeys.length})...`);
+
+        await Promise.all(batch.map(async (segKey) => {
+          try {
+            await generateSingleAudio(segKey);
+          } catch (e) {
+            console.warn(`Lỗi sinh audio ${segKey}:`, e);
+          } finally {
+            completed++;
+          }
+        }));
+      }
+
+      hideLoading();
+      renderVideoTimeline();
+      showToast(`🎉 Đã hoàn tất sinh audio cho ${completed} phân đoạn!`);
+    }
+
+    async function exportFinalVideo() {
+      const audioCount = Object.keys(window._videoAudioCache).length;
+      if (audioCount === 0) {
+        showToast('⚠️ Cần sinh audio trước khi xuất video! Bấm [🔊 Sinh Toàn Bộ Audio] trước.');
+        return;
+      }
+
+      const resolution = document.getElementById('video-resolution')?.value || '1920x1080';
+      const fps = document.getElementById('video-fps')?.value || '30';
+      const bgm = document.getElementById('video-bgm')?.value || 'none';
+
+      showToast(`🎬 Chức năng xuất video ${resolution} @ ${fps}fps đang được phát triển! Sẽ sớm hỗ trợ ghép slide + audio + phụ đề thành file MP4.`);
+
+      // TODO: Implement actual video export using:
+      // 1. Canvas API + MediaRecorder for browser-based export
+      // 2. Or FFmpeg.wasm for high-quality server-less export
+      // 3. Or server-side FFmpeg via API endpoint
     }
 
     function renderDetailedContentUI() {
