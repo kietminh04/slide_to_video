@@ -965,9 +965,8 @@
       box-shadow: 0 0 14px rgba(56, 189, 248, 0.15);
     }
 
-    /* NÚT SINH KỊCH BẢN (CÁC PHẦN ĐÃ CHỌN) TRÊN THANH BAR */
+    /* NÚT SINH TẤT CẢ KỊCH BẢN (CHO RIÊNG TAB KỊCH BẢN) */
     .btn-generate-script-now {
-      margin-left: auto;
       display: flex;
       align-items: center;
       gap: 8px;
@@ -3616,15 +3615,6 @@
               <span>🎬</span> Video Bài Giảng
             </button>
           </div>
-
-          <!-- NÚT SINH KỊCH BẢN (CÁC PHẦN ĐÃ CHỌN) -->
-          <button class="btn-generate-script-now" id="btn-generate-script-now" onclick="generateScriptFromSelection()"
-            title="Tự động quét các slide và nhánh sơ đồ đã chọn để tạo kịch bản hoàn chỉnh ngay lập tức">
-            <span>⚡</span>
-            <span class="btn-gen-text">Sinh Kịch Bản (Các Phần Đã Chọn)</span>
-            <span class="btn-gen-badge" id="btn-gen-count-badge">0 mục</span>
-          </button>
-
         </div>
 
         <!-- THANH CẤU HÌNH CHUNG (GLOBAL CONFIG BAR) -->
@@ -3825,9 +3815,12 @@
                   <button class="view-mode-pill" data-mode="plain" onclick="setScriptViewMode('plain')"
                     title="Hiển thị văn bản thuần cho phụ đề">📄 Văn Bản Thuần</button>
                 </div>
-                <!-- Nút AI Viết Toàn Bộ đã được gộp lên nút chính 'Sinh Kịch Bản (Các Phần Đã Chọn)' ở góc trên -->
-                <button class="script-action-btn" id="btn-ai-generate-all" style="display: none;">
-                  <span>✨</span> AI Viết Toàn Bộ
+                <!-- NÚT SINH TẤT CẢ KỊCH BẢN (DÀNH RIÊNG CHO TAB KỊCH BẢN) -->
+                <button class="btn-generate-script-now" id="btn-generate-script-now" onclick="generateScriptFromSelection()"
+                  title="Tự động sinh kịch bản hoàn chỉnh cho tất cả các mục bằng AI">
+                  <span>⚡</span>
+                  <span class="btn-gen-text">Sinh Tất Cả Kịch Bản</span>
+                  <span class="btn-gen-badge" id="btn-gen-count-badge">0 mục</span>
                 </button>
                 <button class="script-action-btn" id="btn-copy-full-script" title="Sao chép toàn bộ văn bản kịch bản">
                   <span>📋</span> Sao Chép Kịch Bản
