@@ -1,0 +1,100 @@
+function renderMindmap() {
+      const world = document.getElementById('mindmap-world');
+      if (!world) return;
+      world.innerHTML = '';
+
+      const roots = buildDecisionTree(activeProject, currentScenes);
+      layoutDecisionTree(roots);
+
+      // Thu thập toàn bộ các node hiển thị
+      const allNodes = [];
+      function collectVisible(n) {
+        allNodes.push(n);
+        if (n.isExpanded && n.children) {
+          n.children.forEach(collectVisible);
+        }
+      }
+      roots.forEach(collectVisible);
+
+      const minX = Math.min(...allNodes.map(n => n.x));
+      const maxX = Math.max(...allNodes.map(n => n.x + n.width));
+      const minY = Math.min(...allNodes.map(n => n.y));
+      const maxY = Math.max(...allNodes.map(n => n.y + n.height));
+
+      const worldWidth = Math.max(4800, maxX + 800);
+      const worldHeight = Math.max(3200, maxY + 800);
+      world.style.minWidth = worldWidth + 'px';
+      world.style.minHeight = worldHeight + 'px';
+
+      // 1. Tạo SVG Canvas vẽ các đường cong nối nhánh (Cubic Bézier)
+      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svg.setAttribute('class', 'mindmap-svg-canvas');
+      svg.style.width = worldWidth + 'px';
+      svg.style.height = worldHeight + 'px';
+
+      allNodes.forEach(node => {
+        if (node.isExpanded && node.children && node.children.length > 0) {
+          const pX = node.x + node.width / 2;
+          const pY = node.y + node.height;
+
+          node.children.forEach(child => {
+            const cX = child.x + child.width / 2;
+            const cY = child.y;
+            const deltaY = cY - pY;
+            const cpY1 = pY + Math.max(25, deltaY * 0.5);
+            const cpY2 = cY - Math.max(25, deltaY * 0.5);
+
+            const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            const d = `M ${pX} ${pY} C ${pX} ${cpY1}, ${cX} ${cpY2}, ${cX} ${cY}`;
+            path.setAttribute('d', d);
+            path.setAttribute('data-parent-key', node.key);
+            path.setAttribute('data-child-key', child.key);
+            path.setAttribute('id', `path-${node.key}-${child.key}`);
+
+            const isChildEx = isNodeExcluded(child.key, [node.key, child.parentKey]);
+            if (isChildEx) {
+              path.setAttribute('stroke', 'rgba(244, 63, 94, 0.35)');
+              path.setAttribute('stroke-width', '1.8');
+              path.setAttribute('stroke-dasharray', '5,5');
+              path.setAttribute('fill', 'none');
+            } else {
+              path.setAttribute('stroke', 'rgba(56, 189, 248, 0.45)');
+              path.setAttribute('stroke-width', '2.5');
+              path.setAttribute('fill', 'none');
+              path.setAttribute('stroke-linecap', 'round');
+            }
+            svg.appendChild(path);
+          });
+        }
+      });
+
+      world.appendChild(svg);
+
+      // 2. Tạo Container chứa các thẻ nhánh độc lập
+      const nodesContainer = document.createElement('div');
+      nodesContainer.setAttribute('class', 'mindmap-nodes-container');
+
+      allNodes.forEach(node => {
+        const card = createDecisionNodeElement(node);
+        nodesContainer.appendChild(card);
+      });
+
+      world.appendChild(nodesContainer);
+
+      // Lưu bản đồ tra cứu node phục vụ kéo thả phân cấp
+      currentNodesMap = {};
+      allNodes.forEach(n => {
+        currentNodesMap[n.key] = n;
+      });
+
+      // Cập nhật video preview title
+      const videoTitle = document.getElementById('video-mock-title');
+      if (videoTitle) videoTitle.textContent = activeProject.title;
+      const teleText = document.getElementById('video-teleprompter-text');
+      if (teleText && currentScenes.length > 0) {
+        teleText.textContent = currentScenes[0].narration;
+      }
+    }
+
+---
+

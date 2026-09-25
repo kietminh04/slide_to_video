@@ -1,0 +1,722 @@
+
+--- MATCH 0 ---
+ax = Math.max(sDur.max, totalSec); }
+      const vDur = document.getElementById('val-duration');
+      if (vDur) vDur.textContent = `${totalMinutes} phút (${totalSec}s)`;
+
+      // Phân bổ xuống tất cả roots -> chapters theo tỷ lệ (skip locked)
+      const roots = Object.values(currentNodesMap).filter(node => node.level === 0 && node.children && node.children.length > 0);
+      if (roots.length === 1) {
+        const root = roots[0];
+        if (root.data) root.data.duration = totalSec;
+        setNodeParam(root.key, 'duration', totalSec);
+        distributeDurationDown(root, totalSec);
+      } else if (roots.length > 1) {
+        const oldRootDurs = roots.map(r => (r.data && r.data.duration) ? r.data.duration : 300);
+        const sumOld = oldRootDurs.reduce((a, b) => a + b, 0);
+        let currSum = 0;
+        roots.forEach((root, idx) => {
+          let rootShare = totalSec;
+          if (idx === roots.length - 1) {
+            rootShare = Math.max(30, totalSec - currSum);
+         
+--- MATCH 1 ---
+;
+        const sumOld = oldRootDurs.reduce((a, b) => a + b, 0);
+        let currSum = 0;
+        roots.forEach((root, idx) => {
+          let rootShare = totalSec;
+          if (idx === roots.length - 1) {
+            rootShare = Math.max(30, totalSec - currSum);
+          } else {
+            rootShare = Math.max(30, Math.round((oldRootDurs[idx] / Math.max(1, sumOld)) * totalSec));
+            currSum += rootShare;
+          }
+          if (root.data) root.data.duration = rootShare;
+          setNodeParam(root.key, 'duration', rootShare);
+          distributeDurationDown(root, rootShare);
+        });
+      }
+
+      renderMindmap();
+      if (document.getElementById('tab-content-script')?.classList.contains('active')) {
+        renderScriptDocument();
+      }
+      showToast(`⏱️ Thời gian tổng: ${totalMinutes} phút (${totalSec}s)`);
+    }
+
+    function applyGlobalVoice() {
+      const sel = document.getElementById('gcfg-voice');
+      if (!sel || !activeProject) return;
+      activePr
+--- MATCH 2 ---
+ Mặc định tất cả nhánh nhỏ nhất (lá) là 30s
+    // - Nhánh cha luôn bằng TỔNG thời lượng của các nhánh con
+    // - Chỉnh nhánh con: chỉ riêng nhánh đó đổi, cộng dồn ngược lên nhánh cha
+    // - Chỉnh nhánh to: tự động chia đều (nếu bằng nhau) hoặc theo tỷ lệ xuống các nhánh con
+    // =========================================================================
+
+    function distributeDurationDown(parentNode, totalDur) {
+      if (!parentNode.children || parentNode.children.length === 0) {
+        setNodeParam(parentNode.key, 'duration', totalDur);
+        parentNode.data.duration = totalDur;
+        return;
+      }
+
+      const children = parentNode.children;
+      const N = children.length;
+      const oldDurs = children.map(c => (c.data && c.data.duration) ? c.data.duration : 30);
+
+      // TÁCH NHÁNH KHÓA VÀ NHÁNH TỰ DO
+      const lockedDur = children.reduce((acc, c, i) => acc + (getNodeParam(c.key, 'isLocked', false) ? oldDurs[i] : 0), 0);
+      const freeIndices = children.map((c, 
+--- MATCH 3 ---
+rs[fi] = Math.max(5, availableForFree - currentSum);
+            } else {
+              const share = Math.max(5, Math.round((freeDurs[j] / sumFree) * availableForFree));
+              newDurs[fi] = share;
+              currentSum += share;
+            }
+          });
+        }
+      }
+
+      // Đệ quy áp dụng xuống từng nhánh con
+      children.forEach((child, idx) => {
+        if (getNodeParam(child.key, 'isLocked', false)) return; // Skip locked
+        const childDur = newDurs[idx];
+        setNodeParam(child.key, 'duration', childDur);
+        if (child.data) child.data.duration = childDur;
+        if (child.children && child.children.length > 0) {
+          distributeDurationDown(child, childDur);
+        }
+      });
+    }
+
+    function propagateDurationUp(startNode) {
+      let current = startNode;
+      while (current && current.parentKey) {
+        const parent = currentNodesMap[current.parentKey];
+        if (!parent) break;
+
+        const sumChildDur = (parent.children || []
+--- MATCH 4 ---
+agateDurationUp(startNode) {
+      let current = startNode;
+      while (current && current.parentKey) {
+        const parent = currentNodesMap[current.parentKey];
+        if (!parent) break;
+
+        const sumChildDur = (parent.children || []).reduce((acc, c) => {
+          const isEx = isNodeExcluded(c.key, [parent.key]);
+          return acc + (isEx ? 0 : ((c.data && c.data.duration) ? c.data.duration : 30));
+        }, 0);
+        if (parent.data) parent.data.duration = sumChildDur;
+        setNodeParam(parent.key, 'duration', sumChildDur);
+
+        // Đồng bộ với dữ liệu scenes của activeProject nếu parent là Chapter (Level 1)
+        if (parent.level === 1 && activeProject) {
+          const allSources = activeProject.sources || [{ name: activeProject.title + '.pdf', pages: 35, size: '1.2 MB', active: true }];
+          allSources.forEach((src, srcIdx) => {
+            const rootKey = getSourceKey(src, srcIdx);
+            if (parent.key.startsWith(`ch-${rootKey}-`)) {
+          
+--- MATCH 5 ---
+=> acc + ((r.data && r.data.duration) ? r.data.duration : 0), 0);
+      if (totalSec > 0 && activeProject) {
+        activeProject.duration_s = totalSec;
+        syncGlobalConfigFromProject();
+      }
+    }
+
+    function applyNodeDurationAndParams(targetKey, newDur, newWpm, newTitle, newVisual, newNotes) {
+      const node = currentNodesMap[targetKey];
+      newDur = Math.max(5, parseInt(newDur) || 30);
+      newWpm = Math.max(80, parseInt(newWpm) || 140);
+
+      // 1. Lưu các tham số phụ
+      setNodeParam(targetKey, 'title', newTitle);
+      setNodeParam(targetKey, 'wpm', newWpm);
+      setNodeParam(targetKey, 'visualType', newVisual);
+      setNodeParam(targetKey, 'notes', newNotes);
+
+      if (!node) {
+        setNodeParam(targetKey, 'duration', newDur);
+        return;
+      }
+
+      const isParent = node.children && node.children.length > 0;
+
+      if (!isParent) {
+        // CASE A: CHỈNH NHÁNH CON BÉ NHẤT (LÁ) -> Chỉ riêng nhánh đó nhận newDur, cộng dồn lên nhánh cha
+        se
+--- MATCH 6 ---
+ation : 0), 0);
+      if (totalSec > 0 && activeProject) {
+        activeProject.duration_s = totalSec;
+        syncGlobalConfigFromProject();
+      }
+    }
+
+    function applyNodeDurationAndParams(targetKey, newDur, newWpm, newTitle, newVisual, newNotes) {
+      const node = currentNodesMap[targetKey];
+      newDur = Math.max(5, parseInt(newDur) || 30);
+      newWpm = Math.max(80, parseInt(newWpm) || 140);
+
+      // 1. Lưu các tham số phụ
+      setNodeParam(targetKey, 'title', newTitle);
+      setNodeParam(targetKey, 'wpm', newWpm);
+      setNodeParam(targetKey, 'visualType', newVisual);
+      setNodeParam(targetKey, 'notes', newNotes);
+
+      if (!node) {
+        setNodeParam(targetKey, 'duration', newDur);
+        return;
+      }
+
+      const isParent = node.children && node.children.length > 0;
+
+      if (!isParent) {
+        // CASE A: CHỈNH NHÁNH CON BÉ NHẤT (LÁ) -> Chỉ riêng nhánh đó nhận newDur, cộng dồn lên nhánh cha
+        setNodeParam(targetKey, 'duration', newDur);
+       
+--- MATCH 7 ---
+veProject) {
+        activeProject.duration_s = totalSec;
+        syncGlobalConfigFromProject();
+      }
+    }
+
+    function applyNodeDurationAndParams(targetKey, newDur, newWpm, newTitle, newVisual, newNotes) {
+      const node = currentNodesMap[targetKey];
+      newDur = Math.max(5, parseInt(newDur) || 30);
+      newWpm = Math.max(80, parseInt(newWpm) || 140);
+
+      // 1. Lưu các tham số phụ
+      setNodeParam(targetKey, 'title', newTitle);
+      setNodeParam(targetKey, 'wpm', newWpm);
+      setNodeParam(targetKey, 'visualType', newVisual);
+      setNodeParam(targetKey, 'notes', newNotes);
+
+      if (!node) {
+        setNodeParam(targetKey, 'duration', newDur);
+        return;
+      }
+
+      const isParent = node.children && node.children.length > 0;
+
+      if (!isParent) {
+        // CASE A: CHỈNH NHÁNH CON BÉ NHẤT (LÁ) -> Chỉ riêng nhánh đó nhận newDur, cộng dồn lên nhánh cha
+        setNodeParam(targetKey, 'duration', newDur);
+        if (node.data) node.data.duration = newDur;
+ 
+--- MATCH 8 ---
+;
+        syncGlobalConfigFromProject();
+      }
+    }
+
+    function applyNodeDurationAndParams(targetKey, newDur, newWpm, newTitle, newVisual, newNotes) {
+      const node = currentNodesMap[targetKey];
+      newDur = Math.max(5, parseInt(newDur) || 30);
+      newWpm = Math.max(80, parseInt(newWpm) || 140);
+
+      // 1. Lưu các tham số phụ
+      setNodeParam(targetKey, 'title', newTitle);
+      setNodeParam(targetKey, 'wpm', newWpm);
+      setNodeParam(targetKey, 'visualType', newVisual);
+      setNodeParam(targetKey, 'notes', newNotes);
+
+      if (!node) {
+        setNodeParam(targetKey, 'duration', newDur);
+        return;
+      }
+
+      const isParent = node.children && node.children.length > 0;
+
+      if (!isParent) {
+        // CASE A: CHỈNH NHÁNH CON BÉ NHẤT (LÁ) -> Chỉ riêng nhánh đó nhận newDur, cộng dồn lên nhánh cha
+        setNodeParam(targetKey, 'duration', newDur);
+        if (node.data) node.data.duration = newDur;
+        propagateDurationUp(node);
+      } else {
+       
+--- MATCH 9 ---
+lyNodeDurationAndParams(targetKey, newDur, newWpm, newTitle, newVisual, newNotes) {
+      const node = currentNodesMap[targetKey];
+      newDur = Math.max(5, parseInt(newDur) || 30);
+      newWpm = Math.max(80, parseInt(newWpm) || 140);
+
+      // 1. Lưu các tham số phụ
+      setNodeParam(targetKey, 'title', newTitle);
+      setNodeParam(targetKey, 'wpm', newWpm);
+      setNodeParam(targetKey, 'visualType', newVisual);
+      setNodeParam(targetKey, 'notes', newNotes);
+
+      if (!node) {
+        setNodeParam(targetKey, 'duration', newDur);
+        return;
+      }
+
+      const isParent = node.children && node.children.length > 0;
+
+      if (!isParent) {
+        // CASE A: CHỈNH NHÁNH CON BÉ NHẤT (LÁ) -> Chỉ riêng nhánh đó nhận newDur, cộng dồn lên nhánh cha
+        setNodeParam(targetKey, 'duration', newDur);
+        if (node.data) node.data.duration = newDur;
+        propagateDurationUp(node);
+      } else {
+        // CASE B: CHỈNH NHÁNH TO -> Phân bổ newDur xuống các nhánh con theo qu
+--- MATCH 10 ---
+  setNodeParam(targetKey, 'title', newTitle);
+      setNodeParam(targetKey, 'wpm', newWpm);
+      setNodeParam(targetKey, 'visualType', newVisual);
+      setNodeParam(targetKey, 'notes', newNotes);
+
+      if (!node) {
+        setNodeParam(targetKey, 'duration', newDur);
+        return;
+      }
+
+      const isParent = node.children && node.children.length > 0;
+
+      if (!isParent) {
+        // CASE A: CHỈNH NHÁNH CON BÉ NHẤT (LÁ) -> Chỉ riêng nhánh đó nhận newDur, cộng dồn lên nhánh cha
+        setNodeParam(targetKey, 'duration', newDur);
+        if (node.data) node.data.duration = newDur;
+        propagateDurationUp(node);
+      } else {
+        // CASE B: CHỈNH NHÁNH TO -> Phân bổ newDur xuống các nhánh con theo quy tắc chia đều/tỷ lệ
+        setNodeParam(targetKey, 'duration', newDur);
+        if (node.data) node.data.duration = newDur;
+        distributeDurationDown(node, newDur);
+        propagateDurationUp(node);
+      }
+    }
+
+    function saveNodeParameters(nodeKey, duration, w
+--- MATCH 11 ---
+tion', newDur);
+        return;
+      }
+
+      const isParent = node.children && node.children.length > 0;
+
+      if (!isParent) {
+        // CASE A: CHỈNH NHÁNH CON BÉ NHẤT (LÁ) -> Chỉ riêng nhánh đó nhận newDur, cộng dồn lên nhánh cha
+        setNodeParam(targetKey, 'duration', newDur);
+        if (node.data) node.data.duration = newDur;
+        propagateDurationUp(node);
+      } else {
+        // CASE B: CHỈNH NHÁNH TO -> Phân bổ newDur xuống các nhánh con theo quy tắc chia đều/tỷ lệ
+        setNodeParam(targetKey, 'duration', newDur);
+        if (node.data) node.data.duration = newDur;
+        distributeDurationDown(node, newDur);
+        propagateDurationUp(node);
+      }
+    }
+
+    function saveNodeParameters(nodeKey, duration, wpm, title, visualType, notes = '') {
+      applyNodeDurationAndParams(nodeKey, duration, wpm, title, visualType, notes);
+    }
+
+
+    function getNodeParam(nodeKey, paramName, defaultValue) {
+      if (nodeCustomParams[nodeKey] && nodeCustomParams[nodeKey]
+--- MATCH 12 ---
+Dur);
+        propagateDurationUp(node);
+      }
+    }
+
+    function saveNodeParameters(nodeKey, duration, wpm, title, visualType, notes = '') {
+      applyNodeDurationAndParams(nodeKey, duration, wpm, title, visualType, notes);
+    }
+
+
+    function getNodeParam(nodeKey, paramName, defaultValue) {
+      if (nodeCustomParams[nodeKey] && nodeCustomParams[nodeKey][paramName] !== undefined) {
+        return nodeCustomParams[nodeKey][paramName];
+      }
+      return defaultValue;
+    }
+
+    function setNodeParam(nodeKey, paramName, value) {
+      if (!nodeCustomParams[nodeKey]) {
+        nodeCustomParams[nodeKey] = {};
+      }
+      nodeCustomParams[nodeKey][paramName] = value;
+
+      // 1. Đồng bộ trực tiếp vào node.data nếu node đang tồn tại trên cây DOM
+      if (typeof currentNodesMap !== 'undefined' && currentNodesMap[nodeKey] && currentNodesMap[nodeKey].data) {
+        currentNodesMap[nodeKey].data[paramName] = value;
+      }
+
+      // 2. Đồng bộ ngược thẳng vào activeProject.scenes v
+--- MATCH 13 ---
+
+                },
+                children: []
+              };
+            });
+
+            // TÍNH THỜI LƯỢNG SECTION TỪ CÁC ITEMS (BOTTOM-UP)
+            if (secNode.children.length > 0) {
+              const secTotalDur = secNode.children.reduce((sum, it) => {
+                const itEx = isNodeExcluded(it.key, [secKey, chKey, rootKey]);
+                return sum + (itEx ? 0 : (it.data.duration || 30));
+              }, 0);
+              secNode.data.duration = secTotalDur;
+              setNodeParam(secKey, 'duration', secTotalDur);
+            } else {
+              secNode.data.duration = getNodeParam(secKey, 'duration', 30);
+            }
+
+            return secNode;
+          });
+
+          // TÍNH THỜI LƯỢNG CHAPTER TỪ CÁC SECTIONS (BOTTOM-UP)
+          if (chNode.children.length > 0) {
+            const chTotalDur = chNode.children.reduce((sum, sec) => {
+              const secEx = isNodeExcluded(sec.key, [chKey, rootKey]);
+              return sum + (secEx ? 0 : (sec.dat
+--- MATCH 14 ---
+;
+            }
+
+            return secNode;
+          });
+
+          // TÍNH THỜI LƯỢNG CHAPTER TỪ CÁC SECTIONS (BOTTOM-UP)
+          if (chNode.children.length > 0) {
+            const chTotalDur = chNode.children.reduce((sum, sec) => {
+              const secEx = isNodeExcluded(sec.key, [chKey, rootKey]);
+              return sum + (secEx ? 0 : (sec.data.duration || 30));
+            }, 0);
+            chNode.data.duration = chTotalDur;
+            chData.duration_s = chTotalDur;
+            setNodeParam(chKey, 'duration', chTotalDur);
+          } else {
+            chNode.data.duration = getNodeParam(chKey, 'duration', chData.duration_s || 30);
+            chData.duration_s = chNode.data.duration;
+          }
+
+          chData.title = customTitle;
+          chData.visual_type = customVisual;
+
+          return chNode;
+        });
+
+        // TÍNH THỜI LƯỢNG ROOT NODE (TÀI LIỆU) TỪ CÁC CHAPTERS (BOTTOM-UP)
+        // QUAN TRỌNG: CHỈ CỘNG DỒN CÁC CHƯƠNG ĐANG ACTIVE (KHÔNG BỊ ẨN / LOẠI
+--- MATCH 15 ---
+turn chNode;
+        });
+
+        // TÍNH THỜI LƯỢNG ROOT NODE (TÀI LIỆU) TỪ CÁC CHAPTERS (BOTTOM-UP)
+        // QUAN TRỌNG: CHỈ CỘNG DỒN CÁC CHƯƠNG ĐANG ACTIVE (KHÔNG BỊ ẨN / LOẠI BỎ)
+        if (rootNode.children.length > 0) {
+          const rootTotalDur = rootNode.children.reduce((sum, ch) => {
+            const chEx = isNodeExcluded(ch.key, [rootKey]);
+            return sum + (chEx ? 0 : (ch.data.duration || 30));
+          }, 0);
+          rootNode.data.duration = rootTotalDur;
+          setNodeParam(rootKey, 'duration', rootTotalDur);
+        } else {
+          rootNode.data.duration = getNodeParam(rootKey, 'duration', 30);
+        }
+
+        return rootNode;
+      });
+
+      // ĐỒNG BỘ TỔNG THỜI LƯỢNG TỪ CÁC GỐC LÊN DỰ ÁN & CẤU HÌNH CHUNG (BOTTOM-UP TO PROJECT)
+      // CHỈ TÍNH CÁC TÀI LIỆU VÀ CHƯƠNG ĐANG THAM GIA KỊCH BẢN (KHÔNG BỊ LOẠI BỎ)
+      const totalTreeDur = roots.reduce((acc, r) => {
+        if (isNodeExcluded(r.key)) return acc;
+        return acc + (r.data && r.d
+--- MATCH 16 ---
+    return;
+        }
+
+        // A. Nhấn nút ✕ (Loại bỏ / Khôi phục)
+        const hitX = e.target.closest('.node-corner-x');
+        if (hitX) {
+          e.stopPropagation();
+          toggleNodeExclusion(node.key);
+          return;
+        }
+
+        // B1. Nhấn nút Lock 🔓/🔒 -> Toggle khóa nhánh
+        const hitLock = e.target.closest('.node-corner-lock');
+        if (hitLock) {
+          e.stopPropagation();
+          const isLocked = !getNodeParam(node.key, 'isLocked', false);
+          setNodeParam(node.key, 'isLocked', isLocked);
+          hitLock.innerHTML = isLocked ? '🔒' : '🔓';
+          hitLock.className = 'node-corner-lock' + (isLocked ? ' is-locked' : '');
+          hitLock.title = isLocked
+            ? 'Đã khóa: Thời lượng nhánh này cố định, không bị ảnh hưởng khi chỉnh tổng'
+            : 'Khóa thời lượng nhánh này (cố định khi chỉnh tổng)';
+          updateLockedBadge();
+          showToast(isLocked ? `🔒 Đã khóa nhánh: ${node.data.title || node.key}` : `🔓 Đã mở khóa
+--- MATCH 17 ---
+me: secName,
+            nodeCode: nodeCode,
+            nodeText: nodeText
+          });
+        }
+
+        if (res && (res.summary || res.mechanism)) {
+          node.data.summary = res.summary || node.data.summary;
+          node.data.mechanism = res.mechanism || node.data.mechanism;
+          node.data.key_point = res.key_point || node.data.key_point;
+          node.data.details = res.details || node.data.details;
+          node.data.examples = res.examples || node.data.examples;
+
+          setNodeParam(node.key, 'summary', node.data.summary);
+          setNodeParam(node.key, 'mechanism', node.data.mechanism);
+          setNodeParam(node.key, 'key_point', node.data.key_point);
+          setNodeParam(node.key, 'details', node.data.details);
+          setNodeParam(node.key, 'examples', node.data.examples);
+
+          showToast('✨ Đã bóc tách chi tiết thành công!');
+          // Tự động chuyển sang chế độ chi tiết
+          window.summaryViewMode = 'detailed';
+          localStorage.s
+--- MATCH 18 ---
+t: nodeText
+          });
+        }
+
+        if (res && (res.summary || res.mechanism)) {
+          node.data.summary = res.summary || node.data.summary;
+          node.data.mechanism = res.mechanism || node.data.mechanism;
+          node.data.key_point = res.key_point || node.data.key_point;
+          node.data.details = res.details || node.data.details;
+          node.data.examples = res.examples || node.data.examples;
+
+          setNodeParam(node.key, 'summary', node.data.summary);
+          setNodeParam(node.key, 'mechanism', node.data.mechanism);
+          setNodeParam(node.key, 'key_point', node.data.key_point);
+          setNodeParam(node.key, 'details', node.data.details);
+          setNodeParam(node.key, 'examples', node.data.examples);
+
+          showToast('✨ Đã bóc tách chi tiết thành công!');
+          // Tự động chuyển sang chế độ chi tiết
+          window.summaryViewMode = 'detailed';
+          localStorage.setItem('clsg_summary_mode', 'detailed');
+          const cardEl 
+--- MATCH 19 ---
+ || res.mechanism)) {
+          node.data.summary = res.summary || node.data.summary;
+          node.data.mechanism = res.mechanism || node.data.mechanism;
+          node.data.key_point = res.key_point || node.data.key_point;
+          node.data.details = res.details || node.data.details;
+          node.data.examples = res.examples || node.data.examples;
+
+          setNodeParam(node.key, 'summary', node.data.summary);
+          setNodeParam(node.key, 'mechanism', node.data.mechanism);
+          setNodeParam(node.key, 'key_point', node.data.key_point);
+          setNodeParam(node.key, 'details', node.data.details);
+          setNodeParam(node.key, 'examples', node.data.examples);
+
+          showToast('✨ Đã bóc tách chi tiết thành công!');
+          // Tự động chuyển sang chế độ chi tiết
+          window.summaryViewMode = 'detailed';
+          localStorage.setItem('clsg_summary_mode', 'detailed');
+          const cardEl = document.getElementById(`node-${node.key}`);
+          selectLeafN
+--- MATCH 20 ---
+ode.data.summary;
+          node.data.mechanism = res.mechanism || node.data.mechanism;
+          node.data.key_point = res.key_point || node.data.key_point;
+          node.data.details = res.details || node.data.details;
+          node.data.examples = res.examples || node.data.examples;
+
+          setNodeParam(node.key, 'summary', node.data.summary);
+          setNodeParam(node.key, 'mechanism', node.data.mechanism);
+          setNodeParam(node.key, 'key_point', node.data.key_point);
+          setNodeParam(node.key, 'details', node.data.details);
+          setNodeParam(node.key, 'examples', node.data.examples);
+
+          showToast('✨ Đã bóc tách chi tiết thành công!');
+          // Tự động chuyển sang chế độ chi tiết
+          window.summaryViewMode = 'detailed';
+          localStorage.setItem('clsg_summary_mode', 'detailed');
+          const cardEl = document.getElementById(`node-${node.key}`);
+          selectLeafNodeForContent(node, cardEl, false);
+        } else {
+          showT
+--- MATCH 21 ---
+|| node.data.mechanism;
+          node.data.key_point = res.key_point || node.data.key_point;
+          node.data.details = res.details || node.data.details;
+          node.data.examples = res.examples || node.data.examples;
+
+          setNodeParam(node.key, 'summary', node.data.summary);
+          setNodeParam(node.key, 'mechanism', node.data.mechanism);
+          setNodeParam(node.key, 'key_point', node.data.key_point);
+          setNodeParam(node.key, 'details', node.data.details);
+          setNodeParam(node.key, 'examples', node.data.examples);
+
+          showToast('✨ Đã bóc tách chi tiết thành công!');
+          // Tự động chuyển sang chế độ chi tiết
+          window.summaryViewMode = 'detailed';
+          localStorage.setItem('clsg_summary_mode', 'detailed');
+          const cardEl = document.getElementById(`node-${node.key}`);
+          selectLeafNodeForContent(node, cardEl, false);
+        } else {
+          showToast('⚠️ AI không trả về dữ liệu chi tiết, vui lòng thử lại!');
+
+--- MATCH 22 ---
+  }
+        return false;
+      },
+
+      setTotalMinutes(minutes) {
+        const inp = document.getElementById('gcfg-total-minutes');
+        if (inp) {
+          inp.value = Math.max(1, parseInt(minutes));
+          applyGlobalDuration();
+          return true;
+        }
+        return false;
+      },
+
+      lockChapter(chapterNum, locked = true) {
+        const chapters = getAllChaptersInfo();
+        const ch = chapters.find(c => c.num === parseInt(chapterNum));
+        if (ch) {
+          setNodeParam(ch.key, 'isLocked', locked !== false);
+          this.refresh();
+          return true;
+        }
+        return false;
+      },
+
+      setSpeed(val) {
+        const sel = document.getElementById('gcfg-speed');
+        if (sel) {
+          if (typeof val === 'number' && val > 2) {
+            if (val <= 125) sel.value = "0.85";
+            else if (val <= 150) sel.value = "1.0";
+            else if (val <= 175) sel.value = "1.2";
+            else sel.value = "1.35";
+          } else
+--- MATCH 23 ---
+badge.textContent = `${activeSources.length} slide • ${totalChaps} mục`;
+    }
+
+
+    // =========================================================================
+    // HỆ THỐNG KỊCH BẢN ĐA PHƯƠNG THỨC: KHUNG XƯƠNG TỪNG NHÁNH CON & ĐỒNG BỘ 2 CHIỀU
+    // =========================================================================
+
+    // 1. Đồng bộ 2 chiều các tham số từ ô kịch bản sang Sơ Đồ & Dự án
+    window.syncSegmentParam = function (itKey, paramName, value) {
+      if (!itKey) return;
+      setNodeParam(itKey, paramName, value);
+
+      // Đồng bộ thời lượng
+      if (paramName === 'duration') {
+        const newDur = Math.max(5, parseInt(value) || 30);
+        const node = currentNodesMap[itKey];
+        if (node) {
+          if (node.data) node.data.duration = newDur;
+          propagateDurationUp(node);
+          renderMindmap();
+        }
+      }
+
+      // Đồng bộ ghi chú AI / Custom instruction
+      if (paramName === 'notes') {
+        const terminalNotes = document.getElement
+--- MATCH 24 ---
+deo = file.type.startsWith('video');
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const dataUrl = e.target.result;
+        const att = {
+          name: file.name,
+          type: isVideo ? 'video' : 'image',
+          size: `${(file.size / 1024).toFixed(1)} KB`,
+          dataUrl: dataUrl
+        };
+
+        let currentAtts = getNodeParam(itKey, 'attachments', []);
+        if (!Array.isArray(currentAtts)) currentAtts = [];
+        currentAtts.push(att);
+        setNodeParam(itKey, 'attachments', currentAtts);
+
+        showToast(`📎 Đã đính kèm ${isVideo ? 'video' : 'ảnh'}: ${file.name}`);
+        renderScriptDocument();
+      };
+      reader.readAsDataURL(file);
+    };
+
+    window.removeSegmentAttachment = function (itKey, attIdx) {
+      let currentAtts = getNodeParam(itKey, 'attachments', []);
+      if (Array.isArray(currentAtts)) {
+        currentAtts.splice(attIdx, 1);
+        setNodeParam(itKey, 'attachments', currentAtts);
+        renderScriptDocu
+--- MATCH 25 ---
+y(currentAtts)) currentAtts = [];
+        currentAtts.push(att);
+        setNodeParam(itKey, 'attachments', currentAtts);
+
+        showToast(`📎 Đã đính kèm ${isVideo ? 'video' : 'ảnh'}: ${file.name}`);
+        renderScriptDocument();
+      };
+      reader.readAsDataURL(file);
+    };
+
+    window.removeSegmentAttachment = function (itKey, attIdx) {
+      let currentAtts = getNodeParam(itKey, 'attachments', []);
+      if (Array.isArray(currentAtts)) {
+        currentAtts.splice(attIdx, 1);
+        setNodeParam(itKey, 'attachments', currentAtts);
+        renderScriptDocument();
+        showToast('Đã gỡ tệp đính kèm.');
+      }
+    };
+
+    // =========================================================================
+    // HỆ THỐNG KỊCH BẢN HAI TẦNG (TWO-PASS STORYBOARD & PARALLEL FAN-OUT)
+    // TẦNG 1: SINH DÀN Ý CÂU NỐI CHƯƠNG -> TẦNG 2: BẮN SONG SONG (PROMISE.ALL)
+    // =========================================================================
+    const chapterStoryboards = {};
+
+    func
+--- MATCH 26 ---
+scriptText = await LLMClient.generateSegmentNarration({
+          projectTitle: activeProject?.title || '',
+          projectDesc: activeProject?.desc || '',
+          nodeCode,
+          nodeText,
+          chapterTitle,
+          sectionTitle,
+          duration,
+          wpm,
+          visualType,
+          summary,
+          mechanism,
+          keyPoint,
+          notes,
+          mediaAttachments,
+          mediaNote,
+          bridgeIntro
+        });
+
+        if (scriptText) {
+          setNodeParam(itKey, 'narration', scriptText);
+          if (node && node.data) node.data.narration = scriptText;
+
+          // Cập nhật textarea ngay lập tức nếu card đang có trên DOM
+          if (card) {
+            const textarea = card.querySelector('.segment-script-editor');
+            if (textarea) textarea.value = scriptText;
+            updateSegmentCardStats(itKey, scriptText);
+          }
+          updateScriptHeaderStats();
+          showToast(`✨ Đã sinh kịch bản cho mục: [${nodeCode

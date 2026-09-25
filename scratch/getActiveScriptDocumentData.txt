@@ -1,0 +1,455 @@
+function getActiveScriptDocumentData() {
+      if (!activeProject) return null;
+
+      const allSources = activeProject.sources || [
+        { name: (activeProject.title || 'Tài Liệu') + '.pdf', pages: 35, size: '1.2 MB', active: true }
+      ];
+      const activeSources = allSources.filter(s => s.active !== false);
+
+      let cumulativeSec = 0;
+      const chapters = [];
+      const flatSegments = [];
+
+      activeSources.forEach((src, srcIdx) => {
+        const originalIdx = allSources.indexOf(src);
+        const rootKey = getSourceKey(src, originalIdx >= 0 ? originalIdx : srcIdx);
+        if (isNodeExcluded(rootKey)) return;
+
+        const sourceScenes = (src.scenes && src.scenes.length > 0)
+          ? src.scenes
+          : (originalIdx === 0 ? currentScenes : []);
+        const hierarchyChapters = getProjectHierarchy(activeProject, sourceScenes, src, originalIdx >= 0 ? originalIdx : srcIdx);
+
+        hierarchyChapters.forEach((ch, chIdx) => {
+          const chKey = `ch-${rootKey}-${chIdx}`;
+          if (isNodeExcluded(chKey, [rootKey])) return;
+
+          const chTitle = getNodeParam(chKey, 'title', ch.title || `Chương ${chIdx + 1}`);
+          const chDepth = ch.depth || (chIdx === 0 ? 'bridge' : (chIdx === hierarchyChapters.length - 1 ? 'bridge' : 'core'));
+          const chVisual = getNodeParam(chKey, 'visualType', ch.visual_type || 'split_screen');
+
+          const chObj = {
+            sourceName: src.name,
+            sourceIdx: srcIdx,
+            chKey,
+            chIndex: chIdx + 1,
+            title: chTitle,
+            depth: chDepth,
+            visualType: chVisual,
+            sections: []
+          };
+
+          (ch.sections || []).forEach((sec, secIdx) => {
+            const secKey = `sec-${rootKey}-${chIdx}-${secIdx}`;
+            if (isNodeExcluded(secKey, [chKey, rootKey])) return;
+
+            const secCode = sec.code || `${chIdx + 1}.${secIdx + 1}`;
+            const secTitle = sec.title || `Phần ${secCode}`;
+
+            const secObj = {
+              secKey,
+              code: secCode,
+              title: secTitle,
+              items: []
+            };
+
+            (sec.items || []).forEach((it, itIdx) => {
+              const itKey = `item-${rootKey}-${chIdx}-${secIdx}-${itIdx}`;
+              if (isNodeExcluded(itKey, [secKey, chKey, rootKey])) return;
+
+              const itCode = getNodeParam(itKey, 'code', it.code || `${chIdx + 1}.${secIdx + 1}.${itIdx + 1}`);
+              const itTitle = getNodeParam(itKey, 'title', it.text || it.title || `Mục ${itIdx + 1}`);
+              const itDur = parseInt(getNodeParam(itKey, 'duration', it.duration || 30)) || 30;
+              const itWpm = parseInt(getNodeParam(itKey, 'wpm', activeProject.wpm || 140)) || 140;
+              const itVisual = getNodeParam(itKey, 'visualType', it.visual_type || chVisual || 'split_screen');
+              const itNotes = getNodeParam(itKey, 'notes', '');
+              const itMediaNote = getNodeParam(itKey, 'mediaNote', '');
+              const itNarr = getNodeParam(itKey, 'narration', it.narration || '');
+              const itAtts = getNodeParam(itKey, 'attachments', []);
+
+              // Cơ chế công thức toán học và tóm tắt sư phạm
+              const itMechanism = getNodeParam(itKey, 'mechanism', it.mechanism || '');
+              const itSummary = getNodeParam(itKey, 'summary', it.summary || '');
+              const itKeyPoint = getNodeParam(itKey, 'key_point', it.key_point || '');
+              const itDetails = getNodeParam(itKey, 'details', it.details || '');
+              const itExamples = getNodeParam(itKey, 'examples', it.examples || '');
+              const itPageRange = it.pageRange || (it.pdfStart ? `Slide ${it.pdfStart} - ${it.pdfEnd}` : '');
+
+              const tStart = cumulativeSec;
+              const tEnd = cumulativeSec + itDur;
+              cumulativeSec = tEnd;
+
+              const cleanNarr = itNarr.trim();
+              const wordCount = cleanNarr ? cleanNarr.split(/\s+/).length : 0;
+              const estReadTime = wordCount > 0 ? Math.round((wordCount / itWpm) * 60) : 0;
+
+              // Câu nối chuyển tiếp sư phạm (Storyboards)
+              const bridge = getChapterBridge(itKey);
+
+              const itemObj = {
+                itKey,
+                code: itCode,
+                title: itTitle,
+                duration: itDur,
+                wpm: itWpm,
+                tStart,
+                tEnd,
+                wordCount,
+                estReadTime,
+                visualType: itVisual,
+                narration: itNarr,
+                mechanism: itMechanism,
+                summary: itSummary,
+                keyPoint: itKeyPoint,
+                details: itDetails,
+                examples: itExamples,
+                pageRange: itPageRange,
+                notes: itNotes,
+                mediaNote: itMediaNote,
+                attachments: itAtts,
+                bridge,
+                chapterTitle: chTitle,
+                sectionTitle: secTitle,
+                sourceName: src.name
+              };
+
+              secObj.items.push(itemObj);
+              flatSegments.push(itemObj);
+            });
+
+            if (secObj.items.length > 0) {
+              chObj.sections.push(secObj);
+            }
+          });
+
+          if (chObj.sections.length > 0) {
+            chapters.push(chObj);
+          }
+        });
+      });
+
+      return {
+        meta: {
+          projectId: activeProject.id || currentProjectId,
+          title: activeProject.title || 'Kịch Bản Bài Giảng',
+          totalDuration: cumulativeSec,
+          wpm: activeProject.wpm || 140,
+          criticScore: parseInt(document.getElementById('score-overall')?.textContent) || 94,
+          totalSources: activeSources.length,
+          totalChapters: chapters.length,
+          totalSegments: flatSegments.length,
+          totalWords: flatSegments.reduce((sum, s) => sum + s.wordCount, 0),
+          exportedAt: new Date().toLocaleString('vi-VN')
+        },
+        sources: activeSources.map(s => ({ name: s.name, pages: s.pages, size: s.size })),
+        chapters,
+        flatSegments
+      };
+    }
+
+    // 1. XUẤT MARKDOWN SƯ PHẠM CHUYÊN NGHIỆP (.MD)
+    document.getElementById('btn-export-md')?.addEventListener('click', () => {
+      const data = getActiveScriptDocumentData();
+      if (!data || data.flatSegments.length === 0) {
+        showToast('⚠️ Không có nội dung phân cảnh nào để xuất Markdown!');
+        return;
+      }
+
+      const filename = `Kich_Ban_${data.meta.projectId}.md`;
+      const m = Math.floor(data.meta.totalDuration / 60);
+      const s = data.meta.totalDuration % 60;
+
+      const lines = [
+        `# 🎓 KỊCH BẢN BÀI GIẢNG SƯ PHẠM: ${data.meta.title.toUpperCase()}`,
+        ``,
+        `> ⏱️ **Tổng thời lượng:** ${m} phút ${s < 10 ? '0' : ''}${s}s (${data.meta.totalDuration}s)  `,
+        `> 🎙️ **Tốc độ đọc chuẩn:** ${data.meta.wpm} WPM | 📊 **Quy mô:** ${data.meta.totalChapters} Chương • ${data.meta.totalSegments} Phân cảnh • ~${data.meta.totalWords} từ  `,
+        `> 🎯 **Điểm kiểm định sư phạm:** ${data.meta.criticScore}/100 | 📅 **Thời gian xuất bản:** ${data.meta.exportedAt}  `,
+        `> 📄 **Học liệu nguồn:** ${data.sources.map(src => `\`${src.name}\``).join(', ')}  `,
+        ``,
+        `---`,
+        ``,
+        `## 📑 MỤC LỤC TỔNG QUAN BÀI GIẢNG`,
+        ``
+      ];
+
+      data.chapters.forEach(ch => {
+        lines.push(`- **CHƯƠNG ${ch.chIndex}: ${ch.title}** (${ch.visualType})`);
+        ch.sections.forEach(sec => {
+          sec.items.forEach(it => {
+            lines.push(`  - [${it.code}] ${it.title} \`[${formatTime(it.tStart)} - ${formatTime(it.tEnd)} • ${it.duration}s]\``);
+          });
+        });
+      });
+
+      lines.push(``, `---`, ``);
+
+      // Chi tiết từng chương và phân đoạn
+      data.chapters.forEach(ch => {
+        lines.push(`## 📘 CHƯƠNG ${ch.chIndex}: ${ch.title.toUpperCase()}`);
+        lines.push(`*Chế độ thị giác chính: \`[${ch.visualType}]\` • Cấp độ sư phạm: \`[${ch.depth}]\` • Tài liệu: \`${ch.sourceName}\`*`);
+        lines.push(``);
+
+        ch.sections.forEach(sec => {
+          lines.push(`### 📂 ${sec.code}. ${sec.title}`);
+          lines.push(``);
+
+          sec.items.forEach(it => {
+            lines.push(`#### 🎯 [${it.code}] ${it.title}`);
+            lines.push(`- ⏱️ **Thời lượng:** \`${formatTime(it.tStart)} - ${formatTime(it.tEnd)}\` (${it.duration}s • ~${it.wordCount} từ)`);
+            lines.push(`- 🎬 **Chỉ dẫn thị giác:** \`[${it.visualType}]\`${it.mediaNote ? ` - *${it.mediaNote}*` : ''}`);
+
+            if (it.mechanism) {
+              lines.push(``, `> 📐 **Cơ chế & Công thức Toán học ($LaTeX$):**  `, `> ${it.mechanism}`);
+            }
+
+            if (it.summary || it.keyPoint) {
+              lines.push(``, `> 💡 **Trọng tâm sư phạm & Điểm then chốt:**  `, `> ${it.summary || it.keyPoint}`);
+            }
+
+            if (it.bridge) {
+              lines.push(``, `> 🌉 **Câu nối chuyển tiếp sư phạm (Bridge):**  `, `> *"${it.bridge}"*`);
+            }
+
+            lines.push(``, `##### 🎙️ Lời Thoại Sư Phạm:`);
+            if (it.narration && it.narration.trim()) {
+              lines.push(it.narration.trim());
+            } else {
+              lines.push(`*(Chưa tạo kịch bản lời thoại cho phân đoạn này)*`);
+            }
+
+            if (Array.isArray(it.attachments) && it.attachments.length > 0) {
+              lines.push(``, `**📎 Tệp đính kèm minh họa:**`);
+              it.attachments.forEach(att => {
+                lines.push(`- 🖼️ \`${att.name}\` (${att.type} • ${att.size})`);
+              });
+            }
+
+            lines.push(``, `---`, ``);
+          });
+        });
+      });
+
+      downloadFile(filename, lines.join('\n'), 'text/markdown');
+      showToast(`Đã xuất tài liệu Markdown chuyên nghiệp: ${filename}`);
+    });
+
+    // 2. XUẤT TÀI LIỆU GIÁO ÁN WORD CHUẨN ACADEMIC (.DOC)
+    document.getElementById('btn-export-docx')?.addEventListener('click', async () => {
+      const data = getActiveScriptDocumentData();
+      if (!data || data.flatSegments.length === 0) {
+        showToast('⚠️ Không có nội dung phân cảnh nào để xuất Word!');
+        return;
+      }
+
+      const filename = `Giao_An_Kich_Ban_${data.meta.projectId}.doc`;
+      const m = Math.floor(data.meta.totalDuration / 60);
+      const s = data.meta.totalDuration % 60;
+
+      try {
+        // 1. Tạo bảng ma trận tổng quan chương trình
+        let outlineRows = '';
+        data.flatSegments.forEach((it, idx) => {
+          const timeStr = `${formatTime(it.tStart)} - ${formatTime(it.tEnd)}`;
+          outlineRows += `
+            <tr style="background:${idx % 2 === 0 ? '#f8fafc' : '#ffffff'};">
+              <td style="padding:8px 10px;border:1px solid #cbd5e1;font-family:'Courier New',monospace;font-size:11px;font-weight:bold;color:#0369a1;">${timeStr}</td>
+              <td style="padding:8px 10px;border:1px solid #cbd5e1;font-weight:bold;font-size:12px;">${it.code}</td>
+              <td style="padding:8px 10px;border:1px solid #cbd5e1;font-size:12px;"><b>${it.title}</b><br/><span style="color:#64748b;font-size:11px;">${it.chapterTitle}</span></td>
+              <td style="padding:8px 10px;border:1px solid #cbd5e1;font-size:11px;text-align:center;">${it.duration}s</td>
+              <td style="padding:8px 10px;border:1px solid #cbd5e1;font-size:11px;color:#047857;font-weight:600;">[${it.visualType}]</td>
+              <td style="padding:8px 10px;border:1px solid #cbd5e1;font-size:11px;color:#334155;">${it.summary || it.mechanism || '—'}</td>
+            </tr>
+          `;
+        });
+
+        // 2. Tạo chi tiết từng phân đoạn kịch bản
+        let detailedSectionsHtml = '';
+        data.chapters.forEach(ch => {
+          detailedSectionsHtml += `
+            <div style="margin-top:30px;page-break-before:always;">
+              <div style="background:#0f172a;color:#ffffff;padding:12px 18px;border-radius:6px;margin-bottom:18px;">
+                <h2 style="margin:0;font-size:16px;letter-spacing:0.5px;color:#38bdf8;">CHƯƠNG ${ch.chIndex}: ${ch.title.toUpperCase()}</h2>
+                <div style="font-size:11px;color:#cbd5e1;margin-top:4px;">Chế độ thị giác chính: <b>${ch.visualType}</b> | Phân loại: <b>${ch.depth}</b> | Tài liệu nguồn: <b>${ch.sourceName}</b></div>
+              </div>
+          `;
+
+          ch.sections.forEach(sec => {
+            detailedSectionsHtml += `
+              <div style="margin:16px 0 10px 0;padding-bottom:6px;border-bottom:2px solid #e2e8f0;">
+                <h3 style="margin:0;font-size:14px;color:#1e293b;">📂 ${sec.code}. ${sec.title}</h3>
+              </div>
+            `;
+
+            sec.items.forEach(it => {
+              const timeStr = `${formatTime(it.tStart)} - ${formatTime(it.tEnd)}`;
+              const safeNarr = (it.narration || '<i>(Chưa tạo kịch bản lời thoại cho phân đoạn này)</i>')
+                .replace(/</g, '&lt;').replace(/>/g, '&gt;')
+                .replace(/\[P1\]/g, '<span style="background:#e2e8f0;color:#334155;font-weight:bold;font-size:10px;padding:2px 6px;border-radius:3px;margin:0 4px;">[P1: Nghỉ 1s]</span>')
+                .replace(/\[P2\]/g, '<span style="background:#fef08a;color:#854d0e;font-weight:bold;font-size:10px;padding:2px 6px;border-radius:3px;margin:0 4px;">[P2: Nghỉ 2s]</span>')
+                .replace(/\n/g, '<br/>');
+
+              let formulaCallout = '';
+              if (it.mechanism) {
+                formulaCallout = `
+                  <div style="border-left:4px solid #0284c7;background:#f0f9ff;padding:10px 14px;margin:10px 0;border-radius:0 4px 4px 0;">
+                    <div style="font-weight:bold;font-size:11px;color:#0369a1;margin-bottom:3px;">📐 CƠ CHẾ & CÔNG THỨC TOÁN HỌC ($LaTeX$):</div>
+                    <div style="font-family:'Cambria Math',Georgia,serif;font-size:12px;color:#0f172a;">${it.mechanism.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div>
+                  </div>
+                `;
+              }
+
+              let summaryCallout = '';
+              if (it.summary || it.keyPoint) {
+                summaryCallout = `
+                  <div style="border-left:4px solid #10b981;background:#ecfdf5;padding:10px 14px;margin:10px 0;border-radius:0 4px 4px 0;">
+                    <div style="font-weight:bold;font-size:11px;color:#047857;margin-bottom:3px;">💡 TRỌNG TÂM SƯ PHẠM & ĐIỂM THEN CHỐT:</div>
+                    <div style="font-size:11.5px;color:#064e3b;line-height:1.5;">${(it.summary || it.keyPoint).replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div>
+                  </div>
+                `;
+              }
+
+              let bridgeCallout = '';
+              if (it.bridge) {
+                bridgeCallout = `
+                  <div style="border-left:4px solid #8b5cf6;background:#f5f3ff;padding:8px 12px;margin:8px 0;border-radius:0 4px 4px 0;">
+                    <div style="font-weight:bold;font-size:11px;color:#6d28d9;margin-bottom:2px;">🌉 CÂU NỐI CHUYỂN TIẾP SƯ PHẠM (PEDAGOGICAL BRIDGE):</div>
+                    <div style="font-size:11px;color:#4c1d95;font-style:italic;">"${it.bridge.replace(/</g, '&lt;').replace(/>/g, '&gt;')}"</div>
+                  </div>
+                `;
+              }
+
+              let mediaAttachList = '';
+              if (Array.isArray(it.attachments) && it.attachments.length > 0) {
+                mediaAttachList = `
+                  <div style="margin-top:8px;font-size:11px;color:#475569;">
+                    <b>📎 Tệp minh họa:</b> ${it.attachments.map(a => `<code>${a.name}</code> (${a.type})`).join(', ')}
+                  </div>
+                `;
+              }
+
+              detailedSectionsHtml += `
+                <div style="background:#ffffff;border:1px solid #cbd5e1;border-radius:6px;padding:16px 20px;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.05);">
+                  <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #e2e8f0;padding-bottom:8px;margin-bottom:12px;">
+                    <div>
+                      <span style="background:#0284c7;color:#ffffff;font-size:11px;font-weight:bold;padding:2px 8px;border-radius:3px;font-family:'Courier New',monospace;">${it.code}</span>
+                      <span style="font-size:14px;font-weight:bold;color:#0f172a;margin-left:8px;">${it.title}</span>
+                    </div>
+                    <div style="font-family:'Courier New',monospace;font-size:12px;font-weight:bold;color:#0369a1;">
+                      ⏱️ ${timeStr} (${it.duration}s • ~${it.wordCount} từ)
+                    </div>
+                  </div>
+
+                  <div style="background:#fffbeb;border:1px solid #fde68a;padding:6px 12px;border-radius:4px;font-size:11px;color:#92400e;margin-bottom:10px;">
+                    🎬 <b>Chỉ dẫn thị giác:</b> [${it.visualType}] ${it.mediaNote ? `— <i>${it.mediaNote}</i>` : ''}
+                  </div>
+
+                  ${formulaCallout}
+                  ${summaryCallout}
+                  ${bridgeCallout}
+
+                  <div style="margin-top:12px;">
+                    <div style="font-weight:bold;font-size:11px;color:#334155;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">🎙️ Lời Thoại Sư Phạm (Production Narration):</div>
+                    <div style="background:#f8fafc;border:1px solid #e2e8f0;padding:14px 18px;border-radius:4px;font-size:12pt;font-family:'Times New Roman',Georgia,serif;line-height:1.75;color:#1e293b;">
+                      ${safeNarr}
+                    </div>
+                  </div>
+
+                  ${mediaAttachList}
+                </div>
+              `;
+            });
+          });
+
+          detailedSectionsHtml += `</div>`;
+        });
+
+        // 3. Toàn bộ tài liệu HTML Word
+        const htmlWordContent = `
+          <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
+          <head>
+            <meta charset="utf-8">
+            <title>${data.meta.title}</title>
+            <style>
+              body { font-family: 'Segoe UI', Calibri, Arial, sans-serif; color: #1e293b; line-height: 1.6; margin: 40px; }
+              h1 { color: #0f172a; font-size: 24px; margin-bottom: 4px; }
+              table { border-collapse: collapse; width: 100%; }
+              th { background: #0f172a; color: #ffffff; padding: 10px; font-size: 12px; text-align: left; border: 1px solid #0f172a; }
+              td { font-size: 11.5px; }
+            </style>
+          </head>
+          <body>
+            <!-- COVER BANNER -->
+            <div style="background:linear-gradient(135deg, #0f172a 0%, #1e293b 100%);color:#ffffff;padding:32px 36px;border-radius:8px;margin-bottom:28px;">
+              <div style="font-size:11px;font-weight:bold;letter-spacing:2px;color:#38bdf8;text-transform:uppercase;margin-bottom:6px;">CLSG STUDIO • BỘ TRÍCH XUẤT GIÁO ÁN & VIDEO SƯ PHẠM</div>
+              <h1 style="color:#ffffff;font-size:26px;margin:0 0 10px 0;line-height:1.3;">${data.meta.title}</h1>
+              <div style="font-size:13px;color:#94a3b8;margin-bottom:20px;">KỊCH BẢN PHÂN CẢNH, LỜI THOẠI & CHỈ DẪN THỊ GIÁC TOÀN DIỆN</div>
+
+              <table style="width:100%;border-top:1px solid rgba(255,255,255,0.15);padding-top:16px;margin-top:16px;">
+                <tr>
+                  <td style="color:#e2e8f0;padding:4px 0;">⏱️ <b>Thời lượng:</b> ${m} phút ${s < 10 ? '0' : ''}${s}s (${data.meta.totalDuration}s)</td>
+                  <td style="color:#e2e8f0;padding:4px 0;">🎙️ <b>Tốc độ đọc:</b> ${data.meta.wpm} WPM</td>
+                  <td style="color:#e2e8f0;padding:4px 0;">📊 <b>Quy mô:</b> ${data.meta.totalChapters} Chương • ${data.meta.totalSegments} Cảnh</td>
+                </tr>
+                <tr>
+                  <td style="color:#e2e8f0;padding:4px 0;">🎯 <b>Điểm Critic:</b> ${data.meta.criticScore}/100</td>
+                  <td style="color:#e2e8f0;padding:4px 0;">📄 <b>Slide gốc:</b> ${data.sources.map(s => s.name).join(', ')}</td>
+                  <td style="color:#e2e8f0;padding:4px 0;">📅 <b>Ngày xuất:</b> ${data.meta.exportedAt}</td>
+                </tr>
+              </table>
+            </div>
+
+            <!-- BẢNG TỔNG QUAN KHUNG CHƯƠNG TRÌNH -->
+            <h2 style="color:#0f172a;font-size:16px;border-bottom:2px solid #0284c7;padding-bottom:6px;margin-bottom:14px;">I. BẢNG MA TRẬN PHÂN CẢNH BÀI GIẢNG</h2>
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:12%;">Thời Gian</th>
+                  <th style="width:8%;">Mã Mục</th>
+                  <th style="width:30%;">Tên Phân Cảnh & Chương</th>
+                  <th style="width:8%;">Thời Lượng</th>
+                  <th style="width:14%;">Thị Giác</th>
+                  <th style="width:28%;">Trọng Tâm / Công Thức</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${outlineRows}
+              </tbody>
+            </table>
+
+            <!-- CHI TIẾT SẢN XUẤT TỪNG PHÂN CẢNH -->
+            <div style="margin-top:35px;">
+              <h2 style="color:#0f172a;font-size:16px;border-bottom:2px solid #0284c7;padding-bottom:6px;margin-bottom:14px;">II. KỊCH BẢN CHI TIẾT LỜI THOẠI & DỰNG HÌNH</h2>
+              ${detailedSectionsHtml}
+            </div>
+          </body>
+          </html>
+        `;
+
+        const blob = new Blob(['\ufeff' + htmlWordContent], { type: 'application/msword' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        showToast(`Đã xuất tài liệu Word giáo án cao cấp: ${filename}`);
+      } catch (err) {
+        console.error('Lỗi xuất Word:', err);
+        showToast('Lỗi khi tạo file Word. Xem Console để biết chi tiết.');
+      }
+    });
+
+    // 3. XUẤT PHỤ ĐỀ CHUẨN SUBRIP CHO VIDEO (.SRT)
+    document.getElementById('btn-export-srt')?.addEventListener('click', () => {
+      const data = getActiveScriptDocumentData();
+      if (!data || data.flatSegments.length === 0) {
+        showToast('⚠️ Không có nội dung phân cảnh nào để xuất phụ đề SRT!');
+        return;
+      }
+
+      const filename = `Phu_De_${data.meta.projectId}.srt`;
+
+      

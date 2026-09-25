@@ -1,0 +1,560 @@
+
+--- MATCH 0 ---
+t) || 94,
+          totalSources: activeSources.length,
+          totalChapters: chapters.length,
+          totalSegments: flatSegments.length,
+          totalWords: flatSegments.reduce((sum, s) => sum + s.wordCount, 0),
+          exportedAt: new Date().toLocaleString('vi-VN')
+        },
+        sources: activeSources.map(s => ({ name: s.name, pages: s.pages, size: s.size })),
+        chapters,
+        flatSegments
+      };
+    }
+
+    // 1. XUẤT MARKDOWN SƯ PHẠM CHUYÊN NGHIỆP (.MD)
+    document.getElementById('btn-export-md')?.addEventListener('click', () => {
+      const data = getActiveScriptDocumentData();
+      if (!data || data.flatSegments.length === 0) {
+        showToast('⚠️ Không có nội dung phân cảnh nào để xuất Markdown!');
+        return;
+      }
+
+      const filename = `Kich_Ban_${data.meta.projectId}.md`;
+      const m = Math.floor(data.meta.totalDuration / 60);
+      const s = data.meta.totalDuration % 60;
+
+      const lines = [
+        `# 🎓 KỊCH BẢN BÀI GIẢNG SƯ PHẠM: ${data.meta.title.toUpperCase()}`,
+        ``,
+        `> ⏱️ **Tổng thời lượng:** ${m} phút ${s < 10 ? '0' : ''}${s}s (${data.meta.totalDuration}s)  `,
+        `> 🎙️ **Tốc độ đọc chuẩn:** ${data.meta.wpm} WPM | 📊 **Quy mô:** ${data.meta.totalChapters} Chương • ${data.meta.totalSegments} Phân cảnh • ~${data.meta.totalWords} từ  `,
+        `> 🎯 **Điểm kiểm định sư phạm:** ${data.meta.criticScore}/100 | 📅 **Thời gian xuất bản:** ${data.meta.exportedAt}  `,
+        `> 📄 **Học liệu nguồn:** ${data.sources.map(src => `\`${src.name}\``).join(', ')}  `,
+        ``,
+        `---`,
+        ``,
+        `## 📑 MỤC LỤC TỔNG QUAN BÀI GIẢNG`,
+        ``
+      ];
+
+      data.chapters.forEach(ch => {
+        lines.push(`- **CHƯƠNG ${ch.chIndex}: ${ch.title}** (${ch.visualType})`);
+        ch.sections.forEach(sec => {
+          sec.items.forEach(it => {
+            lines.push(`  - [${it.code}] ${it.title} \`[${formatTime(it.tStart)} - ${formatTime(it.tEnd)} • ${it.duration}s]\``);
+          });
+        });
+      });
+
+      lines.push(``, `---`, ``);
+
+      // Chi tiết từng chương và phân đoạn
+      data.chapters.forEach(ch => {
+        lines.push(`## 📘 CHƯƠNG ${ch.chIndex}: ${ch.title.toUpperCase()}`);
+        lines.push(`*Chế độ thị giác chính: \`[${ch.visualType}]\` • Cấp độ sư phạm: \`[${ch.depth}]\` • Tài liệu: \`${ch.sourceName}\`*`);
+        lines.push(``);
+
+        ch.sections.forEach(sec => {
+          lines.push(`### 📂 ${sec.code}. ${sec.title}`);
+          lines.push(``);
+
+          sec.items.forEach(it => {
+            lines.push(`#### 🎯 [${it.code}] ${it.title}`);
+            lines.push(`- ⏱️ **Thời lượng:** \`${formatTime(it.tStart)} - ${formatTime(it.tEnd)}\` (${it.duration}s • ~${it.wordCount} từ)`);
+            lines.push(`- 🎬 **Chỉ dẫn thị giác:** \`[${it.visualType}]\`${it.mediaNote ? ` - *${it.mediaNote}*` : ''}`);
+
+            if (it.mechanism) {
+              lines.push(``, `> 📐 **Cơ chế & Công thức Toán học ($LaTeX$):**  `, `> ${it.mechanism}`);
+            }
+
+            if (it.summary || it.keyPoint) {
+              lines.push(``, `> 💡 **Trọng tâm sư phạm & Điểm then chốt:**  `, `> ${it.summary || it.keyPoint}`);
+            }
+
+            if (it.bridge) {
+              lines.push(``, `> 🌉 **Câu nối chuyển tiếp sư phạm (Bridge):**  `, `> *"${it.bridge}"*`);
+            }
+
+            lines.push(``, `##### 🎙️ Lời Thoại Sư Phạm:`);
+            if (it.narration && it.narration.trim()) {
+              lines.push(it.narration.trim());
+            } else {
+              lines.push(`*(Chưa tạo kịch bản lời thoại cho phân đoạn này)*`);
+            }
+
+            if (Array.isArray(it.attachments) && it.attachments.length > 0) {
+              lines.push(``, `**📎 Tệp đính kèm minh họa:**`);
+              it.attachments.forEach(att => {
+                lines.push(`- 🖼️ \`${att.name}\` (${att.type} • ${att.size})`);
+              });
+            }
+
+            lines.push(``, `---`, ``);
+          });
+        });
+      });
+
+      downloadFile(filename, lin
+--- MATCH 1 ---
+nes.push(``, `**📎 Tệp đính kèm minh họa:**`);
+              it.attachments.forEach(att => {
+                lines.push(`- 🖼️ \`${att.name}\` (${att.type} • ${att.size})`);
+              });
+            }
+
+            lines.push(``, `---`, ``);
+          });
+        });
+      });
+
+      downloadFile(filename, lines.join('\n'), 'text/markdown');
+      showToast(`Đã xuất tài liệu Markdown chuyên nghiệp: ${filename}`);
+    });
+
+    // 2. XUẤT TÀI LIỆU GIÁO ÁN WORD CHUẨN ACADEMIC (.DOC)
+    document.getElementById('btn-export-docx')?.addEventListener('click', async () => {
+      const data = getActiveScriptDocumentData();
+      if (!data || data.flatSegments.length === 0) {
+        showToast('⚠️ Không có nội dung phân cảnh nào để xuất Word!');
+        return;
+      }
+
+      const filename = `Giao_An_Kich_Ban_${data.meta.projectId}.doc`;
+      const m = Math.floor(data.meta.totalDuration / 60);
+      const s = data.meta.totalDuration % 60;
+
+      try {
+        // 1. Tạo bảng ma trận tổng quan chương trình
+        let outlineRows = '';
+        data.flatSegments.forEach((it, idx) => {
+          const timeStr = `${formatTime(it.tStart)} - ${formatTime(it.tEnd)}`;
+          outlineRows += `
+            <tr style="background:${idx % 2 === 0 ? '#f8fafc' : '#ffffff'};">
+              <td style="padding:8px 10px;border:1px solid #cbd5e1;font-family:'Courier New',monospace;font-size:11px;font-weight:bold;color:#0369a1;">${timeStr}</td>
+              <td style="padding:8px 10px;border:1px solid #cbd5e1;font-weight:bold;font-size:12px;">${it.code}</td>
+              <td style="padding:8px 10px;border:1px solid #cbd5e1;font-size:12px;"><b>${it.title}</b><br/><span style="color:#64748b;font-size:11px;">${it.chapterTitle}</span></td>
+              <td style="padding:8px 10px;border:1px solid #cbd5e1;font-size:11px;text-align:center;">${it.duration}s</td>
+              <td style="padding:8px 10px;border:1px solid #cbd5e1;font-size:11px;color:#047857;font-weight:600;">[${it.visualType}]</td>
+              <td style="padding:8px 10px;border:1px solid #cbd5e1;font-size:11px;color:#334155;">${it.summary || it.mechanism || '—'}</td>
+            </tr>
+          `;
+        });
+
+        // 2. Tạo chi tiết từng phân đoạn kịch bản
+        let detailedSectionsHtml = '';
+        data.chapters.forEach(ch => {
+          detailedSectionsHtml += `
+            <div style="margin-top:30px;page-break-before:always;">
+              <div style="background:#0f172a;color:#ffffff;padding:12px 18px;border-radius:6px;margin-bottom:18px;">
+                <h2 style="margin:0;font-size:16px;letter-spacing:0.5px;color:#38bdf8;">CHƯƠNG ${ch.chIndex}: ${ch.title.toUpperCase()}</h2>
+                <div style="font-size:11px;color:#cbd5e1;margin-top:4px;">Chế độ thị giác chính: <b>${ch.visualType}</b> | Phân loại: <b>${ch.depth}</b> | Tài liệu nguồn: <b>${ch.sourceName}</b></div>
+              </div>
+          `;
+
+          ch.sections.forEach(sec => {
+            detailedSectionsHtml += `
+              <div style="margin:16px 0 10px 0;padding-bottom:6px;border-bottom:2px solid #e2e8f0;">
+                <h3 style="margin:0;font-size:14px;color:#1e293b;">📂 ${sec.code}. ${sec.title}</h3>
+              </div>
+            `;
+
+            sec.items.forEach(it => {
+              const timeStr = `${formatTime(it.tStart)} - ${formatTime(it.tEnd)}`;
+              const safeNarr = (it.narration || '<i>(Chưa tạo kịch bản lời thoại cho phân đoạn này)</i>')
+                .replace(/</g, '&lt;').replace(/>/g, '&gt;')
+                .replace(/\[P1\]/g, '<span style="background:#e2e8f0;color:#334155;font-weight:bold;font-size:10px;padding:2px 6px;border-radius:3px;margin:0 4px;">[P1: Nghỉ 1s]</span>')
+                .replace(/\[P2\]/g, '<span style="background:#fef08a;color:#854d0e;font-weight:bold;font-size:10px;padding:2px 6px;border-radius:3px;margin:0 4px;">[P2: Nghỉ 2s]</span>')
+                .replace(/\n/g, '<br/>');
+
+              let formulaCallout = '';
+              if (it.mecha
+--- MATCH 2 ---
+createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        showToast(`Đã xuất tài liệu Word giáo án cao cấp: ${filename}`);
+      } catch (err) {
+        console.error('Lỗi xuất Word:', err);
+        showToast('Lỗi khi tạo file Word. Xem Console để biết chi tiết.');
+      }
+    });
+
+    // 3. XUẤT PHỤ ĐỀ CHUẨN SUBRIP CHO VIDEO (.SRT)
+    document.getElementById('btn-export-srt')?.addEventListener('click', () => {
+      const data = getActiveScriptDocumentData();
+      if (!data || data.flatSegments.length === 0) {
+        showToast('⚠️ Không có nội dung phân cảnh nào để xuất phụ đề SRT!');
+        return;
+      }
+
+      const filename = `Phu_De_${data.meta.projectId}.srt`;
+
+      function fmtSrt(sec) {
+        const sInt = Math.max(0, Math.floor(sec));
+        const h = String(Math.floor(sInt / 3600)).padStart(2, '0');
+        const m = String(Math.floor((sInt % 3600) / 60)).padStart(2, '0');
+        const s = String(sInt % 60).padStart(2, '0');
+        const ms = String(Math.floor((sec % 1) * 1000)).padStart(3, '0');
+        return `${h}:${m}:${s},${ms}`;
+      }
+
+      let srtContent = '';
+      let cueIndex = 1;
+
+      data.flatSegments.forEach(it => {
+        const narr = (it.narration || '').replace(/\[P[12]\]/g, '').replace(/\s+/g, ' ').trim();
+        const segStart = it.tStart;
+        const segEnd = it.tEnd;
+        const segDur = Math.max(1, segEnd - segStart);
+
+        if (!narr) {
+          // Nếu chưa có lời thoại, xuất 1 cue đại diện cho phân cảnh
+          srtContent += `${cueIndex++}\n${fmtSrt(segStart)} --> ${fmtSrt(segEnd)}\n[${it.code}] ${it.title}\n\n`;
+          return;
+        }
+
+        // Tách câu thông minh để phụ đề không bị dồn 1 cục 200 từ
+        const rawSentences = narr.split(/(?<=[.!?])\s+/).filter(s => s.trim().length > 0);
+        const subChunks = [];
+
+        rawSentences.forEach(sentence => {
+          const words = sentence.trim().split(/\s+/);
+          if (words.length <= 14) {
+            subChunks.push(sentence.trim());
+          } else {
+            // Tách các câu quá dài thành các cụm 10-12 từ
+            for (let i = 0; i < words.length; i += 10) {
+              subChunks.push(words.slice(i, i + 10).join(' '));
+            }
+          }
+        });
+
+        if (subChunks.length === 0) {
+          subChunks.push(narr);
+        }
+
+        const totalWords = subChunks.reduce((acc, c) => acc + c.split(/\s+/).length, 0);
+        let currentSubStart = segStart;
+
+        subChunks.forEach((chunk, cIdx) => {
+          const chunkWords = chunk.split(/\s+/).length;
+          const chunkShare = totalWords > 0 ? (chunkWords / totalWords) : (1 / subChunks.length);
+          const chunkDur = (cIdx === subChunks.length - 1)
+            ? Math.max(0.5, segEnd - currentSubStart)
+            : Math.max(1.2, segDur * chunkShare);
+
+          const currentSubEnd = Math.min(segEnd, currentSubStart + chunkDur);
+
+          srtContent += `${cueIndex++}\n${fmtSrt(currentSubStart)} --> ${fmtSrt(currentSubEnd)}\n${chunk}\n\n`;
+          currentSubStart = currentSubEnd;
+        });
+      });
+
+      downloadFile(filename, srtContent, 'text/plain');
+      showToast(`Đã xuất phụ đề SRT chuẩn (${cueIndex - 1} phân đoạn): ${filename}`);
+    });
+
+    // 4. XUẤT MANIFEST CẤU TRÚC DỰ ÁN TOÀN DIỆN (.JSON)
+    document.getElementById('btn-export-json')?.addEventListener('click', () => {
+      const data = getActiveScriptDocumentData();
+      if (!data) {
+        showToast('⚠️ Không có dữ liệu dự án để xuất JSON!');
+        return;
+      }
+
+      const filename = `Du_Lieu_Toan_Dien_${data.meta.projectId}.json`;
+
+      const exportManifest = {
+        schema_version: "2.1.0",
+        engine: "CLSG Studio - Pedagogical Slide-to-Video Engine",
+        meta: data.meta,
+        sources: data.sources,
+        curriculum: data.chapters,
+        flat_timeline: data.flatSegments.ma
+--- MATCH 3 ---
+egDur * chunkShare);
+
+          const currentSubEnd = Math.min(segEnd, currentSubStart + chunkDur);
+
+          srtContent += `${cueIndex++}\n${fmtSrt(currentSubStart)} --> ${fmtSrt(currentSubEnd)}\n${chunk}\n\n`;
+          currentSubStart = currentSubEnd;
+        });
+      });
+
+      downloadFile(filename, srtContent, 'text/plain');
+      showToast(`Đã xuất phụ đề SRT chuẩn (${cueIndex - 1} phân đoạn): ${filename}`);
+    });
+
+    // 4. XUẤT MANIFEST CẤU TRÚC DỰ ÁN TOÀN DIỆN (.JSON)
+    document.getElementById('btn-export-json')?.addEventListener('click', () => {
+      const data = getActiveScriptDocumentData();
+      if (!data) {
+        showToast('⚠️ Không có dữ liệu dự án để xuất JSON!');
+        return;
+      }
+
+      const filename = `Du_Lieu_Toan_Dien_${data.meta.projectId}.json`;
+
+      const exportManifest = {
+        schema_version: "2.1.0",
+        engine: "CLSG Studio - Pedagogical Slide-to-Video Engine",
+        meta: data.meta,
+        sources: data.sources,
+        curriculum: data.chapters,
+        flat_timeline: data.flatSegments.map(s => ({
+          id: s.itKey,
+          code: s.code,
+          title: s.title,
+          t_start: s.tStart,
+          t_end: s.tEnd,
+          duration_s: s.duration,
+          wpm: s.wpm,
+          narration: s.narration,
+          clean_narration: (s.narration || '').replace(/\[P[12]\]/g, '').replace(/\s+/g, ' ').trim(),
+          mechanism_latex: s.mechanism,
+          summary: s.summary,
+          key_point: s.keyPoint,
+          details: s.details,
+          examples: s.examples,
+          visual_type: s.visualType,
+          media_note: s.mediaNote,
+          attachments: (s.attachments || []).map(a => ({ name: a.name, type: a.type, size: a.size })),
+          bridge_intro: s.bridge,
+          chapter: s.chapterTitle,
+          section: s.sectionTitle,
+          source_file: s.sourceName
+        }))
+      };
+
+      downloadFile(filename, JSON.stringify(exportManifest, null, 2), 'application/json');
+      showToast(`Đã xuất hồ sơ dữ liệu JSON toàn diện: ${filename}`);
+    });
+
+    document.getElementById('btn-download-slide-toolbar')?.addEventListener('click', async () => {
+      // Redirect to the same PPTX export logic
+      document.getElementById('btn-export-pptx')?.click();
+    });
+
+    document.getElementById('btn-export-pptx')?.addEventListener('click', async () => {
+      const data = getActiveScriptDocumentData();
+      if (!data || !data.flatSegments || data.flatSegments.length === 0) {
+        showToast('⚠️ Không có dữ liệu để tải slide!');
+        return;
+      }
+      showToast('⏳ Đang tạo slide PowerPoint...');
+      try {
+        let pres = new PptxGenJS();
+        pres.layout = 'LAYOUT_16x9';
+        pres.author = 'CLSG Studio Pro';
+        pres.company = 'CLSG';
+        pres.title = data.meta.title || 'Slide Bài Giảng';
+
+        // Title slide
+        let slide = pres.addSlide();
+        slide.background = { color: 'F8FAFC' };
+        slide.addText(data.meta.title || 'BÀI GIẢNG', { x: 1, y: 2, w: '80%', h: 1.5, fontSize: 40, bold: true, color: '0F172A', align: 'center' });
+        if (data.meta.desc) {
+          slide.addText(data.meta.desc, { x: 1.5, y: 3.5, w: '70%', h: 1, fontSize: 20, color: '475569', align: 'center' });
+        }
+
+        data.flatSegments.forEach(seg => {
+          let s = pres.addSlide();
+          // Header
+          s.addText(seg.title || 'Mục Mới', { x: 0.5, y: 0.3, w: '90%', h: 0.8, fontSize: 28, bold: true, color: '1E293B', border: [0, 0, { pt: 2, color: '3B82F6' }, 0] });
+
+          // Body
+          let content = [];
+          if (seg.summary) content.push({ text: `Khái niệm: ${seg.summary}`, options: { bullet: true, color: '334155', breakLine: true } });
+          if (seg.keyPoint) content.push({ text: `Trọng tâm: ${seg.keyPoint}`, options: { bullet: true, color: '334155', breakLine: true } });
+          if (seg.mechanism) content.push({ text: `Cơ chế: ${seg.mechanism}`, options: { bullet: true, color: '334155', breakLine: true
+--- MATCH 4 ---
+ })),
+          bridge_intro: s.bridge,
+          chapter: s.chapterTitle,
+          section: s.sectionTitle,
+          source_file: s.sourceName
+        }))
+      };
+
+      downloadFile(filename, JSON.stringify(exportManifest, null, 2), 'application/json');
+      showToast(`Đã xuất hồ sơ dữ liệu JSON toàn diện: ${filename}`);
+    });
+
+    document.getElementById('btn-download-slide-toolbar')?.addEventListener('click', async () => {
+      // Redirect to the same PPTX export logic
+      document.getElementById('btn-export-pptx')?.click();
+    });
+
+    document.getElementById('btn-export-pptx')?.addEventListener('click', async () => {
+      const data = getActiveScriptDocumentData();
+      if (!data || !data.flatSegments || data.flatSegments.length === 0) {
+        showToast('⚠️ Không có dữ liệu để tải slide!');
+        return;
+      }
+      showToast('⏳ Đang tạo slide PowerPoint...');
+      try {
+        let pres = new PptxGenJS();
+        pres.layout = 'LAYOUT_16x9';
+        pres.author = 'CLSG Studio Pro';
+        pres.company = 'CLSG';
+        pres.title = data.meta.title || 'Slide Bài Giảng';
+
+        // Title slide
+        let slide = pres.addSlide();
+        slide.background = { color: 'F8FAFC' };
+        slide.addText(data.meta.title || 'BÀI GIẢNG', { x: 1, y: 2, w: '80%', h: 1.5, fontSize: 40, bold: true, color: '0F172A', align: 'center' });
+        if (data.meta.desc) {
+          slide.addText(data.meta.desc, { x: 1.5, y: 3.5, w: '70%', h: 1, fontSize: 20, color: '475569', align: 'center' });
+        }
+
+        data.flatSegments.forEach(seg => {
+          let s = pres.addSlide();
+          // Header
+          s.addText(seg.title || 'Mục Mới', { x: 0.5, y: 0.3, w: '90%', h: 0.8, fontSize: 28, bold: true, color: '1E293B', border: [0, 0, { pt: 2, color: '3B82F6' }, 0] });
+
+          // Body
+          let content = [];
+          if (seg.summary) content.push({ text: `Khái niệm: ${seg.summary}`, options: { bullet: true, color: '334155', breakLine: true } });
+          if (seg.keyPoint) content.push({ text: `Trọng tâm: ${seg.keyPoint}`, options: { bullet: true, color: '334155', breakLine: true } });
+          if (seg.mechanism) content.push({ text: `Cơ chế: ${seg.mechanism}`, options: { bullet: true, color: '334155', breakLine: true } });
+          if (seg.details) content.push({ text: `Chi tiết: ${seg.details}`, options: { bullet: true, color: '334155', breakLine: true } });
+
+          if (content.length > 0) {
+            s.addText(content, { x: 0.5, y: 1.5, w: '90%', h: 3.5, fontSize: 18, align: 'left', valign: 'top' });
+          }
+
+          // Narration Notes
+          if (seg.narration) {
+            s.addNotes(seg.narration);
+          }
+        });
+
+        const filename = `${(data.meta.title || 'Slide').replace(/[^a-z0-9]/gi, '_')}.pptx`;
+        await pres.writeFile({ fileName: filename });
+        showToast('🎉 Đã tải slide thành công!');
+      } catch (e) {
+        showToast(`❌ Lỗi tạo slide: ${e.message}`);
+        console.error(e);
+      }
+    });
+
+    // SEARCH FILTER PROJECTS
+    document.getElementById('project-search')?.addEventListener('input', (e) => {
+      renderProjectsGrid(e.target.value);
+    });
+
+    // SLIDER EVENT LISTENERS (CẬP NHẬT SỐ LIỆU TỨC THÌ TRÊN BẢNG TINH CHỈNH)
+    document.getElementById('slider-duration')?.addEventListener('input', (e) => {
+      const v = parseInt(e.target.value);
+      const wpm = parseInt(document.getElementById('slider-wpm')?.value || 140);
+      document.getElementById('val-duration').textContent = `${Math.floor(v / 60)} phút ${v % 60 ? v % 60 + 's' : '00s'} (${v}s)`;
+
+      // Cập nhật giá trị hiển thị thời lượng
+      activeProject.duration_s = v;
+    });
+
+    document.getElementById('slider-wpm')?.addEventListener('input', (e) => {
+      const wpm = parseInt(e.target.value);
+      const dur = parseInt(document.getElementById('slider-duration')?.value || 300);
+      document.getElementById('val-wpm').textContent = `${wpm} từ/phút`;
+
+      activeProject.wpm = wp
+--- MATCH 5 ---
+erTitle,
+          section: s.sectionTitle,
+          source_file: s.sourceName
+        }))
+      };
+
+      downloadFile(filename, JSON.stringify(exportManifest, null, 2), 'application/json');
+      showToast(`Đã xuất hồ sơ dữ liệu JSON toàn diện: ${filename}`);
+    });
+
+    document.getElementById('btn-download-slide-toolbar')?.addEventListener('click', async () => {
+      // Redirect to the same PPTX export logic
+      document.getElementById('btn-export-pptx')?.click();
+    });
+
+    document.getElementById('btn-export-pptx')?.addEventListener('click', async () => {
+      const data = getActiveScriptDocumentData();
+      if (!data || !data.flatSegments || data.flatSegments.length === 0) {
+        showToast('⚠️ Không có dữ liệu để tải slide!');
+        return;
+      }
+      showToast('⏳ Đang tạo slide PowerPoint...');
+      try {
+        let pres = new PptxGenJS();
+        pres.layout = 'LAYOUT_16x9';
+        pres.author = 'CLSG Studio Pro';
+        pres.company = 'CLSG';
+        pres.title = data.meta.title || 'Slide Bài Giảng';
+
+        // Title slide
+        let slide = pres.addSlide();
+        slide.background = { color: 'F8FAFC' };
+        slide.addText(data.meta.title || 'BÀI GIẢNG', { x: 1, y: 2, w: '80%', h: 1.5, fontSize: 40, bold: true, color: '0F172A', align: 'center' });
+        if (data.meta.desc) {
+          slide.addText(data.meta.desc, { x: 1.5, y: 3.5, w: '70%', h: 1, fontSize: 20, color: '475569', align: 'center' });
+        }
+
+        data.flatSegments.forEach(seg => {
+          let s = pres.addSlide();
+          // Header
+          s.addText(seg.title || 'Mục Mới', { x: 0.5, y: 0.3, w: '90%', h: 0.8, fontSize: 28, bold: true, color: '1E293B', border: [0, 0, { pt: 2, color: '3B82F6' }, 0] });
+
+          // Body
+          let content = [];
+          if (seg.summary) content.push({ text: `Khái niệm: ${seg.summary}`, options: { bullet: true, color: '334155', breakLine: true } });
+          if (seg.keyPoint) content.push({ text: `Trọng tâm: ${seg.keyPoint}`, options: { bullet: true, color: '334155', breakLine: true } });
+          if (seg.mechanism) content.push({ text: `Cơ chế: ${seg.mechanism}`, options: { bullet: true, color: '334155', breakLine: true } });
+          if (seg.details) content.push({ text: `Chi tiết: ${seg.details}`, options: { bullet: true, color: '334155', breakLine: true } });
+
+          if (content.length > 0) {
+            s.addText(content, { x: 0.5, y: 1.5, w: '90%', h: 3.5, fontSize: 18, align: 'left', valign: 'top' });
+          }
+
+          // Narration Notes
+          if (seg.narration) {
+            s.addNotes(seg.narration);
+          }
+        });
+
+        const filename = `${(data.meta.title || 'Slide').replace(/[^a-z0-9]/gi, '_')}.pptx`;
+        await pres.writeFile({ fileName: filename });
+        showToast('🎉 Đã tải slide thành công!');
+      } catch (e) {
+        showToast(`❌ Lỗi tạo slide: ${e.message}`);
+        console.error(e);
+      }
+    });
+
+    // SEARCH FILTER PROJECTS
+    document.getElementById('project-search')?.addEventListener('input', (e) => {
+      renderProjectsGrid(e.target.value);
+    });
+
+    // SLIDER EVENT LISTENERS (CẬP NHẬT SỐ LIỆU TỨC THÌ TRÊN BẢNG TINH CHỈNH)
+    document.getElementById('slider-duration')?.addEventListener('input', (e) => {
+      const v = parseInt(e.target.value);
+      const wpm = parseInt(document.getElementById('slider-wpm')?.value || 140);
+      document.getElementById('val-duration').textContent = `${Math.floor(v / 60)} phút ${v % 60 ? v % 60 + 's' : '00s'} (${v}s)`;
+
+      // Cập nhật giá trị hiển thị thời lượng
+      activeProject.duration_s = v;
+    });
+
+    document.getElementById('slider-wpm')?.addEventListener('input', (e) => {
+      const wpm = parseInt(e.target.value);
+      const dur = parseInt(document.getElementById('slider-duration')?.value || 300);
+      document.getElementById('val-wpm').textContent = `${wpm} từ/phút`;
+
+      activeProject.wpm = wpm;
+    });
+
+    // ===============================================

@@ -1,0 +1,168 @@
+4458:                   if (typeof currentProjectId !== 'undefined' && row.id === currentProjectId && typeof activeProject !== 'undefined' && activeProject) {
+4459:                     if (row.data.chatHistory && (!activeProject.chatHistory || activeProject.chatHistory.length === 0)) {
+4460:                       activeProject.chatHistory = row.data.chatHistory;
+4461:                       activeProject.chatHtml = row.data.chatHtml;
+4495:                 title: title || (typeof activeProject !== 'undefined' && activeProject ? activeProject.title : 'Dự Án Bài Giảng'),
+4522:                 title: title || (typeof activeProject !== 'undefined' && activeProject ? activeProject.title : 'Dự Án Bài Giảng'),
+4615:     let activeProject = currentProjectId ? defaultProjects[currentProjectId] : null;
+4616:     let currentScenes = (activeProject && activeProject.scenes) ? JSON.parse(JSON.stringify(activeProject.scenes)) : [];
+4658:           activeProject = defaultProjects[currentProjectId];
+4659:           currentScenes = (activeProject && activeProject.scenes) ? JSON.parse(JSON.stringify(activeProject.scenes)) : [];
+4662:           activeProject = null;
+4913:       if (!input || !activeProject) return;
+4916:       activeProject.duration_s = totalSec;
+4964:       if (!sel || !activeProject) return;
+4965:       activeProject.voice = sel.value;
+4971:       if (!sel || !activeProject) return;
+4974:       activeProject.wpm = wpm;
+4975:       activeProject.speechRate = parseFloat(sel.value);
+5014:       if (!activeProject) return;
+5015:       const totalSec = activeProject.duration_s || 300;
+5022:       if (gcfgVoice && activeProject.voice) gcfgVoice.value = activeProject.voice;
+5024:       if (gcfgSpeed && activeProject.speechRate) gcfgSpeed.value = String(activeProject.speechRate);
+5032:       if (gcfgVoiceR && activeProject.voice) gcfgVoiceR.value = activeProject.voice;
+5034:       if (gcfgSpeedR && activeProject.speechRate) gcfgSpeedR.value = String(activeProject.speechRate);
+5045:       if (activeProject.id) {
+5048:           if (userProjects[activeProject.id]) {
+5049:             userProjects[activeProject.id].duration_s = totalSec;
+5060:       if (!activeProject) return;
+5061:       activeProject.scriptLanguage = lang;
+5079:       const lang = activeProject?.scriptLanguage || 'vi';
+5091:       const dur = parseInt(activeProject.duration_s || 300);
+5092:       const wpm = parseInt(activeProject.wpm || 140);
+6265:       if (!currentProjectId || !activeProject) return;
+6270:         activeProject.scenes = currentScenes;
+6271:         activeProject.nodeCustomParams = JSON.parse(JSON.stringify(nodeCustomParams));
+6272:         activeProject.excludedNodes = Array.from(excludedNodes);
+6274:           activeProject.chatHistory = clsgChatSessionHistory;
+6278:           activeProject.chatHtml = chatContainer.innerHTML;
+6282:         userProjects[currentProjectId] = activeProject;
+6287:           CloudDB.saveSummaries(currentProjectId, nodeCustomParams, currentScenes, activeProject.title);
+6484:         // Đồng bộ với dữ liệu scenes của activeProject nếu parent là Chapter (Level 1)
+6485:         if (parent.level === 1 && activeProject) {
+6486:           const allSources = activeProject.sources || [{ name: activeProject.title + '.pdf', pages: 35, size: '1.2 MB', active: true }];
+6507:       if (totalSec > 0 && activeProject) {
+6508:         activeProject.duration_s = totalSec;
+6568:       // 2. Đồng bộ ngược thẳng vào activeProject.scenes và currentScenes
+6579:             if (typeof activeProject !== 'undefined' && activeProject && activeProject.scenes && activeProject.scenes[chIdx]?.sections?.[secIdx]?.items?.[itIdx]) {
+6580:               activeProject.scenes[chIdx].sections[secIdx].items[itIdx][paramName] = value;
+6944:       if (totalTreeDur > 0 && activeProject) {
+6945:         activeProject.duration_s = totalTreeDur;
+7029:       const roots = buildDecisionTree(activeProject, currentScenes);
+7115:       if (videoTitle) videoTitle.textContent = activeProject.title;
+7713:             projectTitle: activeProject?.title || '',
+7727:             projectTitle: activeProject?.title || '',
+9127:         const scriptLang = activeProject?.scriptLanguage || outputLang;
+9618:         if (found.length === 0 && typeof activeProject !== 'undefined' && activeProject) {
+9619:           const roots = buildDecisionTree(activeProject, currentScenes);
+10400:         if (typeof activeProject !== 'undefined' && activeProject) {
+10401:           activeProject.chatHistory = [...clsgChatSessionHistory];
+10402:           activeProject.chatHtml = chatHtml;
+10405:             userProjects[currentProjectId] = activeProject;
+10411:           CloudDB.saveChat(currentProjectId, clsgChatSessionHistory, chatHtml, activeProject?.title);
+10443:       if (typeof activeProject !== 'undefined' && activeProject) {
+10444:         activeProject.chatHistory = [];
+10445:         activeProject.chatHtml = '';
+10448:         CloudDB.saveChat(currentProjectId, [], '', activeProject?.title);
+10456:         return typeof activeProject !== 'undefined' && activeProject && activeProject.id
+10457:           ? `clsg_copilot_qa_cache_${activeProject.id}`
+10538:         if (!activeProject) return '(Chưa có dự án bài giảng nào đang mở)';
+10539:         const roots = buildDecisionTree(activeProject, currentScenes);
+10540:         let out = `BÀI GIẢNG: "${activeProject.title}" (Tổng thời lượng: ${activeProject.duration_s || 300}s)\n`;
+10541:         out += `MÔ TẢ: ${activeProject.desc || 'Không có mô tả'}\n\n`;
+10797:               const roots = buildDecisionTree(activeProject, currentScenes);
+10909:         activeProject = userProjects[projId];
+10911:         activeProject = defaultProjects[projId];
+10913:       currentScenes = JSON.parse(JSON.stringify(activeProject.scenes || []));
+10927:         // Nếu local chưa có hoặc rỗng mà activeProject (từ Cloud) có nodeCustomParams -> khôi phục từ Cloud
+10928:         if ((!savedParams || Object.keys(savedParams).length === 0) && activeProject && activeProject.nodeCustomParams) {
+10929:           savedParams = activeProject.nodeCustomParams;
+10952:         // Đồng bộ các tham số đã khôi phục ngược vào activeProject.scenes và currentScenes
+10964:                 if (activeProject && activeProject.scenes && activeProject.scenes[chIdx]?.sections?.[secIdx]?.items?.[itIdx]) {
+10965:                   Object.assign(activeProject.scenes[chIdx].sections[secIdx].items[itIdx], params);
+10980:       document.getElementById('ws-current-title').textContent = activeProject.title;
+10982:       if (docBadge) docBadge.textContent = activeProject.badge || 'MOOC';
+11012:           // Nếu local chưa có hoặc rỗng mà activeProject (từ Cloud) có chatHistory -> khôi phục từ Cloud
+11013:           if ((!savedHistory || savedHistory.length === 0) && activeProject && activeProject.chatHistory && activeProject.chatHistory.length > 0) {
+11014:             savedHistory = activeProject.chatHistory;
+11017:           if ((!savedHTML || savedHTML.trim().length === 0) && activeProject && activeProject.chatHtml) {
+11018:             savedHTML = activeProject.chatHtml;
+11081:       showToast(`Đã mở dự án: ${activeProject.title}`);
+11089:       const sources = activeProject.sources || [];
+11170:       const sources = activeProject.sources || [];
+11185:       const sources = activeProject.sources || [];
+11227:       const sources = activeProject.sources || [];
+11257:       const allSources = activeProject ? (activeProject.sources || []) : [];
+11265:         const hierarchyChapters = getProjectHierarchy(activeProject, sourceScenes, src, originalIdx >= 0 ? originalIdx : srcIdx);
+11281:       const allSources = activeProject ? (activeProject.sources || []) : [];
+11330:       const wpm = parseInt(getNodeParam(itKey, 'wpm', activeProject?.wpm || 140)) || 140;
+11399:         if (activeProject) {
+11400:           if (!activeProject._storyboards) activeProject._storyboards = {};
+11401:           activeProject._storyboards[chKey] = bridges;
+11418:       if (activeProject && activeProject._storyboards) {
+11419:         for (const chKey in activeProject._storyboards) {
+11420:           const bridges = activeProject._storyboards[chKey];
+11462:         const wpm = getNodeParam(itKey, 'wpm', activeProject?.wpm || 140);
+11519:           projectTitle: activeProject?.title || '',
+11520:           projectDesc: activeProject?.desc || '',
+11566:       const allSources = activeProject?.sources || [];
+11584:         const hierarchyChapters = getProjectHierarchy(activeProject, sourceScenes, src, originalIdx >= 0 ? originalIdx : srcIdx);
+11640:             projectTitle: activeProject?.title || '',
+11641:             projectDesc: activeProject?.desc || '',
+11679:       if (titleEl && activeProject) titleEl.textContent = activeProject.title || 'Dự Án Bài Giảng';
+11681:       if (metaEl && activeProject) {
+11682:         const allSources = activeProject.sources || [];
+11696:           const hierarchyChapters = getProjectHierarchy(activeProject, sourceScenes, src, originalIdx >= 0 ? originalIdx : srcIdx);
+11739:       const allSources = activeProject?.sources || [
+11740:         { name: (activeProject?.title || 'Tài Liệu') + '.pdf', pages: 35, size: '1.2 MB', active: true }
+11766:         const hierarchyChapters = getProjectHierarchy(activeProject, sourceScenes, src, originalIdx >= 0 ? originalIdx : srcIdx);
+11821:               const itWpm = getNodeParam(itKey, 'wpm', activeProject.wpm || 140);
+13662:         const targetDur = activeProject.duration_s || 300;
+13663:         const targetWpm = activeProject.wpm || 140;
+13674:           if (!activeProject.sources) activeProject.sources = [];
+13686:           activeProject.sources.push(newSourceItem);
+13696:             CloudDB.save(activeProject);
+13700:             userProjects[activeProject.id] = activeProject;
+13719:       const sources = activeProject ? (activeProject.sources || []) : [];
+13752:           : (idx === 0 ? currentScenes : (activeProject.scenes || []));
+13754:           ? getProjectHierarchy(activeProject, sourceScenes, src, idx)
+13908:         const sourceName = (activeProject.sources && activeProject.sources[0]) ? activeProject.sources[0].name : (activeProject.title + ".pdf");
+13917:               project_name: activeProject.title,
+13918:               project_desc: activeProject.desc,
+13929:           projData = await clientSidePedagogicalGenerate({ name: sourceName, size: 500000 }, activeProject.title, activeProject.desc, dur, wpm);
+13932:         activeProject.duration_s = projData.duration_s;
+13933:         activeProject.wpm = projData.wpm;
+13934:         activeProject.scenes = projData.scenes;
+13935:         activeProject.score = projData.score;
+13936:         activeProject.dar = projData.dar;
+13937:         activeProject.tcr = projData.tcr;
+13938:         activeProject.hsr = projData.hsr;
+13939:         activeProject.vns = projData.vns;
+13940:         activeProject.critic_feedback = projData.critic_feedback;
+14183:       if (!activeProject) return null;
+14185:       const allSources = activeProject.sources || [
+14186:         { name: (activeProject.title || 'Tài Liệu') + '.pdf', pages: 35, size: '1.2 MB', active: true }
+14202:         const hierarchyChapters = getProjectHierarchy(activeProject, sourceScenes, src, originalIdx >= 0 ? originalIdx : srcIdx);
+14244:               const itWpm = parseInt(getNodeParam(itKey, 'wpm', activeProject.wpm || 140)) || 140;
+14314:           projectId: activeProject.id || currentProjectId,
+14315:           title: activeProject.title || 'Kịch Bản Bài Giảng',
+14317:           wpm: activeProject.wpm || 140,
+14816:       activeProject.duration_s = v;
+14824:       activeProject.wpm = wpm;
+15143:       if (!activeProject) return;
+15149:       const ok = await CloudDB.save(activeProject);
+15153:         showToast(`☁️ Đã lưu dự án "${activeProject.title}" lên Neon Postgres thành công!`);
+15203:       if (!activeProject) {
+15220:           || (activeProject && activeProject.tocText)
+15221:           || (activeProject && activeProject.sources && activeProject.sources[0] && activeProject.sources[0].tocText);
+15225:           aiResult = await LLMClient.extractTOCWithAI(tocTextToUse, activeProject.title);
+15230:           let textCorpus = `TÊN BÀI GIẢNG: ${activeProject.title}\n`;
+15231:           textCorpus += `MÔ TẢ: ${activeProject.desc || ''}\n\n`;
+15246:             aiResult = await LLMClient.extractDocumentOutlineWithAI(textCorpus, activeProject.title);
+15255:           const sourceList = (currentScenes && currentScenes.length > 0) ? currentScenes : (activeProject?.scenes || []);
+15290:           activeProject.scenes = aiResult.chapters;
+15291:           currentScenes = JSON.parse(JSON.stringify(activeProject.scenes));
+15292:           if (activeProject.sources && activeProject.sources[0]) {
+15293:             activeProject.sources[0].extractedHierarchy = JSON.parse(JSON.stringify(aiResult.chapters));
+15310:             userProjects[activeProject.id] = activeProject;
+15314:           CloudDB.save(activeProject.id, activeProject);

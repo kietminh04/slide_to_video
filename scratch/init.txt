@@ -1,0 +1,87 @@
+function initNodeTuningDrawerEvents() {
+      // 1. Slider thời lượng trong Bottom Terminal
+      document.getElementById('slider-terminal-duration')?.addEventListener('input', (e) => {
+        const val = parseInt(e.target.value);
+        const m = Math.floor(val / 60);
+        const s = val % 60;
+        const label = document.getElementById('val-terminal-duration');
+        if (label) label.textContent = `${val}s (${m > 0 ? m + 'p' : ''}${s < 10 ? '0' : ''}${s}s)`;
+      });
+
+      // 2. Slider tốc độ đọc WPM trong Bottom Terminal
+      document.getElementById('slider-terminal-wpm')?.addEventListener('input', (e) => {
+        const val = parseInt(e.target.value);
+        const label = document.getElementById('val-terminal-wpm');
+        if (label) label.textContent = `${val} WPM`;
+      });
+
+      // 3. Đóng Bottom Terminal
+      document.getElementById('btn-minimize-terminal')?.addEventListener('click', closeNodeTuningTerminal);
+      document.getElementById('btn-cancel-terminal')?.addEventListener('click', closeNodeTuningTerminal);
+
+      // 4. Lưu tham số phân đoạn & Ghi chú riêng cho AI
+      document.getElementById('btn-save-terminal')?.addEventListener('click', () => {
+        if (!currentTuningTarget) return;
+        const newDur = parseInt(document.getElementById('slider-terminal-duration').value) || 60;
+        const newWpm = parseInt(document.getElementById('slider-terminal-wpm').value) || 140;
+        const newTitle = document.getElementById('terminal-node-title').value.trim() || currentTuningTarget.nodeTitle;
+        const newVisual = document.getElementById('select-terminal-visual').value;
+        const newNotes = document.getElementById('terminal-node-notes')?.value.trim() || '';
+
+        saveNodeParameters(currentTuningTarget.nodeKey, newDur, newWpm, newTitle, newVisual, newNotes);
+
+        showToast(`Đã lưu tham số & ghi chú cho: ${newTitle}`);
+        closeNodeTuningTerminal();
+        renderMindmap();
+        renderScriptDocument();
+
+        // Cập nhật lại Content Inspector nếu đang xem chính nhánh này
+        if (selectedLeafNode && selectedLeafNode.key === currentTuningTarget.nodeKey) {
+          selectLeafNodeForContent(selectedLeafNode, document.getElementById(`node-${selectedLeafNode.key}`));
+        }
+
+        // Gửi tin nhắn xác nhận vào khung Chat AI Sư Phạm
+        var chatContainer = document.getElementById('ai-chat-messages');
+        if (chatContainer) {
+          const aiDiv = document.createElement('div');
+          aiDiv.className = 'chat-msg msg-ai';
+          const notesText = newNotes ? `<br><span style="color: var(--amber); font-size: 11px;">📝 Ghi chú: "${newNotes}"</span>` : '';
+          aiDiv.innerHTML = `
+            <div class="msg-avatar">🤖</div>
+            <div class="msg-bubble">
+              Đã cập nhật nhánh <strong>${newTitle}</strong>: thời lượng <strong>${newDur}s</strong>, nhịp đọc <strong>${newWpm} WPM</strong>, thị giác <strong>[${newVisual}]</strong>.${notesText}
+            </div>
+          `;
+          chatContainer.appendChild(aiDiv);
+          chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+      });
+
+      // Nút sao chép kịch bản hoàn chỉnh (Hỗ trợ cả SSML và văn bản thường)
+      document.getElementById('btn-copy-full-script')?.addEventListener('click', () => {
+        const paper = document.getElementById('script-paper-view');
+        if (!paper) return;
+        let text = "";
+        if (currentScriptViewMode === 'ssml') {
+          const pres = paper.querySelectorAll('pre');
+          if (pres.length > 0) {
+            text = Array.from(pres).map(p => p.innerText).join('\n\n');
+          } else {
+            text = paper.innerText;
+          }
+        } else {
+          text = paper.innerText;
+        }
+        navigator.clipboard.writeText(text).then(() => {
+          const modeLabel = currentScriptViewMode === 'ssml' ? 'chuẩn W3C SSML' : (currentScriptViewMode === 'plain' ? 'văn bản thuần' : 'kịch bản sư phạm');
+          showToast(`Đã sao chép ${modeLabel} vào Clipboard!`);
+        }).catch(() => {
+          showToast('Đã sao chép kịch bản!');
+        });
+      });
+    }
+
+    // =========================================================================
+    // GLOBAL CONFIG BAR FUNCTIONS (THỜI GIAN TỔNG 2 CHIỀU, GIỌNG ĐỌC, TỐC ĐỘ, KHÓA)
+    // =========================================================================
+    

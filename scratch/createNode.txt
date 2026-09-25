@@ -1,0 +1,190 @@
+function createDecisionNodeElement(node) {
+      const card = document.createElement('div');
+      const isExcluded = isNodeExcluded(node.key, node.parentKey ? [node.parentKey] : []);
+      const isBeingEdited = currentTuningTarget && currentTuningTarget.nodeKey === node.key;
+      const isActiveLeaf = selectedLeafNode && selectedLeafNode.key === node.key;
+
+      card.className = `decision-node node-level-${node.level} ${isExcluded ? 'is-excluded' : ''} ${isBeingEdited ? 'is-being-edited' : ''} ${isActiveLeaf ? 'is-active-leaf' : ''}`;
+      card.id = `node-${node.key}`;
+      card.style.left = `${node.x}px`;
+      card.style.top = `${node.y}px`;
+      card.style.width = `${node.width}px`;
+      card.style.minHeight = `${node.height}px`;
+
+      // 1. TẠO NỘI DUNG HTML CỐT LÕI TRƯỚC TIÊN (KHÔNG DÙNG innerHTML += ĐỂ TRÁNH XÓA LISTENER)
+      let contentHtml = '';
+      if (node.level === 0) {
+        const orderNum = (node.data.orderIdx !== undefined) ? (node.data.orderIdx + 1) : 1;
+        contentHtml = `
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; padding: 0 4px;">
+            <span class="source-order-badge" style="background: rgba(56, 189, 248, 0.2); color: var(--cyan); border: 1px solid rgba(56, 189, 248, 0.4); font-size: 10px; font-weight: 800; padding: 2px 7px; border-radius: 4px; font-family: 'JetBrains Mono', monospace;">
+              #${orderNum}
+            </span>
+            <span style="font-size: 15px;">📄</span>
+          </div>
+          <div style="font-size: 12.5px; font-weight: 800; color: #fff; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding: 0 4px;">
+            ${node.data.title}
+          </div>
+          <div style="font-size: 10px; color: var(--cyan); font-family: 'JetBrains Mono', monospace; margin-top: 4px; display: flex; align-items: center; justify-content: space-between; padding: 0 26px;">
+            <span class="node-duration-badge" title="Tổng thời lượng tài liệu (bấm để xem/chỉnh)">⏱️ ${node.data.duration || 0}s</span>
+            <span style="color: var(--text-dim); font-size: 9.5px;">${node.data.pages} trang • ${node.data.chapterCount} ch</span>
+          </div>
+        `;
+      } else if (node.level === 1) {
+        const hasChildren = node.children && node.children.length > 0;
+        const expandLabel = hasChildren ? (node.isExpanded ? `▼ ${node.children.length}` : `▶ ${node.children.length}`) : '';
+
+        const visualLabels = {
+          'split_screen': { short: 'Song song', icon: '📺', full: 'So sánh song song (Split Screen)' },
+          'process_visualization': { short: 'Quy trình', icon: '🔄', full: 'Mô phỏng động quá trình (Process Animation)' },
+          'highlight_box': { short: 'Điểm nhấn', icon: '✨', full: 'Khoanh vùng điểm nhấn (Highlight Box)' },
+          'animated_diagram': { short: 'Sơ đồ', icon: '📊', full: 'Lưới sơ đồ tô-pô (Animated Diagram)' },
+          'concept_map': { short: 'Bản đồ', icon: '🗺️', full: 'Bản đồ khái niệm (Concept Map)' }
+        };
+        const visInfo = visualLabels[node.data.visualType] || { short: 'Trực quan', icon: '👁️', full: node.data.visualType || 'split_screen' };
+
+        contentHtml = `
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; padding-right: 22px;">
+            <span class="depth-tag depth-${node.data.depth || 'core'}">${node.data.chapter}</span>
+            <span class="node-expand-pill" style="font-size: 9.5px; padding: 1px 5px; border-radius: 3px; background: rgba(56, 189, 248, 0.15); color: var(--cyan);">${expandLabel}</span>
+          </div>
+          <div class="node-title-text" style="font-size: 11.5px; font-weight: 700; color: #fff; line-height: 1.35; max-height: 34px; overflow: hidden; padding-right: 20px;">
+            ${node.data.title}
+          </div>
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 6px; font-size: 10px; color: var(--text-dim); padding: 0 28px;">
+            <span class="node-duration-badge" title="Tổng thời lượng chương (bấm để xem/chỉnh)">⏱️ ${node.data.duration || 0}s</span>
+            <span style="font-size: 9px; color: var(--text-muted); background: rgba(255,255,255,0.06); padding: 1px 5px; border-radius: 3px; display: inline-flex; align-items: center; gap: 3px;" title="Khuôn thị giác video: ${visInfo.full}">
+              <span>${visInfo.icon}</span> ${visInfo.short}
+            </span>
+          </div>
+        `;
+      } else if (node.level === 2) {
+        const hasChildren = node.children && node.children.length > 0;
+        const expandLabel = hasChildren ? (node.isExpanded ? `▼ ${node.children.length}` : `▶ ${node.children.length}`) : '';
+
+        contentHtml = `
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 3px; padding-right: 22px;">
+            <span style="font-size: 12px; font-weight: 800; color: #fff;">${node.data.code}</span>
+            <span class="node-expand-pill" style="font-size: 9px; padding: 1px 4px; border-radius: 3px; background: rgba(56, 189, 248, 0.15); color: var(--cyan);">${expandLabel}</span>
+          </div>
+          <div class="node-title-text" style="font-size: 11px; font-weight: 600; color: var(--text-main); line-height: 1.3; max-height: 32px; overflow: hidden; padding-right: 20px;">
+            ${node.data.title}
+          </div>
+          <div style="display: flex; align-items: center; justify-content: flex-end; margin-top: 4px; padding: 0 26px;">
+            <span class="node-duration-badge" title="Tổng thời lượng phần này (bấm để xem/chỉnh)">⏱️ ${node.data.duration || 0}s</span>
+          </div>
+        `;
+      } else if (node.level === 3) {
+        contentHtml = `
+          <div style="display: flex; align-items: flex-start; gap: 5px; padding-right: 22px;">
+            <span class="leaf-code" style="font-weight: 700;">${node.data.code}</span>
+            <span class="node-leaf-text" style="font-size: 10.5px; font-weight: 700; color: #fff; line-height: 1.3; max-height: 28px; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">
+              ${node.data.text}
+            </span>
+          </div>
+          <div class="node-leaf-summary" style="font-size: 9px; color: var(--text-muted); line-height: 1.35; height: 26px; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; margin-top: 4px; padding-top: 4px; border-top: 1px dashed rgba(255,255,255,0.1); margin-right: 22px;">
+            ${node.data.summary || 'Đang tạo tóm tắt...'}
+          </div>
+          <div style="display: flex; align-items: center; justify-content: flex-end; margin-top: 4px; padding: 0 26px;">
+            <span class="node-duration-badge" title="Thời lượng nhánh này (bấm để chỉnh)">⏱️ ${node.data.duration || 30}s</span>
+          </div>
+        `;
+      }
+
+      // Gán toàn bộ innerHTML một lần duy nhất
+      card.innerHTML = contentHtml;
+
+      // 2. GẮN CÁC NÚT ĐIỀU HƯỚNG GÓC (X VÀ ✎) VÀO DOM SAU KHI ĐÃ SET innerHTML
+      const btnX = document.createElement('button');
+      btnX.className = 'node-corner-x';
+      btnX.title = isExcluded ? 'Khôi phục nhánh này vào kịch bản' : 'Loại bỏ nhánh này khỏi kịch bản (ấn nhánh to thì nhánh nhỏ cũng bỏ theo)';
+      btnX.innerHTML = isExcluded ? '↺' : '✕';
+
+      const btnEdit = document.createElement('button');
+      btnEdit.className = 'node-corner-edit';
+      btnEdit.title = 'Mở terminal tinh chỉnh thời lượng, tham số & ghi chú riêng cho nhánh này';
+      btnEdit.innerHTML = '✎';
+
+      const btnLock = document.createElement('button');
+      btnLock.className = 'node-corner-lock' + (getNodeParam(node.key, 'isLocked', false) ? ' is-locked' : '');
+      btnLock.title = getNodeParam(node.key, 'isLocked', false)
+        ? 'Đã khóa: Thời lượng nhánh này cố định, không bị ảnh hưởng khi chỉnh tổng'
+        : 'Khóa thời lượng nhánh này (cố định khi chỉnh tổng)';
+      btnLock.innerHTML = getNodeParam(node.key, 'isLocked', false) ? '🔒' : '🔓';
+
+      card.appendChild(btnX);
+      card.appendChild(btnEdit);
+      card.appendChild(btnLock);
+
+      // Kích hoạt kéo thả theo nhánh cho mọi thẻ node
+      initNodeSubtreeDrag(card, node);
+
+      // 3. SỰ KIỆN CLICK ĐƯỢC ỦY QUYỀN (EVENT DELEGATION) ĐẢM BẢO 100% HOẠT ĐỘNG KHÔNG BỊ TRÔI MẤT
+      card.addEventListener('click', (e) => {
+        if (card._dragMoved) {
+          card._dragMoved = false;
+          return;
+        }
+
+        // A. Nhấn nút ✕ (Loại bỏ / Khôi phục)
+        const hitX = e.target.closest('.node-corner-x');
+        if (hitX) {
+          e.stopPropagation();
+          toggleNodeExclusion(node.key);
+          return;
+        }
+
+        // B1. Nhấn nút Lock 🔓/🔒 -> Toggle khóa nhánh
+        const hitLock = e.target.closest('.node-corner-lock');
+        if (hitLock) {
+          e.stopPropagation();
+          const isLocked = !getNodeParam(node.key, 'isLocked', false);
+          setNodeParam(node.key, 'isLocked', isLocked);
+          hitLock.innerHTML = isLocked ? '🔒' : '🔓';
+          hitLock.className = 'node-corner-lock' + (isLocked ? ' is-locked' : '');
+          hitLock.title = isLocked
+            ? 'Đã khóa: Thời lượng nhánh này cố định, không bị ảnh hưởng khi chỉnh tổng'
+            : 'Khóa thời lượng nhánh này (cố định khi chỉnh tổng)';
+          updateLockedBadge();
+          showToast(isLocked ? `🔒 Đã khóa nhánh: ${node.data.title || node.key}` : `🔓 Đã mở khóa nhánh: ${node.data.title || node.key}`);
+          return;
+        }
+
+        // B2. Nhấn nút Edit ✎ hoặc Badge thời lượng -> Mở Terminal ở góc dưới (Image 2)
+        const hitEdit = e.target.closest('.node-corner-edit') || e.target.closest('.node-duration-badge');
+        if (hitEdit) {
+          e.stopPropagation();
+          openNodeTuningTerminal(node, card);
+          return;
+        }
+
+        // C. Nhấn vào nhánh con bé nhất (Level 3 hoặc node không thể sinh thêm nhánh con):
+        // Kích hoạt hiển thị tóm tắt và lời thoại chi tiết ở nửa trên cột bên phải
+        if (node.level === 3 || (!node.children || node.children.length === 0)) {
+          e.stopPropagation();
+          selectLeafNodeForContent(node, card);
+          return;
+        }
+
+        // D. Nhấn vào các nhánh cha (Level 0, 1, 2 có children): Bật / Thu gọn nhánh
+        if (node.children && node.children.length > 0) {
+          setNodeExpanded(node.key, !node.isExpanded);
+          renderMindmap();
+        }
+      });
+
+      return card;
+    }
+
+    // =========================================================================
+    // RENDER KỊCH BẢN HOÀN CHỈNH (CLEAN PEDAGOGICAL SCRIPT DOCUMENT VIEW)
+    // TỰ ĐỘNG BỎ QUA CÁC NHÁNH ĐÃ BẤM X, TỰ TÍNH LẠI MỐC THỜI GIAN
+    // =========================================================================
+
+    // =========================================================================
+    // CONTENT INSPECTOR: HIỂN THỊ TÓM TẮT & LỜI THOẠI CHI TIẾT CHO NHÁNH CON BÉ NHẤT
+    // =========================================================================
+    let selectedLeafNode = null;
+    let activeInspectorTab = 'all'; // 'all' | 'summary' | 'narration'
+
+    

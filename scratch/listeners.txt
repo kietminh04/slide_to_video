@@ -1,0 +1,4 @@
+function saveNodeParameters(nodeKey, duration, wpm, title, visualType, notes = '') {
+      applyNodeDurationAndParams(nodeKey, duration, wpm, title, visualType, notes);
+    }
+

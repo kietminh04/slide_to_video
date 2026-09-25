@@ -1,0 +1,220 @@
+function renderScriptDocument() {
+      const paper = document.getElementById('script-paper-view');
+      if (!paper) return;
+      paper.innerHTML = '';
+
+      const allSources = activeProject?.sources || [
+        { name: (activeProject?.title || 'Tài Liệu') + '.pdf', pages: 35, size: '1.2 MB', active: true }
+      ];
+      const activeSources = allSources.filter(s => s.active !== false);
+
+      if (activeSources.length === 0) {
+        paper.innerHTML = `
+          <div style="text-align: center; padding: 60px 20px; color: var(--text-dim); background: rgba(15, 23, 42, 0.5); border-radius: var(--radius-md); border: 1px dashed rgba(244, 63, 94, 0.4);">
+            <div style="font-size: 40px; margin-bottom: 12px;">📁</div>
+            <div style="font-size: 15px; font-weight: 700; color: #f87171; margin-bottom: 6px;">Chưa chọn tài liệu nào để xây dựng kịch bản!</div>
+            <div style="font-size: 12px; color: var(--text-muted);">Hãy tích chọn ít nhất 1 tài liệu ở danh sách bên trái để tạo kịch bản bài giảng.</div>
+          </div>
+        `;
+        updateScriptHeaderStats();
+        return;
+      }
+
+      let totalSegmentCount = 0;
+
+      activeSources.forEach((src, srcIdx) => {
+        const originalIdx = allSources.indexOf(src);
+        const rootKey = getSourceKey(src, originalIdx >= 0 ? originalIdx : srcIdx);
+        if (isNodeExcluded(rootKey)) return;
+
+        const sourceScenes = (src.scenes && src.scenes.length > 0)
+          ? src.scenes
+          : (originalIdx === 0 ? currentScenes : []);
+        const hierarchyChapters = getProjectHierarchy(activeProject, sourceScenes, src, originalIdx >= 0 ? originalIdx : srcIdx);
+
+        // Hiển thị phân cách nếu có nhiều nguồn tài liệu
+        if (activeSources.length > 1) {
+          const srcDivider = document.createElement('div');
+          srcDivider.className = 'script-source-divider';
+          srcDivider.innerHTML = `
+            <div style="display: flex; align-items: center; gap: 10px; margin: 24px 0 12px 0; padding-bottom: 8px; border-bottom: 2px solid rgba(56, 189, 248, 0.35);">
+              <span style="background: rgba(56, 189, 248, 0.2); color: var(--cyan); border: 1px solid rgba(56, 189, 248, 0.4); font-size: 11px; font-weight: 800; padding: 2px 8px; border-radius: 4px; font-family: 'JetBrains Mono', monospace;">
+                TÀI LIỆU #${srcIdx + 1}
+              </span>
+              <span style="font-size: 14px; font-weight: 800; color: #fff;">📄 ${src.name}</span>
+            </div>
+          `;
+          paper.appendChild(srcDivider);
+        }
+
+        hierarchyChapters.forEach((ch, chIdx) => {
+          const chKey = `ch-${rootKey}-${chIdx}`;
+          if (isNodeExcluded(chKey, [rootKey])) return;
+
+          const chTitle = getNodeParam(chKey, 'title', ch.title || `Chương ${chIdx + 1}`);
+
+          // Tạo container chương
+          const chapterSection = document.createElement('div');
+          chapterSection.className = 'script-chapter-section';
+          chapterSection.style.marginBottom = '20px';
+
+          const chHeader = document.createElement('div');
+          chHeader.className = 'script-chapter-header';
+          chHeader.innerHTML = `
+            <div class="script-chapter-title-group">
+              <span class="depth-tag depth-${ch.depth || 'core'}">CHƯƠNG ${chIdx + 1}</span>
+              <span class="script-chapter-name">${chTitle}</span>
+            </div>
+          `;
+          chapterSection.appendChild(chHeader);
+
+          // Duyệt qua từng phần và nhánh con
+          (ch.sections || []).forEach((sec, secIdx) => {
+            const secKey = `sec-${rootKey}-${chIdx}-${secIdx}`;
+            if (isNodeExcluded(secKey, [chKey, rootKey])) return;
+
+            const secTitle = sec.title || `Phần ${sec.code || (secIdx + 1)}`;
+
+            (sec.items || []).forEach((it, itIdx) => {
+              const itKey = `item-${rootKey}-${chIdx}-${secIdx}-${itIdx}`;
+              if (isNodeExcluded(itKey, [secKey, chKey, rootKey])) return;
+
+              totalSegmentCount++;
+
+              // Lấy các tham số đã đồng bộ 2 chiều
+              const itCode = getNodeParam(itKey, 'code', it.code || `1.${itIdx + 1}`);
+              const itTitle = getNodeParam(itKey, 'title', it.text || it.title || `Mục ${itIdx + 1}`);
+              const itDur = getNodeParam(itKey, 'duration', it.duration || 30);
+              const itWpm = getNodeParam(itKey, 'wpm', activeProject.wpm || 140);
+              const itVisual = getNodeParam(itKey, 'visualType', it.visual_type || 'split_screen');
+              const itNotes = getNodeParam(itKey, 'notes', '');
+              const itNarr = getNodeParam(itKey, 'narration', it.narration || '');
+              const itMediaNote = getNodeParam(itKey, 'mediaNote', '');
+              const itAtts = getNodeParam(itKey, 'attachments', []);
+
+              const wordsCount = itNarr ? itNarr.trim().split(/\s+/).length : 0;
+              const estTime = wordsCount > 0 ? Math.round((wordsCount / itWpm) * 60) : 0;
+
+              // Render danh sách thumbnail đính kèm
+              let attachmentsHtml = '';
+              if (Array.isArray(itAtts) && itAtts.length > 0) {
+                attachmentsHtml = `
+                  <div class="media-preview-list">
+                    ${itAtts.map((att, attIdx) => `
+                      <div class="media-thumb-chip">
+                        ${att.type === 'image' ? `<img src="${att.dataUrl}" class="media-thumb-img" alt="${att.name}">` : '🎥'}
+                        <span>${att.name} (${att.size})</span>
+                        <span class="btn-del-media" onclick="removeSegmentAttachment('${itKey}', ${attIdx})" title="Xóa tệp đính kèm">✕</span>
+                      </div>
+                    `).join('')}
+                  </div>
+                `;
+              }
+
+              const card = document.createElement('div');
+              card.className = 'script-segment-skeleton';
+              card.id = `seg-card-${itKey}`;
+              card.innerHTML = `
+                <!-- HÀNG 1: HEADER PHÂN ĐOẠN & NÚT SINH KỊCH BẢN RIÊNG -->
+                <div class="segment-header-row">
+                  <div class="segment-title-wrap">
+                    <span class="segment-code-badge">${itCode}</span>
+                    <span class="segment-title">${itTitle}</span>
+                    <span class="segment-breadcrumb">(${chTitle} • ${secTitle})</span>
+                  </div>
+                  <div style="display: flex; gap: 8px;">
+                    <button type="button" class="btn-gen-single-script" onclick="downloadSingleNodeSlide('${itKey}')" style="background: rgba(56, 189, 248, 0.15); border-color: rgba(56, 189, 248, 0.4); color: var(--cyan);" title="Tải riêng slide PowerPoint (.pptx) cho mục kiến thức này">
+                      <span>📥</span> Tải Slide
+                    </button>
+                    <button type="button" class="btn-gen-single-script" id="btn-gen-${itKey}" onclick="generateSingleSegmentScript('${itKey}')" title="Dùng AI sinh kịch bản lời thoại chuẩn sư phạm riêng cho phân đoạn này">
+                      <span>✨</span> Sinh Kịch Bản Cho Mục Này
+                    </button>
+                  </div>
+                </div>
+
+                <!-- HÀNG 2: THÔNG SỐ ĐỒNG BỘ 2 CHIỀU VỚI SƠ ĐỒ -->
+                <div class="segment-params-grid">
+                  <div class="segment-param-item">
+                    <span class="segment-param-label">⏱️ Thời lượng:</span>
+                    <input type="number" class="segment-param-input" min="5" max="300" step="5" value="${itDur}" onchange="syncSegmentParam('${itKey}', 'duration', this.value)" title="Thời lượng (giây)">
+                  </div>
+                  <div class="segment-param-item">
+                    <span class="segment-param-label">🎙️ Tốc độ:</span>
+                    <input type="number" class="segment-param-input" min="80" max="220" step="5" value="${itWpm}" onchange="syncSegmentParam('${itKey}', 'wpm', this.value)" title="Tốc độ đọc (WPM)">
+                  </div>
+                  <div class="segment-param-item">
+                    <span class="segment-param-label">👁️ Thị giác / Slide:</span>
+                    <select class="segment-param-input" onchange="syncSegmentParam('${itKey}', 'visualType', this.value)">
+                      <option value="split_screen" ${itVisual === 'split_screen' ? 'selected' : ''}>So sánh song song (Split Screen)</option>
+                      <option value="process_visualization" ${itVisual === 'process_visualization' ? 'selected' : ''}>Mô phỏng động (Process Animation)</option>
+                      <option value="highlight_box" ${itVisual === 'highlight_box' ? 'selected' : ''}>Khoanh vùng điểm nhấn (Highlight Box)</option>
+                      <option value="animated_diagram" ${itVisual === 'animated_diagram' ? 'selected' : ''}>Lưới sơ đồ tô-pô (Animated Diagram)</option>
+                      <option value="concept_map" ${itVisual === 'concept_map' ? 'selected' : ''}>Bản đồ khái niệm (Concept Map)</option>
+                    </select>
+                  </div>
+                  <div class="segment-param-item">
+                    <span class="segment-param-label">📝 Ghi chú AI (Custom Instruction):</span>
+                    <input type="text" class="segment-param-input" placeholder="Ghi chú riêng cho AI khi sinh mục này..." value="${escapeHtml(itNotes)}" onchange="syncSegmentParam('${itKey}', 'notes', this.value)" title="Ghi chú riêng đồng bộ 2 chiều với Sơ đồ">
+                  </div>
+                </div>
+
+                <!-- HÀNG 3: KHU VỰC ĐÍNH KÈM TƯ LIỆU ẢNH / VIDEO & CHỈ DẪN -->
+                <div class="segment-media-box">
+                  <div class="segment-media-top">
+                    <label class="btn-attach-media" title="Tải lên ảnh sơ đồ, ảnh minh họa hoặc video ngắn cho đoạn này">
+                      <input type="file" accept="image/*,video/*" style="display:none;" onchange="attachMediaToSegment('${itKey}', this)">
+                      <span>📎</span> Đính Kèm Ảnh / Video
+                    </label>
+                    <input type="text" class="media-note-input" placeholder="Chỉ dẫn tư liệu (ví dụ: 'Ảnh CNN minh họa cấu trúc', 'Phát video demo sau đoạn này')..." value="${escapeHtml(itMediaNote)}" onchange="syncSegmentParam('${itKey}', 'mediaNote', this.value)">
+                  </div>
+                  ${attachmentsHtml}
+                </div>
+
+                <!-- HÀNG 4: KHOẢNG HIỂN THỊ & SOẠN THẢO KỊCH BẢN -->
+                <div>
+                  <textarea class="segment-script-editor" placeholder="Chưa có kịch bản cho mục này. Bạn có thể tự gõ lời thoại giảng dạy tại đây hoặc bấm nút [✨ Sinh Kịch Bản Cho Mục Này] ở trên để AI tự động viết..." onchange="syncSegmentParam('${itKey}', 'narration', this.value)" oninput="updateSegmentCardStats('${itKey}', this.value)">${escapeHtml(itNarr)}</textarea>
+                </div>
+
+                <!-- HÀNG 5: THỐNG KÊ SỐ TỪ & THỜI GIAN ĐỌC -->
+                <div class="segment-footer-stats">
+                  <div>
+                    <span class="stat-status-badge" style="font-weight: 700; color: ${wordsCount > 0 ? '#34d399' : '#94a3b8'};">
+                      ${wordsCount > 0 ? '🟢 Đã có kịch bản' : '⚪ Chưa sinh kịch bản'}
+                    </span>
+                    <span style="margin-left: 10px;">Số từ: <strong class="stat-words-val" style="color: #fff;">${wordsCount} từ</strong></span>
+                    <span style="margin-left: 10px;">Ước tính: <strong class="stat-est-val" style="color: var(--cyan);">${estTime}s (Mục tiêu: ${itDur}s)</strong></span>
+                  </div>
+                  <div style="font-size: 10.5px; color: var(--text-dim);">
+                    Tip: Dùng <code>[P1]</code> (0.5s), <code>[P2]</code> (1.0s), <code>[P3]</code> (1.5s) để căn nhịp ngắt sư phạm
+                  </div>
+                </div>
+              `;
+
+              chapterSection.appendChild(card);
+            });
+          });
+
+          paper.appendChild(chapterSection);
+        });
+      });
+
+      if (totalSegmentCount === 0) {
+        paper.innerHTML = `
+          <div style="text-align: center; padding: 60px 20px; color: var(--text-dim); background: rgba(15, 23, 42, 0.5); border-radius: var(--radius-md); border: 1px dashed rgba(244, 63, 94, 0.4);">
+            <div style="font-size: 40px; margin-bottom: 12px;">📑</div>
+            <div style="font-size: 15px; font-weight: 700; color: #f87171; margin-bottom: 6px;">Không có phân đoạn nào trên sơ đồ!</div>
+            <div style="font-size: 12px; color: var(--text-muted);">Hãy nạp tài liệu hoặc bấm [✨ Tái Cấu Trúc Sơ Đồ] để tạo cấu trúc bài giảng.</div>
+          </div>
+        `;
+      }
+
+      updateScriptHeaderStats();
+    }
+
+
+    // LOADING OVERLAY CONTROLLER
+    const overlay = document.getElementById('ai-loading-overlay');
+    const loadingTitle = document.getElementById('loading-title');
+    const loadingDesc = document.getElementById('loading-desc');
+
+    

@@ -1,0 +1,42 @@
+<textarea class="terminal-textarea" id="terminal-node-notes"
+                  placeholder="Nhập ghi chú hoặc yêu cầu riêng cho AI (ví dụ: Giải thích chậm rãi bằng ví dụ thực tiễn, làm nổi bật công thức L2 distance, vẽ đồ thị phân bố mật độ...)"></textarea>
+
+---
+
+<textarea class="chat-input" id="chat-input" placeholder="Yêu cầu AI tạo video, chỉnh kịch bản..."
+              rows="1"></textarea>
+
+---
+
+syncSegmentParam
+
+---
+
+syncSegmentParam
+
+---
+
+syncSegmentParam
+
+---
+
+syncSegmentParam
+
+---
+
+syncSegmentParam
+
+---
+
+syncSegmentParam
+
+---
+
+<textarea class="segment-script-editor" placeholder="Chưa có kịch bản cho mục này. Bạn có thể tự gõ lời thoại giảng dạy tại đây hoặc bấm nút [✨ Sinh Kịch Bản Cho Mục Này] ở trên để AI tự động viết..." onchange="syncSegmentParam('${itKey}', 'narration', this.value)" oninput="updateSegmentCardStats('${itKey}', this.value)">${escapeHtml(itNarr)}</textarea>
+
+---
+
+<textarea class="narration-editor" data-index="${index}">${scene.narration}</textarea>
+
+---
+

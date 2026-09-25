@@ -1,0 +1,2461 @@
+
+--- MATCH PPTX 0 ---
+ogleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@300;400;500;600;700;800&family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap"
+    rel="stylesheet">
+  <!-- pdf.js v3: Bóc tách PDF (outline/bookmarks + font-size + text content) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <!-- JSZip: Giải nén DOCX/PPTX (đều là ZIP chứa XML bên trong) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
+  <style>
+    :root {
+      --bg-base: #080c14;
+      --bg-surface: #0f172a;
+      --bg-card: rgba(15, 23, 42, 0.78);
+      --bg-card-hover: rgba(30, 41, 59, 0.9);
+      --border-subtle: rgba(255, 255, 255, 0.08);
+      --border-accent: rgba(99, 102, 241, 0.35);
+      --te
+--- MATCH PPTX 1 ---
+&family=Inter:wght@300;400;500;600;700;800&family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap"
+    rel="stylesheet">
+  <!-- pdf.js v3: Bóc tách PDF (outline/bookmarks + font-size + text content) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <!-- JSZip: Giải nén DOCX/PPTX (đều là ZIP chứa XML bên trong) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
+  <style>
+    :root {
+      --bg-base: #080c14;
+      --bg-surface: #0f172a;
+      --bg-card: rgba(15, 23, 42, 0.78);
+      --bg-card-hover: rgba(30, 41, 59, 0.9);
+      --border-subtle: rgba(255, 255, 255, 0.08);
+      --border-accent: rgba(99, 102, 241, 0.35);
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+      --primary: #6366f1;
+      --primary-glow: rgba(99, 102, 241, 0.25);
+      --cyan: #38bdf8;
+     
+--- MATCH PPTX 2 ---
+;400;500;600;700;800&family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap"
+    rel="stylesheet">
+  <!-- pdf.js v3: Bóc tách PDF (outline/bookmarks + font-size + text content) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <!-- JSZip: Giải nén DOCX/PPTX (đều là ZIP chứa XML bên trong) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
+  <style>
+    :root {
+      --bg-base: #080c14;
+      --bg-surface: #0f172a;
+      --bg-card: rgba(15, 23, 42, 0.78);
+      --bg-card-hover: rgba(30, 41, 59, 0.9);
+      --border-subtle: rgba(255, 255, 255, 0.08);
+      --border-accent: rgba(99, 102, 241, 0.35);
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+      --primary: #6366f1;
+      --primary-glow: rgba(99, 102, 241, 0.25);
+      --cyan: #38bdf8;
+      --cyan-glow: rgba(56,
+--- MATCH PPTX 3 ---
+;">
+        <button class="btn-export" id="btn-export-docx">
+          <span>📘</span> Word (.docx)
+        </button>
+        <button class="btn-export" id="btn-export-md">
+          <span>📄</span> Markdown (.md)
+        </button>
+        <button class="btn-export" id="btn-export-srt">
+          <span>⏱️</span> Phụ đề (.srt)
+        </button>
+        <button class="btn-export" id="btn-export-json">
+          <span>⚙️</span> JSON
+        </button>
+        <button class="btn-export" id="btn-export-pptx">
+          <span>📊</span> Slide (.pptx)
+        </button>
+      </div>
+    </div>
+
+    <!-- 3-PANE WORKSPACE BODY -->
+    <div class="workspace-body">
+
+      <!-- PANE 1: NGUỒN TÀI LIỆU (+ THÊM TÀI LIỆU Ở TRÊN, DƯỚI LÀ DANH SÁCH ĐÃ UP VÀO) -->
+      <aside class="pane-sources">
+        <div class="pane-header">
+          <span>Nguồn Tài Liệu</span>
+          <span style="color: var(--cyan); font-size: 11px;" id="source-active-count">1 tệp</span>
+        </div>
+
+        <!-- Ô THÊM TÀI LIỆU
+--- MATCH PPTX 4 ---
+d="btn-export-docx">
+          <span>📘</span> Word (.docx)
+        </button>
+        <button class="btn-export" id="btn-export-md">
+          <span>📄</span> Markdown (.md)
+        </button>
+        <button class="btn-export" id="btn-export-srt">
+          <span>⏱️</span> Phụ đề (.srt)
+        </button>
+        <button class="btn-export" id="btn-export-json">
+          <span>⚙️</span> JSON
+        </button>
+        <button class="btn-export" id="btn-export-pptx">
+          <span>📊</span> Slide (.pptx)
+        </button>
+      </div>
+    </div>
+
+    <!-- 3-PANE WORKSPACE BODY -->
+    <div class="workspace-body">
+
+      <!-- PANE 1: NGUỒN TÀI LIỆU (+ THÊM TÀI LIỆU Ở TRÊN, DƯỚI LÀ DANH SÁCH ĐÃ UP VÀO) -->
+      <aside class="pane-sources">
+        <div class="pane-header">
+          <span>Nguồn Tài Liệu</span>
+          <span style="color: var(--cyan); font-size: 11px;" id="source-active-count">1 tệp</span>
+        </div>
+
+        <!-- Ô THÊM TÀI LIỆU Ở TRÊN -->
+        <label class="source
+--- MATCH PPTX 5 ---
+r: var(--cyan); font-size: 11px;" id="source-active-count">1 tệp</span>
+        </div>
+
+        <!-- Ô THÊM TÀI LIỆU Ở TRÊN -->
+        <label class="source-drop-zone" id="source-drop-zone" for="source-file-input">
+          <div style="font-size: 26px; margin-bottom: 4px;">📂</div>
+          <div style="font-size: 12px; font-weight: 700; color: var(--text-main);">+ Thêm Tài Liệu</div>
+          <div style="font-size: 11px; color: var(--text-dim); margin-top: 4px;">Kéo thả hoặc bấm để nạp .pdf, .pptx,
+            .docx</div>
+          <input type="file" id="source-file-input" accept=".pptx,.pdf,.docx,.txt" style="display: none;">
+        </label>
+
+        <!-- BỘ CHỌN NGÔN NGỮ KỊCH BẢN -->
+        <div style="margin-top: 6px;">
+          <div
+            style="font-size: 10px; font-weight: 600; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">
+            Ngôn Ngữ Kịch Bản</div>
+          <div class="lang-switcher-row" id="lang-switcher-row
+--- MATCH PPTX 6 ---
+     <!-- Ô THÊM TÀI LIỆU Ở TRÊN -->
+        <label class="source-drop-zone" id="source-drop-zone" for="source-file-input">
+          <div style="font-size: 26px; margin-bottom: 4px;">📂</div>
+          <div style="font-size: 12px; font-weight: 700; color: var(--text-main);">+ Thêm Tài Liệu</div>
+          <div style="font-size: 11px; color: var(--text-dim); margin-top: 4px;">Kéo thả hoặc bấm để nạp .pdf, .pptx,
+            .docx</div>
+          <input type="file" id="source-file-input" accept=".pptx,.pdf,.docx,.txt" style="display: none;">
+        </label>
+
+        <!-- BỘ CHỌN NGÔN NGỮ KỊCH BẢN -->
+        <div style="margin-top: 6px;">
+          <div
+            style="font-size: 10px; font-weight: 600; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">
+            Ngôn Ngữ Kịch Bản</div>
+          <div class="lang-switcher-row" id="lang-switcher-row">
+            <button class="lang-btn active" data-lang="vi" onclick="setScriptLanguage('v
+--- MATCH PPTX 7 ---
+Tham Số
+              </button>
+              <button class="btn-secondary" id="btn-insp-download-slide" onclick="downloadSingleNodeSlide()"
+                style="padding: 7px 11px; font-size: 11px; justify-content: center; background: rgba(56, 189, 248, 0.15); border: 1px solid rgba(56, 189, 248, 0.4); color: var(--cyan); cursor: pointer; border-radius: var(--radius-sm); font-weight: 700; display: inline-flex; align-items: center; gap: 4px;"
+                title="Tải riêng slide PowerPoint (.pptx) cho mục kiến thức đang xem">
+                <span>📥</span> Tải Slide Này
+              </button>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       MODAL: CREATE NEW PROJECT
+       ========================================================================= -->
+  <div class="modal-backdrop" id="modal-create-project">
+    <div class="modal-content">
+      <div class="mo
+--- MATCH PPTX 8 ---
+  <label class="form-label">Chọn tệp slide bài giảng ban đầu <span style="color: var(--rose);">*</span></label>
+        <label class="source-drop-zone" for="modal-file-input" style="display: block;">
+          <div style="font-size: 28px; margin-bottom: 6px;">📑</div>
+          <div style="font-size: 12px; font-weight: 700; color: var(--text-main);">Kéo thả file slide hoặc bấm để duyệt
+          </div>
+          <div style="font-size: 11px; color: var(--text-dim); margin-top: 4px;">Hỗ trợ .pdf, .pptx, .docx, .txt</div>
+          <input type="file" id="modal-file-input" accept=".pptx,.pdf,.docx,.txt" style="display: none;">
+        </label>
+        <div id="modal-file-name"
+          style="font-size: 11px; color: var(--cyan); margin-top: 6px; display: none; font-weight: 600;"></div>
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 10px;">
+        <button class="btn-export" id="btn-cancel-modal">Hủy bỏ</button>
+        <button class="btn-pr
+--- MATCH PPTX 9 ---
+(--rose);">*</span></label>
+        <label class="source-drop-zone" for="modal-file-input" style="display: block;">
+          <div style="font-size: 28px; margin-bottom: 6px;">📑</div>
+          <div style="font-size: 12px; font-weight: 700; color: var(--text-main);">Kéo thả file slide hoặc bấm để duyệt
+          </div>
+          <div style="font-size: 11px; color: var(--text-dim); margin-top: 4px;">Hỗ trợ .pdf, .pptx, .docx, .txt</div>
+          <input type="file" id="modal-file-input" accept=".pptx,.pdf,.docx,.txt" style="display: none;">
+        </label>
+        <div id="modal-file-name"
+          style="font-size: 11px; color: var(--cyan); margin-top: 6px; display: none; font-weight: 600;"></div>
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 10px;">
+        <button class="btn-export" id="btn-cancel-modal">Hủy bỏ</button>
+        <button class="btn-primary" id="btn-submit-create-project">
+          <span>⚡</span> Khởi Tạo & Vào Không
+--- MATCH PPTX 10 ---
+d_terms: ["phân cụm", "K-Means", "DBSCAN", "SOM"]
+          }
+        ]
+      },
+      "cnn_intro": {
+        id: "cnn_intro",
+        title: "Mạng Nơ-ron Tích Chập (CNN Intro)",
+        desc: "Thị giác máy tính • Tích chập 2D, vùng tiếp nhận cục bộ, chia sẻ trọng số, Max Pooling, và bài toán bùng nổ tham số MLP.",
+        badge: "DEEP LEARNING",
+        duration_s: 300,
+        wpm: 140,
+        score: 95.5,
+        dar: 100.0,
+        tcr: 85.0,
+        sources: [
+          { name: "cnn_intro.pptx", pages: 10, size: "3.4 MB", active: false },
+          { name: "Nhận diện khuôn mặt với mạng MTCNN và FaceNet (Phần 1).pdf", pages: 107, size: "3.6 MB", active: true },
+          { name: "Nhận diện khuôn mặt với mạng MTCNN và FaceNet (Phần 2).pdf", pages: 200, size: "6.7 MB", active: false },
+          { name: "Tổng quan về Face Anti-Spoofing - Bài toán chống giả mạo khuôn mặt.pdf", pages: 162, size: "5.4 MB", active: true }
+        ],
+        scenes: [
+          {
+            id: "s_pro_1
+--- MATCH PPTX 11 ---
+ATE CARD (TÂM ĐỐI XỨNG)
+      const createCard = document.createElement('div');
+      createCard.className = 'card-project-create';
+      createCard.id = 'btn-create-project-card';
+      createCard.title = 'Bấm vào đây để tạo dự án bài giảng mới';
+      createCard.innerHTML = `
+        <div class="create-plus-circle">+</div>
+        <div class="create-card-text-group">
+          <div class="create-card-title">Tạo Dự Án Mới</div>
+          <div class="create-card-sub">Nạp slide bài giảng (.pdf, .pptx, .docx)<br>và tạo kịch bản sư phạm tự động</div>
+        </div>
+      `;
+      createCard.addEventListener('click', openCreateModal);
+      container.appendChild(createCard);
+
+      // 2. PROJECT CARDS (ĐƠN GIẢN, HIỆN TÊN PROJECT, NGUỒN, NÚT MỞ & NÚT XÓA)
+      const term = filterTerm.trim().toLowerCase();
+
+      Object.values(defaultProjects).forEach(proj => {
+        if (term) {
+          const matchTitle = (proj.title || '').toLowerCase().includes(term);
+          const matchDesc = (proj
+--- MATCH PPTX 12 ---
+i thảo luận sư phạm" }
+              ]
+            }
+          ]
+        }
+      ]
+    };
+
+    function getProjectHierarchy(proj, scenes, srcItem = null, srcIdx = 0) {
+      // ƯU TIÊN SỐ 0: Nếu scenes có cấu trúc sections và items hoàn chỉnh từ LLM/TOC:
+      if (scenes && scenes.length > 0 && scenes[0].sections && scenes[0].sections.length > 0) {
+        if (srcItem) srcItem.extractedHierarchy = scenes;
+        return scenes;
+      }
+
+      // ƯU TIÊN SỐ 0.5: Dữ liệu bóc tách thực từ PDF/DOCX/PPTX (extractDocumentStructure)
+      if (srcItem && srcItem.extractedHierarchy && srcItem.extractedHierarchy.length > 0) {
+        return srcItem.extractedHierarchy;
+      }
+
+      if (proj && ACADEMIC_HIERARCHY_DATA[proj.id] && (!srcItem || srcIdx === 0)) {
+        return ACADEMIC_HIERARCHY_DATA[proj.id];
+      }
+
+      const activeTitle = (srcItem ? srcItem.name : (proj ? proj.title : '')) || '';
+
+      // ƯU TIÊN SỐ 1: Nếu phân cảnh đã được Multi-Agent Extractor & Generator bóc tách có bulle
+--- MATCH PPTX 13 ---
+ justify-content: space-between;">
+            <div style="display: flex; gap: 8px; align-items: center;">
+              <span>${src.pages || 10} trang / slide</span>
+              <span>${src.size || '1.0 MB'}</span>
+              <span style="color: ${isChecked ? 'var(--emerald)' : 'var(--text-muted)'};">${isChecked ? '● Đang chọn' : '○ Đã bỏ qua'}</span>
+            </div>
+            <button class="btn-source-dl-pill" onclick="downloadSingleSourceSlide(${idx})" title="Tải slide PowerPoint (.pptx) riêng cho tài liệu này" style="font-size: 10px; padding: 2px 8px; border-radius: 4px; background: rgba(56, 189, 248, 0.12); border: 1px solid rgba(56, 189, 248, 0.35); color: var(--cyan); cursor: pointer; display: inline-flex; align-items: center; gap: 4px; font-weight: 600;">
+              📥 Tải slide
+            </button>
+          </div>
+        `;
+        // Sự kiện checkbox bật/tắt slide
+        const chk = item.querySelector(`#src-chk-${idx}`);
+        if (chk) {
+          chk.addEve
+--- MATCH PPTX 14 ---
+span>
+                    <span class="segment-title">${itTitle}</span>
+                    <span class="segment-breadcrumb">(${chTitle} • ${secTitle})</span>
+                  </div>
+                  <div style="display: flex; gap: 8px;">
+                    <button type="button" class="btn-gen-single-script" onclick="downloadSingleNodeSlide('${itKey}')" style="background: rgba(56, 189, 248, 0.15); border-color: rgba(56, 189, 248, 0.4); color: var(--cyan);" title="Tải riêng slide PowerPoint (.pptx) cho mục kiến thức này">
+                      <span>📥</span> Tải Slide
+                    </button>
+                    <button type="button" class="btn-gen-single-script" id="btn-gen-${itKey}" onclick="generateSingleSegmentScript('${itKey}')" title="Dùng AI sinh kịch bản lời thoại chuẩn sư phạm riêng cho phân đoạn này">
+                      <span>✨</span> Sinh Kịch Bản Cho Mục Này
+                    </button>
+                  </div>
+                </div>
+
+                <!-- HÀNG 2:
+--- MATCH PPTX 15 ---
+ 'https:')
+      ? ''
+      : 'http://127.0.0.1:8765';
+
+    // FILE TO BASE64 HELPER
+    function fileToBase64(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = err => reject(err);
+        reader.readAsDataURL(file);
+      });
+    }
+
+    // =========================================================================
+    // BỘ BÓC TÁCH CẤU TRÚC TÀI LIỆU THỰC SỰ (PDF / DOCX / PPTX / TXT / MD)
+    // Không dùng LLM, không hardcode — đọc trực tiếp heading hierarchy từ file
+    // =========================================================================
+
+    // DISPATCHER: Phân loại file → gọi extractor chuyên biệt
+    async function extractDocumentStructure(file) {
+      const ext = (file.name.split('.').pop() || '').toLowerCase();
+      const buf = await file.arrayBuffer();
+
+      try {
+        if (ext === 'pdf') return await extractPdfStructure(buf, file.name);
+     
+--- MATCH PPTX 16 ---
+e
+    // =========================================================================
+
+    // DISPATCHER: Phân loại file → gọi extractor chuyên biệt
+    async function extractDocumentStructure(file) {
+      const ext = (file.name.split('.').pop() || '').toLowerCase();
+      const buf = await file.arrayBuffer();
+
+      try {
+        if (ext === 'pdf') return await extractPdfStructure(buf, file.name);
+        if (ext === 'docx') return await extractDocxStructure(buf, file.name);
+        if (ext === 'pptx') return await extractPptxStructure(buf, file.name);
+        if (ext === 'txt' || ext === 'md') return await extractPlainTextStructure(file);
+      } catch (err) {
+        console.warn(`[Extractor] Lỗi bóc tách .${ext}:`, err);
+      }
+      return null; // Fallback → hệ thống cũ xử lý
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // 1. PDF EXTRACTOR (pdf.js): LLM AI Outline (Mặc định) → Outline → Font-size → Regex
+    // ───────────────────────────────────
+--- MATCH PPTX 17 ---
+=======================================================
+
+    // DISPATCHER: Phân loại file → gọi extractor chuyên biệt
+    async function extractDocumentStructure(file) {
+      const ext = (file.name.split('.').pop() || '').toLowerCase();
+      const buf = await file.arrayBuffer();
+
+      try {
+        if (ext === 'pdf') return await extractPdfStructure(buf, file.name);
+        if (ext === 'docx') return await extractDocxStructure(buf, file.name);
+        if (ext === 'pptx') return await extractPptxStructure(buf, file.name);
+        if (ext === 'txt' || ext === 'md') return await extractPlainTextStructure(file);
+      } catch (err) {
+        console.warn(`[Extractor] Lỗi bóc tách .${ext}:`, err);
+      }
+      return null; // Fallback → hệ thống cũ xử lý
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // 1. PDF EXTRACTOR (pdf.js): LLM AI Outline (Mặc định) → Outline → Font-size → Regex
+    // ─────────────────────────────────────────────────────────────
+
+--- MATCH PPTX 18 ---
+.max(1, Math.round(rawDocxText.length / 2000)),
+              chapters: aiResult.chapters,
+              method: 'llm-openai'
+            };
+          }
+        } catch (aiErr) {
+          console.warn('[DOCX Extractor] LLM không khả dụng hoặc lỗi mạng, tự động fallback sang heading styles:', aiErr);
+        }
+      }
+
+      // Xây cây phân cấp từ heading levels
+      return buildHierarchyFromLevels(elements);
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // 3. PPTX EXTRACTOR (JSZip): LLM AI (Mặc định) → Slide titles + content
+    // ─────────────────────────────────────────────────────────────
+    async function extractPptxStructure(arrayBuffer, fileName = "") {
+      if (typeof JSZip === 'undefined') {
+        console.warn('[PPTX Extractor] JSZip chưa tải xong');
+        return null;
+      }
+      const zip = await JSZip.loadAsync(arrayBuffer);
+      const slideFiles = [];
+      zip.forEach((path, entry) => {
+        const match = path.match(/^ppt\/s
+--- MATCH PPTX 19 ---
+ catch (aiErr) {
+          console.warn('[DOCX Extractor] LLM không khả dụng hoặc lỗi mạng, tự động fallback sang heading styles:', aiErr);
+        }
+      }
+
+      // Xây cây phân cấp từ heading levels
+      return buildHierarchyFromLevels(elements);
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // 3. PPTX EXTRACTOR (JSZip): LLM AI (Mặc định) → Slide titles + content
+    // ─────────────────────────────────────────────────────────────
+    async function extractPptxStructure(arrayBuffer, fileName = "") {
+      if (typeof JSZip === 'undefined') {
+        console.warn('[PPTX Extractor] JSZip chưa tải xong');
+        return null;
+      }
+      const zip = await JSZip.loadAsync(arrayBuffer);
+      const slideFiles = [];
+      zip.forEach((path, entry) => {
+        const match = path.match(/^ppt\/slides\/slide(\d+)\.xml$/i);
+        if (match) slideFiles.push({ path, num: parseInt(match[1]) });
+      });
+      slideFiles.sort((a, b) => a.num - b.num);
+     
+--- MATCH PPTX 20 ---
+sang heading styles:', aiErr);
+        }
+      }
+
+      // Xây cây phân cấp từ heading levels
+      return buildHierarchyFromLevels(elements);
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // 3. PPTX EXTRACTOR (JSZip): LLM AI (Mặc định) → Slide titles + content
+    // ─────────────────────────────────────────────────────────────
+    async function extractPptxStructure(arrayBuffer, fileName = "") {
+      if (typeof JSZip === 'undefined') {
+        console.warn('[PPTX Extractor] JSZip chưa tải xong');
+        return null;
+      }
+      const zip = await JSZip.loadAsync(arrayBuffer);
+      const slideFiles = [];
+      zip.forEach((path, entry) => {
+        const match = path.match(/^ppt\/slides\/slide(\d+)\.xml$/i);
+        if (match) slideFiles.push({ path, num: parseInt(match[1]) });
+      });
+      slideFiles.sort((a, b) => a.num - b.num);
+      if (slideFiles.length === 0) return null;
+
+      const chapters = [];
+      const nsP = 'http://schemas.open
+--- MATCH PPTX 21 ---
+: ''
+        }));
+
+        chapters.push({
+          chapter: `SLIDE ${sf.num}`,
+          title: slideTitle.substring(0, 80),
+          depth: sf.num === 1 ? 'bridge' : 'core',
+          visual_type: 'split_screen',
+          cleanLines: cleanTextList,
+          sections: [{
+            code: 'Phần a',
+            title: slideTitle,
+            items: items
+          }]
+        });
+      }
+
+      // ƯU TIÊN SỐ 1: GỌI LLM 1 LẦN MẶC ĐỊNH ĐỂ TRÍCH XUẤT TÓM TẮT & SƠ ĐỒ CHUẨN SƯ PHẠM
+      const rawPptxText = chapters.map(ch => `[SLIDE ${ch.chapter.replace('SLIDE ', '')}] TIÊU ĐỀ: ${ch.title}\nNỘI DUNG:\n${ch.cleanLines.join('\n')}`).join('\n\n');
+      if (rawPptxText && rawPptxText.trim().length >= 50) {
+        try {
+          updateLoading("Đang Dùng AI Lập Sơ Đồ & Tóm Tắt...", `Đang phân tích cấu trúc bài giảng từ ${fileName || 'PPTX'} qua LLM...`);
+          const aiResult = await LLMClient.extractDocumentOutlineWithAI(rawPptxText, fileName);
+          if (aiResult && aiResult.chapte
+--- MATCH PPTX 22 ---
+e' : 'core',
+          visual_type: 'split_screen',
+          cleanLines: cleanTextList,
+          sections: [{
+            code: 'Phần a',
+            title: slideTitle,
+            items: items
+          }]
+        });
+      }
+
+      // ƯU TIÊN SỐ 1: GỌI LLM 1 LẦN MẶC ĐỊNH ĐỂ TRÍCH XUẤT TÓM TẮT & SƠ ĐỒ CHUẨN SƯ PHẠM
+      const rawPptxText = chapters.map(ch => `[SLIDE ${ch.chapter.replace('SLIDE ', '')}] TIÊU ĐỀ: ${ch.title}\nNỘI DUNG:\n${ch.cleanLines.join('\n')}`).join('\n\n');
+      if (rawPptxText && rawPptxText.trim().length >= 50) {
+        try {
+          updateLoading("Đang Dùng AI Lập Sơ Đồ & Tóm Tắt...", `Đang phân tích cấu trúc bài giảng từ ${fileName || 'PPTX'} qua LLM...`);
+          const aiResult = await LLMClient.extractDocumentOutlineWithAI(rawPptxText, fileName);
+          if (aiResult && aiResult.chapters && aiResult.chapters.length > 0) {
+            console.log(`[PPTX Extractor] ✨ LLM đã bóc tách thành công ${aiResult.chapters.length} chương cho ${fileName}`);
+  
+--- MATCH PPTX 23 ---
+        visual_type: 'split_screen',
+          cleanLines: cleanTextList,
+          sections: [{
+            code: 'Phần a',
+            title: slideTitle,
+            items: items
+          }]
+        });
+      }
+
+      // ƯU TIÊN SỐ 1: GỌI LLM 1 LẦN MẶC ĐỊNH ĐỂ TRÍCH XUẤT TÓM TẮT & SƠ ĐỒ CHUẨN SƯ PHẠM
+      const rawPptxText = chapters.map(ch => `[SLIDE ${ch.chapter.replace('SLIDE ', '')}] TIÊU ĐỀ: ${ch.title}\nNỘI DUNG:\n${ch.cleanLines.join('\n')}`).join('\n\n');
+      if (rawPptxText && rawPptxText.trim().length >= 50) {
+        try {
+          updateLoading("Đang Dùng AI Lập Sơ Đồ & Tóm Tắt...", `Đang phân tích cấu trúc bài giảng từ ${fileName || 'PPTX'} qua LLM...`);
+          const aiResult = await LLMClient.extractDocumentOutlineWithAI(rawPptxText, fileName);
+          if (aiResult && aiResult.chapters && aiResult.chapters.length > 0) {
+            console.log(`[PPTX Extractor] ✨ LLM đã bóc tách thành công ${aiResult.chapters.length} chương cho ${fileName}`);
+            retur
+--- MATCH PPTX 24 ---
+      items: items
+          }]
+        });
+      }
+
+      // ƯU TIÊN SỐ 1: GỌI LLM 1 LẦN MẶC ĐỊNH ĐỂ TRÍCH XUẤT TÓM TẮT & SƠ ĐỒ CHUẨN SƯ PHẠM
+      const rawPptxText = chapters.map(ch => `[SLIDE ${ch.chapter.replace('SLIDE ', '')}] TIÊU ĐỀ: ${ch.title}\nNỘI DUNG:\n${ch.cleanLines.join('\n')}`).join('\n\n');
+      if (rawPptxText && rawPptxText.trim().length >= 50) {
+        try {
+          updateLoading("Đang Dùng AI Lập Sơ Đồ & Tóm Tắt...", `Đang phân tích cấu trúc bài giảng từ ${fileName || 'PPTX'} qua LLM...`);
+          const aiResult = await LLMClient.extractDocumentOutlineWithAI(rawPptxText, fileName);
+          if (aiResult && aiResult.chapters && aiResult.chapters.length > 0) {
+            console.log(`[PPTX Extractor] ✨ LLM đã bóc tách thành công ${aiResult.chapters.length} chương cho ${fileName}`);
+            return {
+              title: (fileName || '').replace(/\.[^/.]+$/, ""),
+              totalPages: slideFiles.length,
+              chapters: aiResult.chapters,
+      
+--- MATCH PPTX 25 ---
+NH ĐỂ TRÍCH XUẤT TÓM TẮT & SƠ ĐỒ CHUẨN SƯ PHẠM
+      const rawPptxText = chapters.map(ch => `[SLIDE ${ch.chapter.replace('SLIDE ', '')}] TIÊU ĐỀ: ${ch.title}\nNỘI DUNG:\n${ch.cleanLines.join('\n')}`).join('\n\n');
+      if (rawPptxText && rawPptxText.trim().length >= 50) {
+        try {
+          updateLoading("Đang Dùng AI Lập Sơ Đồ & Tóm Tắt...", `Đang phân tích cấu trúc bài giảng từ ${fileName || 'PPTX'} qua LLM...`);
+          const aiResult = await LLMClient.extractDocumentOutlineWithAI(rawPptxText, fileName);
+          if (aiResult && aiResult.chapters && aiResult.chapters.length > 0) {
+            console.log(`[PPTX Extractor] ✨ LLM đã bóc tách thành công ${aiResult.chapters.length} chương cho ${fileName}`);
+            return {
+              title: (fileName || '').replace(/\.[^/.]+$/, ""),
+              totalPages: slideFiles.length,
+              chapters: aiResult.chapters,
+              method: 'llm-openai'
+            };
+          }
+        } catch (aiErr) {
+          cons
+--- MATCH PPTX 26 ---
+E ', '')}] TIÊU ĐỀ: ${ch.title}\nNỘI DUNG:\n${ch.cleanLines.join('\n')}`).join('\n\n');
+      if (rawPptxText && rawPptxText.trim().length >= 50) {
+        try {
+          updateLoading("Đang Dùng AI Lập Sơ Đồ & Tóm Tắt...", `Đang phân tích cấu trúc bài giảng từ ${fileName || 'PPTX'} qua LLM...`);
+          const aiResult = await LLMClient.extractDocumentOutlineWithAI(rawPptxText, fileName);
+          if (aiResult && aiResult.chapters && aiResult.chapters.length > 0) {
+            console.log(`[PPTX Extractor] ✨ LLM đã bóc tách thành công ${aiResult.chapters.length} chương cho ${fileName}`);
+            return {
+              title: (fileName || '').replace(/\.[^/.]+$/, ""),
+              totalPages: slideFiles.length,
+              chapters: aiResult.chapters,
+              method: 'llm-openai'
+            };
+          }
+        } catch (aiErr) {
+          console.warn('[PPTX Extractor] LLM không khả dụng hoặc lỗi mạng, tự động fallback sang slide items:', aiErr);
+        }
+      }
+
+ 
+--- MATCH PPTX 27 ---
+ileName);
+          if (aiResult && aiResult.chapters && aiResult.chapters.length > 0) {
+            console.log(`[PPTX Extractor] ✨ LLM đã bóc tách thành công ${aiResult.chapters.length} chương cho ${fileName}`);
+            return {
+              title: (fileName || '').replace(/\.[^/.]+$/, ""),
+              totalPages: slideFiles.length,
+              chapters: aiResult.chapters,
+              method: 'llm-openai'
+            };
+          }
+        } catch (aiErr) {
+          console.warn('[PPTX Extractor] LLM không khả dụng hoặc lỗi mạng, tự động fallback sang slide items:', aiErr);
+        }
+      }
+
+      return { title: '', totalPages: slideFiles.length, chapters, method: 'pptx-slides' };
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // 4. TXT / MD EXTRACTOR: Heading detection bằng # và regex
+    // ─────────────────────────────────────────────────────────────
+    async function extractPlainTextStructure(file) {
+      const text = await file.te
+--- MATCH PPTX 28 ---
+ương cho ${fileName}`);
+            return {
+              title: (fileName || '').replace(/\.[^/.]+$/, ""),
+              totalPages: slideFiles.length,
+              chapters: aiResult.chapters,
+              method: 'llm-openai'
+            };
+          }
+        } catch (aiErr) {
+          console.warn('[PPTX Extractor] LLM không khả dụng hoặc lỗi mạng, tự động fallback sang slide items:', aiErr);
+        }
+      }
+
+      return { title: '', totalPages: slideFiles.length, chapters, method: 'pptx-slides' };
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // 4. TXT / MD EXTRACTOR: Heading detection bằng # và regex
+    // ─────────────────────────────────────────────────────────────
+    async function extractPlainTextStructure(file) {
+      const text = await file.text();
+      if (!text || text.trim().length < 20) return null;
+
+      // ƯU TIÊN SỐ 1: GỌI LLM 1 LẦN MẶC ĐỊNH ĐỂ TRÍCH XUẤT TÓM TẮT & SƠ ĐỒ CHUẨN SƯ PHẠM
+      try {
+        updateLoading("Đ
+--- MATCH PPTX 29 ---
+       }
+      });
+
+      if (chapters.length === 0) return null;
+      return { title: '', totalPages: 0, chapters, method: 'text-headings' };
+    }
+
+    // CLIENT-SIDE PEDAGOGICAL GENERATOR (TỰ ĐỘNG CHẠY KHI MỞ TRỰC TIẾP TỆP FILE:///)
+    async function clientSidePedagogicalGenerate(file, name, desc, duration = 300, wpm = 140) {
+      updateLoading("Đang phân tích...", "Vui lòng chờ trong giây lát...");
+
+      // ƯU TIÊN SỐ 1: Bóc tách cấu trúc thực sự từ file (PDF outline/font, DOCX heading, PPTX slides)
+      try {
+        const structure = await extractDocumentStructure(file);
+        if (structure && structure.chapters && structure.chapters.length > 0) {
+          updateLoading("Đã Bóc Tách Thành Công!", `Phát hiện ${structure.chapters.length} chương/phần bằng phương pháp [${structure.method}]...`);
+          await new Promise(r => setTimeout(r, 400));
+
+          // ĐỒNG BỘ CHẶT CHẼ THEO THỜI LƯỢNG MỤC TIÊU NGƯỜI DÙNG CHỌN (mặc định 300s = 5 phút)
+          const totalDuration = 
+--- MATCH PPTX 30 ---
+p.title || '').trim().toLowerCase() === rawName.toLowerCase()
+      );
+      if (isDuplicate) {
+        showErrorProjName(`⚠️ Tên dự án "${rawName}" đã tồn tại! Vui lòng đặt tên khác hoặc thêm số phiên bản để tránh trùng lặp.`);
+        return;
+      }
+
+      const file = modalFileInput.files[0];
+      if (!file) {
+        await showCustomAlert({
+          title: "Chưa Chọn Tệp Slide",
+          subtitle: "Yêu cầu tệp đầu vào",
+          message: "Vui lòng chọn hoặc kéo thả 1 file slide (.pdf, .pptx, .docx, .txt) để hệ thống Multi-Agent bóc tách cấu trúc bài giảng!",
+          icon: "📑",
+          buttonText: "Chọn Tệp Ngay"
+        });
+        return;
+      }
+
+      const name = rawName;
+      const desc = document.getElementById('input-proj-desc').value.trim() || "Tài liệu bài giảng trực tuyến bóc tách tự động";
+
+      const dur = parseInt(document.getElementById('slider-duration')?.value) || 300;
+      const wpm = parseInt(document.getElementById('slider-wpm')?.value) || 140;
+
+     
+--- MATCH PPTX 31 ---
+          } catch (e) { }
+
+          showToast(`Đã thêm thành công tài liệu: ${f.name}`);
+        } catch (err) {
+          console.error("Lỗi thêm tài liệu:", err);
+          showToast(`Đã nạp tài liệu ${f.name} vào dự án!`);
+        } finally {
+          sourceFileInput.value = ''; // Cho phép chọn lại cùng 1 file nếu cần
+        }
+      }
+    });
+
+
+    // =========================================================================
+    // HỆ THỐNG XUẤT TẢI RIÊNG TỪNG SLIDE (SINGLE SLIDE / SOURCE PPTX EXPORT)
+    // =========================================================================
+    async function downloadSingleSourceSlide(idx) {
+      const sources = activeProject ? (activeProject.sources || []) : [];
+      const src = sources[idx];
+      if (!src) {
+        showToast('⚠️ Không tìm thấy tài liệu/slide này!');
+        return;
+      }
+
+      showToast(`⏳ Đang tạo slide riêng cho [${src.name}]...`);
+      try {
+        if (typeof PptxGenJS === 'undefined') {
+          throw new E
+--- MATCH PPTX 32 ---
+ XUẤT TẢI RIÊNG TỪNG SLIDE (SINGLE SLIDE / SOURCE PPTX EXPORT)
+    // =========================================================================
+    async function downloadSingleSourceSlide(idx) {
+      const sources = activeProject ? (activeProject.sources || []) : [];
+      const src = sources[idx];
+      if (!src) {
+        showToast('⚠️ Không tìm thấy tài liệu/slide này!');
+        return;
+      }
+
+      showToast(`⏳ Đang tạo slide riêng cho [${src.name}]...`);
+      try {
+        if (typeof PptxGenJS === 'undefined') {
+          throw new Error('Thư viện tạo slide PptxGenJS chưa sẵn sàng');
+        }
+
+        let pres = new PptxGenJS();
+        pres.layout = 'LAYOUT_16x9';
+        pres.author = 'CLSG Studio Pro';
+        pres.company = 'CLSG';
+        pres.title = src.name || 'Slide Bài Giảng';
+
+        // 1. Slide bìa cho riêng tài liệu này
+        let coverSlide = pres.addSlide();
+        coverSlide.background = { color: '0F172A' };
+        coverSlide.addText(src.name.replace(/\.
+--- MATCH PPTX 33 ---
+====================================================================
+    async function downloadSingleSourceSlide(idx) {
+      const sources = activeProject ? (activeProject.sources || []) : [];
+      const src = sources[idx];
+      if (!src) {
+        showToast('⚠️ Không tìm thấy tài liệu/slide này!');
+        return;
+      }
+
+      showToast(`⏳ Đang tạo slide riêng cho [${src.name}]...`);
+      try {
+        if (typeof PptxGenJS === 'undefined') {
+          throw new Error('Thư viện tạo slide PptxGenJS chưa sẵn sàng');
+        }
+
+        let pres = new PptxGenJS();
+        pres.layout = 'LAYOUT_16x9';
+        pres.author = 'CLSG Studio Pro';
+        pres.company = 'CLSG';
+        pres.title = src.name || 'Slide Bài Giảng';
+
+        // 1. Slide bìa cho riêng tài liệu này
+        let coverSlide = pres.addSlide();
+        coverSlide.background = { color: '0F172A' };
+        coverSlide.addText(src.name.replace(/\.[^/.]+$/, ""), {
+          x: 1, y: 1.8, w: '80%', h: 1.6, fontSize: 32, bo
+--- MATCH PPTX 34 ---
+=======
+    async function downloadSingleSourceSlide(idx) {
+      const sources = activeProject ? (activeProject.sources || []) : [];
+      const src = sources[idx];
+      if (!src) {
+        showToast('⚠️ Không tìm thấy tài liệu/slide này!');
+        return;
+      }
+
+      showToast(`⏳ Đang tạo slide riêng cho [${src.name}]...`);
+      try {
+        if (typeof PptxGenJS === 'undefined') {
+          throw new Error('Thư viện tạo slide PptxGenJS chưa sẵn sàng');
+        }
+
+        let pres = new PptxGenJS();
+        pres.layout = 'LAYOUT_16x9';
+        pres.author = 'CLSG Studio Pro';
+        pres.company = 'CLSG';
+        pres.title = src.name || 'Slide Bài Giảng';
+
+        // 1. Slide bìa cho riêng tài liệu này
+        let coverSlide = pres.addSlide();
+        coverSlide.background = { color: '0F172A' };
+        coverSlide.addText(src.name.replace(/\.[^/.]+$/, ""), {
+          x: 1, y: 1.8, w: '80%', h: 1.6, fontSize: 32, bold: true, color: '38BDF8', align: 'center'
+        });
+      
+--- MATCH PPTX 35 ---
+ typeof getNodeParam === 'function' ? getNodeParam(itKey, 'narration', it.narration || '') : (it.narration || '');
+                  if (narration) {
+                    s.addNotes(narration);
+                  }
+                  slideCount++;
+                });
+              }
+            });
+          }
+        });
+
+        const safeName = (src.name || 'Slide').replace(/\.[^/.]+$/, "").replace(/[^a-zA-Z0-9_\u00C0-\u1EF9]/gi, '_');
+        await pres.writeFile({ fileName: `Slide_${safeName}.pptx` });
+        showToast(`🎉 Đã tải riêng slide [${src.name}] (${slideCount} slide)!`);
+      } catch (err) {
+        console.error("Lỗi xuất slide riêng:", err);
+        showToast(`❌ Lỗi tạo slide: ${err.message}`);
+      }
+    }
+
+    async function downloadSingleNodeSlide(nodeOrKey) {
+      let node = null;
+      if (!nodeOrKey) {
+        node = (typeof selectedLeafNode !== 'undefined') ? selectedLeafNode : null;
+      } else if (typeof nodeOrKey === 'string') {
+        node = (typeof curren
+--- MATCH PPTX 36 ---
+eOrKey === 'string') {
+        node = (typeof currentNodesMap !== 'undefined' && currentNodesMap) ? currentNodesMap[nodeOrKey] : null;
+      } else {
+        node = nodeOrKey;
+      }
+
+      if (!node) {
+        showToast('⚠️ Vui lòng nhấp chọn một mục slide trên sơ đồ trước khi tải!');
+        return;
+      }
+
+      const nodeTitle = node.data?.title || node.data?.text || node.data?.code || 'Slide';
+      showToast(`⏳ Đang tạo slide riêng cho [${nodeTitle}]...`);
+      try {
+        if (typeof PptxGenJS === 'undefined') {
+          throw new Error('Thư viện PptxGenJS chưa sẵn sàng');
+        }
+
+        let pres = new PptxGenJS();
+        pres.layout = 'LAYOUT_16x9';
+        pres.author = 'CLSG Studio Pro';
+        pres.title = nodeTitle;
+
+        let s = pres.addSlide();
+        s.background = { color: 'FFFFFF' };
+
+        const code = node.data?.code || '';
+        s.addText(code ? `[${code}] ${nodeTitle}` : nodeTitle, {
+          x: 0.6, y: 0.4, w: '88%', h: 0.9, fontSize: 24, bold:
+--- MATCH PPTX 37 ---
+ 'undefined' && currentNodesMap) ? currentNodesMap[nodeOrKey] : null;
+      } else {
+        node = nodeOrKey;
+      }
+
+      if (!node) {
+        showToast('⚠️ Vui lòng nhấp chọn một mục slide trên sơ đồ trước khi tải!');
+        return;
+      }
+
+      const nodeTitle = node.data?.title || node.data?.text || node.data?.code || 'Slide';
+      showToast(`⏳ Đang tạo slide riêng cho [${nodeTitle}]...`);
+      try {
+        if (typeof PptxGenJS === 'undefined') {
+          throw new Error('Thư viện PptxGenJS chưa sẵn sàng');
+        }
+
+        let pres = new PptxGenJS();
+        pres.layout = 'LAYOUT_16x9';
+        pres.author = 'CLSG Studio Pro';
+        pres.title = nodeTitle;
+
+        let s = pres.addSlide();
+        s.background = { color: 'FFFFFF' };
+
+        const code = node.data?.code || '';
+        s.addText(code ? `[${code}] ${nodeTitle}` : nodeTitle, {
+          x: 0.6, y: 0.4, w: '88%', h: 0.9, fontSize: 24, bold: true, color: '0F172A',
+          border: [0, 0, { pt: 3, color: 
+--- MATCH PPTX 38 ---
+ : null;
+      } else {
+        node = nodeOrKey;
+      }
+
+      if (!node) {
+        showToast('⚠️ Vui lòng nhấp chọn một mục slide trên sơ đồ trước khi tải!');
+        return;
+      }
+
+      const nodeTitle = node.data?.title || node.data?.text || node.data?.code || 'Slide';
+      showToast(`⏳ Đang tạo slide riêng cho [${nodeTitle}]...`);
+      try {
+        if (typeof PptxGenJS === 'undefined') {
+          throw new Error('Thư viện PptxGenJS chưa sẵn sàng');
+        }
+
+        let pres = new PptxGenJS();
+        pres.layout = 'LAYOUT_16x9';
+        pres.author = 'CLSG Studio Pro';
+        pres.title = nodeTitle;
+
+        let s = pres.addSlide();
+        s.background = { color: 'FFFFFF' };
+
+        const code = node.data?.code || '';
+        s.addText(code ? `[${code}] ${nodeTitle}` : nodeTitle, {
+          x: 0.6, y: 0.4, w: '88%', h: 0.9, fontSize: 24, bold: true, color: '0F172A',
+          border: [0, 0, { pt: 3, color: '3B82F6' }, 0]
+        });
+
+        let content = [];
+       
+--- MATCH PPTX 39 ---
+     s.addText(content, { x: 0.6, y: 1.6, w: '88%', h: 3.6, fontSize: 16, align: 'left', valign: 'top' });
+        }
+
+        const narration = typeof getNodeParam === 'function' ? getNodeParam(node.key, 'narration', node.data?.narration || '') : (node.data?.narration || '');
+        if (narration) {
+          s.addNotes(narration);
+        }
+
+        const safeName = (nodeTitle || 'Slide').replace(/[^a-zA-Z0-9_\u00C0-\u1EF9]/gi, '_');
+        await pres.writeFile({ fileName: `Slide_${safeName}.pptx` });
+        showToast(`🎉 Đã tải riêng slide [${nodeTitle}] thành công!`);
+      } catch (err) {
+        console.error("Lỗi xuất slide riêng:", err);
+        showToast(`❌ Lỗi tạo slide: ${err.message}`);
+      }
+    }
+
+    // RE-GENERATE BUTTON HANDLER
+    document.getElementById('btn-re-generate')?.addEventListener('click', async () => {
+      const dur = parseInt(document.getElementById('slider-duration').value) || 300;
+      const wpm = parseInt(document.getElementById('slider-wpm').valu
+--- MATCH PPTX 40 ---
+.name, type: a.type, size: a.size })),
+          bridge_intro: s.bridge,
+          chapter: s.chapterTitle,
+          section: s.sectionTitle,
+          source_file: s.sourceName
+        }))
+      };
+
+      downloadFile(filename, JSON.stringify(exportManifest, null, 2), 'application/json');
+      showToast(`Đã xuất hồ sơ dữ liệu JSON toàn diện: ${filename}`);
+    });
+
+    document.getElementById('btn-download-slide-toolbar')?.addEventListener('click', async () => {
+      // Redirect to the same PPTX export logic
+      document.getElementById('btn-export-pptx')?.click();
+    });
+
+    document.getElementById('btn-export-pptx')?.addEventListener('click', async () => {
+      const data = getActiveScriptDocumentData();
+      if (!data || !data.flatSegments || data.flatSegments.length === 0) {
+        showToast('⚠️ Không có dữ liệu để tải slide!');
+        return;
+      }
+      showToast('⏳ Đang tạo slide PowerPoint...');
+      try {
+        let pres = new PptxGenJS();
+        pres.layout = 
+--- MATCH PPTX 41 ---
+o: s.bridge,
+          chapter: s.chapterTitle,
+          section: s.sectionTitle,
+          source_file: s.sourceName
+        }))
+      };
+
+      downloadFile(filename, JSON.stringify(exportManifest, null, 2), 'application/json');
+      showToast(`Đã xuất hồ sơ dữ liệu JSON toàn diện: ${filename}`);
+    });
+
+    document.getElementById('btn-download-slide-toolbar')?.addEventListener('click', async () => {
+      // Redirect to the same PPTX export logic
+      document.getElementById('btn-export-pptx')?.click();
+    });
+
+    document.getElementById('btn-export-pptx')?.addEventListener('click', async () => {
+      const data = getActiveScriptDocumentData();
+      if (!data || !data.flatSegments || data.flatSegments.length === 0) {
+        showToast('⚠️ Không có dữ liệu để tải slide!');
+        return;
+      }
+      showToast('⏳ Đang tạo slide PowerPoint...');
+      try {
+        let pres = new PptxGenJS();
+        pres.layout = 'LAYOUT_16x9';
+        pres.author = 'CLSG Studio Pro';
+    
+--- MATCH PPTX 42 ---
+ s.sectionTitle,
+          source_file: s.sourceName
+        }))
+      };
+
+      downloadFile(filename, JSON.stringify(exportManifest, null, 2), 'application/json');
+      showToast(`Đã xuất hồ sơ dữ liệu JSON toàn diện: ${filename}`);
+    });
+
+    document.getElementById('btn-download-slide-toolbar')?.addEventListener('click', async () => {
+      // Redirect to the same PPTX export logic
+      document.getElementById('btn-export-pptx')?.click();
+    });
+
+    document.getElementById('btn-export-pptx')?.addEventListener('click', async () => {
+      const data = getActiveScriptDocumentData();
+      if (!data || !data.flatSegments || data.flatSegments.length === 0) {
+        showToast('⚠️ Không có dữ liệu để tải slide!');
+        return;
+      }
+      showToast('⏳ Đang tạo slide PowerPoint...');
+      try {
+        let pres = new PptxGenJS();
+        pres.layout = 'LAYOUT_16x9';
+        pres.author = 'CLSG Studio Pro';
+        pres.company = 'CLSG';
+        pres.title = data.meta.title ||
+--- MATCH PPTX 43 ---
+=> {
+      // Redirect to the same PPTX export logic
+      document.getElementById('btn-export-pptx')?.click();
+    });
+
+    document.getElementById('btn-export-pptx')?.addEventListener('click', async () => {
+      const data = getActiveScriptDocumentData();
+      if (!data || !data.flatSegments || data.flatSegments.length === 0) {
+        showToast('⚠️ Không có dữ liệu để tải slide!');
+        return;
+      }
+      showToast('⏳ Đang tạo slide PowerPoint...');
+      try {
+        let pres = new PptxGenJS();
+        pres.layout = 'LAYOUT_16x9';
+        pres.author = 'CLSG Studio Pro';
+        pres.company = 'CLSG';
+        pres.title = data.meta.title || 'Slide Bài Giảng';
+
+        // Title slide
+        let slide = pres.addSlide();
+        slide.background = { color: 'F8FAFC' };
+        slide.addText(data.meta.title || 'BÀI GIẢNG', { x: 1, y: 2, w: '80%', h: 1.5, fontSize: 40, bold: true, color: '0F172A', align: 'center' });
+        if (data.meta.desc) {
+          slide.addText(data.me
+--- MATCH PPTX 44 ---
+seg.details) content.push({ text: `Chi tiết: ${seg.details}`, options: { bullet: true, color: '334155', breakLine: true } });
+
+          if (content.length > 0) {
+            s.addText(content, { x: 0.5, y: 1.5, w: '90%', h: 3.5, fontSize: 18, align: 'left', valign: 'top' });
+          }
+
+          // Narration Notes
+          if (seg.narration) {
+            s.addNotes(seg.narration);
+          }
+        });
+
+        const filename = `${(data.meta.title || 'Slide').replace(/[^a-z0-9]/gi, '_')}.pptx`;
+        await pres.writeFile({ fileName: filename });
+        showToast('🎉 Đã tải slide thành công!');
+      } catch (e) {
+        showToast(`❌ Lỗi tạo slide: ${e.message}`);
+        console.error(e);
+      }
+    });
+
+    // SEARCH FILTER PROJECTS
+    document.getElementById('project-search')?.addEventListener('input', (e) => {
+      renderProjectsGrid(e.target.value);
+    });
+
+    // SLIDER EVENT LISTENERS (CẬP NHẬT SỐ LIỆU TỨC THÌ TRÊN BẢNG TINH CHỈNH)
+    document.getElementById('slide
+--- MATCH EXPORT 0 ---
+135deg, var(--primary), #4f46e5);
+      color: white;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      padding: 8px 16px;
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 14px var(--primary-glow);
+    }
+
+    .btn-primary:hover {
+      filter: brightness(1.1);
+      transform: translateY(-1px);
+    }
+
+    .btn-export {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-main);
+      padding: 7px 12px;
+      border-radius: var(--radius-sm);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+    }
+
+    .btn-export:hover {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    /* ==
+--- MATCH EXPORT 1 ---
+-glow);
+    }
+
+    .btn-primary:hover {
+      filter: brightness(1.1);
+      transform: translateY(-1px);
+    }
+
+    .btn-export {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-main);
+      padding: 7px 12px;
+      border-radius: var(--radius-sm);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+    }
+
+    .btn-export:hover {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    /* =========================================================================
+       VIEW 1: PROJECTS DASHBOARD (GRID VIEW)
+       ========================================================================= */
+    #view-projects {
+      flex: 1;
+      padding: 32px 36px;
+      max-width: 1560px;
+      width: 100%;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: colum
+--- MATCH EXPORT 2 ---
+ne points="3 6 5 6 21 6"></polyline>
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+            <line x1="10" y1="11" x2="10" y2="17"></line>
+            <line x1="14" y1="11" x2="14" y2="17"></line>
+          </svg>
+          <span>Xóa Dự Án</span>
+        </button>
+      </div>
+
+      <!-- THANH NÚT XUẤT TÀI LIỆU: MẶC ĐỊNH ẨN, CHỈ HIỂN THỊ KHI ẤN VÀO TAB KỊCH BẢN THEO ĐÚNG YÊU CẦU -->
+      <div class="header-actions" id="workspace-export-actions" style="display: none;">
+        <button class="btn-export" id="btn-export-docx">
+          <span>📘</span> Word (.docx)
+        </button>
+        <button class="btn-export" id="btn-export-md">
+          <span>📄</span> Markdown (.md)
+        </button>
+        <button class="btn-export" id="btn-export-srt">
+          <span>⏱️</span> Phụ đề (.srt)
+        </button>
+        <button class="btn-export" id="btn-export-json">
+          <span>⚙️</span> JSON
+        </button>
+        <butto
+--- MATCH EXPORT 3 ---
+2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+            <line x1="10" y1="11" x2="10" y2="17"></line>
+            <line x1="14" y1="11" x2="14" y2="17"></line>
+          </svg>
+          <span>Xóa Dự Án</span>
+        </button>
+      </div>
+
+      <!-- THANH NÚT XUẤT TÀI LIỆU: MẶC ĐỊNH ẨN, CHỈ HIỂN THỊ KHI ẤN VÀO TAB KỊCH BẢN THEO ĐÚNG YÊU CẦU -->
+      <div class="header-actions" id="workspace-export-actions" style="display: none;">
+        <button class="btn-export" id="btn-export-docx">
+          <span>📘</span> Word (.docx)
+        </button>
+        <button class="btn-export" id="btn-export-md">
+          <span>📄</span> Markdown (.md)
+        </button>
+        <button class="btn-export" id="btn-export-srt">
+          <span>⏱️</span> Phụ đề (.srt)
+        </button>
+        <button class="btn-export" id="btn-export-json">
+          <span>⚙️</span> JSON
+        </button>
+        <button class="btn-export" id="btn-export-pptx">
+          <span>📊</span>
+--- MATCH EXPORT 4 ---
+2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+            <line x1="10" y1="11" x2="10" y2="17"></line>
+            <line x1="14" y1="11" x2="14" y2="17"></line>
+          </svg>
+          <span>Xóa Dự Án</span>
+        </button>
+      </div>
+
+      <!-- THANH NÚT XUẤT TÀI LIỆU: MẶC ĐỊNH ẨN, CHỈ HIỂN THỊ KHI ẤN VÀO TAB KỊCH BẢN THEO ĐÚNG YÊU CẦU -->
+      <div class="header-actions" id="workspace-export-actions" style="display: none;">
+        <button class="btn-export" id="btn-export-docx">
+          <span>📘</span> Word (.docx)
+        </button>
+        <button class="btn-export" id="btn-export-md">
+          <span>📄</span> Markdown (.md)
+        </button>
+        <button class="btn-export" id="btn-export-srt">
+          <span>⏱️</span> Phụ đề (.srt)
+        </button>
+        <button class="btn-export" id="btn-export-json">
+          <span>⚙️</span> JSON
+        </button>
+        <button class="btn-export" id="btn-export-pptx">
+          <span>📊</span> Slide (.pptx)
+ 
+--- MATCH EXPORT 5 ---
+x2="10" y2="17"></line>
+            <line x1="14" y1="11" x2="14" y2="17"></line>
+          </svg>
+          <span>Xóa Dự Án</span>
+        </button>
+      </div>
+
+      <!-- THANH NÚT XUẤT TÀI LIỆU: MẶC ĐỊNH ẨN, CHỈ HIỂN THỊ KHI ẤN VÀO TAB KỊCH BẢN THEO ĐÚNG YÊU CẦU -->
+      <div class="header-actions" id="workspace-export-actions" style="display: none;">
+        <button class="btn-export" id="btn-export-docx">
+          <span>📘</span> Word (.docx)
+        </button>
+        <button class="btn-export" id="btn-export-md">
+          <span>📄</span> Markdown (.md)
+        </button>
+        <button class="btn-export" id="btn-export-srt">
+          <span>⏱️</span> Phụ đề (.srt)
+        </button>
+        <button class="btn-export" id="btn-export-json">
+          <span>⚙️</span> JSON
+        </button>
+        <button class="btn-export" id="btn-export-pptx">
+          <span>📊</span> Slide (.pptx)
+        </button>
+      </div>
+    </div>
+
+    <!-- 3-PANE WORKSPACE BODY -->
+    <div class="work
+--- MATCH EXPORT 6 ---
+</line>
+            <line x1="14" y1="11" x2="14" y2="17"></line>
+          </svg>
+          <span>Xóa Dự Án</span>
+        </button>
+      </div>
+
+      <!-- THANH NÚT XUẤT TÀI LIỆU: MẶC ĐỊNH ẨN, CHỈ HIỂN THỊ KHI ẤN VÀO TAB KỊCH BẢN THEO ĐÚNG YÊU CẦU -->
+      <div class="header-actions" id="workspace-export-actions" style="display: none;">
+        <button class="btn-export" id="btn-export-docx">
+          <span>📘</span> Word (.docx)
+        </button>
+        <button class="btn-export" id="btn-export-md">
+          <span>📄</span> Markdown (.md)
+        </button>
+        <button class="btn-export" id="btn-export-srt">
+          <span>⏱️</span> Phụ đề (.srt)
+        </button>
+        <button class="btn-export" id="btn-export-json">
+          <span>⚙️</span> JSON
+        </button>
+        <button class="btn-export" id="btn-export-pptx">
+          <span>📊</span> Slide (.pptx)
+        </button>
+      </div>
+    </div>
+
+    <!-- 3-PANE WORKSPACE BODY -->
+    <div class="workspace-body">
+
+  
+--- MATCH EXPORT 7 ---
+n>Xóa Dự Án</span>
+        </button>
+      </div>
+
+      <!-- THANH NÚT XUẤT TÀI LIỆU: MẶC ĐỊNH ẨN, CHỈ HIỂN THỊ KHI ẤN VÀO TAB KỊCH BẢN THEO ĐÚNG YÊU CẦU -->
+      <div class="header-actions" id="workspace-export-actions" style="display: none;">
+        <button class="btn-export" id="btn-export-docx">
+          <span>📘</span> Word (.docx)
+        </button>
+        <button class="btn-export" id="btn-export-md">
+          <span>📄</span> Markdown (.md)
+        </button>
+        <button class="btn-export" id="btn-export-srt">
+          <span>⏱️</span> Phụ đề (.srt)
+        </button>
+        <button class="btn-export" id="btn-export-json">
+          <span>⚙️</span> JSON
+        </button>
+        <button class="btn-export" id="btn-export-pptx">
+          <span>📊</span> Slide (.pptx)
+        </button>
+      </div>
+    </div>
+
+    <!-- 3-PANE WORKSPACE BODY -->
+    <div class="workspace-body">
+
+      <!-- PANE 1: NGUỒN TÀI LIỆU (+ THÊM TÀI LIỆU Ở TRÊN, DƯỚI LÀ DANH SÁCH ĐÃ UP VÀO) -->
+      <
+--- MATCH EXPORT 8 ---
+n>
+        </button>
+      </div>
+
+      <!-- THANH NÚT XUẤT TÀI LIỆU: MẶC ĐỊNH ẨN, CHỈ HIỂN THỊ KHI ẤN VÀO TAB KỊCH BẢN THEO ĐÚNG YÊU CẦU -->
+      <div class="header-actions" id="workspace-export-actions" style="display: none;">
+        <button class="btn-export" id="btn-export-docx">
+          <span>📘</span> Word (.docx)
+        </button>
+        <button class="btn-export" id="btn-export-md">
+          <span>📄</span> Markdown (.md)
+        </button>
+        <button class="btn-export" id="btn-export-srt">
+          <span>⏱️</span> Phụ đề (.srt)
+        </button>
+        <button class="btn-export" id="btn-export-json">
+          <span>⚙️</span> JSON
+        </button>
+        <button class="btn-export" id="btn-export-pptx">
+          <span>📊</span> Slide (.pptx)
+        </button>
+      </div>
+    </div>
+
+    <!-- 3-PANE WORKSPACE BODY -->
+    <div class="workspace-body">
+
+      <!-- PANE 1: NGUỒN TÀI LIỆU (+ THÊM TÀI LIỆU Ở TRÊN, DƯỚI LÀ DANH SÁCH ĐÃ UP VÀO) -->
+      <aside class="pan
+--- MATCH EXPORT 9 ---
+HI ẤN VÀO TAB KỊCH BẢN THEO ĐÚNG YÊU CẦU -->
+      <div class="header-actions" id="workspace-export-actions" style="display: none;">
+        <button class="btn-export" id="btn-export-docx">
+          <span>📘</span> Word (.docx)
+        </button>
+        <button class="btn-export" id="btn-export-md">
+          <span>📄</span> Markdown (.md)
+        </button>
+        <button class="btn-export" id="btn-export-srt">
+          <span>⏱️</span> Phụ đề (.srt)
+        </button>
+        <button class="btn-export" id="btn-export-json">
+          <span>⚙️</span> JSON
+        </button>
+        <button class="btn-export" id="btn-export-pptx">
+          <span>📊</span> Slide (.pptx)
+        </button>
+      </div>
+    </div>
+
+    <!-- 3-PANE WORKSPACE BODY -->
+    <div class="workspace-body">
+
+      <!-- PANE 1: NGUỒN TÀI LIỆU (+ THÊM TÀI LIỆU Ở TRÊN, DƯỚI LÀ DANH SÁCH ĐÃ UP VÀO) -->
+      <aside class="pane-sources">
+        <div class="pane-header">
+          <span>Nguồn Tài Liệu</span>
+          <spa
+--- MATCH EXPORT 10 ---
+CH BẢN THEO ĐÚNG YÊU CẦU -->
+      <div class="header-actions" id="workspace-export-actions" style="display: none;">
+        <button class="btn-export" id="btn-export-docx">
+          <span>📘</span> Word (.docx)
+        </button>
+        <button class="btn-export" id="btn-export-md">
+          <span>📄</span> Markdown (.md)
+        </button>
+        <button class="btn-export" id="btn-export-srt">
+          <span>⏱️</span> Phụ đề (.srt)
+        </button>
+        <button class="btn-export" id="btn-export-json">
+          <span>⚙️</span> JSON
+        </button>
+        <button class="btn-export" id="btn-export-pptx">
+          <span>📊</span> Slide (.pptx)
+        </button>
+      </div>
+    </div>
+
+    <!-- 3-PANE WORKSPACE BODY -->
+    <div class="workspace-body">
+
+      <!-- PANE 1: NGUỒN TÀI LIỆU (+ THÊM TÀI LIỆU Ở TRÊN, DƯỚI LÀ DANH SÁCH ĐÃ UP VÀO) -->
+      <aside class="pane-sources">
+        <div class="pane-header">
+          <span>Nguồn Tài Liệu</span>
+          <span style="color: 
+--- MATCH EXPORT 11 ---
+s" style="display: none;">
+        <button class="btn-export" id="btn-export-docx">
+          <span>📘</span> Word (.docx)
+        </button>
+        <button class="btn-export" id="btn-export-md">
+          <span>📄</span> Markdown (.md)
+        </button>
+        <button class="btn-export" id="btn-export-srt">
+          <span>⏱️</span> Phụ đề (.srt)
+        </button>
+        <button class="btn-export" id="btn-export-json">
+          <span>⚙️</span> JSON
+        </button>
+        <button class="btn-export" id="btn-export-pptx">
+          <span>📊</span> Slide (.pptx)
+        </button>
+      </div>
+    </div>
+
+    <!-- 3-PANE WORKSPACE BODY -->
+    <div class="workspace-body">
+
+      <!-- PANE 1: NGUỒN TÀI LIỆU (+ THÊM TÀI LIỆU Ở TRÊN, DƯỚI LÀ DANH SÁCH ĐÃ UP VÀO) -->
+      <aside class="pane-sources">
+        <div class="pane-header">
+          <span>Nguồn Tài Liệu</span>
+          <span style="color: var(--cyan); font-size: 11px;" id="source-active-count">1 tệp</span>
+        </div>
+
+     
+--- MATCH EXPORT 12 ---
+y: none;">
+        <button class="btn-export" id="btn-export-docx">
+          <span>📘</span> Word (.docx)
+        </button>
+        <button class="btn-export" id="btn-export-md">
+          <span>📄</span> Markdown (.md)
+        </button>
+        <button class="btn-export" id="btn-export-srt">
+          <span>⏱️</span> Phụ đề (.srt)
+        </button>
+        <button class="btn-export" id="btn-export-json">
+          <span>⚙️</span> JSON
+        </button>
+        <button class="btn-export" id="btn-export-pptx">
+          <span>📊</span> Slide (.pptx)
+        </button>
+      </div>
+    </div>
+
+    <!-- 3-PANE WORKSPACE BODY -->
+    <div class="workspace-body">
+
+      <!-- PANE 1: NGUỒN TÀI LIỆU (+ THÊM TÀI LIỆU Ở TRÊN, DƯỚI LÀ DANH SÁCH ĐÃ UP VÀO) -->
+      <aside class="pane-sources">
+        <div class="pane-header">
+          <span>Nguồn Tài Liệu</span>
+          <span style="color: var(--cyan); font-size: 11px;" id="source-active-count">1 tệp</span>
+        </div>
+
+        <!-- Ô THÊM T
+--- MATCH EXPORT 13 ---
+        placeholder="Nhập ghi chú hoặc yêu cầu riêng cho AI (ví dụ: Giải thích chậm rãi bằng ví dụ thực tiễn, làm nổi bật công thức L2 distance, vẽ đồ thị phân bố mật độ...)"></textarea>
+              </div>
+            </div>
+
+            <div class="terminal-footer">
+              <div class="terminal-status" id="terminal-status">Sẵn sàng điều chỉnh thông số & ghi chú cho phân đoạn này
+              </div>
+              <div style="display: flex; gap: 8px;">
+                <button class="btn-export" id="btn-cancel-terminal"
+                  style="padding: 5px 12px; font-size: 11.5px;">Đóng</button>
+                <button class="btn-primary" id="btn-save-terminal" style="padding: 5px 16px; font-size: 11.5px;">
+                  <span>✓</span> Lưu Tham Số & Ghi Chú
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 2: KỊCH BẢN (HIỂN THỊ KỊCH BẢN HOÀN CHỈNH ĐÃ BIÊN TẬP TỪ SƠ ĐỒ) -->
+        <div class="center-tab-pane"
+--- MATCH EXPORT 14 ---
+="font-size: 11px; color: var(--text-dim); margin-top: 4px;">Hỗ trợ .pdf, .pptx, .docx, .txt</div>
+          <input type="file" id="modal-file-input" accept=".pptx,.pdf,.docx,.txt" style="display: none;">
+        </label>
+        <div id="modal-file-name"
+          style="font-size: 11px; color: var(--cyan); margin-top: 6px; display: none; font-weight: 600;"></div>
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 10px;">
+        <button class="btn-export" id="btn-cancel-modal">Hủy bỏ</button>
+        <button class="btn-primary" id="btn-submit-create-project">
+          <span>⚡</span> Khởi Tạo & Vào Không Gian Làm Việc
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       MODAL: AI & API KEY CONFIGURATION (TOKEN-FRUGAL ENGINE)
+       ========================================================================= -->
+  <div class="modal-backdrop" id="modal-api-c
+--- MATCH EXPORT 15 ---
+}
+
+    // CHUYỂN ĐỔI TAB Ở Ô GIỮA (SƠ ĐỒ TƯ DUY, KỊCH BẢN, VIDEO)
+    function switchCenterTab(tabName) {
+      try {
+        localStorage.setItem('clsg_active_tab', tabName);
+      } catch (e) { }
+      document.querySelectorAll('.center-nav-btn').forEach(btn => btn.classList.remove('active'));
+      document.querySelectorAll('.center-tab-pane').forEach(pane => pane.classList.remove('active'));
+
+      // Các nút xuất tài liệu (Word, Markdown, SRT, JSON) chỉ hiển thị khi mở Kịch Bản
+      const exportActions = document.getElementById('workspace-export-actions');
+      if (exportActions) {
+        exportActions.style.display = (tabName === 'script') ? 'flex' : 'none';
+      }
+
+      // ẨN TÓM TẮT KIẾN THỨC KHI MỞ KỊCH BẢN / VIDEO, CHỈ ĐỂ CHATBOT AI CHIẾM TRỌN
+      const inspectorSection = document.getElementById('content-inspector-section');
+      if (inspectorSection) {
+        if (tabName === 'mindmap') {
+          inspectorSection.style.display = (typeof isInspectorHidden !== 'undef
+--- MATCH EXPORT 16 ---
+CH BẢN, VIDEO)
+    function switchCenterTab(tabName) {
+      try {
+        localStorage.setItem('clsg_active_tab', tabName);
+      } catch (e) { }
+      document.querySelectorAll('.center-nav-btn').forEach(btn => btn.classList.remove('active'));
+      document.querySelectorAll('.center-tab-pane').forEach(pane => pane.classList.remove('active'));
+
+      // Các nút xuất tài liệu (Word, Markdown, SRT, JSON) chỉ hiển thị khi mở Kịch Bản
+      const exportActions = document.getElementById('workspace-export-actions');
+      if (exportActions) {
+        exportActions.style.display = (tabName === 'script') ? 'flex' : 'none';
+      }
+
+      // ẨN TÓM TẮT KIẾN THỨC KHI MỞ KỊCH BẢN / VIDEO, CHỈ ĐỂ CHATBOT AI CHIẾM TRỌN
+      const inspectorSection = document.getElementById('content-inspector-section');
+      if (inspectorSection) {
+        if (tabName === 'mindmap') {
+          inspectorSection.style.display = (typeof isInspectorHidden !== 'undefined' && isInspectorHidden) ? 'none' : 'flex';
+    
+--- MATCH EXPORT 17 ---
+switchCenterTab(tabName) {
+      try {
+        localStorage.setItem('clsg_active_tab', tabName);
+      } catch (e) { }
+      document.querySelectorAll('.center-nav-btn').forEach(btn => btn.classList.remove('active'));
+      document.querySelectorAll('.center-tab-pane').forEach(pane => pane.classList.remove('active'));
+
+      // Các nút xuất tài liệu (Word, Markdown, SRT, JSON) chỉ hiển thị khi mở Kịch Bản
+      const exportActions = document.getElementById('workspace-export-actions');
+      if (exportActions) {
+        exportActions.style.display = (tabName === 'script') ? 'flex' : 'none';
+      }
+
+      // ẨN TÓM TẮT KIẾN THỨC KHI MỞ KỊCH BẢN / VIDEO, CHỈ ĐỂ CHATBOT AI CHIẾM TRỌN
+      const inspectorSection = document.getElementById('content-inspector-section');
+      if (inspectorSection) {
+        if (tabName === 'mindmap') {
+          inspectorSection.style.display = (typeof isInspectorHidden !== 'undefined' && isInspectorHidden) ? 'none' : 'flex';
+        } else {
+          inspe
+--- MATCH EXPORT 18 ---
+{
+      try {
+        localStorage.setItem('clsg_active_tab', tabName);
+      } catch (e) { }
+      document.querySelectorAll('.center-nav-btn').forEach(btn => btn.classList.remove('active'));
+      document.querySelectorAll('.center-tab-pane').forEach(pane => pane.classList.remove('active'));
+
+      // Các nút xuất tài liệu (Word, Markdown, SRT, JSON) chỉ hiển thị khi mở Kịch Bản
+      const exportActions = document.getElementById('workspace-export-actions');
+      if (exportActions) {
+        exportActions.style.display = (tabName === 'script') ? 'flex' : 'none';
+      }
+
+      // ẨN TÓM TẮT KIẾN THỨC KHI MỞ KỊCH BẢN / VIDEO, CHỈ ĐỂ CHATBOT AI CHIẾM TRỌN
+      const inspectorSection = document.getElementById('content-inspector-section');
+      if (inspectorSection) {
+        if (tabName === 'mindmap') {
+          inspectorSection.style.display = (typeof isInspectorHidden !== 'undefined' && isInspectorHidden) ? 'none' : 'flex';
+        } else {
+          inspectorSection.style.display
+--- MATCH EXPORT 19 ---
+ingDrawerEvents();
+      initLayoutResizers();
+      renderScriptDocument();
+      updateTuningPanel();
+      if (typeof onProjectOpened === 'function') onProjectOpened();
+
+      try {
+        localStorage.setItem('clsg_active_project_id', projId);
+        localStorage.setItem('clsg_active_view', 'workspace');
+      } catch (e) { }
+
+      // Khôi phục Tab trước đó của người dùng (Mindmap / Kịch Bản / Video)
+      const savedTab = localStorage.getItem('clsg_active_tab') || 'mindmap';
+      const exportActions = document.getElementById('workspace-export-actions');
+      if (exportActions) exportActions.style.display = (savedTab === 'script') ? 'flex' : 'none';
+      switchCenterTab(savedTab);
+
+      // [FIX] Khôi phục Chat Session theo từng dự án từ LocalStorage hoặc Cloud Database
+      if (typeof clsgChatSessionHistory !== 'undefined') clsgChatSessionHistory.length = 0;
+      var chatContainer = document.getElementById('ai-chat-messages');
+      if (chatContainer) {
+        try {
+     
+--- MATCH EXPORT 20 ---
+  renderScriptDocument();
+      updateTuningPanel();
+      if (typeof onProjectOpened === 'function') onProjectOpened();
+
+      try {
+        localStorage.setItem('clsg_active_project_id', projId);
+        localStorage.setItem('clsg_active_view', 'workspace');
+      } catch (e) { }
+
+      // Khôi phục Tab trước đó của người dùng (Mindmap / Kịch Bản / Video)
+      const savedTab = localStorage.getItem('clsg_active_tab') || 'mindmap';
+      const exportActions = document.getElementById('workspace-export-actions');
+      if (exportActions) exportActions.style.display = (savedTab === 'script') ? 'flex' : 'none';
+      switchCenterTab(savedTab);
+
+      // [FIX] Khôi phục Chat Session theo từng dự án từ LocalStorage hoặc Cloud Database
+      if (typeof clsgChatSessionHistory !== 'undefined') clsgChatSessionHistory.length = 0;
+      var chatContainer = document.getElementById('ai-chat-messages');
+      if (chatContainer) {
+        try {
+          let savedHistory = JSON.parse(localStorage.get
+--- MATCH EXPORT 21 ---
+    updateTuningPanel();
+      if (typeof onProjectOpened === 'function') onProjectOpened();
+
+      try {
+        localStorage.setItem('clsg_active_project_id', projId);
+        localStorage.setItem('clsg_active_view', 'workspace');
+      } catch (e) { }
+
+      // Khôi phục Tab trước đó của người dùng (Mindmap / Kịch Bản / Video)
+      const savedTab = localStorage.getItem('clsg_active_tab') || 'mindmap';
+      const exportActions = document.getElementById('workspace-export-actions');
+      if (exportActions) exportActions.style.display = (savedTab === 'script') ? 'flex' : 'none';
+      switchCenterTab(savedTab);
+
+      // [FIX] Khôi phục Chat Session theo từng dự án từ LocalStorage hoặc Cloud Database
+      if (typeof clsgChatSessionHistory !== 'undefined') clsgChatSessionHistory.length = 0;
+      var chatContainer = document.getElementById('ai-chat-messages');
+      if (chatContainer) {
+        try {
+          let savedHistory = JSON.parse(localStorage.getItem('clsg_chat_history_' + 
+--- MATCH EXPORT 22 ---
+gPanel();
+      if (typeof onProjectOpened === 'function') onProjectOpened();
+
+      try {
+        localStorage.setItem('clsg_active_project_id', projId);
+        localStorage.setItem('clsg_active_view', 'workspace');
+      } catch (e) { }
+
+      // Khôi phục Tab trước đó của người dùng (Mindmap / Kịch Bản / Video)
+      const savedTab = localStorage.getItem('clsg_active_tab') || 'mindmap';
+      const exportActions = document.getElementById('workspace-export-actions');
+      if (exportActions) exportActions.style.display = (savedTab === 'script') ? 'flex' : 'none';
+      switchCenterTab(savedTab);
+
+      // [FIX] Khôi phục Chat Session theo từng dự án từ LocalStorage hoặc Cloud Database
+      if (typeof clsgChatSessionHistory !== 'undefined') clsgChatSessionHistory.length = 0;
+      var chatContainer = document.getElementById('ai-chat-messages');
+      if (chatContainer) {
+        try {
+          let savedHistory = JSON.parse(localStorage.getItem('clsg_chat_history_' + projId) || '[]'
+--- MATCH EXPORT 23 ---
+rs.length} chương chuẩn sư phạm cho ${fileName}`);
+            return {
+              title: (fileName || '').replace(/\.[^/.]+$/, ""),
+              totalPages,
+              chapters: aiResult.chapters,
+              method: 'llm-openai'
+            };
+          }
+        } catch (aiErr) {
+          console.warn('[PDF Extractor] LLM không khả dụng hoặc lỗi mạng, tự động fallback sang bộ bóc tách tĩnh:', aiErr);
+        }
+      }
+
+      // ƯU TIÊN 2: PDF Outline/Bookmarks (LaTeX hyperref, Word Export, v.v.)
+      let outline = null;
+      try { outline = await pdf.getOutline(); } catch (e) { }
+
+      if (outline && outline.length > 0) {
+        const chapters = await buildChaptersFromOutline(pdf, outline, totalPages);
+        if (chapters.length > 0) {
+          return { title: '', totalPages, chapters, method: 'pdf-outline' };
+        }
+      }
+
+      // ƯU TIÊN 3: Font-size hierarchy (quét toàn bộ trang)
+      const chapters = await buildChaptersFromFontSize(pdf, totalPages);
+      
+--- MATCH EXPORT 24 ---
+     } catch (e) { }
+
+          showToast(`Đã thêm thành công tài liệu: ${f.name}`);
+        } catch (err) {
+          console.error("Lỗi thêm tài liệu:", err);
+          showToast(`Đã nạp tài liệu ${f.name} vào dự án!`);
+        } finally {
+          sourceFileInput.value = ''; // Cho phép chọn lại cùng 1 file nếu cần
+        }
+      }
+    });
+
+
+    // =========================================================================
+    // HỆ THỐNG XUẤT TẢI RIÊNG TỪNG SLIDE (SINGLE SLIDE / SOURCE PPTX EXPORT)
+    // =========================================================================
+    async function downloadSingleSourceSlide(idx) {
+      const sources = activeProject ? (activeProject.sources || []) : [];
+      const src = sources[idx];
+      if (!src) {
+        showToast('⚠️ Không tìm thấy tài liệu/slide này!');
+        return;
+      }
+
+      showToast(`⏳ Đang tạo slide riêng cho [${src.name}]...`);
+      try {
+        if (typeof PptxGenJS === 'undefined') {
+          throw new Error(
+--- MATCH EXPORT 25 ---
+      isPlayingAll = true;
+      document.getElementById('play-all-icon').textContent = '⏸️';
+      document.getElementById('play-all-text').textContent = 'Tạm Dừng';
+      document.getElementById('btn-stop-speech').style.display = 'flex';
+      playSingleScene(0);
+      showToast('Đang phát giọng đọc bài giảng sư phạm...');
+    });
+
+    document.getElementById('btn-stop-speech')?.addEventListener('click', () => {
+      stopAllSpeech();
+      showToast('Đã dừng phát âm thanh.');
+    });
+
+    // EXPORTS
+    function downloadFile(filename, content, mimeType) {
+      const blob = new Blob([content], { type: mimeType });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    // =========================================================================
+    // HỆ THỐNG TRÍCH XUẤT 
+--- MATCH EXPORT 26 ---
+ontent, mimeType) {
+      const blob = new Blob([content], { type: mimeType });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    // =========================================================================
+    // HỆ THỐNG TRÍCH XUẤT VÀ XUẤT TÀI LIỆU SƯ PHẠM CAO CẤP (ENTERPRISE EXPORT ENGINE)
+    // NGUỒN DỮ LIỆU ĐỒNG BỘ 100% TỪ CÂY SƠ ĐỒ, KỊCH BẢN HAI TẦNG & GIAO DIỆN
+    // =========================================================================
+    function getActiveScriptDocumentData() {
+      if (!activeProject) return null;
+
+      const allSources = activeProject.sources || [
+        { name: (activeProject.title || 'Tài Liệu') + '.pdf', pages: 35, size: '1.2 MB', active: true }
+      ];
+      const activeSources = allSources.filter(s => s.active !== false);
+
+   
+--- MATCH EXPORT 27 ---
+Id: activeProject.id || currentProjectId,
+          title: activeProject.title || 'Kịch Bản Bài Giảng',
+          totalDuration: cumulativeSec,
+          wpm: activeProject.wpm || 140,
+          criticScore: parseInt(document.getElementById('score-overall')?.textContent) || 94,
+          totalSources: activeSources.length,
+          totalChapters: chapters.length,
+          totalSegments: flatSegments.length,
+          totalWords: flatSegments.reduce((sum, s) => sum + s.wordCount, 0),
+          exportedAt: new Date().toLocaleString('vi-VN')
+        },
+        sources: activeSources.map(s => ({ name: s.name, pages: s.pages, size: s.size })),
+        chapters,
+        flatSegments
+      };
+    }
+
+    // 1. XUẤT MARKDOWN SƯ PHẠM CHUYÊN NGHIỆP (.MD)
+    document.getElementById('btn-export-md')?.addEventListener('click', () => {
+      const data = getActiveScriptDocumentData();
+      if (!data || data.flatSegments.length === 0) {
+        showToast('⚠️ Không có nội dung phân cảnh nào để xuất
+--- MATCH EXPORT 28 ---
+totalSources: activeSources.length,
+          totalChapters: chapters.length,
+          totalSegments: flatSegments.length,
+          totalWords: flatSegments.reduce((sum, s) => sum + s.wordCount, 0),
+          exportedAt: new Date().toLocaleString('vi-VN')
+        },
+        sources: activeSources.map(s => ({ name: s.name, pages: s.pages, size: s.size })),
+        chapters,
+        flatSegments
+      };
+    }
+
+    // 1. XUẤT MARKDOWN SƯ PHẠM CHUYÊN NGHIỆP (.MD)
+    document.getElementById('btn-export-md')?.addEventListener('click', () => {
+      const data = getActiveScriptDocumentData();
+      if (!data || data.flatSegments.length === 0) {
+        showToast('⚠️ Không có nội dung phân cảnh nào để xuất Markdown!');
+        return;
+      }
+
+      const filename = `Kich_Ban_${data.meta.projectId}.md`;
+      const m = Math.floor(data.meta.totalDuration / 60);
+      const s = data.meta.totalDuration % 60;
+
+      const lines = [
+        `# 🎓 KỊCH BẢN BÀI GIẢNG SƯ PHẠM: ${data.meta.title.toU
+--- MATCH EXPORT 29 ---
+ const lines = [
+        `# 🎓 KỊCH BẢN BÀI GIẢNG SƯ PHẠM: ${data.meta.title.toUpperCase()}`,
+        ``,
+        `> ⏱️ **Tổng thời lượng:** ${m} phút ${s < 10 ? '0' : ''}${s}s (${data.meta.totalDuration}s)  `,
+        `> 🎙️ **Tốc độ đọc chuẩn:** ${data.meta.wpm} WPM | 📊 **Quy mô:** ${data.meta.totalChapters} Chương • ${data.meta.totalSegments} Phân cảnh • ~${data.meta.totalWords} từ  `,
+        `> 🎯 **Điểm kiểm định sư phạm:** ${data.meta.criticScore}/100 | 📅 **Thời gian xuất bản:** ${data.meta.exportedAt}  `,
+        `> 📄 **Học liệu nguồn:** ${data.sources.map(src => `\`${src.name}\``).join(', ')}  `,
+        ``,
+        `---`,
+        ``,
+        `## 📑 MỤC LỤC TỔNG QUAN BÀI GIẢNG`,
+        ``
+      ];
+
+      data.chapters.forEach(ch => {
+        lines.push(`- **CHƯƠNG ${ch.chIndex}: ${ch.title}** (${ch.visualType})`);
+        ch.sections.forEach(sec => {
+          sec.items.forEach(it => {
+            lines.push(`  - [${it.code}] ${it.title} \`[${formatTime(it.tStart)} - ${formatTime
+--- MATCH EXPORT 30 ---
+p đính kèm minh họa:**`);
+              it.attachments.forEach(att => {
+                lines.push(`- 🖼️ \`${att.name}\` (${att.type} • ${att.size})`);
+              });
+            }
+
+            lines.push(``, `---`, ``);
+          });
+        });
+      });
+
+      downloadFile(filename, lines.join('\n'), 'text/markdown');
+      showToast(`Đã xuất tài liệu Markdown chuyên nghiệp: ${filename}`);
+    });
+
+    // 2. XUẤT TÀI LIỆU GIÁO ÁN WORD CHUẨN ACADEMIC (.DOC)
+    document.getElementById('btn-export-docx')?.addEventListener('click', async () => {
+      const data = getActiveScriptDocumentData();
+      if (!data || data.flatSegments.length === 0) {
+        showToast('⚠️ Không có nội dung phân cảnh nào để xuất Word!');
+        return;
+      }
+
+      const filename = `Giao_An_Kich_Ban_${data.meta.projectId}.doc`;
+      const m = Math.floor(data.meta.totalDuration / 60);
+      const s = data.meta.totalDuration % 60;
+
+      try {
+        // 1. Tạo bảng ma trận tổng quan chương trình
+     
+--- MATCH EXPORT 31 ---
+e="color:#e2e8f0;padding:4px 0;">📊 <b>Quy mô:</b> ${data.meta.totalChapters} Chương • ${data.meta.totalSegments} Cảnh</td>
+                </tr>
+                <tr>
+                  <td style="color:#e2e8f0;padding:4px 0;">🎯 <b>Điểm Critic:</b> ${data.meta.criticScore}/100</td>
+                  <td style="color:#e2e8f0;padding:4px 0;">📄 <b>Slide gốc:</b> ${data.sources.map(s => s.name).join(', ')}</td>
+                  <td style="color:#e2e8f0;padding:4px 0;">📅 <b>Ngày xuất:</b> ${data.meta.exportedAt}</td>
+                </tr>
+              </table>
+            </div>
+
+            <!-- BẢNG TỔNG QUAN KHUNG CHƯƠNG TRÌNH -->
+            <h2 style="color:#0f172a;font-size:16px;border-bottom:2px solid #0284c7;padding-bottom:6px;margin-bottom:14px;">I. BẢNG MA TRẬN PHÂN CẢNH BÀI GIẢNG</h2>
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:12%;">Thời Gian</th>
+                  <th style="width:8%;">Mã Mục</th>
+                  <th style
+--- MATCH EXPORT 32 ---
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        showToast(`Đã xuất tài liệu Word giáo án cao cấp: ${filename}`);
+      } catch (err) {
+        console.error('Lỗi xuất Word:', err);
+        showToast('Lỗi khi tạo file Word. Xem Console để biết chi tiết.');
+      }
+    });
+
+    // 3. XUẤT PHỤ ĐỀ CHUẨN SUBRIP CHO VIDEO (.SRT)
+    document.getElementById('btn-export-srt')?.addEventListener('click', () => {
+      const data = getActiveScriptDocumentData();
+      if (!data || data.flatSegments.length === 0) {
+        showToast('⚠️ Không có nội dung phân cảnh nào để xuất phụ đề SRT!');
+        return;
+      }
+
+      const filename = `Phu_De_${data.meta.projectId}.srt`;
+
+      function fmtSrt(sec) {
+        const sInt = Math.max(0, Math.floor(sec));
+        const h = String(Math.floor(sInt / 3600)).padStart(2, '0');
+        const m = String(Math.floor((s
+--- MATCH EXPORT 33 ---
+
+
+          const currentSubEnd = Math.min(segEnd, currentSubStart + chunkDur);
+
+          srtContent += `${cueIndex++}\n${fmtSrt(currentSubStart)} --> ${fmtSrt(currentSubEnd)}\n${chunk}\n\n`;
+          currentSubStart = currentSubEnd;
+        });
+      });
+
+      downloadFile(filename, srtContent, 'text/plain');
+      showToast(`Đã xuất phụ đề SRT chuẩn (${cueIndex - 1} phân đoạn): ${filename}`);
+    });
+
+    // 4. XUẤT MANIFEST CẤU TRÚC DỰ ÁN TOÀN DIỆN (.JSON)
+    document.getElementById('btn-export-json')?.addEventListener('click', () => {
+      const data = getActiveScriptDocumentData();
+      if (!data) {
+        showToast('⚠️ Không có dữ liệu dự án để xuất JSON!');
+        return;
+      }
+
+      const filename = `Du_Lieu_Toan_Dien_${data.meta.projectId}.json`;
+
+      const exportManifest = {
+        schema_version: "2.1.0",
+        engine: "CLSG Studio - Pedagogical Slide-to-Video Engine",
+        meta: data.meta,
+        sources: data.sources,
+        curriculum: data.chapters,
+
+--- MATCH EXPORT 34 ---
+tContent, 'text/plain');
+      showToast(`Đã xuất phụ đề SRT chuẩn (${cueIndex - 1} phân đoạn): ${filename}`);
+    });
+
+    // 4. XUẤT MANIFEST CẤU TRÚC DỰ ÁN TOÀN DIỆN (.JSON)
+    document.getElementById('btn-export-json')?.addEventListener('click', () => {
+      const data = getActiveScriptDocumentData();
+      if (!data) {
+        showToast('⚠️ Không có dữ liệu dự án để xuất JSON!');
+        return;
+      }
+
+      const filename = `Du_Lieu_Toan_Dien_${data.meta.projectId}.json`;
+
+      const exportManifest = {
+        schema_version: "2.1.0",
+        engine: "CLSG Studio - Pedagogical Slide-to-Video Engine",
+        meta: data.meta,
+        sources: data.sources,
+        curriculum: data.chapters,
+        flat_timeline: data.flatSegments.map(s => ({
+          id: s.itKey,
+          code: s.code,
+          title: s.title,
+          t_start: s.tStart,
+          t_end: s.tEnd,
+          duration_s: s.duration,
+          wpm: s.wpm,
+          narration: s.narration,
+          clean_narr
+--- MATCH EXPORT 35 ---
+    summary: s.summary,
+          key_point: s.keyPoint,
+          details: s.details,
+          examples: s.examples,
+          visual_type: s.visualType,
+          media_note: s.mediaNote,
+          attachments: (s.attachments || []).map(a => ({ name: a.name, type: a.type, size: a.size })),
+          bridge_intro: s.bridge,
+          chapter: s.chapterTitle,
+          section: s.sectionTitle,
+          source_file: s.sourceName
+        }))
+      };
+
+      downloadFile(filename, JSON.stringify(exportManifest, null, 2), 'application/json');
+      showToast(`Đã xuất hồ sơ dữ liệu JSON toàn diện: ${filename}`);
+    });
+
+    document.getElementById('btn-download-slide-toolbar')?.addEventListener('click', async () => {
+      // Redirect to the same PPTX export logic
+      document.getElementById('btn-export-pptx')?.click();
+    });
+
+    document.getElementById('btn-export-pptx')?.addEventListener('click', async () => {
+      const data = getActiveScriptDocumentData();
+      if (!data || !d
+--- MATCH EXPORT 36 ---
+, type: a.type, size: a.size })),
+          bridge_intro: s.bridge,
+          chapter: s.chapterTitle,
+          section: s.sectionTitle,
+          source_file: s.sourceName
+        }))
+      };
+
+      downloadFile(filename, JSON.stringify(exportManifest, null, 2), 'application/json');
+      showToast(`Đã xuất hồ sơ dữ liệu JSON toàn diện: ${filename}`);
+    });
+
+    document.getElementById('btn-download-slide-toolbar')?.addEventListener('click', async () => {
+      // Redirect to the same PPTX export logic
+      document.getElementById('btn-export-pptx')?.click();
+    });
+
+    document.getElementById('btn-export-pptx')?.addEventListener('click', async () => {
+      const data = getActiveScriptDocumentData();
+      if (!data || !data.flatSegments || data.flatSegments.length === 0) {
+        showToast('⚠️ Không có dữ liệu để tải slide!');
+        return;
+      }
+      showToast('⏳ Đang tạo slide PowerPoint...');
+      try {
+        let pres = new PptxGenJS();
+        pres.layout = 'LAYO
+--- MATCH EXPORT 37 ---
+ge_intro: s.bridge,
+          chapter: s.chapterTitle,
+          section: s.sectionTitle,
+          source_file: s.sourceName
+        }))
+      };
+
+      downloadFile(filename, JSON.stringify(exportManifest, null, 2), 'application/json');
+      showToast(`Đã xuất hồ sơ dữ liệu JSON toàn diện: ${filename}`);
+    });
+
+    document.getElementById('btn-download-slide-toolbar')?.addEventListener('click', async () => {
+      // Redirect to the same PPTX export logic
+      document.getElementById('btn-export-pptx')?.click();
+    });
+
+    document.getElementById('btn-export-pptx')?.addEventListener('click', async () => {
+      const data = getActiveScriptDocumentData();
+      if (!data || !data.flatSegments || data.flatSegments.length === 0) {
+        showToast('⚠️ Không có dữ liệu để tải slide!');
+        return;
+      }
+      showToast('⏳ Đang tạo slide PowerPoint...');
+      try {
+        let pres = new PptxGenJS();
+        pres.layout = 'LAYOUT_16x9';
+        pres.author = 'CLSG Studio Pro
+--- MATCH EXPORT 38 ---
+ection: s.sectionTitle,
+          source_file: s.sourceName
+        }))
+      };
+
+      downloadFile(filename, JSON.stringify(exportManifest, null, 2), 'application/json');
+      showToast(`Đã xuất hồ sơ dữ liệu JSON toàn diện: ${filename}`);
+    });
+
+    document.getElementById('btn-download-slide-toolbar')?.addEventListener('click', async () => {
+      // Redirect to the same PPTX export logic
+      document.getElementById('btn-export-pptx')?.click();
+    });
+
+    document.getElementById('btn-export-pptx')?.addEventListener('click', async () => {
+      const data = getActiveScriptDocumentData();
+      if (!data || !data.flatSegments || data.flatSegments.length === 0) {
+        showToast('⚠️ Không có dữ liệu để tải slide!');
+        return;
+      }
+      showToast('⏳ Đang tạo slide PowerPoint...');
+      try {
+        let pres = new PptxGenJS();
+        pres.layout = 'LAYOUT_16x9';
+        pres.author = 'CLSG Studio Pro';
+        pres.company = 'CLSG';
+        pres.title = data.meta.t
+--- MATCH DOWNLOAD 0 ---
+sp-visual-text">
+              </div>
+            </div>
+
+            <!-- NÚT HÀNH ĐỘNG INSPECTOR (CHỈNH SỬA & TẢI RIÊNG SLIDE MỤC NÀY) -->
+            <div style="display: flex; gap: 8px; margin-top: 6px;">
+              <button class="btn-primary" id="btn-insp-open-terminal"
+                style="padding: 7px; font-size: 11px; justify-content: center; flex: 1;">
+                <span>✎</span> Tinh Chỉnh Tham Số
+              </button>
+              <button class="btn-secondary" id="btn-insp-download-slide" onclick="downloadSingleNodeSlide()"
+                style="padding: 7px 11px; font-size: 11px; justify-content: center; background: rgba(56, 189, 248, 0.15); border: 1px solid rgba(56, 189, 248, 0.4); color: var(--cyan); cursor: pointer; border-radius: var(--radius-sm); font-weight: 700; display: inline-flex; align-items: center; gap: 4px;"
+                title="Tải riêng slide PowerPoint (.pptx) cho mục kiến thức đang xem">
+                <span>📥</span> Tải Slide Này
+         
+--- MATCH DOWNLOAD 1 ---
+      </div>
+            </div>
+
+            <!-- NÚT HÀNH ĐỘNG INSPECTOR (CHỈNH SỬA & TẢI RIÊNG SLIDE MỤC NÀY) -->
+            <div style="display: flex; gap: 8px; margin-top: 6px;">
+              <button class="btn-primary" id="btn-insp-open-terminal"
+                style="padding: 7px; font-size: 11px; justify-content: center; flex: 1;">
+                <span>✎</span> Tinh Chỉnh Tham Số
+              </button>
+              <button class="btn-secondary" id="btn-insp-download-slide" onclick="downloadSingleNodeSlide()"
+                style="padding: 7px 11px; font-size: 11px; justify-content: center; background: rgba(56, 189, 248, 0.15); border: 1px solid rgba(56, 189, 248, 0.4); color: var(--cyan); cursor: pointer; border-radius: var(--radius-sm); font-weight: 700; display: inline-flex; align-items: center; gap: 4px;"
+                title="Tải riêng slide PowerPoint (.pptx) cho mục kiến thức đang xem">
+                <span>📥</span> Tải Slide Này
+              </button>
+          
+--- MATCH DOWNLOAD 2 ---
+lass="source-meta-row" style="display: flex; align-items: center; justify-content: space-between;">
+            <div style="display: flex; gap: 8px; align-items: center;">
+              <span>${src.pages || 10} trang / slide</span>
+              <span>${src.size || '1.0 MB'}</span>
+              <span style="color: ${isChecked ? 'var(--emerald)' : 'var(--text-muted)'};">${isChecked ? '● Đang chọn' : '○ Đã bỏ qua'}</span>
+            </div>
+            <button class="btn-source-dl-pill" onclick="downloadSingleSourceSlide(${idx})" title="Tải slide PowerPoint (.pptx) riêng cho tài liệu này" style="font-size: 10px; padding: 2px 8px; border-radius: 4px; background: rgba(56, 189, 248, 0.12); border: 1px solid rgba(56, 189, 248, 0.35); color: var(--cyan); cursor: pointer; display: inline-flex; align-items: center; gap: 4px; font-weight: 600;">
+              📥 Tải slide
+            </button>
+          </div>
+        `;
+        // Sự kiện checkbox bật/tắt slide
+        const chk = item.querySel
+--- MATCH DOWNLOAD 3 ---
+BẢN RIÊNG -->
+                <div class="segment-header-row">
+                  <div class="segment-title-wrap">
+                    <span class="segment-code-badge">${itCode}</span>
+                    <span class="segment-title">${itTitle}</span>
+                    <span class="segment-breadcrumb">(${chTitle} • ${secTitle})</span>
+                  </div>
+                  <div style="display: flex; gap: 8px;">
+                    <button type="button" class="btn-gen-single-script" onclick="downloadSingleNodeSlide('${itKey}')" style="background: rgba(56, 189, 248, 0.15); border-color: rgba(56, 189, 248, 0.4); color: var(--cyan);" title="Tải riêng slide PowerPoint (.pptx) cho mục kiến thức này">
+                      <span>📥</span> Tải Slide
+                    </button>
+                    <button type="button" class="btn-gen-single-script" id="btn-gen-${itKey}" onclick="generateSingleSegmentScript('${itKey}')" title="Dùng AI sinh kịch bản lời thoại chuẩn sư phạm riêng cho phân đoạ
+--- MATCH DOWNLOAD 4 ---
+
+          console.error("Lỗi thêm tài liệu:", err);
+          showToast(`Đã nạp tài liệu ${f.name} vào dự án!`);
+        } finally {
+          sourceFileInput.value = ''; // Cho phép chọn lại cùng 1 file nếu cần
+        }
+      }
+    });
+
+
+    // =========================================================================
+    // HỆ THỐNG XUẤT TẢI RIÊNG TỪNG SLIDE (SINGLE SLIDE / SOURCE PPTX EXPORT)
+    // =========================================================================
+    async function downloadSingleSourceSlide(idx) {
+      const sources = activeProject ? (activeProject.sources || []) : [];
+      const src = sources[idx];
+      if (!src) {
+        showToast('⚠️ Không tìm thấy tài liệu/slide này!');
+        return;
+      }
+
+      showToast(`⏳ Đang tạo slide riêng cho [${src.name}]...`);
+      try {
+        if (typeof PptxGenJS === 'undefined') {
+          throw new Error('Thư viện tạo slide PptxGenJS chưa sẵn sàng');
+        }
+
+        let pres = new PptxGenJS();
+        pres.l
+--- MATCH DOWNLOAD 5 ---
+        });
+              }
+            });
+          }
+        });
+
+        const safeName = (src.name || 'Slide').replace(/\.[^/.]+$/, "").replace(/[^a-zA-Z0-9_\u00C0-\u1EF9]/gi, '_');
+        await pres.writeFile({ fileName: `Slide_${safeName}.pptx` });
+        showToast(`🎉 Đã tải riêng slide [${src.name}] (${slideCount} slide)!`);
+      } catch (err) {
+        console.error("Lỗi xuất slide riêng:", err);
+        showToast(`❌ Lỗi tạo slide: ${err.message}`);
+      }
+    }
+
+    async function downloadSingleNodeSlide(nodeOrKey) {
+      let node = null;
+      if (!nodeOrKey) {
+        node = (typeof selectedLeafNode !== 'undefined') ? selectedLeafNode : null;
+      } else if (typeof nodeOrKey === 'string') {
+        node = (typeof currentNodesMap !== 'undefined' && currentNodesMap) ? currentNodesMap[nodeOrKey] : null;
+      } else {
+        node = nodeOrKey;
+      }
+
+      if (!node) {
+        showToast('⚠️ Vui lòng nhấp chọn một mục slide trên sơ đồ trước khi tải!');
+        return;
+ 
+--- MATCH DOWNLOAD 6 ---
+true;
+      document.getElementById('play-all-icon').textContent = '⏸️';
+      document.getElementById('play-all-text').textContent = 'Tạm Dừng';
+      document.getElementById('btn-stop-speech').style.display = 'flex';
+      playSingleScene(0);
+      showToast('Đang phát giọng đọc bài giảng sư phạm...');
+    });
+
+    document.getElementById('btn-stop-speech')?.addEventListener('click', () => {
+      stopAllSpeech();
+      showToast('Đã dừng phát âm thanh.');
+    });
+
+    // EXPORTS
+    function downloadFile(filename, content, mimeType) {
+      const blob = new Blob([content], { type: mimeType });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    // =========================================================================
+    // HỆ THỐNG TRÍCH XUẤT VÀ XUẤT TÀI LIỆU SƯ P
+--- MATCH DOWNLOAD 7 ---
+   playSingleScene(0);
+      showToast('Đang phát giọng đọc bài giảng sư phạm...');
+    });
+
+    document.getElementById('btn-stop-speech')?.addEventListener('click', () => {
+      stopAllSpeech();
+      showToast('Đã dừng phát âm thanh.');
+    });
+
+    // EXPORTS
+    function downloadFile(filename, content, mimeType) {
+      const blob = new Blob([content], { type: mimeType });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    // =========================================================================
+    // HỆ THỐNG TRÍCH XUẤT VÀ XUẤT TÀI LIỆU SƯ PHẠM CAO CẤP (ENTERPRISE EXPORT ENGINE)
+    // NGUỒN DỮ LIỆU ĐỒNG BỘ 100% TỪ CÂY SƠ ĐỒ, KỊCH BẢN HAI TẦNG & GIAO DIỆN
+    // =========================================================================
+    function getActiveSc
+--- MATCH DOWNLOAD 8 ---
+));
+            } else {
+              lines.push(`*(Chưa tạo kịch bản lời thoại cho phân đoạn này)*`);
+            }
+
+            if (Array.isArray(it.attachments) && it.attachments.length > 0) {
+              lines.push(``, `**📎 Tệp đính kèm minh họa:**`);
+              it.attachments.forEach(att => {
+                lines.push(`- 🖼️ \`${att.name}\` (${att.type} • ${att.size})`);
+              });
+            }
+
+            lines.push(``, `---`, ``);
+          });
+        });
+      });
+
+      downloadFile(filename, lines.join('\n'), 'text/markdown');
+      showToast(`Đã xuất tài liệu Markdown chuyên nghiệp: ${filename}`);
+    });
+
+    // 2. XUẤT TÀI LIỆU GIÁO ÁN WORD CHUẨN ACADEMIC (.DOC)
+    document.getElementById('btn-export-docx')?.addEventListener('click', async () => {
+      const data = getActiveScriptDocumentData();
+      if (!data || data.flatSegments.length === 0) {
+        showToast('⚠️ Không có nội dung phân cảnh nào để xuất Word!');
+        return;
+      }
+
+      const f
+--- MATCH DOWNLOAD 9 ---
+
+              <h2 style="color:#0f172a;font-size:16px;border-bottom:2px solid #0284c7;padding-bottom:6px;margin-bottom:14px;">II. KỊCH BẢN CHI TIẾT LỜI THOẠI & DỰNG HÌNH</h2>
+              ${detailedSectionsHtml}
+            </div>
+          </body>
+          </html>
+        `;
+
+        const blob = new Blob(['\ufeff' + htmlWordContent], { type: 'application/msword' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        showToast(`Đã xuất tài liệu Word giáo án cao cấp: ${filename}`);
+      } catch (err) {
+        console.error('Lỗi xuất Word:', err);
+        showToast('Lỗi khi tạo file Word. Xem Console để biết chi tiết.');
+      }
+    });
+
+    // 3. XUẤT PHỤ ĐỀ CHUẨN SUBRIP CHO VIDEO (.SRT)
+    document.getElementById('btn-export-srt')?.addEventListener('
+--- MATCH DOWNLOAD 10 ---
+e = totalWords > 0 ? (chunkWords / totalWords) : (1 / subChunks.length);
+          const chunkDur = (cIdx === subChunks.length - 1)
+            ? Math.max(0.5, segEnd - currentSubStart)
+            : Math.max(1.2, segDur * chunkShare);
+
+          const currentSubEnd = Math.min(segEnd, currentSubStart + chunkDur);
+
+          srtContent += `${cueIndex++}\n${fmtSrt(currentSubStart)} --> ${fmtSrt(currentSubEnd)}\n${chunk}\n\n`;
+          currentSubStart = currentSubEnd;
+        });
+      });
+
+      downloadFile(filename, srtContent, 'text/plain');
+      showToast(`Đã xuất phụ đề SRT chuẩn (${cueIndex - 1} phân đoạn): ${filename}`);
+    });
+
+    // 4. XUẤT MANIFEST CẤU TRÚC DỰ ÁN TOÀN DIỆN (.JSON)
+    document.getElementById('btn-export-json')?.addEventListener('click', () => {
+      const data = getActiveScriptDocumentData();
+      if (!data) {
+        showToast('⚠️ Không có dữ liệu dự án để xuất JSON!');
+        return;
+      }
+
+      const filename = `Du_Lieu_Toan_Dien_${data.meta.projec
+--- MATCH DOWNLOAD 11 ---
+  mechanism_latex: s.mechanism,
+          summary: s.summary,
+          key_point: s.keyPoint,
+          details: s.details,
+          examples: s.examples,
+          visual_type: s.visualType,
+          media_note: s.mediaNote,
+          attachments: (s.attachments || []).map(a => ({ name: a.name, type: a.type, size: a.size })),
+          bridge_intro: s.bridge,
+          chapter: s.chapterTitle,
+          section: s.sectionTitle,
+          source_file: s.sourceName
+        }))
+      };
+
+      downloadFile(filename, JSON.stringify(exportManifest, null, 2), 'application/json');
+      showToast(`Đã xuất hồ sơ dữ liệu JSON toàn diện: ${filename}`);
+    });
+
+    document.getElementById('btn-download-slide-toolbar')?.addEventListener('click', async () => {
+      // Redirect to the same PPTX export logic
+      document.getElementById('btn-export-pptx')?.click();
+    });
+
+    document.getElementById('btn-export-pptx')?.addEventListener('click', async () => {
+      const data = getActiveScrip
+--- MATCH DOWNLOAD 12 ---
+       media_note: s.mediaNote,
+          attachments: (s.attachments || []).map(a => ({ name: a.name, type: a.type, size: a.size })),
+          bridge_intro: s.bridge,
+          chapter: s.chapterTitle,
+          section: s.sectionTitle,
+          source_file: s.sourceName
+        }))
+      };
+
+      downloadFile(filename, JSON.stringify(exportManifest, null, 2), 'application/json');
+      showToast(`Đã xuất hồ sơ dữ liệu JSON toàn diện: ${filename}`);
+    });
+
+    document.getElementById('btn-download-slide-toolbar')?.addEventListener('click', async () => {
+      // Redirect to the same PPTX export logic
+      document.getElementById('btn-export-pptx')?.click();
+    });
+
+    document.getElementById('btn-export-pptx')?.addEventListener('click', async () => {
+      const data = getActiveScriptDocumentData();
+      if (!data || !data.flatSegments || data.flatSegments.length === 0) {
+        showToast('⚠️ Không có dữ liệu để tải slide!');
+        return;
+      }
+      showToast('⏳ Đang t

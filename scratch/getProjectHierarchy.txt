@@ -1,0 +1,686 @@
+function getProjectHierarchy(proj, scenes, srcItem = null, srcIdx = 0) {
+      // ƯU TIÊN SỐ 0: Nếu scenes có cấu trúc sections và items hoàn chỉnh từ LLM/TOC:
+      if (scenes && scenes.length > 0 && scenes[0].sections && scenes[0].sections.length > 0) {
+        if (srcItem) srcItem.extractedHierarchy = scenes;
+        return scenes;
+      }
+
+      // ƯU TIÊN SỐ 0.5: Dữ liệu bóc tách thực từ PDF/DOCX/PPTX (extractDocumentStructure)
+      if (srcItem && srcItem.extractedHierarchy && srcItem.extractedHierarchy.length > 0) {
+        return srcItem.extractedHierarchy;
+      }
+
+      if (proj && ACADEMIC_HIERARCHY_DATA[proj.id] && (!srcItem || srcIdx === 0)) {
+        return ACADEMIC_HIERARCHY_DATA[proj.id];
+      }
+
+      const activeTitle = (srcItem ? srcItem.name : (proj ? proj.title : '')) || '';
+
+      // ƯU TIÊN SỐ 1: Nếu phân cảnh đã được Multi-Agent Extractor & Generator bóc tách có bullets thực tế từ tệp
+      if (scenes && scenes.length > 0 && scenes.some(sc => sc.bullets && sc.bullets.length > 0)) {
+        return scenes.map((sc, i) => {
+          const rawTitle = sc.title || (sc.visual_purpose ? sc.visual_purpose.split('•')[0].trim() : `Chương ${i + 1}`);
+          const cleanTitle = rawTitle.length > 58 ? rawTitle.substring(0, 55) + '...' : rawTitle;
+          const terms = (sc.detected_terms && sc.detected_terms.length > 0) ? sc.detected_terms : ['Khái niệm cốt lõi', 'Phương pháp thực thi', 'Ứng dụng thực tế'];
+          const bullets = (sc.bullets && sc.bullets.length > 0) ? sc.bullets : [];
+
+          const sectionItems = bullets.map((bText, bIdx) => ({
+            code: `a${bIdx + 1}`,
+            text: bText,
+            summary: `${bText}. Đây là luận điểm trọng tâm cấu thành phân cảnh này.`,
+            mechanism: `Cơ chế thực thi bám sát nguyên lý toán học và quy trình xử lý dữ liệu của ${terms[bIdx % terms.length] || 'thuật toán'}.`,
+            key_point: `Nắm vững nội dung này giúp người học làm chủ toàn diện phân đoạn mà không bắt buộc phải xem video.`
+          }));
+
+          return {
+            chapter: `CHƯƠNG ${i + 1}`,
+            title: cleanTitle,
+            depth: sc.depth || 'core',
+            visual_type: sc.visual_type || 'split_screen',
+            sections: [
+              {
+                code: "Phần a",
+                title: `Trọng tâm kiến thức: ${terms[0] || 'Phân tích cốt lõi'}`,
+                items: sectionItems
+              }
+            ]
+          };
+        });
+      }
+
+      // PHÂN BIỆT RÕ RÀNG TỪNG CHỦ ĐỀ CHUYÊN BIỆT (TUYỆT ĐỐI KHÔNG GOM CHUNG REGEX /face|khuôn mặt/)
+      const isAntiSpoofing = /anti-spoofing|chống giả mạo|spoof|liveness|fas\b/i.test(activeTitle);
+      const isMTCNN_P1 = !isAntiSpoofing && /mtcnn/i.test(activeTitle) && (/phần 1|p1|detection|dò tìm/i.test(activeTitle) || !/phần 2|p2/i.test(activeTitle));
+      const isMTCNN_P2 = !isAntiSpoofing && (/facenet|mtcnn/i.test(activeTitle)) && (/phần 2|p2|triplet|inference/i.test(activeTitle)) && !/phần 1|p1/i.test(activeTitle);
+      const isCNN = !isAntiSpoofing && !isMTCNN_P1 && !isMTCNN_P2 && /cnn|convolution|tích chập|vision|neural/i.test(activeTitle);
+      const isClustering = !isAntiSpoofing && !isMTCNN_P1 && !isMTCNN_P2 && !isCNN && /cluster|phân cụm|kmeans|k-means|dbscan|som/i.test(activeTitle);
+
+      // CÂY PHÂN CẤP CHUYÊN BIỆT 1: FACE ANTI-SPOOFING (BÀI TOÁN CHỐNG GIẢ MẠO KHUÔN MẶT)
+      if (isAntiSpoofing) {
+        const antiSpoofingChaps = [
+          {
+            chapter: "CHƯƠNG 1",
+            title: "Bản chất bài toán Face Anti-Spoofing & Rủi ro bảo mật sinh trắc",
+            depth: "bridge",
+            visual_type: "split_screen",
+            sections: [
+              {
+                code: "Phần a",
+                title: "Thách thức bảo mật sinh trắc học khuôn mặt",
+                items: [
+                  {
+                    code: "a1",
+                    text: "Bùng nổ của nhận diện khuôn mặt trên smartphone, ngân hàng số và eKYC",
+                    summary: "Nhận diện khuôn mặt trở thành phương thức xác thực sinh trắc học phổ biến nhất hiện nay.",
+                    mechanism: "Tiện lợi và không tiếp xúc, nhưng tạo ra lỗ hổng bảo mật nếu không có cơ chế phát hiện thực thể sống.",
+                    key_point: "Bắt buộc phải có tầng phòng thủ Anti-Spoofing trước khi đưa vào mô hình nhận diện FaceNet."
+                  },
+                  {
+                    code: "a2",
+                    text: "Rủi ro lừa máy tính: Kẻ gian dùng ảnh in hoặc video phát lại để qua mặt hệ thống",
+                    summary: "Kẻ tấn công sử dụng ảnh chân dung của người khác hoặc video quay sẵn để điểm danh hoặc mở khóa.",
+                    mechanism: "Camera 2D thông thường dễ dàng nhận nhầm ảnh in độ nét cao là người thật nếu chỉ dựa vào đặc trưng hình học.",
+                    key_point: "Thiệt hại nghiêm trọng về an ninh và tài chính trong các ứng dụng ngân hàng và chấm công."
+                  },
+                  {
+                    code: "a3",
+                    text: "Vị trí và vai trò sống còn của bước FAS trước khi đưa vào Face Recognition",
+                    summary: "FAS đóng vai trò như một người gác cổng xác thực người đứng trước camera là người sống thực sự.",
+                    mechanism: "Quy trình: Camera -> Phát hiện mặt (MTCNN) -> Kiểm tra sự sống (FAS) -> Nhận diện danh tính (FaceNet).",
+                    key_point: "Nếu FAS kết luận giả mạo (Spoof), hệ thống lập tức từ chối và ghi log cảnh báo an ninh."
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            chapter: "CHƯƠNG 2",
+            title: "Các phương thức tấn công giả mạo (2D Print/Replay Attack & 3D Mask)",
+            depth: "core",
+            visual_type: "process_visualization",
+            sections: [
+              {
+                code: "Phần a",
+                title: "Phân loại kịch bản tấn công sinh trắc học",
+                items: [
+                  {
+                    code: "a1",
+                    text: "2D Attacks: Tấn công phát lại qua màn hình (Replay) và in ảnh giấy tỉ lệ 1:1 (Print Attack)",
+                    summary: "Hai hình thức tấn công tĩnh và động phổ biến nhất với chi phí thực hiện cực thấp.",
+                    mechanism: "Print Attack dùng giấy in A4 hoặc ảnh thẻ; Replay Attack dùng màn hình điện thoại, iPad hoặc laptop.",
+                    key_point: "Chiếm tới hơn 85% tổng số các cuộc tấn công giả mạo trong thực tế."
+                  },
+                  {
+                    code: "a2",
+                    text: "Kỹ thuật bẻ cong giấy hoặc khoét mắt để đánh lừa thuật toán phát hiện chuyển động",
+                    summary: "Kẻ tấn công khoét rỗng 2 hốc mắt trên ảnh in và áp mặt mình phía sau để tạo cử động chớp mắt giả.",
+                    mechanism: "Đánh lừa các thuật toán phát hiện sự sống đơn giản chỉ dựa vào chuyển động vùng mắt.",
+                    key_point: "Đòi hỏi hệ thống phải kết hợp phân tích kết cấu toàn diện bề mặt và độ cong chiều sâu."
+                  },
+                  {
+                    code: "a3",
+                    text: "3D Attacks: Tấn công tinh vi bằng mặt nạ silicon 3D, tượng sáp hoặc robot mô phỏng",
+                    summary: "Mặt nạ đúc bằng chất liệu silicon hoặc resin mô phỏng chính xác cấu trúc hình học 3D của khuôn mặt.",
+                    mechanism: "Có độ sâu vật lý giống mặt thật, gây khó khăn lớn cho các cảm biến chiều sâu thông thường.",
+                    key_point: "Đòi hỏi phân tích độ phản xạ quang học đa phổ hoặc biến thiên nhiệt độ hồng ngoại."
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            chapter: "CHƯƠNG 3",
+            title: "Phương pháp nhận diện tĩnh truyền thống (Local Binary Pattern - LBP)",
+            depth: "core",
+            visual_type: "highlight_box",
+            sections: [
+              {
+                code: "Phần a",
+                title: "Phân tích hoa văn vi mô và tần số ảnh quang học",
+                items: [
+                  {
+                    code: "a1",
+                    text: "Bản chất LBP: So sánh cường độ sáng pixel trung tâm với 8 pixel lân cận trong vùng 3x3",
+                    summary: "Thuật toán LBP trích xuất hoa văn kết cấu vi mô (Micro-texture) trên bề mặt da mặt.",
+                    mechanism: "Mã hóa nhị phân 8 bit dựa trên quan hệ so sánh độ sáng, tạo biểu đồ histogram kết cấu đặc trưng.",
+                    key_point: "Da người thật có kết cấu lỗ chân lông hữu cơ tự nhiên, khác biệt hoàn toàn với bề mặt giấy in phẳng."
+                  },
+                  {
+                    code: "a2",
+                    text: "Khác biệt quang học: Ảnh in và màn hình có sọc viền Moiré, phản quang và méo dải màu",
+                    summary: "Màn hình số và giấy in tạo ra các hiện tượng quang học đặc thù khi được chụp lại qua camera.",
+                    mechanism: "Hiệu ứng giao thoa Moiré tạo ra vân sóng tần số cao; màn hình số có độ chói gương và viền phản xạ quang.",
+                    key_point: "Dấu hiệu toán học quan trọng để phân biệt màn hình điện tử với khuôn mặt thực thể."
+                  },
+                  {
+                    code: "a3",
+                    text: "Đóng gói vector đặc trưng kết cấu và phân loại nhị phân người thật / giả mạo",
+                    summary: "Vector histogram LBP kết hợp với bộ phân loại SVM hoặc Random Forest để đưa ra quyết định Live/Spoof.",
+                    mechanism: "Mô hình tĩnh chỉ cần xử lý trên 1 khung hình đơn lẻ, tốc độ thực thi cực nhanh dưới 5ms.",
+                    key_point: "Rất phù hợp để triển khai trên các thiết bị phần cứng nhúng có năng lực tính toán hạn chế."
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            chapter: "CHƯƠNG 4",
+            title: "Phương pháp nhận diện động (Eye Blink Detection & Chuyển động tự nhiên)",
+            depth: "deep",
+            visual_type: "animated_diagram",
+            sections: [
+              {
+                code: "Phần a",
+                title: "Xác thực sự sống qua hành vi sinh học tự nhiên",
+                items: [
+                  {
+                    code: "a1",
+                    text: "Đặc tính sinh lý: Người bình thường nháy mắt 15-30 lần/phút với thời gian sụp mí ~250ms",
+                    summary: "Chớp mắt là phản xạ tự nhiên vô điều kiện của con người để bôi trơn giác mạc.",
+                    mechanism: "Ảnh in 2D hoàn toàn không thể thực hiện hành vi sinh học chớp mắt tự nhiên này.",
+                    key_point: "Là phương pháp kiểm tra liveness không xâm lấn (Passive Liveness) thân thiện với người dùng."
+                  },
+                  {
+                    code: "a2",
+                    text: "Camera 30fps bắt chính xác chuỗi khung hình mắt nhắm mở qua tỷ lệ EAR (Eye Aspect Ratio)",
+                    summary: "Đo tỷ số khoảng cách giữa các điểm landmark mí trên và mí dưới so với chiều dài mắt.",
+                    mechanism: "EAR = (||p2-p6|| + ||p3-p5||) / (2 * ||p1-p4||); khi mắt nhắm, EAR giảm đột ngột dưới ngưỡng 0.2.",
+                    key_point: "Bắt trọn đường cong sụp mí và mở mí sinh học, chống lại các hành vi lắc ảnh tĩnh."
+                  },
+                  {
+                    code: "a3",
+                    text: "Ưu và nhược điểm: Độ chính xác cao nhưng đòi hỏi đầu vào video và người dùng phải chờ đợi",
+                    summary: "Phương pháp động cần thu thập chuỗi khung hình liên tục trong 1 đến 2 giây.",
+                    mechanism: "Yêu cầu băng thông video ổn định; dễ bị vượt qua nếu kẻ tấn công dùng video Replay có sẵn cảnh chớp mắt.",
+                    key_point: "Cần kết hợp thêm thử thách ngẫu nhiên (quay đầu trái/phải) hoặc phân tích kết cấu vi mô LBP."
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            chapter: "CHƯƠNG 5",
+            title: "Bộ chỉ số đánh giá (APCER, BPCER, ACER) & Deep Learning FAS",
+            depth: "deep",
+            visual_type: "concept_map",
+            sections: [
+              {
+                code: "Phần a",
+                title: "Tiêu chuẩn kiểm thử quốc tế & Mô hình học sâu chiều sâu",
+                items: [
+                  {
+                    code: "a1",
+                    text: "Bộ chỉ số chuẩn ISO: APCER (tấn công lọt lưới), BPCER (từ chối người thật) và ACER trung bình",
+                    summary: "Tiêu chuẩn đánh giá bảo mật sinh trắc học quốc tế ISO/IEC 30107-3.",
+                    mechanism: "APCER đo tỷ lệ bỏ lọt tấn công giả mạo; BPCER đo tỷ lệ từ chối nhầm người dùng hợp lệ; ACER = (APCER+BPCER)/2.",
+                    key_point: "Hệ thống ngân hàng và điểm danh bảo mật cao yêu cầu APCER phải tiến sát về 0%."
+                  },
+                  {
+                    code: "a2",
+                    text: "Pixel-wise Supervision: Huấn luyện mạng CNN dự đoán bản đồ độ sâu Pseudo Depth Map cho mặt thật",
+                    summary: "Mặt người thật có độ lồi sống mũi và gò má, trong khi ảnh in và màn hình phẳng hoàn toàn.",
+                    mechanism: "Mạng CNN dự đoán ma trận độ sâu 3D: mặt thật có giá trị lồi lõm thực tế, mặt giả bị ép về ma trận 0.",
+                    key_point: "Ép mô hình học đặc trưng hình học không gian 3D thay vì học vẹt màu sắc dễ bị quá khớp."
+                  },
+                  {
+                    code: "a3",
+                    text: "Domain Generalization: Thách thức lớn khi mô hình đối mặt với thiết bị camera và cách tấn công mới",
+                    summary: "Mô hình học tốt trên tập dữ liệu huấn luyện nhưng giảm độ chính xác khi đưa ra môi trường thực tế khác biệt.",
+                    mechanism: "Kỹ thuật học bất biến miền (Domain Invariant Learning) và Meta-Learning giúp mô hình chống chịu tấn công chưa từng biết.",
+                    key_point: "Chìa khóa quyết định độ tin cậy của giải pháp điểm danh khuôn mặt Zero-Touch trong thực tế."
+                  }
+                ]
+              }
+            ]
+          }
+        ];
+        if (scenes && scenes.length > 0 && scenes.length < antiSpoofingChaps.length) {
+          return antiSpoofingChaps.slice(0, scenes.length);
+        }
+        return antiSpoofingChaps;
+      }
+
+      // CÂY PHÂN CẤP CHUYÊN BIỆT 2: MTCNN PHẦN 1 (BÀI TOÁN FACE DETECTION & IMAGE PYRAMID)
+      if (isMTCNN_P1) {
+        const mtcnnP1Chaps = [
+          {
+            chapter: "CHƯƠNG 1",
+            title: "Tổng quan kiến trúc MTCNN & Bài toán Face Detection",
+            depth: "bridge",
+            visual_type: "split_screen",
+            sections: [
+              {
+                code: "Phần a",
+                title: "Thách thức phát hiện khuôn mặt đa tỷ lệ",
+                items: [
+                  {
+                    code: "a1",
+                    text: "Phân định 2 giai đoạn cốt lõi: Face Detection và Face Verification",
+                    summary: "Phát hiện khuôn mặt là tiền đề bắt buộc trước khi thực hiện nhận diện danh tính cá nhân.",
+                    mechanism: "Detection định vị vị trí và kích thước hộp bao; Verification so khớp đặc trưng vector danh tính.",
+                    key_point: "Nếu bước phát hiện mặt sai lệch, toàn bộ quy trình nhận diện phía sau sẽ thất bại hoàn toàn."
+                  },
+                  {
+                    code: "a2",
+                    text: "Kiến trúc thác tuần hoàn 3 tầng (Cascaded): P-Net -> R-Net -> O-Net",
+                    summary: "MTCNN chia nhỏ bài toán phức tạp thành chuỗi 3 mạng tích chập nông lọc dần từ thô đến tinh.",
+                    mechanism: "Tầng trước sinh ứng viên và lọc nhanh vùng nền; tầng sau nhận diện sâu và tinh chỉnh tọa độ.",
+                    key_point: "Đạt được sự cân bằng hoàn hảo giữa tốc độ tính toán thời gian thực và độ chính xác cao."
+                  },
+                  {
+                    code: "a3",
+                    text: "Xử lý đa nhiệm: Đồng thời dự đoán xác suất có mặt, tọa độ bounding box và điểm landmark",
+                    summary: "Mỗi tầng mạng được huấn luyện đồng thời 3 hàm mất mát: Phân loại, Hồi quy hộp bao và Điểm mốc.",
+                    mechanism: "Chia sẻ đặc trưng chung giữa các nhiệm vụ giúp mạng nơ-ron học biểu diễn khái quát và bền vững hơn.",
+                    key_point: "Tối ưu hóa tài nguyên tính toán so với việc chạy 3 mô hình độc lập riêng rẽ."
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            chapter: "CHƯƠNG 2",
+            title: "Stage 1: Mạng P-Net (Proposal Network) & Cấu trúc Image Pyramid",
+            depth: "core",
+            visual_type: "process_visualization",
+            sections: [
+              {
+                code: "Phần a",
+                title: "Tiến trình quét kim tự tháp ảnh đa kích thước",
+                items: [
+                  {
+                    code: "a1",
+                    text: "Xây dựng Image Pyramid: Thu nhỏ ảnh gốc thành nhiều tỷ lệ để phát hiện khuôn mặt mọi kích cỡ",
+                    summary: "Khuôn mặt trong ảnh có thể rất nhỏ ở xa hoặc rất to ở cận cảnh camera.",
+                    mechanism: "Ảnh gốc được resize liên tiếp với hệ số tỷ lệ factor = 0.709 cho đến khi kích thước nhỏ hơn 12x12.",
+                    key_point: "Cho phép mạng nơ-ron có kích thước cố định quét bắt được mọi khuôn mặt ở các độ phân giải khác nhau."
+                  },
+                  {
+                    code: "a2",
+                    text: "Mạng tích chập hoàn toàn (FCN) 12x12 quét song song, trích xuất hàng loạt bounding box ứng viên",
+                    summary: "P-Net không chứa lớp Fully Connected, nhận đầu vào kích thước tùy ý và xuất bản đồ xác suất.",
+                    mechanism: "Chạy phép tích chập trên toàn bộ các mức kim tự tháp ảnh, xuất tọa độ hộp bao sơ bộ.",
+                    key_point: "Tốc độ quét cực nhanh, loại bỏ ngay lập tức hơn 80% vùng nền không chứa khuôn mặt."
+                  },
+                  {
+                    code: "a3",
+                    text: "Áp dụng Non-Maximum Suppression (NMS) sơ bộ lọc bớt hàng nghìn hộp bao chồng lấn",
+                    summary: "Do quét đa tỷ lệ nên một khuôn mặt sẽ kích hoạt hàng chục hộp bao ứng viên chồng chéo nhau.",
+                    mechanism: "NMS tính chỉ số giao trên hợp IoU giữa các hộp, giữ lại hộp có điểm tin cậy cao nhất và loại bỏ phần dư.",
+                    key_point: "Giảm tải số lượng mẫu ứng viên cần gửi sang mạng R-Net phía sau từ hàng nghìn xuống hàng trăm."
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            chapter: "CHƯƠNG 3",
+            title: "Stage 2: Mạng R-Net (Refine Network) & Khử trùng lặp NMS",
+            depth: "core",
+            visual_type: "highlight_box",
+            sections: [
+              {
+                code: "Phần a",
+                title: "Tinh lọc ứng viên và triệt tiêu báo động giả",
+                items: [
+                  {
+                    code: "a1",
+                    text: "Chuẩn hóa các vùng ứng viên từ P-Net về kích thước 24x24 và đưa qua mạng phân loại sâu hơn",
+                    summary: "R-Net bổ sung thêm các lớp kết nối đầy đủ (FC) để đánh giá chi tiết cấu trúc khuôn mặt.",
+                    mechanism: "Tiếp nhận các vùng cắt từ P-Net, đưa qua kiến trúc tích chập sâu hơn để thẩm định lại.",
+                    key_point: "Triệt tiêu hầu hết các báo động giả (False Positives) do các vật thể giống mặt ở hậu cảnh tạo ra."
+                  },
+                  {
+                    code: "a2",
+                    text: "Áp dụng Non-Maximum Suppression (NMS) với ngưỡng IoU để gộp các hộp bao chồng chéo",
+                    summary: "Tiếp tục áp dụng NMS lần 2 với ngưỡng IoU chặt chẽ hơn (thường chọn ngưỡng 0.7).",
+                    mechanism: "Gộp các hộp bao còn lại quanh khuôn mặt thật và loại bỏ các hộp bao sai lệch biên.",
+                    key_point: "Thu hẹp số lượng ứng viên chất lượng cao truyền sang O-Net chỉ còn một vài hộp bao sáng giá nhất."
+                  },
+                  {
+                    code: "a3",
+                    text: "Hiệu chỉnh tọa độ bounding box (Bounding Box Regression) giúp ôm sát khuôn mặt hơn",
+                    summary: "Mạng xuất ra 4 giá trị độ lệch offset (dx, dy, dw, dh) để căn chỉnh lại vị trí hộp bao.",
+                    mechanism: "Hộp bao được kéo giãn và dịch chuyển để căn khít viền trán, cằm và hai bên má.",
+                    key_point: "Tăng độ chính xác không gian của vùng mặt trước khi định vị các điểm mốc giải phẫu."
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            chapter: "CHƯƠNG 4",
+            title: "Stage 3: Mạng O-Net (Output Network) & Định vị 5 Facial Landmarks",
+            depth: "deep",
+            visual_type: "animated_diagram",
+            sections: [
+              {
+                code: "Phần a",
+                title: "Định vị 5 điểm mốc giải phẫu khuôn mặt",
+                items: [
+                  {
+                    code: "a1",
+                    text: "Tầng sâu nhất với đầu vào 48x48, đưa ra quyết định phân loại khuôn mặt có độ tin cậy cao nhất",
+                    summary: "O-Net là mạng tích chập sâu nhất trong bộ 3 mạng MTCNN với kiến trúc trích xuất mạnh mẽ.",
+                    mechanism: "Đưa ra điểm xác suất khuôn mặt cuối cùng, áp dụng ngưỡng khắt khe (ví dụ 0.8 hoặc 0.9).",
+                    key_point: "Khẳng định tuyệt đối vùng ảnh được chọn là khuôn mặt người với độ tin cậy tối đa."
+                  },
+                  {
+                    code: "a2",
+                    text: "Định vị chuẩn xác 5 điểm mốc Facial Landmarks: 2 mắt, đỉnh mũi và 2 khóe miệng",
+                    summary: "Hồi quy đồng thời tọa độ (x, y) của 5 điểm mốc giải phẫu then chốt trên gương mặt.",
+                    mechanism: "Hàm mất mát hồi quy Euclidean Loss ép các điểm mốc bám sát tâm mắt, chóp mũi và khóe môi.",
+                    key_point: "Là thông tin hình học sống còn để căn chỉnh xoay mặt về tư thế thẳng đứng chuẩn."
+                  },
+                  {
+                    code: "a3",
+                    text: "5 điểm landmark là dữ liệu đầu vào bắt buộc để thực hiện xoay và căn chỉnh khuôn mặt cho FaceNet",
+                    summary: "Khuôn mặt chụp thực tế thường bị nghiêng đầu (Roll) làm lệch không gian vector đặc trưng.",
+                    mechanism: "Dùng 5 điểm mốc để tính toán góc xoay Affine đưa đường nối hai mắt nằm ngang song song.",
+                    key_point: "Tăng độ chính xác nhận diện của FaceNet lên thêm 15% đến 20% so với ảnh chưa căn chỉnh."
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            chapter: "CHƯƠNG 5",
+            title: "Đánh giá hiệu năng thực tế & Ứng dụng tích hợp trong hệ thống",
+            depth: "bridge",
+            visual_type: "concept_map",
+            sections: [
+              {
+                code: "Phần a",
+                title: "Tối ưu hóa pipeline phát hiện mặt thời gian thực",
+                items: [
+                  {
+                    code: "a1",
+                    text: "Cân bằng tốc độ FPS và độ chính xác trên thiết bị biên Edge Device và camera giám sát",
+                    summary: "MTCNN có thể chạy mượt mà ở tốc độ 30-60 FPS trên GPU và thời gian thực trên CPU.",
+                    mechanism: "Điều chỉnh kích thước ảnh đầu vào và hệ số thu nhỏ kim tự tháp để tối ưu tài nguyên.",
+                    key_point: "Lựa chọn hàng đầu cho các bài toán nhận diện khuôn mặt công nghiệp và chấm công."
+                  },
+                  {
+                    code: "a2",
+                    text: "MTCNN chạy ổn định ở tốc độ cao nhờ cấu trúc tuần tự 3 tầng lọc dần vùng nền",
+                    summary: "Nguyên lý thiết kế tầng thác (Cascaded Architecture) giúp tiết kiệm 90% tính toán thừa.",
+                    mechanism: "Vùng nền bị loại ngay ở tầng P-Net nông 12x12, không bao giờ phải chạy qua tầng O-Net sâu 48x48.",
+                    key_point: "Bài học kinh điển về tối ưu hóa kiến trúc mạng nơ-ron tích chập trong thị giác máy tính."
+                  },
+                  {
+                    code: "a3",
+                    text: "Kết nối đầu ra MTCNN với các mạng trích xuất đặc trưng sâu FaceNet/ArcFace hoàn chỉnh",
+                    summary: "Đầu ra của MTCNN (ảnh mặt đã cắt và căn chỉnh) được nạp trực tiếp vào mạng FaceNet.",
+                    mechanism: "Tạo thành một quy trình khép kín: Phát hiện mặt -> Căn chỉnh -> Trích xuất đặc trưng -> Định danh.",
+                    key_point: "Hoàn tất giai đoạn 1 của bài toán nhận diện khuôn mặt hai giai đoạn hiện đại."
+                  }
+                ]
+              }
+            ]
+          }
+        ];
+        if (scenes && scenes.length > 0 && scenes.length < mtcnnP1Chaps.length) {
+          return mtcnnP1Chaps.slice(0, scenes.length);
+        }
+        return mtcnnP1Chaps;
+      }
+
+      // CÂY PHÂN CẤP CHUYÊN BIỆT 3: MTCNN PHẦN 2 (FACENET, EMBEDDINGS 512D & TRIPLET LOSS)
+      if (isMTCNN_P2) {
+        const mtcnnP2Chaps = [
+          {
+            chapter: "CHƯƠNG 1",
+            title: "Chuẩn bị môi trường & Thư viện facenet-pytorch trong thực tế",
+            depth: "bridge",
+            visual_type: "split_screen",
+            sections: [
+              {
+                code: "Phần a",
+                title: "Thiết lập môi trường nhận diện danh tính",
+                items: [
+                  {
+                    code: "a1",
+                    text: "Thiết lập môi trường Python, PyTorch và cài đặt thư viện chuyên dụng facenet-pytorch",
+                    summary: "Khởi tạo môi trường lập trình tối ưu tích hợp sẵn cả MTCNN và FaceNet trong cùng một gói.",
+                    mechanism: "Cài đặt pip install facenet-pytorch; nạp các module MTCNN và InceptionResnetV1 đã tối ưu CUDA.",
+                    key_point: "Đơn giản hóa việc triển khai và đảm bảo tính tương thích phần cứng cao nhất."
+                  },
+                  {
+                    code: "a2",
+                    text: "Sử dụng mô hình Inception-ResnetV1 đã được tiền huấn luyện (pretrained) trên tập VGGFace2",
+                    summary: "Tận dụng tri thức đã học từ hàng triệu bức ảnh khuôn mặt của người nổi tiếng trên thế giới.",
+                    mechanism: "Tải trọng số pre-trained 'vggface2' hoặc 'casia-webface' giúp mô hình có khả năng trích xuất đặc trưng vượt trội.",
+                    key_point: "Không cần đầu tư chi phí tính toán khổng lồ để huấn luyện mạng sâu từ đầu."
+                  },
+                  {
+                    code: "a3",
+                    text: "Khởi tạo luồng xử lý ảnh từ webcam/video bằng OpenCV",
+                    summary: "Kết nối camera thời gian thực, đọc chuỗi khung hình BGR và chuyển đổi sang không gian màu RGB.",
+                    mechanism: "Đóng gói vòng lặp đọc frame, truyền qua MTCNN để phát hiện mặt và chuyển sang FaceNet để nhận dạng.",
+                    key_point: "Khung sườn kỹ thuật hoàn chỉnh cho ứng dụng điểm danh hoặc mở cửa tự động."
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            chapter: "CHƯƠNG 2",
+            title: "Quy trình căn chỉnh khuôn mặt (Face Alignment) & Cắt vùng quan tâm",
+            depth: "core",
+            visual_type: "process_visualization",
+            sections: [
+              {
+                code: "Phần a",
+                title: "Chuẩn hóa hình học khuôn mặt trước khi nạp vào FaceNet",
+                items: [
+                  {
+                    code: "a1",
+                    text: "Sử dụng 5 điểm landmarks từ MTCNN để tính toán góc xoay giữa 2 mắt",
+                    summary: "Độ nghiêng của khuôn mặt làm sai lệch vị trí tương đối giữa các đặc trưng giải phẫu.",
+                    mechanism: "Tính góc xoay theta = arctan2(dY, dX) giữa tâm mắt trái và tâm mắt phải.",
+                    key_point: "Xác định chính xác độ lệch góc nghiêng để xoay khuôn mặt về phương thẳng đứng."
+                  },
+                  {
+                    code: "a2",
+                    text: "Thực hiện biến đổi Affine Transformation để xoay khuôn mặt về phương thẳng đứng chuẩn",
+                    summary: "Áp dụng ma trận biến đổi affine cv2.getRotationMatrix2D và cv2.warpAffine.",
+                    mechanism: "Đưa trục nối hai mắt về phương song song với cạnh ngang của bức ảnh.",
+                    key_point: "Loại bỏ hoàn toàn yếu tố góc nghiêng (Pose variation), tăng tính bất biến cho vector đặc trưng."
+                  },
+                  {
+                    code: "a3",
+                    text: "Cắt vùng mặt (Crop) và co giãn về kích thước chuẩn 160x160 trước khi nạp vào FaceNet",
+                    summary: "Mạng Inception-ResnetV1 của FaceNet yêu cầu kích thước ảnh đầu vào cố định 160x160 pixel.",
+                    mechanism: "Cắt khuôn mặt theo hộp bao có mở rộng padding nhẹ, resize chuẩn nội suy bilinear và chuẩn hóa [-1, 1].",
+                    key_point: "Đảm bảo chất lượng ảnh đầu vào tối ưu giúp mô hình trích xuất vector đặc trưng chính xác nhất."
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            chapter: "CHƯƠNG 3",
+            title: "Trích xuất vector đặc trưng Face Embeddings 512D với FaceNet",
+            depth: "core",
+            visual_type: "highlight_box",
+            sections: [
+              {
+                code: "Phần a",
+                title: "Ánh xạ ảnh khuôn mặt vào không gian vector đa chiều",
+                items: [
+                  {
+                    code: "a1",
+                    text: "Mỗi khuôn mặt được mạng Inception-Resnet biến đổi thành một vector 512 chiều duy nhất",
+                    summary: "FaceNet nén toàn bộ thông tin nhận dạng độc nhất của một khuôn mặt vào 512 con số thực.",
+                    mechanism: "Ảnh đi qua các khối tích chập Inception đa kích thước và các đường nối tắt Residual kết nối sâu.",
+                    key_point: "Đại diện số học cô đọng phản ánh trọn vẹn bản sắc sinh trắc học của cá nhân đó."
+                  },
+                  {
+                    code: "a2",
+                    text: "Chuẩn hóa L2: ||f(x)|| = 1, đưa toàn bộ vector đặc trưng lên mặt cầu đơn vị",
+                    summary: "Vector đầu ra được chia cho độ dài chuẩn Euclidean của chính nó: f_norm = f / ||f||.",
+                    mechanism: "Ép toàn bộ các vector khuôn mặt nằm trên bề mặt của một siêu hình cầu đơn vị 512 chiều.",
+                    key_point: "Khoảng cách Euclidean bình phương giữa hai vector tương đương trực tiếp với độ đo Cosine Similarity."
+                  },
+                  {
+                    code: "a3",
+                    text: "Tính chất bảo toàn: Hai ảnh cùng người có khoảng cách L2 rất nhỏ, khác người có khoảng cách lớn",
+                    summary: "Mô hình được huấn luyện bằng hàm mất mát Triplet Loss để bảo toàn tính chất tương đồng danh tính.",
+                    mechanism: "Khoảng cách giữa hai vector cùng một người thường < 0.8, trong khi khoảng cách giữa hai người khác nhau > 1.1.",
+                    key_point: "Biến bài toán nhận diện thị giác phức tạp thành bài toán so sánh khoảng cách hình học đơn giản."
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            chapter: "CHƯƠNG 4",
+            title: "Phân loại danh tính bằng khoảng cách Euclidean & Ngưỡng Threshold",
+            depth: "deep",
+            visual_type: "animated_diagram",
+            sections: [
+              {
+                code: "Phần a",
+                title: "Định danh và phân lớp người dùng trong cơ sở dữ liệu",
+                items: [
+                  {
+                    code: "a1",
+                    text: "Tính khoảng cách L2 giữa vector khuôn mặt cần nhận diện với cơ sở dữ liệu FaceList đã lưu",
+                    summary: "Hệ thống lưu sẵn vector đặc trưng 512D của nhân viên/sinh viên đã đăng ký trong cơ sở dữ liệu.",
+                    mechanism: "Tính d = torch.norm(emb_test - emb_db, dim=1); tốc độ so khớp hàng nghìn người chỉ mất vài micro-giây.",
+                    key_point: "Không cần huấn luyện lại mạng nơ-ron khi thêm người mới vào hệ thống (Zero-shot enrollment)."
+                  },
+                  {
+                    code: "a2",
+                    text: "Chọn danh tính có khoảng cách nhỏ nhất (min_score tương tự thuật toán k-NN với k=1)",
+                    summary: "Tìm người có vector đặc trưng gần gũi nhất với khuôn mặt đang xuất hiện trước camera.",
+                    mechanism: "Lấy min khoảng cách và chỉ số index tương ứng để truy xuất tên và mã số sinh viên.",
+                    key_point: "Cơ chế phân lớp cực kỳ trực quan, minh bạch và có thể kiểm chứng toán học."
+                  },
+                  {
+                    code: "a3",
+                    text: "Thiết lập ngưỡng Threshold an toàn: Nếu khoảng cách vượt ngưỡng, gán nhãn Unknown (người lạ)",
+                    summary: "Nếu khoảng cách nhỏ nhất vẫn lớn hơn ngưỡng cho phép, hệ thống xác định đây là người lạ chưa đăng ký.",
+                    mechanism: "Ngưỡng thực nghiệm khuyến nghị cho Inception-ResNetV1 thường dao động từ 0.75 đến 0.85.",
+                    key_point: "Kiểm soát ranh giới bảo mật, ngăn chặn kẻ lạ mạo danh người có khuôn mặt na ná trong hệ thống."
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            chapter: "CHƯƠNG 5",
+            title: "Đánh giá hạn chế thực tế & Nhu cầu kết hợp Liveness Detection",
+            depth: "bridge",
+            visual_type: "concept_map",
+            sections: [
+              {
+                code: "Phần a",
+                title: "Bảo mật hệ thống điểm danh trong môi trường thực",
+                items: [
+                  {
+                    code: "a1",
+                    text: "Ảnh hưởng của điều kiện ánh sáng yếu và góc chụp quá nghiêng làm lệch vector Embeddings",
+                    summary: "Trong điều kiện ánh sáng tối hoặc ngược sáng mạnh, vector 512D có thể bị biến dạng nhẹ.",
+                    mechanism: "Cần áp dụng các kỹ thuật tiền xử lý cân bằng trắng (Histogram Equalization) và lọc nhiễu.",
+                    key_point: "Cần hướng dẫn người dùng nhìn thẳng và đảm bảo độ sáng khu vực quét camera tối thiểu."
+                  },
+                  {
+                    code: "a2",
+                    text: "Hạn chế sống còn: MTCNN + FaceNet nguyên bản KHÔNG có khả năng phân biệt người thật và ảnh chụp",
+                    summary: "FaceNet chỉ nhận biết danh tính chứ không quan tâm bức ảnh trước mặt là người thật hay màn hình điện thoại.",
+                    mechanism: "Kẻ gian dễ dàng dùng điện thoại phát ảnh chân dung của bạn để điểm danh hộ qua mặt FaceNet.",
+                    key_point: "Điểm yếu chí mạng khiến hệ thống nhận diện khuôn mặt thuần túy bị mất uy tín bảo mật."
+                  },
+                  {
+                    code: "a3",
+                    text: "Kết luận: Cần tích hợp mô-đun Face Anti-Spoofing (Liveness) để tạo thành hệ thống điểm danh an toàn",
+                    summary: "Quy trình điểm danh chuẩn Zero-Touch: MTCNN (Dò mặt) -> Face Anti-Spoofing (Sự sống) -> FaceNet (Danh tính).",
+                    mechanism: "Chỉ khi vượt qua bước kiểm tra Liveness (chớp mắt, phản xạ quang, LBP) thì mới kích hoạt so khớp danh tính.",
+                    key_point: "Đảm bảo tính pháp lý, an toàn tuyệt đối và tốc độ phản hồi tức thì dưới 0.3 giây."
+                  }
+                ]
+              }
+            ]
+          }
+        ];
+        if (scenes && scenes.length > 0 && scenes.length < mtcnnP2Chaps.length) {
+          return mtcnnP2Chaps.slice(0, scenes.length);
+        }
+        return mtcnnP2Chaps;
+      }
+
+      // VỚI TÀI LIỆU TÙY Ý: Sinh phân cảnh linh hoạt từ 1 đến N (không ép cứng tối thiểu 5)
+      const effectiveScenes = (scenes && scenes.length > 0) ? scenes : [{
+        title: activeTitle.replace(/\.[^/.]+$/, ""),
+        visual_purpose: "Bản tóm tắt nội dung trọng tâm của tài liệu",
+        visual_type: "split_screen",
+        depth: "core",
+        detected_terms: ["nguyên lý cốt lõi", "phương pháp thực thi", "ứng dụng"]
+      }];
+
+      return effectiveScenes.map((sc, i) => {
+        const rawTitle = sc.title || (sc.visual_purpose ? sc.visual_purpose.split('•')[0].trim() : `Phân đoạn ${i + 1}`);
+        const cleanTitle = rawTitle.length > 55 ? rawTitle.substring(0, 52) + '...' : rawTitle;
+        const terms = (sc.detected_terms && sc.detected_terms.length > 0) ? sc.detected_terms : ['Khái niệm cốt lõi', 'Phương pháp thực thi', 'Ứng dụng thực tế'];
+        const bullets = (sc.bullets && sc.bullets.length > 0) ? sc.bullets : [];
+
+        // Nếu scene có sẵn bullets phân rã tri thức từ AI generator
+        let sectionItems = [];
+        if (bullets.length > 0) {
+          sectionItems = bullets.map((bText, bIdx) => ({
+            code: `a${bIdx + 1}`,
+            text: bText,
+            summary: `${bText}. Đây là luận điểm trọng tâm cấu thành phân cảnh này.`,
+            mechanism: `Cơ chế thực thi bám sát nguyên lý toán học và quy trình xử lý dữ liệu của ${terms[bIdx % terms.length] || 'thuật toán'}.`,
+            key_point: `Nắm vững nội dung này giúp người học làm chủ toàn diện phân đoạn mà không bắt buộc phải xem video.`
+          }));
+        } else {
+          // Sinh tối thiểu 1 hoặc tối đa 2 mục con cô đọng, không ép cứng 3x3
+          sectionItems = [
+            {
+              code: "a1",
+              text: `Khái niệm & Bản chất của ${terms[0] || 'chủ đề'}`,
+              summary: `Định nghĩa rõ ràng về ${terms[0] || cleanTitle} và vai trò của nó trong toàn bộ bài giảng.`,
+              mechanism: `Phân tích cấu trúc vận hành và quan hệ tương tác với ${terms[1] || 'các yếu tố liên quan'}.`,
+              key_point: `Hiểu rõ bản chất lý thuyết là nền tảng để vận dụng giải quyết bài toán thực tế.`
+            }
+          ];
+          if (terms.length > 1) {
+            sectionItems.push({
+              code: "a2",
+              text: `Cơ chế vận hành & Kỹ thuật ${terms[1] || 'mô phỏng'}`,
+              summary: `Quy trình thực thi chi tiết và phương pháp triển khai ${terms[1]}.`,
+              mechanism: `Các bước giải thuật tuần tự được kiểm soát qua tham số và tối ưu hóa hiệu năng.`,
+              key_point: `Điểm mấu chốt cần ghi nhớ khi áp dụng vào thực tế triển khai.`
+            });
+          }
+        }
+
+        return {
+          chapter: `CHƯƠNG ${i + 1}`,
+          title: cleanTitle,
+          depth: sc.depth || 'core',
+          visual_type: sc.visual_type || 'split_screen',
+          sections: [
+            {
+              code: "Phần a",
+              title: `Trọng tâm kiến thức: ${terms[0] || 'Phân tích cốt lõi'}`,
+              items: sectionItems
+            }
+          ]
+        };
+      });
+    }
+
+    // =========================================================================
+    // QUẢN LÝ NGUỒN TÀI LIỆU, LOẠI TRỪ (EXCLUSIONS) VÀ TINH CHỈNH THAM SỐ TỪNG NHÁNH
+    // =========================================================================
+    const excludedNodes = new Set();
+    const nodeCustomParams = {}; // Lưu trữ duration, wpm, title, visual cho từng node
+
+    // =========================================================================
+    // HỆ THỐNG AUTO-SAVE VĨNH VIỄN VÀO LOCALSTORAGE (CHỐNG MẤT KỊCH BẢN & TÓM TẮT KHI F5)
+    // =========================================================================
+    let autoSaveTimer = null;
+    

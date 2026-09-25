@@ -1,0 +1,2116 @@
+
+--- MATCH 0 ---
+order: none;
+      color: var(--text-muted);
+      padding: 6px 14px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .nav-tab-btn.active {
+      background: rgba(99, 102, 241, 0.25);
+      color: var(--text-main);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--primary), #4f46e5);
+      color: white;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      padding: 8px 16px;
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 14px var(--primary-glow);
+    }
+
+    .btn-primary:hover {
+      filter: brightness(1.1);
+      transform: translateY(-1px);
+    }
+
+    .btn-export {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-main);
+      padding: 7px 12px;
+      border-radius: var(--radius-sm);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+    }
+
+    .btn-export:hover {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    /* =========================================================================
+       VIEW 1: PROJECTS DASHBOARD (GRID VIEW)
+       ========================================================================= */
+    #view-projects {
+      flex: 1;
+      padding: 32px 36px;
+      max-width: 1560px;
+      width: 100%;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 28px;
+    }
+
+    .dashboard-hero {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 24px;
+      border-bottom: 1px solid var(--border-subtle);
+      gap: 24px;
+      flex-wrap: wrap;
+    }
+
+    .dashboard-title-group {
+      flex: 1;
+      min-width: 320px;
+    }
+
+    .dashboard-title-group h1 {
+      font-size: 24px;
+      font-weight: 800;
+      letter-spacing: -0.4px;
+      margin-bottom: 6px;
+      background: linear-gradient(135deg, #ffffff, #cbd5e1);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .dashboard-title-group p {
+      font-size: 13px;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    .dashboard-search-wrap {
+      min-width: 320px;
+      max-width: 440px;
+      width: 100%;
+    }
+
+    .search-input-wrap {
+      position: relative;
+      width: 100%;
+    }
+
+    .search-input-wrap input {
+      width: 100%;
+      background: rgba(15, 23, 42, 0.85);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      padding: 11px 14px 11px 38px;
+      color: var(--text-main);
+      font-size: 13.5px;
+      font-family: inherit;
+      transition: all 0.2s ease;
+    }
+
+    .search-input-wrap input:focus {
+      outline: none;
+      border-color: var(--cyan);
+      box-shadow: 0 0 16px rgba(56, 189, 248, 0.25);
+      background: rgba(15, 23, 42, 0.95);
+    }
+
+    .search-input-wrap span {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-dim);
+      font-size: 14px;
+    }
+
+    /* GRID CARDS */
+    .projects-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 22px;
+    }
+
+    /* 1. THE DEFAULT "+" CREATE CARD (TỐI GIẢN, DẤU + TẠI TÂM) */
+    .card-project-create {
+      background: rgba(15, 23, 42, 0.4);
+      border: 2px dashed rgba(99, 102, 241, 0.35);
+      border-radius: var(--radius-md);
+      min-height: 195px;
+      height: 100%;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+      box-sizing: border-box;
+      padding: 20px;
+    }
+
+    .card-project-create:hover {
+      border-color: var(--cyan);
+      background: rgba(56, 189, 248, 0.05);
+      box-shadow: 0 0 30px rgba(56, 189, 248, 0.15);
+      transform: translateY(-3px);
+    }
+
+    .create-plus-circle {
+      position: absolute;
+      top: 42%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 62px;
+      height: 62px;
+  
+--- MATCH 1 ---
+
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--primary), #4f46e5);
+      color: white;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      padding: 8px 16px;
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 14px var(--primary-glow);
+    }
+
+    .btn-primary:hover {
+      filter: brightness(1.1);
+      transform: translateY(-1px);
+    }
+
+    .btn-export {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-main);
+      padding: 7px 12px;
+      border-radius: var(--radius-sm);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+    }
+
+    .btn-export:hover {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    /* =========================================================================
+       VIEW 1: PROJECTS DASHBOARD (GRID VIEW)
+       ========================================================================= */
+    #view-projects {
+      flex: 1;
+      padding: 32px 36px;
+      max-width: 1560px;
+      width: 100%;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 28px;
+    }
+
+    .dashboard-hero {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 24px;
+      border-bottom: 1px solid var(--border-subtle);
+      gap: 24px;
+      flex-wrap: wrap;
+    }
+
+    .dashboard-title-group {
+      flex: 1;
+      min-width: 320px;
+    }
+
+    .dashboard-title-group h1 {
+      font-size: 24px;
+      font-weight: 800;
+      letter-spacing: -0.4px;
+      margin-bottom: 6px;
+      background: linear-gradient(135deg, #ffffff, #cbd5e1);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .dashboard-title-group p {
+      font-size: 13px;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    .dashboard-search-wrap {
+      min-width: 320px;
+      max-width: 440px;
+      width: 100%;
+    }
+
+    .search-input-wrap {
+      position: relative;
+      width: 100%;
+    }
+
+    .search-input-wrap input {
+      width: 100%;
+      background: rgba(15, 23, 42, 0.85);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      padding: 11px 14px 11px 38px;
+      color: var(--text-main);
+      font-size: 13.5px;
+      font-family: inherit;
+      transition: all 0.2s ease;
+    }
+
+    .search-input-wrap input:focus {
+      outline: none;
+      border-color: var(--cyan);
+      box-shadow: 0 0 16px rgba(56, 189, 248, 0.25);
+      background: rgba(15, 23, 42, 0.95);
+    }
+
+    .search-input-wrap span {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-dim);
+      font-size: 14px;
+    }
+
+    /* GRID CARDS */
+    .projects-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 22px;
+    }
+
+    /* 1. THE DEFAULT "+" CREATE CARD (TỐI GIẢN, DẤU + TẠI TÂM) */
+    .card-project-create {
+      background: rgba(15, 23, 42, 0.4);
+      border: 2px dashed rgba(99, 102, 241, 0.35);
+      border-radius: var(--radius-md);
+      min-height: 195px;
+      height: 100%;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+      box-sizing: border-box;
+      padding: 20px;
+    }
+
+    .card-project-create:hover {
+      border-color: var(--cyan);
+      background: rgba(56, 189, 248, 0.05);
+      box-shadow: 0 0 30px rgba(56, 189, 248, 0.15);
+      transform: translateY(-3px);
+    }
+
+    .create-plus-circle {
+      position: absolute;
+      top: 42%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 62px;
+      height: 62px;
+      border-radius: 50%;
+      background: rgba(99, 102, 241, 0.15);
+      border: 1.5px solid rgba(99, 102, 241, 0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 36px;
+      font-weight: 300;
+      color: var(--cyan);
+      transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+      line-height: 1;
+      pointer-events: none;
+--- MATCH 2 ---
+ms: center; gap: 6px;">
+          <span id="cloud-sync-icon">☁️</span>
+          <span id="cloud-sync-text">Lưu Cloud</span>
+        </button>
+        <button class="btn-ws-delete-project" id="btn-ws-delete-project" title="Xóa vĩnh viễn dự án này">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="3 6 5 6 21 6"></polyline>
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+            <line x1="10" y1="11" x2="10" y2="17"></line>
+            <line x1="14" y1="11" x2="14" y2="17"></line>
+          </svg>
+          <span>Xóa Dự Án</span>
+        </button>
+      </div>
+
+      <!-- THANH NÚT XUẤT TÀI LIỆU: MẶC ĐỊNH ẨN, CHỈ HIỂN THỊ KHI ẤN VÀO TAB KỊCH BẢN THEO ĐÚNG YÊU CẦU -->
+      <div class="header-actions" id="workspace-export-actions" style="display: none;">
+        <button class="btn-export" id="btn-export-docx">
+          <span>📘</span> Word (.docx)
+        </button>
+        <button class="btn-export" id="btn-export-md">
+          <span>📄</span> Markdown (.md)
+        </button>
+        <button class="btn-export" id="btn-export-srt">
+          <span>⏱️</span> Phụ đề (.srt)
+        </button>
+        <button class="btn-export" id="btn-export-json">
+          <span>⚙️</span> JSON
+        </button>
+        <button class="btn-export" id="btn-export-pptx">
+          <span>📊</span> Slide (.pptx)
+        </button>
+      </div>
+    </div>
+
+    <!-- 3-PANE WORKSPACE BODY -->
+    <div class="workspace-body">
+
+      <!-- PANE 1: NGUỒN TÀI LIỆU (+ THÊM TÀI LIỆU Ở TRÊN, DƯỚI LÀ DANH SÁCH ĐÃ UP VÀO) -->
+      <aside class="pane-sources">
+        <div class="pane-header">
+          <span>Nguồn Tài Liệu</span>
+          <span style="color: var(--cyan); font-size: 11px;" id="source-active-count">1 tệp</span>
+        </div>
+
+        <!-- Ô THÊM TÀI LIỆU Ở TRÊN -->
+        <label class="source-drop-zone" id="source-drop-zone" for="source-file-input">
+          <div style="font-size: 26px; margin-bottom: 4px;">📂</div>
+          <div style="font-size: 12px; font-weight: 700; color: var(--text-main);">+ Thêm Tài Liệu</div>
+          <div style="font-size: 11px; color: var(--text-dim); margin-top: 4px;">Kéo thả hoặc bấm để nạp .pdf, .pptx,
+            .docx</div>
+          <input type="file" id="source-file-input" accept=".pptx,.pdf,.docx,.txt" style="display: none;">
+        </label>
+
+        <!-- BỘ CHỌN NGÔN NGỮ KỊCH BẢN -->
+        <div style="margin-top: 6px;">
+          <div
+            style="font-size: 10px; font-weight: 600; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">
+            Ngôn Ngữ Kịch Bản</div>
+          <div class="lang-switcher-row" id="lang-switcher-row">
+            <button class="lang-btn active" data-lang="vi" onclick="setScriptLanguage('vi')">🇻🇳 Tiếng Việt</button>
+            <button class="lang-btn" data-lang="en" onclick="setScriptLanguage('en')">🇬🇧 English</button>
+          </div>
+          <div style="font-size: 9.5px; color: var(--text-dim); margin-top: 3px; line-height: 1.4;">VN: thuần Việt + mở
+            ngoặc thuật ngữ chuyên ngành</div>
+        </div>
+
+        <!-- DƯỚI ĐÓ LÀ DANH SÁCH CÁC TÀI LIỆU ĐÃ UP VÀO -->
+        <div
+          style="font-size: 11px; font-weight: 700; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 4px;">
+          Tài Liệu Đã Nạp
+        </div>
+        <div id="sources-list" style="display: flex; flex-direction: column; gap: 10px;">
+          <!-- Items will be injected dynamically -->
+        </div>
+      </aside>
+
+      <!-- RESIZER TRÁI: KÉO ĐỘ RỘNG CỘT TÀI LIỆU -->
+      <div class="layout-resizer" id="resizer-left" title="Kéo để thay đổi độ rộng cột nguồn tài liệu"></div>
+
+      <!-- PANE 2: CENTER PANE WITH NOTEBOOK-STYLE TABS (SƠ ĐỒ TƯ DUY, KỊCH BẢN, VIDEO) -->
+      <main class="pane-center">
+        <!-- TOP NAVIGATION BAR -->
+        <div class="center-nav-bar">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <button class="center-nav-btn active" id="btn-tab-mindmap">
+              <span>🗺️</span> Sơ Đồ
+            </button>
+            <button class="center-nav-btn" id="btn-tab-script">
+              <span>📜</span> Kịch Bản
+            </button>
+            <button class="center-nav-btn" id="btn-tab-video">
+              <span>🎬</span> Vide
+--- MATCH 3 ---
+ 6px;">
+          <span id="cloud-sync-icon">☁️</span>
+          <span id="cloud-sync-text">Lưu Cloud</span>
+        </button>
+        <button class="btn-ws-delete-project" id="btn-ws-delete-project" title="Xóa vĩnh viễn dự án này">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="3 6 5 6 21 6"></polyline>
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+            <line x1="10" y1="11" x2="10" y2="17"></line>
+            <line x1="14" y1="11" x2="14" y2="17"></line>
+          </svg>
+          <span>Xóa Dự Án</span>
+        </button>
+      </div>
+
+      <!-- THANH NÚT XUẤT TÀI LIỆU: MẶC ĐỊNH ẨN, CHỈ HIỂN THỊ KHI ẤN VÀO TAB KỊCH BẢN THEO ĐÚNG YÊU CẦU -->
+      <div class="header-actions" id="workspace-export-actions" style="display: none;">
+        <button class="btn-export" id="btn-export-docx">
+          <span>📘</span> Word (.docx)
+        </button>
+        <button class="btn-export" id="btn-export-md">
+          <span>📄</span> Markdown (.md)
+        </button>
+        <button class="btn-export" id="btn-export-srt">
+          <span>⏱️</span> Phụ đề (.srt)
+        </button>
+        <button class="btn-export" id="btn-export-json">
+          <span>⚙️</span> JSON
+        </button>
+        <button class="btn-export" id="btn-export-pptx">
+          <span>📊</span> Slide (.pptx)
+        </button>
+      </div>
+    </div>
+
+    <!-- 3-PANE WORKSPACE BODY -->
+    <div class="workspace-body">
+
+      <!-- PANE 1: NGUỒN TÀI LIỆU (+ THÊM TÀI LIỆU Ở TRÊN, DƯỚI LÀ DANH SÁCH ĐÃ UP VÀO) -->
+      <aside class="pane-sources">
+        <div class="pane-header">
+          <span>Nguồn Tài Liệu</span>
+          <span style="color: var(--cyan); font-size: 11px;" id="source-active-count">1 tệp</span>
+        </div>
+
+        <!-- Ô THÊM TÀI LIỆU Ở TRÊN -->
+        <label class="source-drop-zone" id="source-drop-zone" for="source-file-input">
+          <div style="font-size: 26px; margin-bottom: 4px;">📂</div>
+          <div style="font-size: 12px; font-weight: 700; color: var(--text-main);">+ Thêm Tài Liệu</div>
+          <div style="font-size: 11px; color: var(--text-dim); margin-top: 4px;">Kéo thả hoặc bấm để nạp .pdf, .pptx,
+            .docx</div>
+          <input type="file" id="source-file-input" accept=".pptx,.pdf,.docx,.txt" style="display: none;">
+        </label>
+
+        <!-- BỘ CHỌN NGÔN NGỮ KỊCH BẢN -->
+        <div style="margin-top: 6px;">
+          <div
+            style="font-size: 10px; font-weight: 600; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">
+            Ngôn Ngữ Kịch Bản</div>
+          <div class="lang-switcher-row" id="lang-switcher-row">
+            <button class="lang-btn active" data-lang="vi" onclick="setScriptLanguage('vi')">🇻🇳 Tiếng Việt</button>
+            <button class="lang-btn" data-lang="en" onclick="setScriptLanguage('en')">🇬🇧 English</button>
+          </div>
+          <div style="font-size: 9.5px; color: var(--text-dim); margin-top: 3px; line-height: 1.4;">VN: thuần Việt + mở
+            ngoặc thuật ngữ chuyên ngành</div>
+        </div>
+
+        <!-- DƯỚI ĐÓ LÀ DANH SÁCH CÁC TÀI LIỆU ĐÃ UP VÀO -->
+        <div
+          style="font-size: 11px; font-weight: 700; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 4px;">
+          Tài Liệu Đã Nạp
+        </div>
+        <div id="sources-list" style="display: flex; flex-direction: column; gap: 10px;">
+          <!-- Items will be injected dynamically -->
+        </div>
+      </aside>
+
+      <!-- RESIZER TRÁI: KÉO ĐỘ RỘNG CỘT TÀI LIỆU -->
+      <div class="layout-resizer" id="resizer-left" title="Kéo để thay đổi độ rộng cột nguồn tài liệu"></div>
+
+      <!-- PANE 2: CENTER PANE WITH NOTEBOOK-STYLE TABS (SƠ ĐỒ TƯ DUY, KỊCH BẢN, VIDEO) -->
+      <main class="pane-center">
+        <!-- TOP NAVIGATION BAR -->
+        <div class="center-nav-bar">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <button class="center-nav-btn active" id="btn-tab-mindmap">
+              <span>🗺️</span> Sơ Đồ
+            </button>
+            <button class="center-nav-btn" id="btn-tab-script">
+              <span>📜</span> Kịch Bản
+            </button>
+            <button class="center-nav-btn" id="btn-tab-video">
+              <span>🎬</span> Video Bài Giảng
+    
+--- MATCH 4 ---
+loud</span>
+        </button>
+        <button class="btn-ws-delete-project" id="btn-ws-delete-project" title="Xóa vĩnh viễn dự án này">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="3 6 5 6 21 6"></polyline>
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+            <line x1="10" y1="11" x2="10" y2="17"></line>
+            <line x1="14" y1="11" x2="14" y2="17"></line>
+          </svg>
+          <span>Xóa Dự Án</span>
+        </button>
+      </div>
+
+      <!-- THANH NÚT XUẤT TÀI LIỆU: MẶC ĐỊNH ẨN, CHỈ HIỂN THỊ KHI ẤN VÀO TAB KỊCH BẢN THEO ĐÚNG YÊU CẦU -->
+      <div class="header-actions" id="workspace-export-actions" style="display: none;">
+        <button class="btn-export" id="btn-export-docx">
+          <span>📘</span> Word (.docx)
+        </button>
+        <button class="btn-export" id="btn-export-md">
+          <span>📄</span> Markdown (.md)
+        </button>
+        <button class="btn-export" id="btn-export-srt">
+          <span>⏱️</span> Phụ đề (.srt)
+        </button>
+        <button class="btn-export" id="btn-export-json">
+          <span>⚙️</span> JSON
+        </button>
+        <button class="btn-export" id="btn-export-pptx">
+          <span>📊</span> Slide (.pptx)
+        </button>
+      </div>
+    </div>
+
+    <!-- 3-PANE WORKSPACE BODY -->
+    <div class="workspace-body">
+
+      <!-- PANE 1: NGUỒN TÀI LIỆU (+ THÊM TÀI LIỆU Ở TRÊN, DƯỚI LÀ DANH SÁCH ĐÃ UP VÀO) -->
+      <aside class="pane-sources">
+        <div class="pane-header">
+          <span>Nguồn Tài Liệu</span>
+          <span style="color: var(--cyan); font-size: 11px;" id="source-active-count">1 tệp</span>
+        </div>
+
+        <!-- Ô THÊM TÀI LIỆU Ở TRÊN -->
+        <label class="source-drop-zone" id="source-drop-zone" for="source-file-input">
+          <div style="font-size: 26px; margin-bottom: 4px;">📂</div>
+          <div style="font-size: 12px; font-weight: 700; color: var(--text-main);">+ Thêm Tài Liệu</div>
+          <div style="font-size: 11px; color: var(--text-dim); margin-top: 4px;">Kéo thả hoặc bấm để nạp .pdf, .pptx,
+            .docx</div>
+          <input type="file" id="source-file-input" accept=".pptx,.pdf,.docx,.txt" style="display: none;">
+        </label>
+
+        <!-- BỘ CHỌN NGÔN NGỮ KỊCH BẢN -->
+        <div style="margin-top: 6px;">
+          <div
+            style="font-size: 10px; font-weight: 600; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">
+            Ngôn Ngữ Kịch Bản</div>
+          <div class="lang-switcher-row" id="lang-switcher-row">
+            <button class="lang-btn active" data-lang="vi" onclick="setScriptLanguage('vi')">🇻🇳 Tiếng Việt</button>
+            <button class="lang-btn" data-lang="en" onclick="setScriptLanguage('en')">🇬🇧 English</button>
+          </div>
+          <div style="font-size: 9.5px; color: var(--text-dim); margin-top: 3px; line-height: 1.4;">VN: thuần Việt + mở
+            ngoặc thuật ngữ chuyên ngành</div>
+        </div>
+
+        <!-- DƯỚI ĐÓ LÀ DANH SÁCH CÁC TÀI LIỆU ĐÃ UP VÀO -->
+        <div
+          style="font-size: 11px; font-weight: 700; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 4px;">
+          Tài Liệu Đã Nạp
+        </div>
+        <div id="sources-list" style="display: flex; flex-direction: column; gap: 10px;">
+          <!-- Items will be injected dynamically -->
+        </div>
+      </aside>
+
+      <!-- RESIZER TRÁI: KÉO ĐỘ RỘNG CỘT TÀI LIỆU -->
+      <div class="layout-resizer" id="resizer-left" title="Kéo để thay đổi độ rộng cột nguồn tài liệu"></div>
+
+      <!-- PANE 2: CENTER PANE WITH NOTEBOOK-STYLE TABS (SƠ ĐỒ TƯ DUY, KỊCH BẢN, VIDEO) -->
+      <main class="pane-center">
+        <!-- TOP NAVIGATION BAR -->
+        <div class="center-nav-bar">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <button class="center-nav-btn active" id="btn-tab-mindmap">
+              <span>🗺️</span> Sơ Đồ
+            </button>
+            <button class="center-nav-btn" id="btn-tab-script">
+              <span>📜</span> Kịch Bản
+            </button>
+            <button class="center-nav-btn" id="btn-tab-video">
+              <span>🎬</span> Video Bài Giảng
+            </button>
+          </div>
+
+          <!-- NÚT SINH KỊCH BẢN (CÁC PHẦN ĐÃ CHỌN) -->
+     
+--- MATCH 5 ---
+    </button>
+        <button class="btn-ws-delete-project" id="btn-ws-delete-project" title="Xóa vĩnh viễn dự án này">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="3 6 5 6 21 6"></polyline>
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+            <line x1="10" y1="11" x2="10" y2="17"></line>
+            <line x1="14" y1="11" x2="14" y2="17"></line>
+          </svg>
+          <span>Xóa Dự Án</span>
+        </button>
+      </div>
+
+      <!-- THANH NÚT XUẤT TÀI LIỆU: MẶC ĐỊNH ẨN, CHỈ HIỂN THỊ KHI ẤN VÀO TAB KỊCH BẢN THEO ĐÚNG YÊU CẦU -->
+      <div class="header-actions" id="workspace-export-actions" style="display: none;">
+        <button class="btn-export" id="btn-export-docx">
+          <span>📘</span> Word (.docx)
+        </button>
+        <button class="btn-export" id="btn-export-md">
+          <span>📄</span> Markdown (.md)
+        </button>
+        <button class="btn-export" id="btn-export-srt">
+          <span>⏱️</span> Phụ đề (.srt)
+        </button>
+        <button class="btn-export" id="btn-export-json">
+          <span>⚙️</span> JSON
+        </button>
+        <button class="btn-export" id="btn-export-pptx">
+          <span>📊</span> Slide (.pptx)
+        </button>
+      </div>
+    </div>
+
+    <!-- 3-PANE WORKSPACE BODY -->
+    <div class="workspace-body">
+
+      <!-- PANE 1: NGUỒN TÀI LIỆU (+ THÊM TÀI LIỆU Ở TRÊN, DƯỚI LÀ DANH SÁCH ĐÃ UP VÀO) -->
+      <aside class="pane-sources">
+        <div class="pane-header">
+          <span>Nguồn Tài Liệu</span>
+          <span style="color: var(--cyan); font-size: 11px;" id="source-active-count">1 tệp</span>
+        </div>
+
+        <!-- Ô THÊM TÀI LIỆU Ở TRÊN -->
+        <label class="source-drop-zone" id="source-drop-zone" for="source-file-input">
+          <div style="font-size: 26px; margin-bottom: 4px;">📂</div>
+          <div style="font-size: 12px; font-weight: 700; color: var(--text-main);">+ Thêm Tài Liệu</div>
+          <div style="font-size: 11px; color: var(--text-dim); margin-top: 4px;">Kéo thả hoặc bấm để nạp .pdf, .pptx,
+            .docx</div>
+          <input type="file" id="source-file-input" accept=".pptx,.pdf,.docx,.txt" style="display: none;">
+        </label>
+
+        <!-- BỘ CHỌN NGÔN NGỮ KỊCH BẢN -->
+        <div style="margin-top: 6px;">
+          <div
+            style="font-size: 10px; font-weight: 600; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">
+            Ngôn Ngữ Kịch Bản</div>
+          <div class="lang-switcher-row" id="lang-switcher-row">
+            <button class="lang-btn active" data-lang="vi" onclick="setScriptLanguage('vi')">🇻🇳 Tiếng Việt</button>
+            <button class="lang-btn" data-lang="en" onclick="setScriptLanguage('en')">🇬🇧 English</button>
+          </div>
+          <div style="font-size: 9.5px; color: var(--text-dim); margin-top: 3px; line-height: 1.4;">VN: thuần Việt + mở
+            ngoặc thuật ngữ chuyên ngành</div>
+        </div>
+
+        <!-- DƯỚI ĐÓ LÀ DANH SÁCH CÁC TÀI LIỆU ĐÃ UP VÀO -->
+        <div
+          style="font-size: 11px; font-weight: 700; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 4px;">
+          Tài Liệu Đã Nạp
+        </div>
+        <div id="sources-list" style="display: flex; flex-direction: column; gap: 10px;">
+          <!-- Items will be injected dynamically -->
+        </div>
+      </aside>
+
+      <!-- RESIZER TRÁI: KÉO ĐỘ RỘNG CỘT TÀI LIỆU -->
+      <div class="layout-resizer" id="resizer-left" title="Kéo để thay đổi độ rộng cột nguồn tài liệu"></div>
+
+      <!-- PANE 2: CENTER PANE WITH NOTEBOOK-STYLE TABS (SƠ ĐỒ TƯ DUY, KỊCH BẢN, VIDEO) -->
+      <main class="pane-center">
+        <!-- TOP NAVIGATION BAR -->
+        <div class="center-nav-bar">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <button class="center-nav-btn active" id="btn-tab-mindmap">
+              <span>🗺️</span> Sơ Đồ
+            </button>
+            <button class="center-nav-btn" id="btn-tab-script">
+              <span>📜</span> Kịch Bản
+            </button>
+            <button class="center-nav-btn" id="btn-tab-video">
+              <span>🎬</span> Video Bài Giảng
+            </button>
+          </div>
+
+          <!-- NÚT SINH KỊCH BẢN (CÁC PHẦN ĐÃ CHỌN) -->
+          <button cla
+--- MATCH 6 ---
+ vĩnh viễn dự án này">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="3 6 5 6 21 6"></polyline>
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+            <line x1="10" y1="11" x2="10" y2="17"></line>
+            <line x1="14" y1="11" x2="14" y2="17"></line>
+          </svg>
+          <span>Xóa Dự Án</span>
+        </button>
+      </div>
+
+      <!-- THANH NÚT XUẤT TÀI LIỆU: MẶC ĐỊNH ẨN, CHỈ HIỂN THỊ KHI ẤN VÀO TAB KỊCH BẢN THEO ĐÚNG YÊU CẦU -->
+      <div class="header-actions" id="workspace-export-actions" style="display: none;">
+        <button class="btn-export" id="btn-export-docx">
+          <span>📘</span> Word (.docx)
+        </button>
+        <button class="btn-export" id="btn-export-md">
+          <span>📄</span> Markdown (.md)
+        </button>
+        <button class="btn-export" id="btn-export-srt">
+          <span>⏱️</span> Phụ đề (.srt)
+        </button>
+        <button class="btn-export" id="btn-export-json">
+          <span>⚙️</span> JSON
+        </button>
+        <button class="btn-export" id="btn-export-pptx">
+          <span>📊</span> Slide (.pptx)
+        </button>
+      </div>
+    </div>
+
+    <!-- 3-PANE WORKSPACE BODY -->
+    <div class="workspace-body">
+
+      <!-- PANE 1: NGUỒN TÀI LIỆU (+ THÊM TÀI LIỆU Ở TRÊN, DƯỚI LÀ DANH SÁCH ĐÃ UP VÀO) -->
+      <aside class="pane-sources">
+        <div class="pane-header">
+          <span>Nguồn Tài Liệu</span>
+          <span style="color: var(--cyan); font-size: 11px;" id="source-active-count">1 tệp</span>
+        </div>
+
+        <!-- Ô THÊM TÀI LIỆU Ở TRÊN -->
+        <label class="source-drop-zone" id="source-drop-zone" for="source-file-input">
+          <div style="font-size: 26px; margin-bottom: 4px;">📂</div>
+          <div style="font-size: 12px; font-weight: 700; color: var(--text-main);">+ Thêm Tài Liệu</div>
+          <div style="font-size: 11px; color: var(--text-dim); margin-top: 4px;">Kéo thả hoặc bấm để nạp .pdf, .pptx,
+            .docx</div>
+          <input type="file" id="source-file-input" accept=".pptx,.pdf,.docx,.txt" style="display: none;">
+        </label>
+
+        <!-- BỘ CHỌN NGÔN NGỮ KỊCH BẢN -->
+        <div style="margin-top: 6px;">
+          <div
+            style="font-size: 10px; font-weight: 600; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">
+            Ngôn Ngữ Kịch Bản</div>
+          <div class="lang-switcher-row" id="lang-switcher-row">
+            <button class="lang-btn active" data-lang="vi" onclick="setScriptLanguage('vi')">🇻🇳 Tiếng Việt</button>
+            <button class="lang-btn" data-lang="en" onclick="setScriptLanguage('en')">🇬🇧 English</button>
+          </div>
+          <div style="font-size: 9.5px; color: var(--text-dim); margin-top: 3px; line-height: 1.4;">VN: thuần Việt + mở
+            ngoặc thuật ngữ chuyên ngành</div>
+        </div>
+
+        <!-- DƯỚI ĐÓ LÀ DANH SÁCH CÁC TÀI LIỆU ĐÃ UP VÀO -->
+        <div
+          style="font-size: 11px; font-weight: 700; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 4px;">
+          Tài Liệu Đã Nạp
+        </div>
+        <div id="sources-list" style="display: flex; flex-direction: column; gap: 10px;">
+          <!-- Items will be injected dynamically -->
+        </div>
+      </aside>
+
+      <!-- RESIZER TRÁI: KÉO ĐỘ RỘNG CỘT TÀI LIỆU -->
+      <div class="layout-resizer" id="resizer-left" title="Kéo để thay đổi độ rộng cột nguồn tài liệu"></div>
+
+      <!-- PANE 2: CENTER PANE WITH NOTEBOOK-STYLE TABS (SƠ ĐỒ TƯ DUY, KỊCH BẢN, VIDEO) -->
+      <main class="pane-center">
+        <!-- TOP NAVIGATION BAR -->
+        <div class="center-nav-bar">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <button class="center-nav-btn active" id="btn-tab-mindmap">
+              <span>🗺️</span> Sơ Đồ
+            </button>
+            <button class="center-nav-btn" id="btn-tab-script">
+              <span>📜</span> Kịch Bản
+            </button>
+            <button class="center-nav-btn" id="btn-tab-video">
+              <span>🎬</span> Video Bài Giảng
+            </button>
+          </div>
+
+          <!-- NÚT SINH KỊCH BẢN (CÁC PHẦN ĐÃ CHỌN) -->
+          <button class="btn-generate-script-now" id="btn-generate-script-now" onclick="generateScriptFromSelection()"
+--- MATCH 7 ---
+ này">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="3 6 5 6 21 6"></polyline>
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+            <line x1="10" y1="11" x2="10" y2="17"></line>
+            <line x1="14" y1="11" x2="14" y2="17"></line>
+          </svg>
+          <span>Xóa Dự Án</span>
+        </button>
+      </div>
+
+      <!-- THANH NÚT XUẤT TÀI LIỆU: MẶC ĐỊNH ẨN, CHỈ HIỂN THỊ KHI ẤN VÀO TAB KỊCH BẢN THEO ĐÚNG YÊU CẦU -->
+      <div class="header-actions" id="workspace-export-actions" style="display: none;">
+        <button class="btn-export" id="btn-export-docx">
+          <span>📘</span> Word (.docx)
+        </button>
+        <button class="btn-export" id="btn-export-md">
+          <span>📄</span> Markdown (.md)
+        </button>
+        <button class="btn-export" id="btn-export-srt">
+          <span>⏱️</span> Phụ đề (.srt)
+        </button>
+        <button class="btn-export" id="btn-export-json">
+          <span>⚙️</span> JSON
+        </button>
+        <button class="btn-export" id="btn-export-pptx">
+          <span>📊</span> Slide (.pptx)
+        </button>
+      </div>
+    </div>
+
+    <!-- 3-PANE WORKSPACE BODY -->
+    <div class="workspace-body">
+
+      <!-- PANE 1: NGUỒN TÀI LIỆU (+ THÊM TÀI LIỆU Ở TRÊN, DƯỚI LÀ DANH SÁCH ĐÃ UP VÀO) -->
+      <aside class="pane-sources">
+        <div class="pane-header">
+          <span>Nguồn Tài Liệu</span>
+          <span style="color: var(--cyan); font-size: 11px;" id="source-active-count">1 tệp</span>
+        </div>
+
+        <!-- Ô THÊM TÀI LIỆU Ở TRÊN -->
+        <label class="source-drop-zone" id="source-drop-zone" for="source-file-input">
+          <div style="font-size: 26px; margin-bottom: 4px;">📂</div>
+          <div style="font-size: 12px; font-weight: 700; color: var(--text-main);">+ Thêm Tài Liệu</div>
+          <div style="font-size: 11px; color: var(--text-dim); margin-top: 4px;">Kéo thả hoặc bấm để nạp .pdf, .pptx,
+            .docx</div>
+          <input type="file" id="source-file-input" accept=".pptx,.pdf,.docx,.txt" style="display: none;">
+        </label>
+
+        <!-- BỘ CHỌN NGÔN NGỮ KỊCH BẢN -->
+        <div style="margin-top: 6px;">
+          <div
+            style="font-size: 10px; font-weight: 600; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">
+            Ngôn Ngữ Kịch Bản</div>
+          <div class="lang-switcher-row" id="lang-switcher-row">
+            <button class="lang-btn active" data-lang="vi" onclick="setScriptLanguage('vi')">🇻🇳 Tiếng Việt</button>
+            <button class="lang-btn" data-lang="en" onclick="setScriptLanguage('en')">🇬🇧 English</button>
+          </div>
+          <div style="font-size: 9.5px; color: var(--text-dim); margin-top: 3px; line-height: 1.4;">VN: thuần Việt + mở
+            ngoặc thuật ngữ chuyên ngành</div>
+        </div>
+
+        <!-- DƯỚI ĐÓ LÀ DANH SÁCH CÁC TÀI LIỆU ĐÃ UP VÀO -->
+        <div
+          style="font-size: 11px; font-weight: 700; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 4px;">
+          Tài Liệu Đã Nạp
+        </div>
+        <div id="sources-list" style="display: flex; flex-direction: column; gap: 10px;">
+          <!-- Items will be injected dynamically -->
+        </div>
+      </aside>
+
+      <!-- RESIZER TRÁI: KÉO ĐỘ RỘNG CỘT TÀI LIỆU -->
+      <div class="layout-resizer" id="resizer-left" title="Kéo để thay đổi độ rộng cột nguồn tài liệu"></div>
+
+      <!-- PANE 2: CENTER PANE WITH NOTEBOOK-STYLE TABS (SƠ ĐỒ TƯ DUY, KỊCH BẢN, VIDEO) -->
+      <main class="pane-center">
+        <!-- TOP NAVIGATION BAR -->
+        <div class="center-nav-bar">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <button class="center-nav-btn active" id="btn-tab-mindmap">
+              <span>🗺️</span> Sơ Đồ
+            </button>
+            <button class="center-nav-btn" id="btn-tab-script">
+              <span>📜</span> Kịch Bản
+            </button>
+            <button class="center-nav-btn" id="btn-tab-video">
+              <span>🎬</span> Video Bài Giảng
+            </button>
+          </div>
+
+          <!-- NÚT SINH KỊCH BẢN (CÁC PHẦN ĐÃ CHỌN) -->
+          <button class="btn-generate-script-now" id="btn-generate-script-now" onclick="generateScriptFromSelection()"
+            tit
+--- MATCH 8 ---
+ stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="3 6 5 6 21 6"></polyline>
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+            <line x1="10" y1="11" x2="10" y2="17"></line>
+            <line x1="14" y1="11" x2="14" y2="17"></line>
+          </svg>
+          <span>Xóa Dự Án</span>
+        </button>
+      </div>
+
+      <!-- THANH NÚT XUẤT TÀI LIỆU: MẶC ĐỊNH ẨN, CHỈ HIỂN THỊ KHI ẤN VÀO TAB KỊCH BẢN THEO ĐÚNG YÊU CẦU -->
+      <div class="header-actions" id="workspace-export-actions" style="display: none;">
+        <button class="btn-export" id="btn-export-docx">
+          <span>📘</span> Word (.docx)
+        </button>
+        <button class="btn-export" id="btn-export-md">
+          <span>📄</span> Markdown (.md)
+        </button>
+        <button class="btn-export" id="btn-export-srt">
+          <span>⏱️</span> Phụ đề (.srt)
+        </button>
+        <button class="btn-export" id="btn-export-json">
+          <span>⚙️</span> JSON
+        </button>
+        <button class="btn-export" id="btn-export-pptx">
+          <span>📊</span> Slide (.pptx)
+        </button>
+      </div>
+    </div>
+
+    <!-- 3-PANE WORKSPACE BODY -->
+    <div class="workspace-body">
+
+      <!-- PANE 1: NGUỒN TÀI LIỆU (+ THÊM TÀI LIỆU Ở TRÊN, DƯỚI LÀ DANH SÁCH ĐÃ UP VÀO) -->
+      <aside class="pane-sources">
+        <div class="pane-header">
+          <span>Nguồn Tài Liệu</span>
+          <span style="color: var(--cyan); font-size: 11px;" id="source-active-count">1 tệp</span>
+        </div>
+
+        <!-- Ô THÊM TÀI LIỆU Ở TRÊN -->
+        <label class="source-drop-zone" id="source-drop-zone" for="source-file-input">
+          <div style="font-size: 26px; margin-bottom: 4px;">📂</div>
+          <div style="font-size: 12px; font-weight: 700; color: var(--text-main);">+ Thêm Tài Liệu</div>
+          <div style="font-size: 11px; color: var(--text-dim); margin-top: 4px;">Kéo thả hoặc bấm để nạp .pdf, .pptx,
+            .docx</div>
+          <input type="file" id="source-file-input" accept=".pptx,.pdf,.docx,.txt" style="display: none;">
+        </label>
+
+        <!-- BỘ CHỌN NGÔN NGỮ KỊCH BẢN -->
+        <div style="margin-top: 6px;">
+          <div
+            style="font-size: 10px; font-weight: 600; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">
+            Ngôn Ngữ Kịch Bản</div>
+          <div class="lang-switcher-row" id="lang-switcher-row">
+            <button class="lang-btn active" data-lang="vi" onclick="setScriptLanguage('vi')">🇻🇳 Tiếng Việt</button>
+            <button class="lang-btn" data-lang="en" onclick="setScriptLanguage('en')">🇬🇧 English</button>
+          </div>
+          <div style="font-size: 9.5px; color: var(--text-dim); margin-top: 3px; line-height: 1.4;">VN: thuần Việt + mở
+            ngoặc thuật ngữ chuyên ngành</div>
+        </div>
+
+        <!-- DƯỚI ĐÓ LÀ DANH SÁCH CÁC TÀI LIỆU ĐÃ UP VÀO -->
+        <div
+          style="font-size: 11px; font-weight: 700; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 4px;">
+          Tài Liệu Đã Nạp
+        </div>
+        <div id="sources-list" style="display: flex; flex-direction: column; gap: 10px;">
+          <!-- Items will be injected dynamically -->
+        </div>
+      </aside>
+
+      <!-- RESIZER TRÁI: KÉO ĐỘ RỘNG CỘT TÀI LIỆU -->
+      <div class="layout-resizer" id="resizer-left" title="Kéo để thay đổi độ rộng cột nguồn tài liệu"></div>
+
+      <!-- PANE 2: CENTER PANE WITH NOTEBOOK-STYLE TABS (SƠ ĐỒ TƯ DUY, KỊCH BẢN, VIDEO) -->
+      <main class="pane-center">
+        <!-- TOP NAVIGATION BAR -->
+        <div class="center-nav-bar">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <button class="center-nav-btn active" id="btn-tab-mindmap">
+              <span>🗺️</span> Sơ Đồ
+            </button>
+            <button class="center-nav-btn" id="btn-tab-script">
+              <span>📜</span> Kịch Bản
+            </button>
+            <button class="center-nav-btn" id="btn-tab-video">
+              <span>🎬</span> Video Bài Giảng
+            </button>
+          </div>
+
+          <!-- NÚT SINH KỊCH BẢN (CÁC PHẦN ĐÃ CHỌN) -->
+          <button class="btn-generate-script-now" id="btn-generate-script-now" onclick="generateScriptFromSelection()"
+            title="Tự động quét các slide và nhánh sơ đồ đã chọn để tạo kịch bản hoàn chỉnh ngay lập tức">
+      
+--- MATCH 9 ---
+"
+            stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="3 6 5 6 21 6"></polyline>
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+            <line x1="10" y1="11" x2="10" y2="17"></line>
+            <line x1="14" y1="11" x2="14" y2="17"></line>
+          </svg>
+          <span>Xóa Dự Án</span>
+        </button>
+      </div>
+
+      <!-- THANH NÚT XUẤT TÀI LIỆU: MẶC ĐỊNH ẨN, CHỈ HIỂN THỊ KHI ẤN VÀO TAB KỊCH BẢN THEO ĐÚNG YÊU CẦU -->
+      <div class="header-actions" id="workspace-export-actions" style="display: none;">
+        <button class="btn-export" id="btn-export-docx">
+          <span>📘</span> Word (.docx)
+        </button>
+        <button class="btn-export" id="btn-export-md">
+          <span>📄</span> Markdown (.md)
+        </button>
+        <button class="btn-export" id="btn-export-srt">
+          <span>⏱️</span> Phụ đề (.srt)
+        </button>
+        <button class="btn-export" id="btn-export-json">
+          <span>⚙️</span> JSON
+        </button>
+        <button class="btn-export" id="btn-export-pptx">
+          <span>📊</span> Slide (.pptx)
+        </button>
+      </div>
+    </div>
+
+    <!-- 3-PANE WORKSPACE BODY -->
+    <div class="workspace-body">
+
+      <!-- PANE 1: NGUỒN TÀI LIỆU (+ THÊM TÀI LIỆU Ở TRÊN, DƯỚI LÀ DANH SÁCH ĐÃ UP VÀO) -->
+      <aside class="pane-sources">
+        <div class="pane-header">
+          <span>Nguồn Tài Liệu</span>
+          <span style="color: var(--cyan); font-size: 11px;" id="source-active-count">1 tệp</span>
+        </div>
+
+        <!-- Ô THÊM TÀI LIỆU Ở TRÊN -->
+        <label class="source-drop-zone" id="source-drop-zone" for="source-file-input">
+          <div style="font-size: 26px; margin-bottom: 4px;">📂</div>
+          <div style="font-size: 12px; font-weight: 700; color: var(--text-main);">+ Thêm Tài Liệu</div>
+          <div style="font-size: 11px; color: var(--text-dim); margin-top: 4px;">Kéo thả hoặc bấm để nạp .pdf, .pptx,
+            .docx</div>
+          <input type="file" id="source-file-input" accept=".pptx,.pdf,.docx,.txt" style="display: none;">
+        </label>
+
+        <!-- BỘ CHỌN NGÔN NGỮ KỊCH BẢN -->
+        <div style="margin-top: 6px;">
+          <div
+            style="font-size: 10px; font-weight: 600; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">
+            Ngôn Ngữ Kịch Bản</div>
+          <div class="lang-switcher-row" id="lang-switcher-row">
+            <button class="lang-btn active" data-lang="vi" onclick="setScriptLanguage('vi')">🇻🇳 Tiếng Việt</button>
+            <button class="lang-btn" data-lang="en" onclick="setScriptLanguage('en')">🇬🇧 English</button>
+          </div>
+          <div style="font-size: 9.5px; color: var(--text-dim); margin-top: 3px; line-height: 1.4;">VN: thuần Việt + mở
+            ngoặc thuật ngữ chuyên ngành</div>
+        </div>
+
+        <!-- DƯỚI ĐÓ LÀ DANH SÁCH CÁC TÀI LIỆU ĐÃ UP VÀO -->
+        <div
+          style="font-size: 11px; font-weight: 700; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 4px;">
+          Tài Liệu Đã Nạp
+        </div>
+        <div id="sources-list" style="display: flex; flex-direction: column; gap: 10px;">
+          <!-- Items will be injected dynamically -->
+        </div>
+      </aside>
+
+      <!-- RESIZER TRÁI: KÉO ĐỘ RỘNG CỘT TÀI LIỆU -->
+      <div class="layout-resizer" id="resizer-left" title="Kéo để thay đổi độ rộng cột nguồn tài liệu"></div>
+
+      <!-- PANE 2: CENTER PANE WITH NOTEBOOK-STYLE TABS (SƠ ĐỒ TƯ DUY, KỊCH BẢN, VIDEO) -->
+      <main class="pane-center">
+        <!-- TOP NAVIGATION BAR -->
+        <div class="center-nav-bar">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <button class="center-nav-btn active" id="btn-tab-mindmap">
+              <span>🗺️</span> Sơ Đồ
+            </button>
+            <button class="center-nav-btn" id="btn-tab-script">
+              <span>📜</span> Kịch Bản
+            </button>
+            <button class="center-nav-btn" id="btn-tab-video">
+              <span>🎬</span> Video Bài Giảng
+            </button>
+          </div>
+
+          <!-- NÚT SINH KỊCH BẢN (CÁC PHẦN ĐÃ CHỌN) -->
+          <button class="btn-generate-script-now" id="btn-generate-script-now" onclick="generateScriptFromSelection()"
+            title="Tự động quét các slide và nhánh sơ đồ đã chọn để tạo kịch bản hoàn chỉnh ngay lập tức">
+            <span>⚡</s
+--- MATCH 10 ---
+="3 6 5 6 21 6"></polyline>
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+            <line x1="10" y1="11" x2="10" y2="17"></line>
+            <line x1="14" y1="11" x2="14" y2="17"></line>
+          </svg>
+          <span>Xóa Dự Án</span>
+        </button>
+      </div>
+
+      <!-- THANH NÚT XUẤT TÀI LIỆU: MẶC ĐỊNH ẨN, CHỈ HIỂN THỊ KHI ẤN VÀO TAB KỊCH BẢN THEO ĐÚNG YÊU CẦU -->
+      <div class="header-actions" id="workspace-export-actions" style="display: none;">
+        <button class="btn-export" id="btn-export-docx">
+          <span>📘</span> Word (.docx)
+        </button>
+        <button class="btn-export" id="btn-export-md">
+          <span>📄</span> Markdown (.md)
+        </button>
+        <button class="btn-export" id="btn-export-srt">
+          <span>⏱️</span> Phụ đề (.srt)
+        </button>
+        <button class="btn-export" id="btn-export-json">
+          <span>⚙️</span> JSON
+        </button>
+        <button class="btn-export" id="btn-export-pptx">
+          <span>📊</span> Slide (.pptx)
+        </button>
+      </div>
+    </div>
+
+    <!-- 3-PANE WORKSPACE BODY -->
+    <div class="workspace-body">
+
+      <!-- PANE 1: NGUỒN TÀI LIỆU (+ THÊM TÀI LIỆU Ở TRÊN, DƯỚI LÀ DANH SÁCH ĐÃ UP VÀO) -->
+      <aside class="pane-sources">
+        <div class="pane-header">
+          <span>Nguồn Tài Liệu</span>
+          <span style="color: var(--cyan); font-size: 11px;" id="source-active-count">1 tệp</span>
+        </div>
+
+        <!-- Ô THÊM TÀI LIỆU Ở TRÊN -->
+        <label class="source-drop-zone" id="source-drop-zone" for="source-file-input">
+          <div style="font-size: 26px; margin-bottom: 4px;">📂</div>
+          <div style="font-size: 12px; font-weight: 700; color: var(--text-main);">+ Thêm Tài Liệu</div>
+          <div style="font-size: 11px; color: var(--text-dim); margin-top: 4px;">Kéo thả hoặc bấm để nạp .pdf, .pptx,
+            .docx</div>
+          <input type="file" id="source-file-input" accept=".pptx,.pdf,.docx,.txt" style="display: none;">
+        </label>
+
+        <!-- BỘ CHỌN NGÔN NGỮ KỊCH BẢN -->
+        <div style="margin-top: 6px;">
+          <div
+            style="font-size: 10px; font-weight: 600; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">
+            Ngôn Ngữ Kịch Bản</div>
+          <div class="lang-switcher-row" id="lang-switcher-row">
+            <button class="lang-btn active" data-lang="vi" onclick="setScriptLanguage('vi')">🇻🇳 Tiếng Việt</button>
+            <button class="lang-btn" data-lang="en" onclick="setScriptLanguage('en')">🇬🇧 English</button>
+          </div>
+          <div style="font-size: 9.5px; color: var(--text-dim); margin-top: 3px; line-height: 1.4;">VN: thuần Việt + mở
+            ngoặc thuật ngữ chuyên ngành</div>
+        </div>
+
+        <!-- DƯỚI ĐÓ LÀ DANH SÁCH CÁC TÀI LIỆU ĐÃ UP VÀO -->
+        <div
+          style="font-size: 11px; font-weight: 700; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 4px;">
+          Tài Liệu Đã Nạp
+        </div>
+        <div id="sources-list" style="display: flex; flex-direction: column; gap: 10px;">
+          <!-- Items will be injected dynamically -->
+        </div>
+      </aside>
+
+      <!-- RESIZER TRÁI: KÉO ĐỘ RỘNG CỘT TÀI LIỆU -->
+      <div class="layout-resizer" id="resizer-left" title="Kéo để thay đổi độ rộng cột nguồn tài liệu"></div>
+
+      <!-- PANE 2: CENTER PANE WITH NOTEBOOK-STYLE TABS (SƠ ĐỒ TƯ DUY, KỊCH BẢN, VIDEO) -->
+      <main class="pane-center">
+        <!-- TOP NAVIGATION BAR -->
+        <div class="center-nav-bar">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <button class="center-nav-btn active" id="btn-tab-mindmap">
+              <span>🗺️</span> Sơ Đồ
+            </button>
+            <button class="center-nav-btn" id="btn-tab-script">
+              <span>📜</span> Kịch Bản
+            </button>
+            <button class="center-nav-btn" id="btn-tab-video">
+              <span>🎬</span> Video Bài Giảng
+            </button>
+          </div>
+
+          <!-- NÚT SINH KỊCH BẢN (CÁC PHẦN ĐÃ CHỌN) -->
+          <button class="btn-generate-script-now" id="btn-generate-script-now" onclick="generateScriptFromSelection()"
+            title="Tự động quét các slide và nhánh sơ đồ đã chọn để tạo kịch bản hoàn chỉnh ngay lập tức">
+            <span>⚡</span>
+            <span class="btn-gen-text">Sinh Kịch Bản (Các Phần Đã Chọn)</span>
+      
+--- MATCH 11 ---
+</polyline>
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+            <line x1="10" y1="11" x2="10" y2="17"></line>
+            <line x1="14" y1="11" x2="14" y2="17"></line>
+          </svg>
+          <span>Xóa Dự Án</span>
+        </button>
+      </div>
+
+      <!-- THANH NÚT XUẤT TÀI LIỆU: MẶC ĐỊNH ẨN, CHỈ HIỂN THỊ KHI ẤN VÀO TAB KỊCH BẢN THEO ĐÚNG YÊU CẦU -->
+      <div class="header-actions" id="workspace-export-actions" style="display: none;">
+        <button class="btn-export" id="btn-export-docx">
+          <span>📘</span> Word (.docx)
+        </button>
+        <button class="btn-export" id="btn-export-md">
+          <span>📄</span> Markdown (.md)
+        </button>
+        <button class="btn-export" id="btn-export-srt">
+          <span>⏱️</span> Phụ đề (.srt)
+        </button>
+        <button class="btn-export" id="btn-export-json">
+          <span>⚙️</span> JSON
+        </button>
+        <button class="btn-export" id="btn-export-pptx">
+          <span>📊</span> Slide (.pptx)
+        </button>
+      </div>
+    </div>
+
+    <!-- 3-PANE WORKSPACE BODY -->
+    <div class="workspace-body">
+
+      <!-- PANE 1: NGUỒN TÀI LIỆU (+ THÊM TÀI LIỆU Ở TRÊN, DƯỚI LÀ DANH SÁCH ĐÃ UP VÀO) -->
+      <aside class="pane-sources">
+        <div class="pane-header">
+          <span>Nguồn Tài Liệu</span>
+          <span style="color: var(--cyan); font-size: 11px;" id="source-active-count">1 tệp</span>
+        </div>
+
+        <!-- Ô THÊM TÀI LIỆU Ở TRÊN -->
+        <label class="source-drop-zone" id="source-drop-zone" for="source-file-input">
+          <div style="font-size: 26px; margin-bottom: 4px;">📂</div>
+          <div style="font-size: 12px; font-weight: 700; color: var(--text-main);">+ Thêm Tài Liệu</div>
+          <div style="font-size: 11px; color: var(--text-dim); margin-top: 4px;">Kéo thả hoặc bấm để nạp .pdf, .pptx,
+            .docx</div>
+          <input type="file" id="source-file-input" accept=".pptx,.pdf,.docx,.txt" style="display: none;">
+        </label>
+
+        <!-- BỘ CHỌN NGÔN NGỮ KỊCH BẢN -->
+        <div style="margin-top: 6px;">
+          <div
+            style="font-size: 10px; font-weight: 600; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">
+            Ngôn Ngữ Kịch Bản</div>
+          <div class="lang-switcher-row" id="lang-switcher-row">
+            <button class="lang-btn active" data-lang="vi" onclick="setScriptLanguage('vi')">🇻🇳 Tiếng Việt</button>
+            <button class="lang-btn" data-lang="en" onclick="setScriptLanguage('en')">🇬🇧 English</button>
+          </div>
+          <div style="font-size: 9.5px; color: var(--text-dim); margin-top: 3px; line-height: 1.4;">VN: thuần Việt + mở
+            ngoặc thuật ngữ chuyên ngành</div>
+        </div>
+
+        <!-- DƯỚI ĐÓ LÀ DANH SÁCH CÁC TÀI LIỆU ĐÃ UP VÀO -->
+        <div
+          style="font-size: 11px; font-weight: 700; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 4px;">
+          Tài Liệu Đã Nạp
+        </div>
+        <div id="sources-list" style="display: flex; flex-direction: column; gap: 10px;">
+          <!-- Items will be injected dynamically -->
+        </div>
+      </aside>
+
+      <!-- RESIZER TRÁI: KÉO ĐỘ RỘNG CỘT TÀI LIỆU -->
+      <div class="layout-resizer" id="resizer-left" title="Kéo để thay đổi độ rộng cột nguồn tài liệu"></div>
+
+      <!-- PANE 2: CENTER PANE WITH NOTEBOOK-STYLE TABS (SƠ ĐỒ TƯ DUY, KỊCH BẢN, VIDEO) -->
+      <main class="pane-center">
+        <!-- TOP NAVIGATION BAR -->
+        <div class="center-nav-bar">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <button class="center-nav-btn active" id="btn-tab-mindmap">
+              <span>🗺️</span> Sơ Đồ
+            </button>
+            <button class="center-nav-btn" id="btn-tab-script">
+              <span>📜</span> Kịch Bản
+            </button>
+            <button class="center-nav-btn" id="btn-tab-video">
+              <span>🎬</span> Video Bài Giảng
+            </button>
+          </div>
+
+          <!-- NÚT SINH KỊCH BẢN (CÁC PHẦN ĐÃ CHỌN) -->
+          <button class="btn-generate-script-now" id="btn-generate-script-now" onclick="generateScriptFromSelection()"
+            title="Tự động quét các slide và nhánh sơ đồ đã chọn để tạo kịch bản hoàn chỉnh ngay lập tức">
+            <span>⚡</span>
+            <span class="btn-gen-text">Sinh Kịch Bản (Các Phần Đã Chọn)</span>
+            <span clas
+--- MATCH 12 ---
+ES THEO ĐÚNG YÊU CẦU) -->
+              <div class="terminal-col-notes">
+                <div class="terminal-label-row">
+                  <label class="terminal-label">📝 Ghi Chú & Chỉ Dẫn Riêng Của Bạn Cho AI (Custom Instruction):</label>
+                  <span style="font-size: 10px; color: var(--text-dim);">AI sẽ bám sát ghi chú này khi sinh kịch bản &
+                    visual</span>
+                </div>
+                <textarea class="terminal-textarea" id="terminal-node-notes"
+                  placeholder="Nhập ghi chú hoặc yêu cầu riêng cho AI (ví dụ: Giải thích chậm rãi bằng ví dụ thực tiễn, làm nổi bật công thức L2 distance, vẽ đồ thị phân bố mật độ...)"></textarea>
+              </div>
+            </div>
+
+            <div class="terminal-footer">
+              <div class="terminal-status" id="terminal-status">Sẵn sàng điều chỉnh thông số & ghi chú cho phân đoạn này
+              </div>
+              <div style="display: flex; gap: 8px;">
+                <button class="btn-export" id="btn-cancel-terminal"
+                  style="padding: 5px 12px; font-size: 11.5px;">Đóng</button>
+                <button class="btn-primary" id="btn-save-terminal" style="padding: 5px 16px; font-size: 11.5px;">
+                  <span>✓</span> Lưu Tham Số & Ghi Chú
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 2: KỊCH BẢN (HIỂN THỊ KỊCH BẢN HOÀN CHỈNH ĐÃ BIÊN TẬP TỪ SƠ ĐỒ) -->
+        <div class="center-tab-pane" id="tab-content-script">
+          <div class="script-document-container">
+            <!-- THANH THAO TÁC & THÔNG TIN KỊCH BẢN -->
+            <div class="script-doc-toolbar">
+              <div class="script-doc-summary">
+                <span class="script-doc-filename" id="doc-active-title">DSS09 - Phân Cụm Dữ Liệu</span>
+                <div class="script-doc-meta" id="doc-summary-meta">
+                  <div class="meta-stat-row">⏱️ Thời lượng: <strong>5 phút 00s</strong></div>
+                  <div class="meta-stat-row">🎬 <strong>5/5</strong> chương</div>
+                </div>
+              </div>
+              <div class="script-doc-btn-group" style="display: flex; align-items: center; gap: 10px;">
+                <!-- CHUYỂN ĐỔI CHẾ ĐỘ HIỂN THỊ KỊCH BẢN -->
+                <div class="view-mode-group">
+                  <button class="view-mode-pill active" data-mode="badges" onclick="setScriptViewMode('badges')"
+                    title="Hiển thị nhịp ngắt sư phạm [P1/P2/P3]">👁️ Nhịp Ngắt [P1/P2/P3]</button>
+                  <button class="view-mode-pill" data-mode="ssml" onclick="setScriptViewMode('ssml')"
+                    title="Hiển thị định dạng chuẩn W3C SSML cho TTS">🔊 Chuẩn W3C SSML</button>
+                  <button class="view-mode-pill" data-mode="plain" onclick="setScriptViewMode('plain')"
+                    title="Hiển thị văn bản thuần cho phụ đề">📄 Văn Bản Thuần</button>
+                </div>
+                <!-- Nút AI Viết Toàn Bộ đã được gộp lên nút chính 'Sinh Kịch Bản (Các Phần Đã Chọn)' ở góc trên -->
+                <button class="script-action-btn" id="btn-ai-generate-all" style="display: none;">
+                  <span>✨</span> AI Viết Toàn Bộ
+                </button>
+                <button class="script-action-btn" id="btn-copy-full-script" title="Sao chép toàn bộ văn bản kịch bản">
+                  <span>📋</span> Sao Chép Kịch Bản
+                </button>
+              </div>
+            </div>
+
+            <!-- TỜ VĂN BẢN KỊCH BẢN HOÀN CHỈNH (CLEAN DOCUMENT VIEW) -->
+            <div class="script-paper-view" id="script-paper-view">
+              <!-- Rendered via JS -->
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 3: VIDEO BÀI GIẢNG (TẠM THỜI ĐỂ ĐÓ) -->
+        <div class="center-tab-pane" id="tab-content-video">
+          <div class="video-preview-container">
+            <div class="video-screen-mockup">
+              <div class="video-mock-slide">
+                <div style="text-align: center;">
+                  <div style="font-size: 48px; margin-bottom: 12px;">📽️</div>
+                  <div style="font-size: 20px; font-weight: 800; color: #fff;" id="video-mock-title">Phân Cụm Dữ Liệu
+                  </div>
+                  <div style="font-size: 12px; color: var(--cyan); margin-top: 6px;" id="video-mock-badge">1080p Full HD
+                    • 60 FPS • Tỷ lệ 16:9</div>
+                </div>
+              </div>
+              <div class="video-teleprompter
+--- MATCH 13 ---
+"VD: Đồ Án Chuyên Ngành Toán Tin K67 HUST...">
+      </div>
+
+      <div>
+        <label class="form-label">Chọn tệp slide bài giảng ban đầu <span style="color: var(--rose);">*</span></label>
+        <label class="source-drop-zone" for="modal-file-input" style="display: block;">
+          <div style="font-size: 28px; margin-bottom: 6px;">📑</div>
+          <div style="font-size: 12px; font-weight: 700; color: var(--text-main);">Kéo thả file slide hoặc bấm để duyệt
+          </div>
+          <div style="font-size: 11px; color: var(--text-dim); margin-top: 4px;">Hỗ trợ .pdf, .pptx, .docx, .txt</div>
+          <input type="file" id="modal-file-input" accept=".pptx,.pdf,.docx,.txt" style="display: none;">
+        </label>
+        <div id="modal-file-name"
+          style="font-size: 11px; color: var(--cyan); margin-top: 6px; display: none; font-weight: 600;"></div>
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 10px;">
+        <button class="btn-export" id="btn-cancel-modal">Hủy bỏ</button>
+        <button class="btn-primary" id="btn-submit-create-project">
+          <span>⚡</span> Khởi Tạo & Vào Không Gian Làm Việc
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       MODAL: AI & API KEY CONFIGURATION (TOKEN-FRUGAL ENGINE)
+       ========================================================================= -->
+  <div class="modal-backdrop" id="modal-api-config" style="display: none; z-index: 9999;">
+    <div class="modal-content"
+      style="max-width: 650px; padding: 0; background: #0f172a; border-radius: 12px; overflow: hidden; border: 1px solid rgba(99,102,241,0.25); box-shadow: 0 20px 60px rgba(0,0,0,0.5);">
+
+      <!-- TABS HEADER -->
+      <div
+        style="display: flex; background: rgba(15,23,42,0.95); border-bottom: 1px solid rgba(99,102,241,0.15); position: relative;"
+        id="ai-config-tabs">
+        <button class="ai-config-tab active" data-prov="gemini_local"
+          style="flex: 1; padding: 14px 0; border: none; background: transparent; font-size: 13px; font-weight: 600; color: #818cf8; cursor: pointer; border-bottom: 2px solid #818cf8; display: flex; align-items: center; justify-content: center; gap: 6px;">
+          ⚡ Google <span
+            style="display:inline-block; width:6px; height:6px; border-radius:50%; background:#10b981;"></span>
+        </button>
+        <button class="ai-config-tab" data-prov="anthropic"
+          style="flex: 1; padding: 14px 0; border: none; background: transparent; font-size: 13px; font-weight: 600; color: #64748b; cursor: pointer; border-bottom: 2px solid transparent; display: flex; align-items: center; justify-content: center; gap: 6px;">
+          🟣 Anthropic
+        </button>
+        <button class="ai-config-tab" data-prov="openai"
+          style="flex: 1; padding: 14px 0; border: none; background: transparent; font-size: 13px; font-weight: 600; color: #64748b; cursor: pointer; border-bottom: 2px solid transparent; display: flex; align-items: center; justify-content: center; gap: 6px;">
+          🟢 OpenAI
+        </button>
+        <button class="ai-config-tab" data-prov="openrouter"
+          style="flex: 1; padding: 14px 0; border: none; background: transparent; font-size: 13px; font-weight: 600; color: #64748b; cursor: pointer; border-bottom: 2px solid transparent; display: flex; align-items: center; justify-content: center; gap: 6px;">
+          🌐 OpenRouter
+        </button>
+        <button class="btn-close-modal" id="btn-close-ai-config"
+          style="position: absolute; right: 8px; top: 8px; background: none; border: none; font-size: 20px; color: #94a3b8; cursor: pointer; padding: 4px 8px;">&times;</button>
+      </div>
+
+      <div style="padding: 24px; padding-top: 16px;">
+
+        <!-- ENGINE ACTIVATION CARD -->
+        <div
+          style="display: flex; align-items: center; justify-content: space-between; padding: 14px; border: 1px solid rgba(99,102,241,0.2); border-radius: 10px; margin-bottom: 20px; background: rgba(30,41,59,0.7);">
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <div id="cfg-prov-icon" style="font-size: 24px;">⚡</div>
+            <div>
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span id="cfg-prov-title" style="font-weight: 700; color: #e2e8f0; font-size: 14px;">Google
+                  Gemini</span>
+                <sp
+--- MATCH 14 ---
+bj.sections.push(secObj);
+            }
+          });
+
+          if (chObj.sections.length > 0) {
+            chapters.push(chObj);
+          }
+        });
+      });
+
+      return {
+        meta: {
+          projectId: activeProject.id || currentProjectId,
+          title: activeProject.title || 'Kịch Bản Bài Giảng',
+          totalDuration: cumulativeSec,
+          wpm: activeProject.wpm || 140,
+          criticScore: parseInt(document.getElementById('score-overall')?.textContent) || 94,
+          totalSources: activeSources.length,
+          totalChapters: chapters.length,
+          totalSegments: flatSegments.length,
+          totalWords: flatSegments.reduce((sum, s) => sum + s.wordCount, 0),
+          exportedAt: new Date().toLocaleString('vi-VN')
+        },
+        sources: activeSources.map(s => ({ name: s.name, pages: s.pages, size: s.size })),
+        chapters,
+        flatSegments
+      };
+    }
+
+    // 1. XUẤT MARKDOWN SƯ PHẠM CHUYÊN NGHIỆP (.MD)
+    document.getElementById('btn-export-md')?.addEventListener('click', () => {
+      const data = getActiveScriptDocumentData();
+      if (!data || data.flatSegments.length === 0) {
+        showToast('⚠️ Không có nội dung phân cảnh nào để xuất Markdown!');
+        return;
+      }
+
+      const filename = `Kich_Ban_${data.meta.projectId}.md`;
+      const m = Math.floor(data.meta.totalDuration / 60);
+      const s = data.meta.totalDuration % 60;
+
+      const lines = [
+        `# 🎓 KỊCH BẢN BÀI GIẢNG SƯ PHẠM: ${data.meta.title.toUpperCase()}`,
+        ``,
+        `> ⏱️ **Tổng thời lượng:** ${m} phút ${s < 10 ? '0' : ''}${s}s (${data.meta.totalDuration}s)  `,
+        `> 🎙️ **Tốc độ đọc chuẩn:** ${data.meta.wpm} WPM | 📊 **Quy mô:** ${data.meta.totalChapters} Chương • ${data.meta.totalSegments} Phân cảnh • ~${data.meta.totalWords} từ  `,
+        `> 🎯 **Điểm kiểm định sư phạm:** ${data.meta.criticScore}/100 | 📅 **Thời gian xuất bản:** ${data.meta.exportedAt}  `,
+        `> 📄 **Học liệu nguồn:** ${data.sources.map(src => `\`${src.name}\``).join(', ')}  `,
+        ``,
+        `---`,
+        ``,
+        `## 📑 MỤC LỤC TỔNG QUAN BÀI GIẢNG`,
+        ``
+      ];
+
+      data.chapters.forEach(ch => {
+        lines.push(`- **CHƯƠNG ${ch.chIndex}: ${ch.title}** (${ch.visualType})`);
+        ch.sections.forEach(sec => {
+          sec.items.forEach(it => {
+            lines.push(`  - [${it.code}] ${it.title} \`[${formatTime(it.tStart)} - ${formatTime(it.tEnd)} • ${it.duration}s]\``);
+          });
+        });
+      });
+
+      lines.push(``, `---`, ``);
+
+      // Chi tiết từng chương và phân đoạn
+      data.chapters.forEach(ch => {
+        lines.push(`## 📘 CHƯƠNG ${ch.chIndex}: ${ch.title.toUpperCase()}`);
+        lines.push(`*Chế độ thị giác chính: \`[${ch.visualType}]\` • Cấp độ sư phạm: \`[${ch.depth}]\` • Tài liệu: \`${ch.sourceName}\`*`);
+        lines.push(``);
+
+        ch.sections.forEach(sec => {
+          lines.push(`### 📂 ${sec.code}. ${sec.title}`);
+          lines.push(``);
+
+          sec.items.forEach(it => {
+            lines.push(`#### 🎯 [${it.code}] ${it.title}`);
+            lines.push(`- ⏱️ **Thời lượng:** \`${formatTime(it.tStart)} - ${formatTime(it.tEnd)}\` (${it.duration}s • ~${it.wordCount} từ)`);
+            lines.push(`- 🎬 **Chỉ dẫn thị giác:** \`[${it.visualType}]\`${it.mediaNote ? ` - *${it.mediaNote}*` : ''}`);
+
+            if (it.mechanism) {
+              lines.push(``, `> 📐 **Cơ chế & Công thức Toán học ($LaTeX$):**  `, `> ${it.mechanism}`);
+            }
+
+            if (it.summary || it.keyPoint) {
+              lines.push(``, `> 💡 **Trọng tâm sư phạm & Điểm then chốt:**  `, `> ${it.summary || it.keyPoint}`);
+            }
+
+            if (it.bridge) {
+              lines.push(``, `> 🌉 **Câu nối chuyển tiếp sư phạm (Bridge):**  `, `> *"${it.bridge}"*`);
+            }
+
+            lines.push(``, `##### 🎙️ Lời Thoại Sư Phạm:`);
+            if (it.narration && it.narration.trim()) {
+              lines.push(it.narration.trim());
+            } else {
+              lines.push(`*(Chưa tạo kịch bản lời thoại cho phân đoạn này)*`);
+            }
+
+            if (Array.isArray(it.attachments) && it.attachments.length > 0) {
+              lines.push(``, `**📎 Tệp đính kèm minh họa:**`);
+              it.attachments.forEach(att => {
+                lines.push(`- 🖼️ \`${att.name}\` (${att.type} • ${att.size})`);
+              });
+            }
+
+            lines.push(``, `---`, ``);
+          });
+        });
+      });
+
+      downloadFile(filename, lines.join('\n'), '
+--- MATCH 15 ---
+          lines.push(``, `> 🌉 **Câu nối chuyển tiếp sư phạm (Bridge):**  `, `> *"${it.bridge}"*`);
+            }
+
+            lines.push(``, `##### 🎙️ Lời Thoại Sư Phạm:`);
+            if (it.narration && it.narration.trim()) {
+              lines.push(it.narration.trim());
+            } else {
+              lines.push(`*(Chưa tạo kịch bản lời thoại cho phân đoạn này)*`);
+            }
+
+            if (Array.isArray(it.attachments) && it.attachments.length > 0) {
+              lines.push(``, `**📎 Tệp đính kèm minh họa:**`);
+              it.attachments.forEach(att => {
+                lines.push(`- 🖼️ \`${att.name}\` (${att.type} • ${att.size})`);
+              });
+            }
+
+            lines.push(``, `---`, ``);
+          });
+        });
+      });
+
+      downloadFile(filename, lines.join('\n'), 'text/markdown');
+      showToast(`Đã xuất tài liệu Markdown chuyên nghiệp: ${filename}`);
+    });
+
+    // 2. XUẤT TÀI LIỆU GIÁO ÁN WORD CHUẨN ACADEMIC (.DOC)
+    document.getElementById('btn-export-docx')?.addEventListener('click', async () => {
+      const data = getActiveScriptDocumentData();
+      if (!data || data.flatSegments.length === 0) {
+        showToast('⚠️ Không có nội dung phân cảnh nào để xuất Word!');
+        return;
+      }
+
+      const filename = `Giao_An_Kich_Ban_${data.meta.projectId}.doc`;
+      const m = Math.floor(data.meta.totalDuration / 60);
+      const s = data.meta.totalDuration % 60;
+
+      try {
+        // 1. Tạo bảng ma trận tổng quan chương trình
+        let outlineRows = '';
+        data.flatSegments.forEach((it, idx) => {
+          const timeStr = `${formatTime(it.tStart)} - ${formatTime(it.tEnd)}`;
+          outlineRows += `
+            <tr style="background:${idx % 2 === 0 ? '#f8fafc' : '#ffffff'};">
+              <td style="padding:8px 10px;border:1px solid #cbd5e1;font-family:'Courier New',monospace;font-size:11px;font-weight:bold;color:#0369a1;">${timeStr}</td>
+              <td style="padding:8px 10px;border:1px solid #cbd5e1;font-weight:bold;font-size:12px;">${it.code}</td>
+              <td style="padding:8px 10px;border:1px solid #cbd5e1;font-size:12px;"><b>${it.title}</b><br/><span style="color:#64748b;font-size:11px;">${it.chapterTitle}</span></td>
+              <td style="padding:8px 10px;border:1px solid #cbd5e1;font-size:11px;text-align:center;">${it.duration}s</td>
+              <td style="padding:8px 10px;border:1px solid #cbd5e1;font-size:11px;color:#047857;font-weight:600;">[${it.visualType}]</td>
+              <td style="padding:8px 10px;border:1px solid #cbd5e1;font-size:11px;color:#334155;">${it.summary || it.mechanism || '—'}</td>
+            </tr>
+          `;
+        });
+
+        // 2. Tạo chi tiết từng phân đoạn kịch bản
+        let detailedSectionsHtml = '';
+        data.chapters.forEach(ch => {
+          detailedSectionsHtml += `
+            <div style="margin-top:30px;page-break-before:always;">
+              <div style="background:#0f172a;color:#ffffff;padding:12px 18px;border-radius:6px;margin-bottom:18px;">
+                <h2 style="margin:0;font-size:16px;letter-spacing:0.5px;color:#38bdf8;">CHƯƠNG ${ch.chIndex}: ${ch.title.toUpperCase()}</h2>
+                <div style="font-size:11px;color:#cbd5e1;margin-top:4px;">Chế độ thị giác chính: <b>${ch.visualType}</b> | Phân loại: <b>${ch.depth}</b> | Tài liệu nguồn: <b>${ch.sourceName}</b></div>
+              </div>
+          `;
+
+          ch.sections.forEach(sec => {
+            detailedSectionsHtml += `
+              <div style="margin:16px 0 10px 0;padding-bottom:6px;border-bottom:2px solid #e2e8f0;">
+                <h3 style="margin:0;font-size:14px;color:#1e293b;">📂 ${sec.code}. ${sec.title}</h3>
+              </div>
+            `;
+
+            sec.items.forEach(it => {
+              const timeStr = `${formatTime(it.tStart)} - ${formatTime(it.tEnd)}`;
+              const safeNarr = (it.narration || '<i>(Chưa tạo kịch bản lời thoại cho phân đoạn này)</i>')
+                .replace(/</g, '&lt;').replace(/>/g, '&gt;')
+                .replace(/\[P1\]/g, '<span style="background:#e2e8f0;color:#334155;font-weight:bold;font-size:10px;padding:2px 6px;border-radius:3px;margin:0 4px;">[P1: Nghỉ 1s]</span>')
+                .replace(/\[P2\]/g, '<span style="background:#fef08a;color:#854d0e;font-weight:bold;font-size:10px;padding:2px 6px;border-radius:3px;margin:0 4px;">[P2: Nghỉ 2s]</span>')
+                .replace(/\n/g, '<br/>');
+
+              let formulaCallout = '';
+              if (it.mechanism) {
+        
+--- MATCH 16 ---
+      <div style="margin-top:35px;">
+              <h2 style="color:#0f172a;font-size:16px;border-bottom:2px solid #0284c7;padding-bottom:6px;margin-bottom:14px;">II. KỊCH BẢN CHI TIẾT LỜI THOẠI & DỰNG HÌNH</h2>
+              ${detailedSectionsHtml}
+            </div>
+          </body>
+          </html>
+        `;
+
+        const blob = new Blob(['\ufeff' + htmlWordContent], { type: 'application/msword' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        showToast(`Đã xuất tài liệu Word giáo án cao cấp: ${filename}`);
+      } catch (err) {
+        console.error('Lỗi xuất Word:', err);
+        showToast('Lỗi khi tạo file Word. Xem Console để biết chi tiết.');
+      }
+    });
+
+    // 3. XUẤT PHỤ ĐỀ CHUẨN SUBRIP CHO VIDEO (.SRT)
+    document.getElementById('btn-export-srt')?.addEventListener('click', () => {
+      const data = getActiveScriptDocumentData();
+      if (!data || data.flatSegments.length === 0) {
+        showToast('⚠️ Không có nội dung phân cảnh nào để xuất phụ đề SRT!');
+        return;
+      }
+
+      const filename = `Phu_De_${data.meta.projectId}.srt`;
+
+      function fmtSrt(sec) {
+        const sInt = Math.max(0, Math.floor(sec));
+        const h = String(Math.floor(sInt / 3600)).padStart(2, '0');
+        const m = String(Math.floor((sInt % 3600) / 60)).padStart(2, '0');
+        const s = String(sInt % 60).padStart(2, '0');
+        const ms = String(Math.floor((sec % 1) * 1000)).padStart(3, '0');
+        return `${h}:${m}:${s},${ms}`;
+      }
+
+      let srtContent = '';
+      let cueIndex = 1;
+
+      data.flatSegments.forEach(it => {
+        const narr = (it.narration || '').replace(/\[P[12]\]/g, '').replace(/\s+/g, ' ').trim();
+        const segStart = it.tStart;
+        const segEnd = it.tEnd;
+        const segDur = Math.max(1, segEnd - segStart);
+
+        if (!narr) {
+          // Nếu chưa có lời thoại, xuất 1 cue đại diện cho phân cảnh
+          srtContent += `${cueIndex++}\n${fmtSrt(segStart)} --> ${fmtSrt(segEnd)}\n[${it.code}] ${it.title}\n\n`;
+          return;
+        }
+
+        // Tách câu thông minh để phụ đề không bị dồn 1 cục 200 từ
+        const rawSentences = narr.split(/(?<=[.!?])\s+/).filter(s => s.trim().length > 0);
+        const subChunks = [];
+
+        rawSentences.forEach(sentence => {
+          const words = sentence.trim().split(/\s+/);
+          if (words.length <= 14) {
+            subChunks.push(sentence.trim());
+          } else {
+            // Tách các câu quá dài thành các cụm 10-12 từ
+            for (let i = 0; i < words.length; i += 10) {
+              subChunks.push(words.slice(i, i + 10).join(' '));
+            }
+          }
+        });
+
+        if (subChunks.length === 0) {
+          subChunks.push(narr);
+        }
+
+        const totalWords = subChunks.reduce((acc, c) => acc + c.split(/\s+/).length, 0);
+        let currentSubStart = segStart;
+
+        subChunks.forEach((chunk, cIdx) => {
+          const chunkWords = chunk.split(/\s+/).length;
+          const chunkShare = totalWords > 0 ? (chunkWords / totalWords) : (1 / subChunks.length);
+          const chunkDur = (cIdx === subChunks.length - 1)
+            ? Math.max(0.5, segEnd - currentSubStart)
+            : Math.max(1.2, segDur * chunkShare);
+
+          const currentSubEnd = Math.min(segEnd, currentSubStart + chunkDur);
+
+          srtContent += `${cueIndex++}\n${fmtSrt(currentSubStart)} --> ${fmtSrt(currentSubEnd)}\n${chunk}\n\n`;
+          currentSubStart = currentSubEnd;
+        });
+      });
+
+      downloadFile(filename, srtContent, 'text/plain');
+      showToast(`Đã xuất phụ đề SRT chuẩn (${cueIndex - 1} phân đoạn): ${filename}`);
+    });
+
+    // 4. XUẤT MANIFEST CẤU TRÚC DỰ ÁN TOÀN DIỆN (.JSON)
+    document.getElementById('btn-export-json')?.addEventListener('click', () => {
+      const data = getActiveScriptDocumentData();
+      if (!data) {
+        showToast('⚠️ Không có dữ liệu dự án để xuất JSON!');
+        return;
+      }
+
+      const filename = `Du_Lieu_Toan_Dien_${data.meta.projectId}.json`;
+
+      const exportManifest = {
+        schema_version: "2.1.0",
+        engine: "CLSG Studio - Pedagogical Slide-to-Video Engine",
+        meta: data.meta,
+        sources: data.sources,
+        curriculum: data.chapters,
+        flat_timeline: data.flatSegments.map(s => ({
+      
+--- MATCH 17 ---
+;
+        }
+
+        const totalWords = subChunks.reduce((acc, c) => acc + c.split(/\s+/).length, 0);
+        let currentSubStart = segStart;
+
+        subChunks.forEach((chunk, cIdx) => {
+          const chunkWords = chunk.split(/\s+/).length;
+          const chunkShare = totalWords > 0 ? (chunkWords / totalWords) : (1 / subChunks.length);
+          const chunkDur = (cIdx === subChunks.length - 1)
+            ? Math.max(0.5, segEnd - currentSubStart)
+            : Math.max(1.2, segDur * chunkShare);
+
+          const currentSubEnd = Math.min(segEnd, currentSubStart + chunkDur);
+
+          srtContent += `${cueIndex++}\n${fmtSrt(currentSubStart)} --> ${fmtSrt(currentSubEnd)}\n${chunk}\n\n`;
+          currentSubStart = currentSubEnd;
+        });
+      });
+
+      downloadFile(filename, srtContent, 'text/plain');
+      showToast(`Đã xuất phụ đề SRT chuẩn (${cueIndex - 1} phân đoạn): ${filename}`);
+    });
+
+    // 4. XUẤT MANIFEST CẤU TRÚC DỰ ÁN TOÀN DIỆN (.JSON)
+    document.getElementById('btn-export-json')?.addEventListener('click', () => {
+      const data = getActiveScriptDocumentData();
+      if (!data) {
+        showToast('⚠️ Không có dữ liệu dự án để xuất JSON!');
+        return;
+      }
+
+      const filename = `Du_Lieu_Toan_Dien_${data.meta.projectId}.json`;
+
+      const exportManifest = {
+        schema_version: "2.1.0",
+        engine: "CLSG Studio - Pedagogical Slide-to-Video Engine",
+        meta: data.meta,
+        sources: data.sources,
+        curriculum: data.chapters,
+        flat_timeline: data.flatSegments.map(s => ({
+          id: s.itKey,
+          code: s.code,
+          title: s.title,
+          t_start: s.tStart,
+          t_end: s.tEnd,
+          duration_s: s.duration,
+          wpm: s.wpm,
+          narration: s.narration,
+          clean_narration: (s.narration || '').replace(/\[P[12]\]/g, '').replace(/\s+/g, ' ').trim(),
+          mechanism_latex: s.mechanism,
+          summary: s.summary,
+          key_point: s.keyPoint,
+          details: s.details,
+          examples: s.examples,
+          visual_type: s.visualType,
+          media_note: s.mediaNote,
+          attachments: (s.attachments || []).map(a => ({ name: a.name, type: a.type, size: a.size })),
+          bridge_intro: s.bridge,
+          chapter: s.chapterTitle,
+          section: s.sectionTitle,
+          source_file: s.sourceName
+        }))
+      };
+
+      downloadFile(filename, JSON.stringify(exportManifest, null, 2), 'application/json');
+      showToast(`Đã xuất hồ sơ dữ liệu JSON toàn diện: ${filename}`);
+    });
+
+    document.getElementById('btn-download-slide-toolbar')?.addEventListener('click', async () => {
+      // Redirect to the same PPTX export logic
+      document.getElementById('btn-export-pptx')?.click();
+    });
+
+    document.getElementById('btn-export-pptx')?.addEventListener('click', async () => {
+      const data = getActiveScriptDocumentData();
+      if (!data || !data.flatSegments || data.flatSegments.length === 0) {
+        showToast('⚠️ Không có dữ liệu để tải slide!');
+        return;
+      }
+      showToast('⏳ Đang tạo slide PowerPoint...');
+      try {
+        let pres = new PptxGenJS();
+        pres.layout = 'LAYOUT_16x9';
+        pres.author = 'CLSG Studio Pro';
+        pres.company = 'CLSG';
+        pres.title = data.meta.title || 'Slide Bài Giảng';
+
+        // Title slide
+        let slide = pres.addSlide();
+        slide.background = { color: 'F8FAFC' };
+        slide.addText(data.meta.title || 'BÀI GIẢNG', { x: 1, y: 2, w: '80%', h: 1.5, fontSize: 40, bold: true, color: '0F172A', align: 'center' });
+        if (data.meta.desc) {
+          slide.addText(data.meta.desc, { x: 1.5, y: 3.5, w: '70%', h: 1, fontSize: 20, color: '475569', align: 'center' });
+        }
+
+        data.flatSegments.forEach(seg => {
+          let s = pres.addSlide();
+          // Header
+          s.addText(seg.title || 'Mục Mới', { x: 0.5, y: 0.3, w: '90%', h: 0.8, fontSize: 28, bold: true, color: '1E293B', border: [0, 0, { pt: 2, color: '3B82F6' }, 0] });
+
+          // Body
+          let content = [];
+          if (seg.summary) content.push({ text: `Khái niệm: ${seg.summary}`, options: { bullet: true, color: '334155', breakLine: true } });
+          if (seg.keyPoint) content.push({ text: `Trọng tâm: ${seg.keyPoint}`, options: { bullet: true, color: '334155', breakLine: true } });
+          if (seg.mechanism) content.push({ text: `Cơ chế: ${seg.mechanism}`, options: { bullet: true, color: '334155', breakLine: true } });
+         
+--- MATCH 18 ---
+  wpm: s.wpm,
+          narration: s.narration,
+          clean_narration: (s.narration || '').replace(/\[P[12]\]/g, '').replace(/\s+/g, ' ').trim(),
+          mechanism_latex: s.mechanism,
+          summary: s.summary,
+          key_point: s.keyPoint,
+          details: s.details,
+          examples: s.examples,
+          visual_type: s.visualType,
+          media_note: s.mediaNote,
+          attachments: (s.attachments || []).map(a => ({ name: a.name, type: a.type, size: a.size })),
+          bridge_intro: s.bridge,
+          chapter: s.chapterTitle,
+          section: s.sectionTitle,
+          source_file: s.sourceName
+        }))
+      };
+
+      downloadFile(filename, JSON.stringify(exportManifest, null, 2), 'application/json');
+      showToast(`Đã xuất hồ sơ dữ liệu JSON toàn diện: ${filename}`);
+    });
+
+    document.getElementById('btn-download-slide-toolbar')?.addEventListener('click', async () => {
+      // Redirect to the same PPTX export logic
+      document.getElementById('btn-export-pptx')?.click();
+    });
+
+    document.getElementById('btn-export-pptx')?.addEventListener('click', async () => {
+      const data = getActiveScriptDocumentData();
+      if (!data || !data.flatSegments || data.flatSegments.length === 0) {
+        showToast('⚠️ Không có dữ liệu để tải slide!');
+        return;
+      }
+      showToast('⏳ Đang tạo slide PowerPoint...');
+      try {
+        let pres = new PptxGenJS();
+        pres.layout = 'LAYOUT_16x9';
+        pres.author = 'CLSG Studio Pro';
+        pres.company = 'CLSG';
+        pres.title = data.meta.title || 'Slide Bài Giảng';
+
+        // Title slide
+        let slide = pres.addSlide();
+        slide.background = { color: 'F8FAFC' };
+        slide.addText(data.meta.title || 'BÀI GIẢNG', { x: 1, y: 2, w: '80%', h: 1.5, fontSize: 40, bold: true, color: '0F172A', align: 'center' });
+        if (data.meta.desc) {
+          slide.addText(data.meta.desc, { x: 1.5, y: 3.5, w: '70%', h: 1, fontSize: 20, color: '475569', align: 'center' });
+        }
+
+        data.flatSegments.forEach(seg => {
+          let s = pres.addSlide();
+          // Header
+          s.addText(seg.title || 'Mục Mới', { x: 0.5, y: 0.3, w: '90%', h: 0.8, fontSize: 28, bold: true, color: '1E293B', border: [0, 0, { pt: 2, color: '3B82F6' }, 0] });
+
+          // Body
+          let content = [];
+          if (seg.summary) content.push({ text: `Khái niệm: ${seg.summary}`, options: { bullet: true, color: '334155', breakLine: true } });
+          if (seg.keyPoint) content.push({ text: `Trọng tâm: ${seg.keyPoint}`, options: { bullet: true, color: '334155', breakLine: true } });
+          if (seg.mechanism) content.push({ text: `Cơ chế: ${seg.mechanism}`, options: { bullet: true, color: '334155', breakLine: true } });
+          if (seg.details) content.push({ text: `Chi tiết: ${seg.details}`, options: { bullet: true, color: '334155', breakLine: true } });
+
+          if (content.length > 0) {
+            s.addText(content, { x: 0.5, y: 1.5, w: '90%', h: 3.5, fontSize: 18, align: 'left', valign: 'top' });
+          }
+
+          // Narration Notes
+          if (seg.narration) {
+            s.addNotes(seg.narration);
+          }
+        });
+
+        const filename = `${(data.meta.title || 'Slide').replace(/[^a-z0-9]/gi, '_')}.pptx`;
+        await pres.writeFile({ fileName: filename });
+        showToast('🎉 Đã tải slide thành công!');
+      } catch (e) {
+        showToast(`❌ Lỗi tạo slide: ${e.message}`);
+        console.error(e);
+      }
+    });
+
+    // SEARCH FILTER PROJECTS
+    document.getElementById('project-search')?.addEventListener('input', (e) => {
+      renderProjectsGrid(e.target.value);
+    });
+
+    // SLIDER EVENT LISTENERS (CẬP NHẬT SỐ LIỆU TỨC THÌ TRÊN BẢNG TINH CHỈNH)
+    document.getElementById('slider-duration')?.addEventListener('input', (e) => {
+      const v = parseInt(e.target.value);
+      const wpm = parseInt(document.getElementById('slider-wpm')?.value || 140);
+      document.getElementById('val-duration').textContent = `${Math.floor(v / 60)} phút ${v % 60 ? v % 60 + 's' : '00s'} (${v}s)`;
+
+      // Cập nhật giá trị hiển thị thời lượng
+      activeProject.duration_s = v;
+    });
+
+    document.getElementById('slider-wpm')?.addEventListener('input', (e) => {
+      const wpm = parseInt(e.target.value);
+      const dur = parseInt(document.getElementById('slider-duration')?.value || 300);
+      document.getElementById('val-wpm').textContent = `${wpm} từ/phút`;
+
+      activeProject.wpm = wpm;
+    });
+
+    
+--- MATCH 19 ---
+rration: (s.narration || '').replace(/\[P[12]\]/g, '').replace(/\s+/g, ' ').trim(),
+          mechanism_latex: s.mechanism,
+          summary: s.summary,
+          key_point: s.keyPoint,
+          details: s.details,
+          examples: s.examples,
+          visual_type: s.visualType,
+          media_note: s.mediaNote,
+          attachments: (s.attachments || []).map(a => ({ name: a.name, type: a.type, size: a.size })),
+          bridge_intro: s.bridge,
+          chapter: s.chapterTitle,
+          section: s.sectionTitle,
+          source_file: s.sourceName
+        }))
+      };
+
+      downloadFile(filename, JSON.stringify(exportManifest, null, 2), 'application/json');
+      showToast(`Đã xuất hồ sơ dữ liệu JSON toàn diện: ${filename}`);
+    });
+
+    document.getElementById('btn-download-slide-toolbar')?.addEventListener('click', async () => {
+      // Redirect to the same PPTX export logic
+      document.getElementById('btn-export-pptx')?.click();
+    });
+
+    document.getElementById('btn-export-pptx')?.addEventListener('click', async () => {
+      const data = getActiveScriptDocumentData();
+      if (!data || !data.flatSegments || data.flatSegments.length === 0) {
+        showToast('⚠️ Không có dữ liệu để tải slide!');
+        return;
+      }
+      showToast('⏳ Đang tạo slide PowerPoint...');
+      try {
+        let pres = new PptxGenJS();
+        pres.layout = 'LAYOUT_16x9';
+        pres.author = 'CLSG Studio Pro';
+        pres.company = 'CLSG';
+        pres.title = data.meta.title || 'Slide Bài Giảng';
+
+        // Title slide
+        let slide = pres.addSlide();
+        slide.background = { color: 'F8FAFC' };
+        slide.addText(data.meta.title || 'BÀI GIẢNG', { x: 1, y: 2, w: '80%', h: 1.5, fontSize: 40, bold: true, color: '0F172A', align: 'center' });
+        if (data.meta.desc) {
+          slide.addText(data.meta.desc, { x: 1.5, y: 3.5, w: '70%', h: 1, fontSize: 20, color: '475569', align: 'center' });
+        }
+
+        data.flatSegments.forEach(seg => {
+          let s = pres.addSlide();
+          // Header
+          s.addText(seg.title || 'Mục Mới', { x: 0.5, y: 0.3, w: '90%', h: 0.8, fontSize: 28, bold: true, color: '1E293B', border: [0, 0, { pt: 2, color: '3B82F6' }, 0] });
+
+          // Body
+          let content = [];
+          if (seg.summary) content.push({ text: `Khái niệm: ${seg.summary}`, options: { bullet: true, color: '334155', breakLine: true } });
+          if (seg.keyPoint) content.push({ text: `Trọng tâm: ${seg.keyPoint}`, options: { bullet: true, color: '334155', breakLine: true } });
+          if (seg.mechanism) content.push({ text: `Cơ chế: ${seg.mechanism}`, options: { bullet: true, color: '334155', breakLine: true } });
+          if (seg.details) content.push({ text: `Chi tiết: ${seg.details}`, options: { bullet: true, color: '334155', breakLine: true } });
+
+          if (content.length > 0) {
+            s.addText(content, { x: 0.5, y: 1.5, w: '90%', h: 3.5, fontSize: 18, align: 'left', valign: 'top' });
+          }
+
+          // Narration Notes
+          if (seg.narration) {
+            s.addNotes(seg.narration);
+          }
+        });
+
+        const filename = `${(data.meta.title || 'Slide').replace(/[^a-z0-9]/gi, '_')}.pptx`;
+        await pres.writeFile({ fileName: filename });
+        showToast('🎉 Đã tải slide thành công!');
+      } catch (e) {
+        showToast(`❌ Lỗi tạo slide: ${e.message}`);
+        console.error(e);
+      }
+    });
+
+    // SEARCH FILTER PROJECTS
+    document.getElementById('project-search')?.addEventListener('input', (e) => {
+      renderProjectsGrid(e.target.value);
+    });
+
+    // SLIDER EVENT LISTENERS (CẬP NHẬT SỐ LIỆU TỨC THÌ TRÊN BẢNG TINH CHỈNH)
+    document.getElementById('slider-duration')?.addEventListener('input', (e) => {
+      const v = parseInt(e.target.value);
+      const wpm = parseInt(document.getElementById('slider-wpm')?.value || 140);
+      document.getElementById('val-duration').textContent = `${Math.floor(v / 60)} phút ${v % 60 ? v % 60 + 's' : '00s'} (${v}s)`;
+
+      // Cập nhật giá trị hiển thị thời lượng
+      activeProject.duration_s = v;
+    });
+
+    document.getElementById('slider-wpm')?.addEventListener('input', (e) => {
+      const wpm = parseInt(e.target.value);
+      const dur = parseInt(document.getElementById('slider-duration')?.value || 300);
+      document.getElementById('val-wpm').textContent = `${wpm} từ/phút`;
+
+      activeProject.wpm = wpm;
+    });
+
+    // ===============================================================

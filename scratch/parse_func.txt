@@ -1,0 +1,210 @@
+function parseLocalCopilotCommand(msg) {
+      const actions = [];
+      const lower = msg.toLowerCase();
+
+      // Guard: Nếu câu hỏi là yêu cầu hỏi đáp/tóm tắt kiến thức thuần túy (không chứa ý định can thiệp ẩn/chỉ giữ giao diện)
+      const isPureKnowledgeQuery = /(?:tóm\s*tắt|bản\s*tóm\s*tắt|nội\s*dung\s*(?:của)?|giải\s*thích|đọc\s*hộ|cho\s*biết|là\s*gì|như\s*thế\s*nào)/i.test(msg) &&
+        !/(?:bỏ\s*hết|chỉ\s*giữ|chỉ\s*lấy|để\s*lại\s*mình|ẩn\s*đi|bỏ\s*đi|xóa\s*đi|tắt\s*đi)/i.test(msg);
+      if (isPureKnowledgeQuery) {
+        return actions;
+      }
+
+      // Check tri thức đã học trước (Learned Rules)
+      const learned = CopilotLearningEngine.match(msg);
+      if (learned && Array.isArray(learned.actions) && learned.actions.length > 0) {
+        return learned.actions;
+      }
+
+      // =======================================================================
+      // NHẬN DIỆN MÃ PHÂN CẤP THẬP PHÂN GIAO DIỆN MỚI (VÍ DỤ: 1.1, 1.2, 1.1.1...)
+      // =======================================================================
+
+      // A. CHỈ GIỮ LẠI MÃ PHÂN CẤP: "chỉ giữ 1.1", "để lại mục 1.1", "bỏ hết chỉ giữ 1.1", "chỉ lấy 1.1.1"
+      const mOnlyCode = msg.match(/(?:chỉ\s*(?:cần|lấy|giữ(?:\s*lại)?|chọn|để\s*lại|chừa(?:\s*lại)?)|giữ\s*lại|để\s*lại|chừa\s*lại)\s*(?:mỗi\s*|duy\s*nhất\s*)?(?:mục|phần|nhánh|node)?\s*([0-9]+(?:\.[0-9]+)+(?:[\s,và]+[0-9]+(?:\.[0-9]+)+)*)/i) ||
+        msg.match(/(?:ẩn|bỏ|xóa|(?<!tóm\s*)tắt)\s+(?:hết|tất\s*cả|toàn\s*bộ).*?(?:chỉ\s*giữ|chỉ\s*lấy|để\s*lại)\s*(?:mục|phần|nhánh)?\s*([0-9]+(?:\.[0-9]+)+(?:[\s,và]+[0-9]+(?:\.[0-9]+)+)*)/i);
+      if (mOnlyCode) {
+        const raw = mOnlyCode[1];
+        const codes = (raw.match(/[0-9]+(?:\.[0-9]+)+/g) || []);
+        if (codes.length > 0) {
+          actions.push({ type: 'set_only_codes', codes });
+          return actions;
+        }
+      }
+
+      // B. ẨN / BỎ / TẮT / XÓA MÃ PHÂN CẤP: "ẩn 1.1 đi", "bỏ 1.1", "ẩn mục 1.1", "ẩn phần 1.1", "ẩn 1.1.1 đi", "tắt 1.1"
+      const mExCode = msg.match(/(?:ẩn|bỏ|loại\s*bỏ|xóa|(?<!tóm\s*)tắt)\s*(?:các\s*)?(?:mục|phần|nhánh|node)?\s*([0-9]+(?:\.[0-9]+)+(?:[\s,và]+[0-9]+(?:\.[0-9]+)+)*)\s*(?:đi|nhé|nha|thôi|này)?/i);
+      if (mExCode) {
+        const raw = mExCode[1];
+        const codes = (raw.match(/[0-9]+(?:\.[0-9]+)+/g) || []);
+        if (codes.length > 0) {
+          actions.push({ type: 'exclude_codes', codes });
+          return actions;
+        }
+      }
+
+      // C. BẬT LẠI / HIỆN / KHÔI PHỤC MÃ PHÂN CẤP: "bật lại 1.1", "hiện 1.1", "mở lại 1.1", "khôi phục 1.1", "hiện 1.1.1"
+      const mIncCode = msg.match(/(?:khôi\s*phục|bật\s*lại|mở\s*lại|thêm\s*lại|hiện(?:\s*lại)?|bật)\s*(?:các\s*)?(?:mục|phần|nhánh|node)?\s*([0-9]+(?:\.[0-9]+)+(?:[\s,và]+[0-9]+(?:\.[0-9]+)+)*)\s*(?:lại|đi|nhé|nha|thôi|này)?/i);
+      if (mIncCode) {
+        const raw = mIncCode[1];
+        const codes = (raw.match(/[0-9]+(?:\.[0-9]+)+/g) || []);
+        if (codes.length > 0) {
+          actions.push({ type: 'include_codes', codes });
+          return actions;
+        }
+      }
+
+      // D. XEM / LIA TỚI MÃ PHÂN CẤP: "cho tôi xem 1.1", "lia tới 1.1", "xem 1.1", "tập trung vào 1.1"
+      const mFocusCode = msg.match(/(?:cho\s*tôi\s*xem|xem|đưa\s*tôi\s*đến|lia\s*đến|lia\s*tới|tập\s*trung\s*vào)\s*(?:mục|phần|nhánh|node)?\s*([0-9]+(?:\.[0-9]+)+)/i);
+      if (mFocusCode) {
+        actions.push({ type: 'focus_code', code: mFocusCode[1] });
+        return actions;
+      }
+
+      // E. ĐỌC THỬ / NGHE MÃ PHÂN CẤP: "đọc thử 1.1", "đọc 1.1", "nghe 1.1", "đọc mục 1.1.1"
+      const mSpeakCode = msg.match(/(?:đọc\s*(?:thử|hộ|cho\s*nghe|to)?|nghe|phát\s*(?:giọng|âm\s*thanh)?)\s*(?:mục|phần|nhánh|nội\s*dung)?\s*([0-9]+(?:\.[0-9]+)+)/i);
+      if (mSpeakCode) {
+        actions.push({ type: 'speak_code', code: mSpeakCode[1] });
+        return actions;
+      }
+
+      // F. MỞ CHỈNH SỬA MÃ PHÂN CẤP: "mở chỉnh sửa 1.1", "sửa 1.1", "chỉnh 1.1"
+      const mEditCode = msg.match(/(?:mở\s*(?:chỉnh\s*sửa|bảng|ngăn\s*kéo|editor)|chỉnh\s*sửa|sửa|chỉnh)\s*(?:mục|phần|nhánh)?\s*([0-9]+(?:\.[0-9]+)+)/i);
+      if (mEditCode) {
+        actions.push({ type: 'open_editor_code', code: mEditCode[1] });
+        return actions;
+      }
+
+      // 00. Câu lệnh lọc sâu tới từng mục/lá: "bản tóm tắt của chương 1, phần d, a1... bỏ hết chỉ giữ lại mình phần đó"
+      const mSingleTarget = msg.match(/(?:bản\s*tóm\s*tắt\s*(?:của)?\s*)?chương\s*(\d+).*?phần\s*([a-z0-9]+).*?([a-z]\d+).*(?:bỏ\s*hết|chỉ\s*giữ|chỉ\s*lấy|để\s*lại\s*mình)/i) ||
+        msg.match(/(?:bỏ\s*hết|chỉ\s*giữ|chỉ\s*lấy).*?chương\s*(\d+).*?phần\s*([a-z0-9]+).*?([a-z]\d+)/i);
+      if (mSingleTarget) {
+        actions.push({
+          type: 'keep_only_target',
+          chapter: parseInt(mSingleTarget[1]),
+          section: mSingleTarget[2],
+          item: mSingleTarget[3]
+        });
+        return actions;
+      }
+
+      // 0a. Câu lệnh phức hợp: "à thôi, để lại chương 4 với phần a b của chương 1 đi"
+      const cleanMsg = msg.replace(/^(?:à\s*thôi|thôi|đổi\s*lại)\s*,?\s*/i, '').trim();
+      const mCombo = cleanMsg.match(/(?:chỉ\s*)?(?:để\s*lại|giữ\s*(?:lại)?|lấy)\s*(?:chương|phần)?\s*([0-9\s,và]+)\s*(?:với|và|kèm|cùng)\s*phần\s*([^c]+?)\s*của\s*chương\s*(\d+)/i);
+      if (mCombo) {
+        const keepChaps = (mCombo[1].match(/\b\d+\b/g) || []).map(n => parseInt(n));
+        const targetCh = parseInt(mCombo[3]);
+        const rawSecs = mCombo[2].toLowerCase();
+        const secs = [];
+        rawSecs.split(/[\s,]+/).forEach(s => {
+          s = s.trim();
+          if (s && !['và', 'va', 'voi', 'với', 'kèm', 'cùng', 'của'].includes(s)) {
+            secs.push(s);
+          }
+        });
+        if (keepChaps.length > 0 && targetCh && secs.length > 0) {
+          actions.push({
+            type: 'keep_chapters_and_sections',
+            chapters: keepChaps,
+            targetChapter: targetCh,
+            sections: secs
+          });
+          return actions;
+        }
+      }
+
+      // 0. Bỏ / Ẩn / Tắt / Xóa / Ấn tất cả chỉ để lại / chỉ giữ lại / trừ chương X (Ví dụ: "ấn tất cả chỉ để lại chương 2 này", "ẩn tất cả chỉ giữ chương 3")
+      const mKeepOnly = msg.match(/(?:bỏ|loại\s*bỏ|xóa|ẩn|(?<!tóm\s*)tắt|ấn)\s+(?:(?:hết|tất\s*cả|mọi\s*(?:thứ|chương)|toàn\s*bộ)\s*)*(?:(?:chỉ\s*)?(?:trừ|giữ(?:\s*lại)?|để\s*lại|chừa(?:\s*lại)?)|ngoại\s*trừ)\s*(?:các\s*)?(?:chương|phần)?\s*([0-9\s,và]+)/i) ||
+        msg.match(/(?:(?:ẩn|ấn|bỏ|loại\s*bỏ|xóa|(?<!tóm\s*)tắt)\s+)?(?:tất\s*cả|toàn\s*bộ)\s*.*?(?:chỉ\s*để\s*lại|chỉ\s*giữ|chỉ\s*lấy|để\s*lại|giữ\s*lại)\s*(?:các\s*)?(?:chương|phần)?\s*([0-9\s,và]+)/i) ||
+        msg.match(/(?:chỉ\s*(?:cần|lấy|giữ(?:\s*lại)?|chọn|để\s*lại|chừa(?:\s*lại)?)|giữ\s*lại|để\s*lại|chừa\s*lại)\s*(?:mỗi\s*|duy\s*nhất\s*)?(?:chương|phần)?\s*([0-9\s,và]+)/i);
+      if (mKeepOnly) {
+        const rawGroup = mKeepOnly[1] || mKeepOnly[2] || mKeepOnly[3];
+        if (rawGroup) {
+          const nums = (rawGroup.match(/\b\d+\b/g) || []).map(n => parseInt(n));
+          if (nums.length > 0) {
+            actions.push({ type: 'set_only_chapters', chapters: nums });
+            return actions;
+          }
+        }
+      }
+      // 2. Bỏ / ẩn / loại bỏ chương X Y
+      const mEx = msg.match(/(?:bỏ|loại\s*bỏ|xóa|ẩn|(?<!tóm\s*)tắt)\s*(?:các\s*)?(?:chương|phần)?\s*([0-9\s,và]+)/i);
+      if (mEx) {
+        const nums = (mEx[1].match(/\b\d+\b/g) || []).map(n => parseInt(n));
+        if (nums.length > 0) actions.push({ type: 'exclude_chapters', chapters: nums });
+      }
+
+      // 3. Khôi phục / bật lại chương X
+      const mInc = msg.match(/(?:khôi phục|bật lại|mở lại|thêm lại)\s*(?:chương|phần)?\s*([0-9\s,và]+)/i);
+      if (mInc) {
+        const nums = (mInc[1].match(/\b\d+\b/g) || []).map(n => parseInt(n));
+        if (nums.length > 0) actions.push({ type: 'include_chapters', chapters: nums });
+      }
+
+      // 4. Cho tôi xem / đưa tôi đến chương X
+      const mFocus = msg.match(/(?:cho tôi xem|xem|đưa tôi đến|lia đến|tập trung vào)\s*chương\s*(\d+)/i);
+      if (mFocus) {
+        actions.push({ type: 'focus_chapter', chapter: parseInt(mFocus[1]) });
+      }
+
+      // 5. Mở chỉnh sửa chương X
+      const mEdit = msg.match(/(?:mở\s*(?:chỉnh sửa|bảng|ngăn kéo|editor)|chỉnh sửa)\s*chương\s*(\d+)/i);
+      if (mEdit) {
+        actions.push({ type: 'open_editor', chapter: parseInt(mEdit[1]) });
+      }
+
+      // 6. Chuyển tab
+      if (lower.includes('sang kịch bản') || lower.includes('xem kịch bản') || lower.includes('tab kịch bản')) {
+        actions.push({ type: 'switch_tab', tab: 'script' });
+      } else if (lower.includes('sang sơ đồ') || lower.includes('xem sơ đồ') || lower.includes('tab sơ đồ')) {
+        actions.push({ type: 'switch_tab', tab: 'mindmap' });
+      } else if (lower.includes('sang video') || lower.includes('dựng video') || lower.includes('tab video')) {
+        actions.push({ type: 'switch_tab', tab: 'video' });
+      }
+
+      // 6.5. Tái cấu trúc toàn bộ sơ đồ bằng LLM
+      if (lower.includes('tái cấu trúc') || lower.includes('chuẩn hóa sơ đồ') || lower.includes('làm lại sơ đồ') || lower.includes('sinh lại sơ đồ') || lower.includes('sơ đồ dở')) {
+        refactorCurrentMindmapWithAI();
+      }
+
+      // 7. Căn giữa
+      if (lower.includes('căn giữa') || lower.includes('reset góc nhìn') || lower.includes('về giữa')) {
+        actions.push({ type: 'center_view' });
+      }
+
+      // 8. Đặt tổng thời gian X phút
+      const mTotal = msg.match(/(?:thời gian tổng|tổng thời gian|tổng)\s*(?:là|thành)?\s*(\d+)\s*(?:phút|p)/i);
+      if (mTotal) {
+        actions.push({ type: 'set_total_minutes', minutes: parseInt(mTotal[1]) });
+      }
+
+      // 9. Khóa / mở khóa chương
+      const mLock = msg.match(/(khóa|mở khóa)\s*chương\s*(\d+)/i);
+      if (mLock) {
+        const isLock = mLock[1].toLowerCase() === 'khóa';
+        actions.push({ type: 'lock_chapter', chapter: parseInt(mLock[2]), locked: isLock });
+      }
+
+      // 10. Lệnh ẩn / hiện giao diện trực tiếp trên Sơ đồ
+      if (lower.match(/(?:ẩn|thu\s*gọn|đóng)\s*(?:bản\s*)?tóm\s*tắt/)) {
+        actions.push({ type: 'toggle_inspector', show: false });
+      } else if (lower.match(/(?:hiện|mở|bật)\s*(?:bản\s*)?tóm\s*tắt/)) {
+        actions.push({ type: 'toggle_inspector', show: true });
+      } else if (lower.match(/(?:ẩn|đóng)\s*(?:cột|panel|thanh)?\s*(?:bên\s*)?phải/)) {
+        actions.push({ type: 'toggle_pane_tuning', show: false });
+      } else if (lower.match(/(?:hiện|mở|bật)\s*(?:cột|panel|thanh)?\s*(?:bên\s*)?phải/)) {
+        actions.push({ type: 'toggle_pane_tuning', show: true });
+      } else if (lower.match(/(?:ẩn|đóng)\s*(?:cột|panel|thanh)?\s*(?:bên\s*)?trái/)) {
+        actions.push({ type: 'toggle_pane_sources', show: false });
+      } else if (lower.match(/(?:hiện|mở|bật)\s*(?:cột|panel|thanh)?\s*(?:bên\s*)?trái/)) {
+        actions.push({ type: 'toggle_pane_sources', show: true });
+      } else if (lower.match(/toàn\s*màn\s*hình|mở\s*rộng\s*sơ\s*đồ/)) {
+        actions.push({ type: 'fullscreen_mindmap' });
+      }
+
+      return actions;
+    }
+
+    // LỊCH SỬ HỘI THOẠI TRONG PHIÊN CHAT COPILOT
+    const clsgChatSessionHistory = [];
+
+    

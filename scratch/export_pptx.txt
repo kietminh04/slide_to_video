@@ -1,0 +1,55 @@
+document.getElementById('btn-export-pptx')?.addEventListener('click', async () => {
+      const data = getActiveScriptDocumentData();
+      if (!data || !data.flatSegments || data.flatSegments.length === 0) {
+        showToast('⚠️ Không có dữ liệu để tải slide!');
+        return;
+      }
+      showToast('⏳ Đang tạo slide PowerPoint...');
+      try {
+        let pres = new PptxGenJS();
+        pres.layout = 'LAYOUT_16x9';
+        pres.author = 'CLSG Studio Pro';
+        pres.company = 'CLSG';
+        pres.title = data.meta.title || 'Slide Bài Giảng';
+
+        // Title slide
+        let slide = pres.addSlide();
+        slide.background = { color: 'F8FAFC' };
+        slide.addText(data.meta.title || 'BÀI GIẢNG', { x: 1, y: 2, w: '80%', h: 1.5, fontSize: 40, bold: true, color: '0F172A', align: 'center' });
+        if (data.meta.desc) {
+          slide.addText(data.meta.desc, { x: 1.5, y: 3.5, w: '70%', h: 1, fontSize: 20, color: '475569', align: 'center' });
+        }
+
+        data.flatSegments.forEach(seg => {
+          let s = pres.addSlide();
+          // Header
+          s.addText(seg.title || 'Mục Mới', { x: 0.5, y: 0.3, w: '90%', h: 0.8, fontSize: 28, bold: true, color: '1E293B', border: [0, 0, { pt: 2, color: '3B82F6' }, 0] });
+
+          // Body
+          let content = [];
+          if (seg.summary) content.push({ text: `Khái niệm: ${seg.summary}`, options: { bullet: true, color: '334155', breakLine: true } });
+          if (seg.keyPoint) content.push({ text: `Trọng tâm: ${seg.keyPoint}`, options: { bullet: true, color: '334155', breakLine: true } });
+          if (seg.mechanism) content.push({ text: `Cơ chế: ${seg.mechanism}`, options: { bullet: true, color: '334155', breakLine: true } });
+          if (seg.details) content.push({ text: `Chi tiết: ${seg.details}`, options: { bullet: true, color: '334155', breakLine: true } });
+
+          if (content.length > 0) {
+            s.addText(content, { x: 0.5, y: 1.5, w: '90%', h: 3.5, fontSize: 18, align: 'left', valign: 'top' });
+          }
+
+          // Narration Notes
+          if (seg.narration) {
+            s.addNotes(seg.narration);
+          }
+        });
+
+        const filename = `${(data.meta.title || 'Slide').replace(/[^a-z0-9]/gi, '_')}.pptx`;
+        await pres.writeFile({ fileName: filename });
+        showToast('🎉 Đã tải slide thành công!');
+      } catch (e) {
+        showToast(`❌ Lỗi tạo slide: ${e.message}`);
+        console.error(e);
+      }
+    });
+
+    // SEARCH FILTER PROJECTS
+    

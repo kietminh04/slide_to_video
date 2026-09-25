@@ -1,0 +1,640 @@
+function parseLocalCopilotCommand(msg) {
+      const actions = [];
+      const lower = msg.toLowerCase();
+
+      // Guard: Nếu câu hỏi là yêu cầu hỏi đáp/tóm tắt kiến thức thuần túy (không chứa ý định can thiệp ẩn/chỉ giữ giao diện)
+      const isPureKnowledgeQuery = /(?:tóm\s*tắt|bản\s*tóm\s*tắt|nội\s*dung\s*(?:của)?|giải\s*thích|đọc\s*hộ|cho\s*biết|là\s*gì|như\s*thế\s*nào)/i.test(msg) &&
+        !/(?:bỏ\s*hết|chỉ\s*giữ|chỉ\s*lấy|để\s*lại\s*mình|ẩn\s*đi|bỏ\s*đi|xóa\s*đi|tắt\s*đi)/i.test(msg);
+      if (isPureKnowledgeQuery) {
+        return actions;
+      }
+
+      // Check tri thức đã học trước (Learned Rules)
+      const learned = CopilotLearningEngine.match(msg);
+      if (learned && Array.isArray(learned.actions) && learned.actions.length > 0) {
+        return learned.actions;
+      }
+
+      // =======================================================================
+      // NHẬN DIỆN MÃ PHÂN CẤP THẬP PHÂN GIAO DIỆN MỚI (VÍ DỤ: 1.1, 1.2, 1.1.1...)
+      // =======================================================================
+
+      // A. CHỈ GIỮ LẠI MÃ PHÂN CẤP: "chỉ giữ 1.1", "để lại mục 1.1", "bỏ hết chỉ giữ 1.1", "chỉ lấy 1.1.1"
+      const mOnlyCode = msg.match(/(?:chỉ\s*(?:cần|lấy|giữ(?:\s*lại)?|chọn|để\s*lại|chừa(?:\s*lại)?)|giữ\s*lại|để\s*lại|chừa\s*lại)\s*(?:mỗi\s*|duy\s*nhất\s*)?(?:mục|phần|nhánh|node)?\s*([0-9]+(?:\.[0-9]+)+(?:[\s,và]+[0-9]+(?:\.[0-9]+)+)*)/i) ||
+        msg.match(/(?:ẩn|bỏ|xóa|(?<!tóm\s*)tắt)\s+(?:hết|tất\s*cả|toàn\s*bộ).*?(?:chỉ\s*giữ|chỉ\s*lấy|để\s*lại)\s*(?:mục|phần|nhánh)?\s*([0-9]+(?:\.[0-9]+)+(?:[\s,và]+[0-9]+(?:\.[0-9]+)+)*)/i);
+      if (mOnlyCode) {
+        const raw = mOnlyCode[1];
+        const codes = (raw.match(/[0-9]+(?:\.[0-9]+)+/g) || []);
+        if (codes.length > 0) {
+          actions.push({ type: 'set_only_codes', codes });
+          return actions;
+        }
+      }
+
+      // B. ẨN / BỎ / TẮT / XÓA MÃ PHÂN CẤP: "ẩn 1.1 đi", "bỏ 1.1", "ẩn mục 1.1", "ẩn phần 1.1", "ẩn 1.1.1 đi", "tắt 1.1"
+      const mExCode = msg.match(/(?:ẩn|bỏ|loại\s*bỏ|xóa|(?<!tóm\s*)tắt)\s*(?:các\s*)?(?:mục|phần|nhánh|node)?\s*([0-9]+(?:\.[0-9]+)+(?:[\s,và]+[0-9]+(?:\.[0-9]+)+)*)\s*(?:đi|nhé|nha|thôi|này)?/i);
+      if (mExCode) {
+        const raw = mExCode[1];
+        const codes = (raw.match(/[0-9]+(?:\.[0-9]+)+/g) || []);
+        if (codes.length > 0) {
+          actions.push({ type: 'exclude_codes', codes });
+          return actions;
+        }
+      }
+
+      // C. BẬT LẠI / HIỆN / KHÔI PHỤC MÃ PHÂN CẤP: "bật lại 1.1", "hiện 1.1", "mở lại 1.1", "khôi phục 1.1", "hiện 1.1.1"
+      const mIncCode = msg.match(/(?:khôi\s*phục|bật\s*lại|mở\s*lại|thêm\s*lại|hiện(?:\s*lại)?|bật)\s*(?:các\s*)?(?:mục|phần|nhánh|node)?\s*([0-9]+(?:\.[0-9]+)+(?:[\s,và]+[0-9]+(?:\.[0-9]+)+)*)\s*(?:lại|đi|nhé|nha|thôi|này)?/i);
+      if (mIncCode) {
+        const raw = mIncCode[1];
+        const codes = (raw.match(/[0-9]+(?:\.[0-9]+)+/g) || []);
+        if (codes.length > 0) {
+          actions.push({ type: 'include_codes', codes });
+          return actions;
+        }
+      }
+
+      // D. XEM / LIA TỚI MÃ PHÂN CẤP: "cho tôi xem 1.1", "lia tới 1.1", "xem 1.1", "tập trung vào 1.1"
+      const mFocusCode = msg.match(/(?:cho\s*tôi\s*xem|xem|đưa\s*tôi\s*đến|lia\s*đến|lia\s*tới|tập\s*trung\s*vào)\s*(?:mục|phần|nhánh|node)?\s*([0-9]+(?:\.[0-9]+)+)/i);
+      if (mFocusCode) {
+        actions.push({ type: 'focus_code', code: mFocusCode[1] });
+        return actions;
+      }
+
+      // E. ĐỌC THỬ / NGHE MÃ PHÂN CẤP: "đọc thử 1.1", "đọc 1.1", "nghe 1.1", "đọc mục 1.1.1"
+      const mSpeakCode = msg.match(/(?:đọc\s*(?:thử|hộ|cho\s*nghe|to)?|nghe|phát\s*(?:giọng|âm\s*thanh)?)\s*(?:mục|phần|nhánh|nội\s*dung)?\s*([0-9]+(?:\.[0-9]+)+)/i);
+      if (mSpeakCode) {
+        actions.push({ type: 'speak_code', code: mSpeakCode[1] });
+        return actions;
+      }
+
+      // F. MỞ CHỈNH SỬA MÃ PHÂN CẤP: "mở chỉnh sửa 1.1", "sửa 1.1", "chỉnh 1.1"
+      const mEditCode = msg.match(/(?:mở\s*(?:chỉnh\s*sửa|bảng|ngăn\s*kéo|editor)|chỉnh\s*sửa|sửa|chỉnh)\s*(?:mục|phần|nhánh)?\s*([0-9]+(?:\.[0-9]+)+)/i);
+      if (mEditCode) {
+        actions.push({ type: 'open_editor_code', code: mEditCode[1] });
+        return actions;
+      }
+
+      // 00. Câu lệnh lọc sâu tới từng mục/lá: "bản tóm tắt của chương 1, phần d, a1... bỏ hết chỉ giữ lại mình phần đó"
+      const mSingleTarget = msg.match(/(?:bản\s*tóm\s*tắt\s*(?:của)?\s*)?chương\s*(\d+).*?phần\s*([a-z0-9]+).*?([a-z]\d+).*(?:bỏ\s*hết|chỉ\s*giữ|chỉ\s*lấy|để\s*lại\s*mình)/i) ||
+        msg.match(/(?:bỏ\s*hết|chỉ\s*giữ|chỉ\s*lấy).*?chương\s*(\d+).*?phần\s*([a-z0-9]+).*?([a-z]\d+)/i);
+      if (mSingleTarget) {
+        actions.push({
+          type: 'keep_only_target',
+          chapter: parseInt(mSingleTarget[1]),
+          section: mSingleTarget[2],
+          item: mSingleTarget[3]
+        });
+        return actions;
+      }
+
+      // 0a. Câu lệnh phức hợp: "à thôi, để lại chương 4 với phần a b của chương 1 đi"
+      const cleanMsg = msg.replace(/^(?:à\s*thôi|thôi|đổi\s*lại)\s*,?\s*/i, '').trim();
+      const mCombo = cleanMsg.match(/(?:chỉ\s*)?(?:để\s*lại|giữ\s*(?:lại)?|lấy)\s*(?:chương|phần)?\s*([0-9\s,và]+)\s*(?:với|và|kèm|cùng)\s*phần\s*([^c]+?)\s*của\s*chương\s*(\d+)/i);
+      if (mCombo) {
+        const keepChaps = (mCombo[1].match(/\b\d+\b/g) || []).map(n => parseInt(n));
+        const targetCh = parseInt(mCombo[3]);
+        const rawSecs = mCombo[2].toLowerCase();
+        const secs = [];
+        rawSecs.split(/[\s,]+/).forEach(s => {
+          s = s.trim();
+          if (s && !['và', 'va', 'voi', 'với', 'kèm', 'cùng', 'của'].includes(s)) {
+            secs.push(s);
+          }
+        });
+        if (keepChaps.length > 0 && targetCh && secs.length > 0) {
+          actions.push({
+            type: 'keep_chapters_and_sections',
+            chapters: keepChaps,
+            targetChapter: targetCh,
+            sections: secs
+          });
+          return actions;
+        }
+      }
+
+      // 0. Bỏ / Ẩn / Tắt / Xóa / Ấn tất cả chỉ để lại / chỉ giữ lại / trừ chương X (Ví dụ: "ấn tất cả chỉ để lại chương 2 này", "ẩn tất cả chỉ giữ chương 3")
+      const mKeepOnly = msg.match(/(?:bỏ|loại\s*bỏ|xóa|ẩn|(?<!tóm\s*)tắt|ấn)\s+(?:(?:hết|tất\s*cả|mọi\s*(?:thứ|chương)|toàn\s*bộ)\s*)*(?:(?:chỉ\s*)?(?:trừ|giữ(?:\s*lại)?|để\s*lại|chừa(?:\s*lại)?)|ngoại\s*trừ)\s*(?:các\s*)?(?:chương|phần)?\s*([0-9\s,và]+)/i) ||
+        msg.match(/(?:(?:ẩn|ấn|bỏ|loại\s*bỏ|xóa|(?<!tóm\s*)tắt)\s+)?(?:tất\s*cả|toàn\s*bộ)\s*.*?(?:chỉ\s*để\s*lại|chỉ\s*giữ|chỉ\s*lấy|để\s*lại|giữ\s*lại)\s*(?:các\s*)?(?:chương|phần)?\s*([0-9\s,và]+)/i) ||
+        msg.match(/(?:chỉ\s*(?:cần|lấy|giữ(?:\s*lại)?|chọn|để\s*lại|chừa(?:\s*lại)?)|giữ\s*lại|để\s*lại|chừa\s*lại)\s*(?:mỗi\s*|duy\s*nhất\s*)?(?:chương|phần)?\s*([0-9\s,và]+)/i);
+      if (mKeepOnly) {
+        const rawGroup = mKeepOnly[1] || mKeepOnly[2] || mKeepOnly[3];
+        if (rawGroup) {
+          const nums = (rawGroup.match(/\b\d+\b/g) || []).map(n => parseInt(n));
+          if (nums.length > 0) {
+            actions.push({ type: 'set_only_chapters', chapters: nums });
+            return actions;
+          }
+        }
+      }
+      // 2. Bỏ / ẩn / loại bỏ chương X Y
+      const mEx = msg.match(/(?:bỏ|loại\s*bỏ|xóa|ẩn|(?<!tóm\s*)tắt)\s*(?:các\s*)?(?:chương|phần)?\s*([0-9\s,và]+)/i);
+      if (mEx) {
+        const nums = (mEx[1].match(/\b\d+\b/g) || []).map(n => parseInt(n));
+        if (nums.length > 0) actions.push({ type: 'exclude_chapters', chapters: nums });
+      }
+
+      // 3. Khôi phục / bật lại chương X
+      const mInc = msg.match(/(?:khôi phục|bật lại|mở lại|thêm lại)\s*(?:chương|phần)?\s*([0-9\s,và]+)/i);
+      if (mInc) {
+        const nums = (mInc[1].match(/\b\d+\b/g) || []).map(n => parseInt(n));
+        if (nums.length > 0) actions.push({ type: 'include_chapters', chapters: nums });
+      }
+
+      // 4. Cho tôi xem / đưa tôi đến chương X
+      const mFocus = msg.match(/(?:cho tôi xem|xem|đưa tôi đến|lia đến|tập trung vào)\s*chương\s*(\d+)/i);
+      if (mFocus) {
+        actions.push({ type: 'focus_chapter', chapter: parseInt(mFocus[1]) });
+      }
+
+      // 5. Mở chỉnh sửa chương X
+      const mEdit = msg.match(/(?:mở\s*(?:chỉnh sửa|bảng|ngăn kéo|editor)|chỉnh sửa)\s*chương\s*(\d+)/i);
+      if (mEdit) {
+        actions.push({ type: 'open_editor', chapter: parseInt(mEdit[1]) });
+      }
+
+      // 6. Chuyển tab
+      if (lower.includes('sang kịch bản') || lower.includes('xem kịch bản') || lower.includes('tab kịch bản')) {
+        actions.push({ type: 'switch_tab', tab: 'script' });
+      } else if (lower.includes('sang sơ đồ') || lower.includes('xem sơ đồ') || lower.includes('tab sơ đồ')) {
+        actions.push({ type: 'switch_tab', tab: 'mindmap' });
+      } else if (lower.includes('sang video') || lower.includes('dựng video') || lower.includes('tab video')) {
+        actions.push({ type: 'switch_tab', tab: 'video' });
+      }
+
+      // 6.5. Tái cấu trúc toàn bộ sơ đồ bằng LLM
+      if (lower.includes('tái cấu trúc') || lower.includes('chuẩn hóa sơ đồ') || lower.includes('làm lại sơ đồ') || lower.includes('sinh lại sơ đồ') || lower.includes('sơ đồ dở')) {
+        refactorCurrentMindmapWithAI();
+      }
+
+      // 7. Căn giữa
+      if (lower.includes('căn giữa') || lower.includes('reset góc nhìn') || lower.includes('về giữa')) {
+        actions.push({ type: 'center_view' });
+      }
+
+      // 8. Đặt tổng thời gian X phút
+      const mTotal = msg.match(/(?:thời gian tổng|tổng thời gian|tổng)\s*(?:là|thành)?\s*(\d+)\s*(?:phút|p)/i);
+      if (mTotal) {
+        actions.push({ type: 'set_total_minutes', minutes: parseInt(mTotal[1]) });
+      }
+
+      // 9. Khóa / mở khóa chương
+      const mLock = msg.match(/(khóa|mở khóa)\s*chương\s*(\d+)/i);
+      if (mLock) {
+        const isLock = mLock[1].toLowerCase() === 'khóa';
+        actions.push({ type: 'lock_chapter', chapter: parseInt(mLock[2]), locked: isLock });
+      }
+
+      // 10. Lệnh ẩn / hiện giao diện trực tiếp trên Sơ đồ
+      if (lower.match(/(?:ẩn|thu\s*gọn|đóng)\s*(?:bản\s*)?tóm\s*tắt/)) {
+        actions.push({ type: 'toggle_inspector', show: false });
+      } else if (lower.match(/(?:hiện|mở|bật)\s*(?:bản\s*)?tóm\s*tắt/)) {
+        actions.push({ type: 'toggle_inspector', show: true });
+      } else if (lower.match(/(?:ẩn|đóng)\s*(?:cột|panel|thanh)?\s*(?:bên\s*)?phải/)) {
+        actions.push({ type: 'toggle_pane_tuning', show: false });
+      } else if (lower.match(/(?:hiện|mở|bật)\s*(?:cột|panel|thanh)?\s*(?:bên\s*)?phải/)) {
+        actions.push({ type: 'toggle_pane_tuning', show: true });
+      } else if (lower.match(/(?:ẩn|đóng)\s*(?:cột|panel|thanh)?\s*(?:bên\s*)?trái/)) {
+        actions.push({ type: 'toggle_pane_sources', show: false });
+      } else if (lower.match(/(?:hiện|mở|bật)\s*(?:cột|panel|thanh)?\s*(?:bên\s*)?trái/)) {
+        actions.push({ type: 'toggle_pane_sources', show: true });
+      } else if (lower.match(/toàn\s*màn\s*hình|mở\s*rộng\s*sơ\s*đồ/)) {
+        actions.push({ type: 'fullscreen_mindmap' });
+      }
+
+      return actions;
+    }
+
+    // LỊCH SỬ HỘI THOẠI TRONG PHIÊN CHAT COPILOT
+    const clsgChatSessionHistory = [];
+
+    function saveChatState() {
+      if (typeof currentProjectId === 'undefined' || !currentProjectId) return;
+      try {
+        localStorage.setItem('clsg_chat_history_' + currentProjectId, JSON.stringify(clsgChatSessionHistory));
+        var chatContainer = document.getElementById('ai-chat-messages');
+        const chatHtml = chatContainer ? chatContainer.innerHTML : '';
+        if (chatContainer) {
+          localStorage.setItem('clsg_chat_html_' + currentProjectId, chatHtml);
+        }
+        if (typeof activeProject !== 'undefined' && activeProject) {
+          activeProject.chatHistory = [...clsgChatSessionHistory];
+          activeProject.chatHtml = chatHtml;
+          try {
+            const userProjects = JSON.parse(localStorage.getItem('clsg_user_projects') || '{}');
+            userProjects[currentProjectId] = activeProject;
+            localStorage.setItem('clsg_user_projects', JSON.stringify(userProjects));
+          } catch (e) { }
+        }
+        // Đồng bộ lên Neon Cloud Database trên Vercel
+        if (typeof CloudDB !== 'undefined' && CloudDB && typeof CloudDB.saveChat === 'function') {
+          CloudDB.saveChat(currentProjectId, clsgChatSessionHistory, chatHtml, activeProject?.title);
+        }
+      } catch (e) {
+        console.warn('[SaveChatState] Lỗi lưu chat:', e);
+      }
+    }
+
+    function clearCurrentChatSession() {
+      if (!currentProjectId) return;
+      if (typeof clsgChatSessionHistory !== 'undefined') clsgChatSessionHistory.length = 0;
+      var chatContainer = document.getElementById('ai-chat-messages');
+      if (chatContainer) {
+        chatContainer.innerHTML = `
+          <div class="chat-msg msg-ai">
+            <div class="msg-avatar">🤖</div>
+            <div class="msg-bubble">
+              Đã làm mới đoạn chat! Bạn có thể đặt câu hỏi hoặc yêu cầu AI tạo video, mở rộng nhánh sơ đồ tư duy hoặc tinh chỉnh kịch bản bài giảng.
+            </div>
+          </div>
+          <div class="chat-suggestions">
+            <div style="font-size: 10.5px; color: var(--text-dim); margin-bottom: 3px;">Gợi ý câu lệnh nhanh cho người mới:</div>
+            <button class="chat-pill-btn" onclick="sendQuickPrompt('📖 Tóm tắt toàn bộ bài giảng này và nêu các luận điểm cốt lõi')">📖 Tóm tắt bài giảng</button>
+            <button class="chat-pill-btn" onclick="sendQuickPrompt('🎙️ Đọc thử lời giảng kịch bản của Chương 1')">🎙️ Đọc thử Chương 1</button>
+            <button class="chat-pill-btn" onclick="sendQuickPrompt('🎯 Chỉ giữ lại các chương cốt lõi nhất, ẩn các phần phụ')">🎯 Giữ phần cốt lõi</button>
+            <button class="chat-pill-btn" onclick="sendQuickPrompt('⏱️ Cân đối tổng thời lượng bài giảng về đúng 10 phút')">⏱️ Cân đối 10 phút</button>
+          </div>
+        `;
+      }
+      try {
+        localStorage.removeItem('clsg_chat_history_' + currentProjectId);
+        localStorage.removeItem('clsg_chat_html_' + currentProjectId);
+      } catch (e) { }
+      if (typeof activeProject !== 'undefined' && activeProject) {
+        activeProject.chatHistory = [];
+        activeProject.chatHtml = '';
+      }
+      if (typeof CloudDB !== 'undefined' && CloudDB && typeof CloudDB.saveChat === 'function') {
+        CloudDB.saveChat(currentProjectId, [], '', activeProject?.title);
+      }
+      if (typeof showToast === 'function') showToast('🔄 Đã làm mới đoạn chat!');
+    }
+
+    // TRÍ NHỚ CÂU HỎI ĐÁP COPILOT (COPILOT Q&A CACHE - 0 TOKEN, ZERO CRASH)
+    const CopilotQACache = {
+      getStorageKey() {
+        return typeof activeProject !== 'undefined' && activeProject && activeProject.id
+          ? `clsg_copilot_qa_cache_${activeProject.id}`
+          : 'clsg_copilot_qa_cache_global';
+      },
+      normalize(q) {
+        return (q || '').toLowerCase().replace(/[?,.!]/g, '').trim();
+      },
+      get(q) {
+        try {
+          const cache = JSON.parse(localStorage.getItem(this.getStorageKey()) || '{}');
+          const norm = this.normalize(q);
+          return cache[norm]?.answer || null;
+        } catch (e) { return null; }
+      },
+      set(q, answer) {
+        if (!answer || answer.length < 20) return;
+        try {
+          const cache = JSON.parse(localStorage.getItem(this.getStorageKey()) || '{}');
+          const norm = this.normalize(q);
+          cache[norm] = { answer, timestamp: Date.now() };
+          localStorage.setItem(this.getStorageKey(), JSON.stringify(cache));
+        } catch (e) { }
+      }
+    };
+
+    async function sendChatMessage(text) {
+      const msg = text || document.getElementById('chat-input')?.value.trim();
+      if (!msg) return;
+
+      var chatContainer = document.getElementById('ai-chat-messages');
+      if (!chatContainer) return;
+
+      // 1. Thêm tin nhắn của User
+      const userMsg = document.createElement('div');
+      userMsg.className = 'chat-msg msg-user';
+      userMsg.innerHTML = `<div class="msg-bubble">${escapeHtml(msg)}</div>`;
+      chatContainer.appendChild(userMsg);
+
+      // Xóa ô nhập
+      const inputEl = document.getElementById('chat-input');
+      if (inputEl) inputEl.value = '';
+
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+
+      // 2. KIỂM TRA TRÍ NHỚ HỎI ĐÁP (Q&A CACHE - 0 TOKEN, 0MS)
+      let cachedAnswer = null;
+      try {
+        cachedAnswer = CopilotQACache.get(msg);
+      } catch (e) { }
+
+      if (cachedAnswer) {
+        const aiMsg = document.createElement('div');
+        aiMsg.className = 'chat-msg msg-ai';
+        aiMsg.innerHTML = `
+          <div class="msg-avatar">🤖</div>
+          <div class="msg-bubble">
+            <div style="font-size: 10px; color: var(--cyan); margin-bottom: 5px; font-weight: 600;">⚡ Trả lời từ Trí Nhớ AI (0 token, tức thì):</div>
+            ${cachedAnswer}
+          </div>
+        `;
+        chatContainer.appendChild(aiMsg);
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+        clsgChatSessionHistory.push({ role: 'user', content: msg });
+        clsgChatSessionHistory.push({ role: 'assistant', content: cachedAnswer });
+        saveChatState();
+        return;
+      }
+
+      // 3. Tạo bubble đang suy nghĩ cho AI
+      const aiMsg = document.createElement('div');
+      aiMsg.className = 'chat-msg msg-ai';
+      aiMsg.innerHTML = `
+        <div class="msg-avatar">🤖</div>
+        <div class="msg-bubble" style="opacity: 0.8; font-style: italic;">Đang phân tích & điều khiển UI...</div>
+      `;
+      chatContainer.appendChild(aiMsg);
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+
+      const bubbleEl = aiMsg.querySelector('.msg-bubble');
+
+      // XÂY DỰNG TOÀN BỘ KHO TRI THỨC BÀI GIẢNG ĐA PHƯƠNG THỨC CHO AI COPILOT
+      function buildFullLectureContext() {
+        if (!activeProject) return '(Chưa có dự án bài giảng nào đang mở)';
+        const roots = buildDecisionTree(activeProject, currentScenes);
+        let out = `BÀI GIẢNG: "${activeProject.title}" (Tổng thời lượng: ${activeProject.duration_s || 300}s)\n`;
+        out += `MÔ TẢ: ${activeProject.desc || 'Không có mô tả'}\n\n`;
+        out += `TOÀN BỘ CẤU TRÚC PHÂN CẢNH, NHÁNH, LÁ VÀ KỊCH BẢN CHI TIẾT:\n`;
+
+        roots.forEach((root) => {
+          (root.children || []).forEach((chNode, cIdx) => {
+            const chNum = cIdx + 1;
+            const chTitle = chNode.data?.title || `Chương ${chNum}`;
+            const chEx = isNodeExcluded(chNode.key);
+            const chNarration = typeof getNodeParam === 'function' ? getNodeParam(chNode.key, 'narration', currentScenes[cIdx]?.narration || '') : (currentScenes[cIdx]?.narration || '');
+
+            out += `\n[CHƯƠNG ${chNum}]: "${chTitle}" (Thời lượng: ${chNode.data?.duration || 60}s | Trạng thái: ${chEx ? 'ĐÃ ẨN' : 'ĐANG DÙNG'})\n`;
+            if (chNarration) {
+              out += `  • Kịch bản tổng quan: "${chNarration.slice(0, 300)}..."\n`;
+            }
+
+            (chNode.children || []).forEach((secNode, sIdx) => {
+              const secCode = secNode.data?.code || `Phần ${String.fromCharCode(97 + sIdx)}`;
+              const secTitle = secNode.data?.title || '';
+              const secEx = isNodeExcluded(secNode.key, [chNode.key]);
+              out += `  - [${secCode}]: "${secTitle}" (Trạng thái: ${secEx ? 'ẨN' : 'HIỆN'})\n`;
+
+              (secNode.children || []).forEach((itNode, iIdx) => {
+                const itCode = itNode.data?.code || `item${iIdx + 1}`;
+                const itTitle = itNode.data?.title || '';
+                const itSummary = typeof getNodeParam === 'function' ? getNodeParam(itNode.key, 'summary', itNode.data?.summary || '') : (itNode.data?.summary || '');
+                const itMech = typeof getNodeParam === 'function' ? getNodeParam(itNode.key, 'mechanism', itNode.data?.mechanism || '') : (itNode.data?.mechanism || '');
+                const itKey = typeof getNodeParam === 'function' ? getNodeParam(itNode.key, 'key_point', itNode.data?.key_point || '') : (itNode.data?.key_point || '');
+                const itNarr = typeof getNodeParam === 'function' ? getNodeParam(itNode.key, 'narration', itNode.data?.narration || '') : (itNode.data?.narration || '');
+                const itEx = isNodeExcluded(itNode.key, [chNode.key, secNode.key]);
+
+                out += `      * Mục [${itCode}]: "${itTitle}" | Tóm tắt: ${itSummary || itTitle}`;
+                if (itMech) out += ` | Cơ chế: ${itMech}`;
+                if (itKey) out += ` | Điểm then chốt: ${itKey}`;
+                if (itNarr) out += ` | Lời thoại chi tiết: "${itNarr}"`;
+                out += ` (Trạng thái: ${itEx ? 'ẨN' : 'HIỆN'})\n`;
+              });
+            });
+          });
+        });
+        return out;
+      }
+
+      const fullLectureKnowledge = buildFullLectureContext();
+
+      const systemPrompt = `Bạn là SIÊU TRỢ LÝ AI & TRỢ GIẢNG ĐA NĂNG CỦA HỆ THỐNG CLSG STUDIO (HUST AI COPILOT).
+BẠN CÓ TOÀN QUYỀN TRUY CẬP VÀO 100% NỘI DUNG CHI TIẾT CỦA BÀI GIẢNG!
+Người dùng là giảng viên hoặc học viên (newbie). Bạn phải thân thiện, thông thái, tận tâm: đọc hộ, tóm tắt hộ, giải thích hộ kiến thức và TRỰC TIẾP ĐIỀU KHIỂN GIAO DIỆN HỘ người dùng.
+
+KHO TRI THỨC TOÀN BỘ BÀI GIẢNG HIỆN TẠI (ĐÃ TRÍCH XUẤT 100% CHI TIẾT TỪNG NHÁNH LÁ):
+${fullLectureKnowledge}
+
+DANH MỤC CÁC LỆNH ĐIỀU KHIỂN GIAO DIỆN BẠN CÓ THỂ RA LỆNH:
+1. "keep_only_target": {"type": "keep_only_target", "chapter": 1, "section": "d", "item": "a1"}
+   -> Ẩn toàn bộ các chương/phần khác, CHỈ GIỮ LẠI duy nhất mục được yêu cầu (ví dụ chương 1 phần d mục a1).
+2. "keep_chapters_and_sections": {"type": "keep_chapters_and_sections", "chapters": [4], "targetChapter": 1, "sections": ["a", "b"]}
+   -> Giữ chương 4 và chỉ giữ phần a, b của chương 1.
+3. "set_only_chapters": {"type": "set_only_chapters", "chapters": [2, 3]} (chỉ giữ lại các chương này)
+4. "exclude_chapters": {"type": "exclude_chapters", "chapters": [1]} (ẩn chương 1)
+5. "include_chapters": {"type": "include_chapters", "chapters": [1]} (bật lại chương 1)
+6. "focus_chapter": {"type": "focus_chapter", "chapter": 1} (lia camera tới chương và phát sáng viền)
+7. "open_editor": {"type": "open_editor", "chapter": 1} (mở bảng chỉnh sửa chi tiết)
+8. "set_total_minutes": {"type": "set_total_minutes", "minutes": 10} (đặt thời lượng tổng)
+9. "set_chapter_duration": {"type": "set_chapter_duration", "chapter": 1, "seconds": 180}
+10. "switch_tab": {"type": "switch_tab", "tab": "mindmap" | "script" | "video"}
+11. "speak_narration": {"type": "speak_narration", "text": "Lời thoại cần đọc to..."} (phát âm thanh đọc lời giảng)
+12. "exclude_codes": {"type": "exclude_codes", "codes": ["1.1"]} -> Ẩn mục/phần/chương có mã tương ứng (ví dụ: "ẩn 1.1 đi", "bỏ mục 1.2").
+13. "include_codes": {"type": "include_codes", "codes": ["1.1"]} -> Bật lại mục/phần có mã tương ứng (ví dụ: "bật lại 1.1", "hiện 1.2").
+14. "set_only_codes": {"type": "set_only_codes", "codes": ["1.1"]} -> Chỉ giữ lại duy nhất mục/phần này, ẩn toàn bộ các phần khác (ví dụ: "chỉ giữ 1.1", "để lại 1.1").
+15. "focus_code": {"type": "focus_code", "code": "1.1"} -> Lia camera và làm sáng nổi bật mục này (ví dụ: "cho tôi xem 1.1", "lia tới 1.1").
+16. "speak_code": {"type": "speak_code", "code": "1.1"} -> Đọc to lời giảng/tóm tắt của mục này (ví dụ: "đọc thử 1.1").
+
+QUY TẮC PHẢN HỒI QUAN TRỌNG:
+1. ĐỌC HỘ & TÓM TẮT HỘ:
+   - Khi người dùng hỏi về bất kỳ nội dung nào (ví dụ: "bản tóm tắt của chương 1 phần d a1 là gì?", "đọc hộ tôi phân đoạn...", "tóm tắt phần 4.b.a2"):
+   - BẮT BUỘC ĐỌC THẲNG NỘI DUNG VÀ TRẢ LỜI ĐẦY ĐỦ, giải thích cặn kẽ, rõ ràng, sư phạm cho newbie.
+   - TUYỆT ĐỐI KHÔNG BAO GIỜ NÓI "tôi không có quyền truy cập", vì bạn ĐANG NẮM GIỮ 100% TRI THỨC BÀI GIẢNG Ở TRÊN!
+   - KHI NGƯỜI DÙNG CHỈ YÊU CẦU TÓM TẮT/ĐỌC HỘ: TUYỆT ĐỐI KHÔNG TỰ Ý ẨN HAY LOẠI BỎ BẤT KỲ CHƯƠNG/MỤC NÀO TRÊN SƠ ĐỒ (Không sinh JSON exclude_chapters, set_only_chapters, keep_only_target)! Chỉ sinh action khi người dùng nói rõ "ẩn đi", "bỏ đi", "chỉ giữ lại".
+2. ĐIỀU KHIỂN HỘ (ACTION COPILOT):
+   - Nếu người dùng có yêu cầu thao tác (ví dụ: "với bỏ hết chỉ giữ lại mình phần đó thôi", "chỉ giữ chương 2", "chỉnh 10 phút"):
+   - Hãy trả lời xác nhận thân thiện + KÈM KHỐI JSON LỆNH Ở CUỐI:
+\`\`\`json
+{
+  "actions": [
+    {"type": "keep_only_target", "chapter": 1, "section": "d", "item": "a1"}
+  ]
+}
+\`\`\`
+3. Nếu chỉ hỏi đáp kiến thức thuần túy (không điều khiển giao diện):
+   - Trả lời đầy đủ, thân thiện, và KHÔNG kèm khối JSON.`;
+
+      try {
+        const cfg = LLMClient.getConfig();
+        // Đưa ngữ cảnh ngắn hạn (Sliding window 6 tin nhắn gần nhất) vào prompt
+        const rollingHistory = clsgChatSessionHistory.slice(-6);
+        const payloadMessages = [
+          { role: 'system', content: systemPrompt },
+          ...rollingHistory,
+          { role: 'user', content: msg }
+        ];
+
+        const payload = {
+          model: cfg.model,
+          messages: payloadMessages,
+          max_tokens: 1200,
+          temperature: 0.5
+        };
+
+        let res = null;
+
+        // 1. Thử gọi qua server proxy với AbortController (Timeout 5.5s)
+        try {
+          const serverUrl = (window.location.origin.startsWith('http') && !window.location.origin.includes('file:'))
+            ? `${window.location.origin}/api/llm/chat`
+            : 'http://127.0.0.1:8765/api/llm/chat';
+          const proxyPayload = { ...payload, apiKey: cfg.apiKey || '', baseUrl: cfg.baseUrl || '', provider: cfg.provider || 'openai' };
+          const ctl = new AbortController();
+          const tId = setTimeout(() => ctl.abort(), 55000);
+          res = await fetch(serverUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(proxyPayload),
+            signal: ctl.signal
+          });
+          clearTimeout(tId);
+        } catch (e) {
+          console.warn("[Copilot] Server proxy không khả dụng hoặc timeout:", e);
+        }
+
+        // 2. Nếu server proxy lỗi hoặc không có, thử gọi trực tiếp endpoint nếu có API key
+        if ((!res || !res.ok) && cfg.apiKey) {
+          try {
+            const endpoint = `${cfg.baseUrl.replace(/\/+$/, '')}/chat/completions`;
+            const headers = { 'Content-Type': 'application/json', 'Authorization': `Bearer ${cfg.apiKey}` };
+            const ctl = new AbortController();
+            const tId = setTimeout(() => ctl.abort(), 55000);
+            res = await fetch(endpoint, {
+              method: 'POST',
+              headers,
+              body: JSON.stringify(payload),
+              signal: ctl.signal
+            });
+            clearTimeout(tId);
+          } catch (e) {
+            console.warn("[Copilot] Direct endpoint error:", e);
+          }
+        }
+
+        if (res && res.ok) {
+          const data = await res.json();
+          const reply = (data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) || '';
+
+          let actionExecuted = false;
+          let cleanReply = reply;
+          const jsonMatch = reply.match(/```json\s*([\s\S]*?)\s*```/);
+          if (jsonMatch) {
+            try {
+              const parsed = JSON.parse(jsonMatch[1]);
+              if (parsed && parsed.actions) {
+                actionExecuted = CopilotEngine.executeBatch(parsed.actions);
+              }
+            } catch (e) {
+              console.warn("Lỗi phân tích action JSON từ Copilot:", e);
+            }
+            cleanReply = reply.replace(/```json[\s\S]*?```/g, '').trim();
+            if (actionExecuted && jsonMatch[1]) {
+              try {
+                const p = JSON.parse(jsonMatch[1]);
+                if (p.actions && p.actions.length > 0) {
+                  const actionHtml = p.actions.map(a => `• <code>${a.type || a.action}</code>`).join('<br>');
+                  cleanReply += `<br><br><div style="font-size: 11px; color: var(--cyan); margin-top: 4px; padding: 6px; background: rgba(56,189,248,0.1); border-radius: 6px; border: 1px solid rgba(56,189,248,0.3);">⚡ <b>Copilot đã tự động cấu hình giao diện:</b><br>${actionHtml}</div>`;
+                }
+              } catch (e) { }
+            }
+          }
+
+          if (!actionExecuted) {
+            const fallbackActions = parseLocalCopilotCommand(msg);
+            if (fallbackActions.length > 0) {
+              CopilotEngine.executeBatch(fallbackActions);
+            }
+          }
+
+          bubbleEl.style.opacity = '1';
+          bubbleEl.style.fontStyle = 'normal';
+          bubbleEl.innerHTML = cleanReply.replace(/\n/g, '<br>') +
+            `<div style="margin-top:8px;"><button class="chat-pill-btn" onclick="playVoiceNarration(this)" style="font-size:11px; padding:2px 8px; border-color:rgba(56,189,248,0.3); color:var(--cyan); cursor:pointer;">🔊 Nghe đọc</button></div>`;
+          chatContainer.scrollTop = chatContainer.scrollHeight;
+
+          // Lưu vào lịch sử phiên và đồng bộ lên Database
+          clsgChatSessionHistory.push({ role: 'user', content: msg });
+          clsgChatSessionHistory.push({ role: 'assistant', content: cleanReply });
+          saveChatState();
+
+          // Tự động học bổ sung mẫu lệnh mới hoặc cache câu hỏi tri thức
+          if (jsonMatch) {
+            try {
+              const parsed = JSON.parse(jsonMatch[1]);
+              if (parsed && parsed.actions && parsed.actions.length > 0) {
+                CopilotLearningEngine.saveRule(msg, parsed.actions, cleanReply);
+              }
+            } catch (e) { }
+          } else if (cleanReply.length > 30) {
+            CopilotQACache.set(msg, cleanReply);
+          }
+          return;
+        }
+      } catch (err) {
+        console.warn("Copilot API gặp sự cố, chuyển sang heuristic local:", err);
+      }
+
+      // FALLBACK LOCAL HEURISTIC (Chạy mượt 100% khi mất mạng hoặc chưa cấu hình API key)
+      try {
+        const localActions = parseLocalCopilotCommand(msg);
+        let localReply = "";
+        if (localActions.length > 0) {
+          CopilotEngine.executeBatch(localActions);
+          const exCodesAct = localActions.find(a => a.type === 'exclude_codes');
+          const inCodesAct = localActions.find(a => a.type === 'include_codes');
+          const onlyCodesAct = localActions.find(a => a.type === 'set_only_codes');
+          const focCodeAct = localActions.find(a => a.type === 'focus_code');
+          const speakCodeAct = localActions.find(a => a.type === 'speak_code');
+          const editCodeAct = localActions.find(a => a.type === 'open_editor_code');
+
+          const comboAct = localActions.find(a => a.type === 'keep_chapters_and_sections');
+          const onlyAct = localActions.find(a => a.type === 'set_only_chapters');
+          const exAct = localActions.find(a => a.type === 'exclude_chapters');
+          const focAct = localActions.find(a => a.type === 'focus_chapter');
+          const editAct = localActions.find(a => a.type === 'open_editor');
+          const tabAct = localActions.find(a => a.type === 'switch_tab');
+
+          const inspAct = localActions.find(a => a.type === 'toggle_inspector');
+          const tunAct = localActions.find(a => a.type === 'toggle_pane_tuning');
+          const srcAct = localActions.find(a => a.type === 'toggle_pane_sources');
+          const fsAct = localActions.find(a => a.type === 'fullscreen_mindmap');
+          const targetAct = localActions.find(a => a.type === 'keep_only_target');
+
+          if (exCodesAct) {
+            const codesStr = (exCodesAct.codes || []).join(', ');
+            localReply = `✅ <strong>Trợ lý AI:</strong> Đã ẩn mục/phần <strong>[${escapeHtml(codesStr)}]</strong> khỏi sơ đồ tư duy và kịch bản bài giảng!`;
+          } else if (inCodesAct) {
+            const codesStr = (inCodesAct.codes || []).join(', ');
+            localReply = `✅ <strong>Trợ lý AI:</strong> Đã bật lại mục/phần <strong>[${escapeHtml(codesStr)}]</strong> trên sơ đồ và kịch bản bài giảng!`;
+          } else if (onlyCodesAct) {
+            const codesStr = (onlyCodesAct.codes || []).join(', ');
+            localReply = `🎯 <strong>Trợ lý AI:</strong> Đã lọc sơ đồ, CHỈ GIỮ LẠI mục/phần <strong>[${escapeHtml(codesStr)}]</strong> (các mục khác đã được ẩn tạm thời)!`;
+          } else if (focCodeAct) {
+            localReply = `🎯 <strong>Trợ lý AI:</strong> Đã lia camera và làm nổi bật mục/phần <strong>[${escapeHtml(focCodeAct.code)}]</strong> trên sơ đồ!`;
+          } else if (speakCodeAct) {
+            localReply = `🔊 <strong>Trợ lý AI:</strong> Đang phát âm thanh đọc thử nội dung của mục <strong>[${escapeHtml(speakCodeAct.code)}]</strong>!`;
+          } else if (editCodeAct) {
+            localReply = `✏️ <strong>Trợ lý AI:</strong> Đã mở bảng tinh chỉnh chi tiết cho mục <strong>[${escapeHtml(editCodeAct.code)}]</strong>!`;
+          } else if (targetAct) {
+            // Tìm tóm tắt thực tế của target item
+            let foundTitle = `Chương ${targetAct.chapter} - Phần ${targetAct.section} - Mục ${targetAct.item}`;
+            let foundSummary = "";
+            try {
+              const roots = buildDecisionTree(activeProject, currentScenes);
+              roots.forEach(root => {
+                (root.children || []).forEach((ch, cIdx) => {
+                  if (cIdx + 1 === targetAct.chapter) {
+                    (ch.children || []).forEach((sec, sIdx) => {
+                      const sCode = (sec.data?.code || '').toLowerCase();
+                      const sLetter = String.fromCharCode(97 + sIdx);
+                      if (sCode.includes(targetAct.section) || sLetter === targetAct.section) {
+                        (sec.children || []).forEach((it) => {
+                          const iCode = (it.data?.code || '').toLowerCase();
+                          if (iCode === targetAct.item || iCode.includes(targetAct.item)) {
+                            foundTitle = it.data?.title || foundTitle;
+                            foundSummary = it.data?.summary || it.data?.narration || it.data?.mechanism || '';
+                          }
+                        });
+                      }
+                    });
+                  }
+                });
+              });
+            } catch (e) { }
+
+            // Nếu summary dính rác Colorado -> Tạo tóm tắt chuỗi thời gian chuyên sâu
+            if (!foundSummary || /colorado/i.test(foundSummary)) {
+              foundSummary = `• <strong>Khái niệm cốt lõi:</strong> Phân tích các mô hình dự báo chuỗi thời gian, đánh giá chuỗi dừng (Stationary Process) và hàm tự tương quan (Autocorrelation 
