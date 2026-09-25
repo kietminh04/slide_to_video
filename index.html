@@ -3646,10 +3646,10 @@
             <button class="mindmap-ctrl-btn" id="btn-zoom-out" title="Thu nhỏ (hoặc lăn chuột xuống)">➖</button>
             <span class="mindmap-zoom-label" id="label-zoom">85%</span>
             <button class="mindmap-ctrl-btn" id="btn-zoom-reset" title="Đặt lại góc nhìn">⟲ Căn Giữa</button>
-            <button class="mindmap-ctrl-btn" id="btn-ai-refactor-mindmap"
+            <button class="mindmap-ctrl-btn" id="btn-toggle-layout"
               style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.4), rgba(168, 85, 247, 0.4)); border: 1px solid rgba(168, 85, 247, 0.7); color: #fff; font-weight: 700; padding: 0 14px; gap: 6px; display: flex; align-items: center;"
               title="Phân tích lại toàn bộ bài giảng và chuẩn hóa sơ đồ tư duy">
-              <span>✨</span> Tái Cấu Trúc Sơ Đồ
+              <span>✨</span> Đổi Cấu Trúc
             </button>
             
           </div>
@@ -4439,6 +4439,58 @@
         ]
       }
     };
+
+    
+    // =========================================================================
+    // GRID / SNAKE LAYOUT CHO CHẾ ĐỘ SLIDE
+    // =========================================================================
+    window.isGridLayout = true; // Mặc định là Grid
+    
+    function toggleMindmapLayout() {
+      window.isGridLayout = !window.isGridLayout;
+      renderMindmap();
+      showToast(window.isGridLayout ? 'Chuyển sang chế độ Sơ Đồ Trang (Grid)' : 'Chuyển sang chế độ Sơ Đồ Cây (Tree)');
+    }
+
+    function layoutGridTree(allNodes) {
+      const leaves = [];
+      allNodes.forEach(n => {
+        // Coi các node ở tầng dưới cùng (không có children) là trang
+        if (!n.children || n.children.length === 0) {
+          if (n.type !== 'project') {
+            leaves.push(n);
+            n.isHidden = false;
+          } else {
+            n.isHidden = true;
+          }
+        } else {
+          n.isHidden = true;
+        }
+      });
+      
+      const N = leaves.length;
+      let cols = 5;
+      if (N < 10) cols = Math.ceil(N / 2);
+      if (cols < 1) cols = 1;
+      
+      const gapX = 350;
+      const gapY = 250;
+      const startX = 100;
+      const startY = 150;
+      
+      for (let i = 0; i < N; i++) {
+        let row = Math.floor(i / cols);
+        let col = i % cols;
+        if (row % 2 !== 0) {
+          col = cols - 1 - col;
+        }
+        leaves[i].x = startX + col * gapX;
+        leaves[i].y = startY + row * gapY;
+        leaves[i].gridOrder = i; // Save order for drawing paths
+      }
+      
+      return leaves;
+    }
 
     // =========================================================================
     // CLOUD DATABASE SYNC (NEON SERVERLESS POSTGRES)
@@ -7078,9 +7130,8 @@
       world.innerHTML = '';
 
       const roots = buildDecisionTree(activeProject, currentScenes);
-      layoutDecisionTree(roots);
-
-      // Thu thập toàn bộ các node hiển thị
+      
+      // Thu thập toàn bộ các node
       const allNodes = [];
       function collectVisible(n) {
         allNodes.push(n);
@@ -7089,14 +7140,22 @@
         }
       }
       roots.forEach(collectVisible);
+      
+      let gridLeaves = [];
+      if (window.isGridLayout) {
+        gridLeaves = layoutGridTree(allNodes);
+      } else {
+        allNodes.forEach(n => n.isHidden = false);
+        layoutDecisionTree(roots);
+      }
 
-      const minX = Math.min(...allNodes.map(n => n.x));
-      const maxX = Math.max(...allNodes.map(n => n.x + n.width));
-      const minY = Math.min(...allNodes.map(n => n.y));
-      const maxY = Math.max(...allNodes.map(n => n.y + n.height));
 
-      const worldWidth = Math.max(4800, maxX + 800);
-      const worldHeight = Math.max(3200, maxY + 800);
+      const visibleNodes = allNodes.filter(n => !n.isHidden);
+      if (visibleNodes.length === 0) return;
+      const minX = Math.min(...visibleNodes.map(n => n.x));
+      const maxX = Math.max(...visibleNodes.map(n => n.x + n.width));
+      const minY = Math.min(...visibleNodes.map(n => n.y));
+      const maxY = Math.max(...visibleNodes.map(n => n.y + n.height));
       world.style.minWidth = worldWidth + 'px';
       world.style.minHeight = worldHeight + 'px';
 
@@ -7106,8 +7165,52 @@
       svg.style.width = worldWidth + 'px';
       svg.style.height = worldHeight + 'px';
 
+      if (window.isGridLayout) {
+        for (let i = 0; i < gridLeaves.length - 1; i++) {
+          const pEl = gridLeaves[i];
+          const cEl = gridLeaves[i + 1];
+          const pX = pEl.x + pEl.width / 2;
+          const pY = pEl.y + pEl.height / 2;
+          const cX = cEl.x + cEl.width / 2;
+          const cY = cEl.y + cEl.height / 2;
+          
+          const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+          // Vẽ đường gấp khúc vuông góc (snake)
+          let d = '';
+          const row = Math.floor(i / (gridLeaves.length < 10 ? Math.ceil(gridLeaves.length/2) : 5));
+          const nextRow = Math.floor((i+1) / (gridLeaves.length < 10 ? Math.ceil(gridLeaves.length/2) : 5));
+          
+          if (row === nextRow) {
+             // Cùng hàng, nối ngang
+             const startX = pX + (pEl.x < cEl.x ? pEl.width/2 : -pEl.width/2);
+             const endX = cX + (pEl.x < cEl.x ? -cEl.width/2 : cEl.width/2);
+             // Arrow head logic isn't strictly needed for path, but let's just connect centers
+             d = `M ${pX} ${pY} L ${cX} ${cY}`;
+          } else {
+             // Xuống hàng, nối dọc
+             d = `M ${pX} ${pY} L ${pX} ${cY} L ${cX} ${cY}`;
+          }
+          
+          path.setAttribute('d', d);
+          path.setAttribute('stroke', 'rgba(56, 189, 248, 0.45)');
+          path.setAttribute('stroke-width', '4');
+          path.setAttribute('fill', 'none');
+          path.setAttribute('stroke-linecap', 'round');
+          path.setAttribute('stroke-linejoin', 'round');
+          
+          // Thêm mũi tên
+          path.setAttribute('marker-end', 'url(#arrowhead)');
+          svg.appendChild(path);
+        }
+        
+        // Định nghĩa marker mũi tên
+        const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+        defs.innerHTML = `<marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="rgba(56, 189, 248, 0.6)"/></marker>`;
+        svg.appendChild(defs);
+        
+      } else {
       allNodes.forEach(node => {
-        if (node.isExpanded && node.children && node.children.length > 0) {
+        if (!node.isHidden && node.isExpanded && node.children && node.children.length > 0) {
           const pX = node.x + node.width / 2;
           const pY = node.y + node.height;
 
@@ -7142,14 +7245,22 @@
         }
       });
 
+      }
       world.appendChild(svg);
 
       // 2. Tạo Container chứa các thẻ nhánh độc lập
       const nodesContainer = document.createElement('div');
       nodesContainer.setAttribute('class', 'mindmap-nodes-container');
 
-      allNodes.forEach(node => {
+      visibleNodes.forEach(node => {
         const card = createDecisionNodeElement(node);
+        // Rename title for Grid View
+        if (window.isGridLayout) {
+           const titleEl = card.querySelector('.node-title');
+           if (titleEl) {
+               titleEl.innerHTML = `Trang ${node.gridOrder + 1}`;
+           }
+        }
         nodesContainer.appendChild(card);
       });
 
@@ -15582,7 +15693,7 @@ ${foreshadowText}`;
       }
     }
 
-    document.getElementById('btn-ai-refactor-mindmap')?.addEventListener('click', refactorCurrentMindmapWithAI);
+    document.getElementById('btn-toggle-layout')?.addEventListener('click', toggleMindmapLayout);
 
 
     // --- BẮT ĐẦU: RAG INGESTION TÍCH HỢP ---
