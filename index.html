@@ -15479,6 +15479,11 @@ ${foreshadowText}`;
           renderMindmap();
           renderScriptDocument();
           updateTuningPanel();
+          // TỰ ĐỘNG NẠP RAG NGAY KHI PHÂN TÍCH XONG
+          setTimeout(() => {
+            if (typeof triggerRagIngestion === 'function') triggerRagIngestion();
+          }, 1000);
+
 
           // Lưu vào local cache và Neon Cloud
           try {
