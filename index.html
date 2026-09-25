@@ -4414,7 +4414,8 @@
       window.isGridLayout = !window.isGridLayout;
       renderMindmap();
       centerMindmapView(true);
-      // Cập nhật label nút
+      renderScriptDocument(); // Đồng bộ ngay sang kịch bản
+      updateBtnGenCountBadge(); // Đồng bộ nhãn nút sinh kịch bản
 
       showToast(window.isGridLayout ? 'Chuyển sang chế độ Sơ Đồ Trang (Grid)' : 'Chuyển sang chế độ Sơ Đồ Cây (Tree)');
     }
@@ -7442,7 +7443,7 @@
       if (window.isGridLayout) {
           let imgHtml = '';
           if (activeProject && activeProject.detailedContent && activeProject.detailedContent[node.gridOrder]) {
-              const imgUrl = activeProject.detailedContent[node.gridOrder].image_url;
+              const imgUrl = activeProject.detailedContent[node.gridOrder].thumbnail || activeProject.detailedContent[node.gridOrder].image_url;
               if (imgUrl) {
                   imgHtml = `<img src="${imgUrl}" style="width: 100%; height: 100%; object-fit: contain; border-radius: 4px;"/>`;
               }
@@ -7452,6 +7453,8 @@
               imgHtml = `<div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.05); color: var(--text-dim); font-size: 11px; border-radius: 4px; border: 1px dashed rgba(255,255,255,0.2);">Trống (Vào Nội Dung)</div>`;
           }
 
+          const curDur = getNodeParam(node.key, 'duration', node.data?.duration || 20);
+
           contentHtml = `
             <div style="font-size: 12px; font-weight: 800; color: #e2e8f0; margin-bottom: 6px; padding-left: 2px;" class="node-title">
                Trang ${node.gridOrder + 1}
@@ -7460,7 +7463,7 @@
                ${imgHtml}
             </div>
             <div style="display: flex; align-items: center; justify-content: flex-end; padding-right: 22px;">
-              <span class="node-duration-badge" title="Thời lượng (bấm để chỉnh)" style="font-size: 11px; padding: 3px 8px;">⏱ ${node.data?.duration || 20}s</span>
+              <span class="node-duration-badge" title="Thời lượng (bấm để chỉnh)" style="font-size: 11px; padding: 3px 8px;">⏱ ${curDur}s</span>
             </div>
           `;
           
@@ -11550,6 +11553,14 @@ QUY TẮC:
         badge.textContent = `${chapCount} mục`;
         return;
       }
+      if (window.isGridLayout) {
+        const sources = activeProject ? (activeProject.sources || []) : [];
+        let totalPages = 0;
+        sources.forEach(s => { totalPages += (s.pages || 0); });
+        if (totalPages === 0) totalPages = (activeProject?.detailedContent && activeProject.detailedContent.length > 0) ? activeProject.detailedContent.length : 1;
+        badge.textContent = `${totalPages} trang`;
+        return;
+      }
       const totalChaps = countTotalActiveScriptChapters();
       badge.textContent = `${totalChaps} mục`;
     }
@@ -11726,64 +11737,96 @@ QUY TẮC:
         const node = currentNodesMap[itKey];
         const itemData = node ? (node.data || {}) : {};
 
-        const nodeCode = getNodeParam(itKey, 'code', itemData.code || '•');
-        const nodeText = getNodeParam(itKey, 'title', itemData.text || itemData.title || itKey);
-        const duration = getNodeParam(itKey, 'duration', itemData.duration || 30);
-        const wpm = getNodeParam(itKey, 'wpm', activeProject?.wpm || 140);
-        const visualType = getNodeParam(itKey, 'visualType', itemData.visual_type || 'split_screen');
-        const notes = getNodeParam(itKey, 'notes', '');
-        const mediaNote = getNodeParam(itKey, 'mediaNote', '');
-        const mediaAttachments = getNodeParam(itKey, 'attachments', []);
-
-        // Xác định câu nối ý chuyển đoạn sư phạm (Bridge)
-        let bridgeIntro = optionalBridge || '';
-        if (!bridgeIntro) {
-          bridgeIntro = getChapterBridge(itKey);
-        }
-        if (!bridgeIntro) {
-          const prevText = getPreviousSegmentNarration(itKey);
-          if (prevText) {
-            const sentences = prevText.trim().split(/(?<=[.!?])\s+/);
-            const lastSentence = sentences.slice(-2).join(' ');
-            if (lastSentence.length > 8) {
-              bridgeIntro = `Nối tiếp câu kết của phần trước: "${lastSentence.slice(0, 120)}"`;
-            }
-          }
-        }
-        // [UPGRADE 1: 3D Contextual Bridge (Next Slide Foreshadowing)]
-        const cards = Array.from(document.querySelectorAll('.segment-script-card'));
-        const currentCard = document.getElementById(`seg-card-${itKey}`);
-        const idx = cards.indexOf(currentCard);
-        if (idx !== -1 && idx < cards.length - 1) {
-          const nextCard = cards[idx + 1];
-          const nextTitleEl = nextCard.querySelector('.seg-title');
-          if (nextTitleEl) {
-            const nextTitle = nextTitleEl.innerText.trim();
-            const foreshadowText = `=> LƯU Ý FORESHADOWING TỪ ĐẠO DIỄN: Phần tiếp theo bài giảng sẽ nói về "${nextTitle}". Hãy chèn 1 CÂU GỢI MỞ ngắn ở CUỐI kịch bản để dẫn dắt sự tò mò của học viên sang phần đó một cách tự nhiên.`;
-            if (bridgeIntro) bridgeIntro += `
-
-${foreshadowText}`;
-            else bridgeIntro = foreshadowText;
-          }
-        }
-
-        // Tìm thông tin Chương & Phần
+        let nodeCode = '';
+        let nodeText = '';
+        let duration = 20;
+        let wpm = 140;
+        let visualType = 'split_screen';
+        let notes = '';
+        let mediaNote = '';
+        let mediaAttachments = [];
         let chapterTitle = '';
         let sectionTitle = '';
-        if (node && node.parentKey) {
-          const pNode = currentNodesMap[node.parentKey];
-          if (pNode) {
-            sectionTitle = pNode.data?.title || '';
-            if (pNode.parentKey) {
-              const chNode = currentNodesMap[pNode.parentKey];
-              if (chNode) chapterTitle = chNode.data?.title || '';
+        let summary = '';
+        let mechanism = '';
+        let keyPoint = '';
+        let bridgeIntro = optionalBridge || '';
+
+        if (itKey.startsWith('grid-page-')) {
+          const pageIndex = parseInt(itKey.replace('grid-page-', ''));
+          nodeCode = `Trang ${pageIndex + 1}`;
+          nodeText = getNodeParam(itKey, 'title', `Trang ${pageIndex + 1}`);
+          duration = parseInt(getNodeParam(itKey, 'duration', 20)) || 20;
+          wpm = parseInt(getNodeParam(itKey, 'wpm', activeProject?.wpm || 140)) || 140;
+          notes = getNodeParam(itKey, 'notes', '');
+          chapterTitle = activeProject?.title || 'Bài Giảng';
+          sectionTitle = `Slide ${pageIndex + 1}`;
+
+          // Lấy nội dung chi tiết bóc tách từ tab Nội Dung nếu có
+          const pageDetail = activeProject?.detailedContent?.[pageIndex];
+          if (pageDetail && pageDetail.explanation) {
+            summary = pageDetail.explanation;
+          }
+
+          // Sliding window bridge từ trang trước
+          if (!bridgeIntro && pageIndex > 0) {
+            const prevNarr = getNodeParam(`grid-page-${pageIndex - 1}`, 'narration', '');
+            if (prevNarr) {
+              const sents = prevNarr.trim().split(/(?<=[.!?])\s+/);
+              const lastSent = sents.slice(-2).join(' ');
+              if (lastSent.length > 5) {
+                bridgeIntro = `Nối tiếp câu kết của trang trước: "${lastSent.slice(0, 100)}"`;
+              }
             }
           }
-        }
+          // Foreshadowing gợi mở sang trang tiếp theo
+          const sources = activeProject ? (activeProject.sources || []) : [];
+          let totalPages = 0; sources.forEach(s => { totalPages += (s.pages || 0); });
+          if (totalPages === 0) totalPages = activeProject?.detailedContent?.length || 1;
+          if (pageIndex < totalPages - 1) {
+            const nextDetail = activeProject?.detailedContent?.[pageIndex + 1];
+            const nextTitle = nextDetail ? `Slide ${pageIndex + 2}` : `Trang ${pageIndex + 2}`;
+            const fText = `=> LƯU Ý FORESHADOWING: Trang tiếp theo là "${nextTitle}". Hãy chèn 1 CÂU GỢI MỞ ngắn ở CUỐI kịch bản để dẫn dắt học viên sang trang tiếp theo một cách tự nhiên.`;
+            bridgeIntro = bridgeIntro ? (bridgeIntro + '\n\n' + fText) : fText;
+          }
+        } else {
+          nodeCode = getNodeParam(itKey, 'code', itemData.code || '•');
+          nodeText = getNodeParam(itKey, 'title', itemData.text || itemData.title || itKey);
+          duration = getNodeParam(itKey, 'duration', itemData.duration || 30);
+          wpm = getNodeParam(itKey, 'wpm', activeProject?.wpm || 140);
+          visualType = getNodeParam(itKey, 'visualType', itemData.visual_type || 'split_screen');
+          notes = getNodeParam(itKey, 'notes', '');
+          mediaNote = getNodeParam(itKey, 'mediaNote', '');
+          mediaAttachments = getNodeParam(itKey, 'attachments', []);
 
-        const summary = getNodeParam(itKey, 'summary', itemData.summary || '');
-        const mechanism = getNodeParam(itKey, 'mechanism', itemData.mechanism || '');
-        const keyPoint = getNodeParam(itKey, 'key_point', itemData.key_point || '');
+          // Xác định câu nối ý chuyển đoạn sư phạm (Bridge)
+          if (!bridgeIntro) bridgeIntro = getChapterBridge(itKey);
+          if (!bridgeIntro) {
+            const prevText = getPreviousSegmentNarration(itKey);
+            if (prevText) {
+              const sentences = prevText.trim().split(/(?<=[.!?])\s+/);
+              const lastSentence = sentences.slice(-2).join(' ');
+              if (lastSentence.length > 8) {
+                bridgeIntro = `Nối tiếp câu kết của phần trước: "${lastSentence.slice(0, 120)}"`;
+              }
+            }
+          }
+
+          if (node && node.parentKey) {
+            const pNode = currentNodesMap[node.parentKey];
+            if (pNode) {
+              sectionTitle = pNode.data?.title || '';
+              if (pNode.parentKey) {
+                const chNode = currentNodesMap[pNode.parentKey];
+                if (chNode) chapterTitle = chNode.data?.title || '';
+              }
+            }
+          }
+
+          summary = getNodeParam(itKey, 'summary', itemData.summary || '');
+          mechanism = getNodeParam(itKey, 'mechanism', itemData.mechanism || '');
+          keyPoint = getNodeParam(itKey, 'key_point', itemData.key_point || '');
+        }
 
         const scriptText = await LLMClient.generateSegmentNarration({
           projectTitle: activeProject?.title || '',
@@ -11842,6 +11885,42 @@ ${foreshadowText}`;
 
       // Chuyển sang tab kịch bản
       switchCenterTab('script');
+
+      // 1. NẾU Ở CHẾ ĐỘ SƠ ĐỒ TRANG (GRID): SINH KỊCH BẢN CHO TỪNG TRANG SLIDE
+      if (window.isGridLayout) {
+        let totalPages = 0;
+        activeSources.forEach(s => { totalPages += (s.pages || 0); });
+        if (totalPages === 0) totalPages = (activeProject?.detailedContent && activeProject.detailedContent.length > 0) ? activeProject.detailedContent.length : 1;
+
+        showLoading("Đang Sinh Kịch Bản Toàn Bộ Slide...", `Chuẩn bị sinh kịch bản cho ${totalPages} trang slide...`);
+
+        let completedCount = 0;
+        const batchSize = 4;
+        for (let b = 0; b < totalPages; b += batchSize) {
+          const batchIndices = [];
+          for (let i = b; i < Math.min(totalPages, b + batchSize); i++) {
+            batchIndices.push(i);
+          }
+          updateLoading(`Đang sinh trang ${b + 1} - ${Math.min(totalPages, b + batchSize)} / ${totalPages}...`, `Tự động phân tích nội dung slide & thiết lập lời thoại...`);
+
+          await Promise.all(batchIndices.map(async (i) => {
+            try {
+              await generateSingleSegmentScript(`grid-page-${i}`);
+            } catch (err) {
+              console.warn(`Lỗi sinh trang ${i + 1}:`, err);
+            } finally {
+              completedCount++;
+              updateLoading(`Đang hoàn tất (${completedCount}/${totalPages} trang)...`, `Đã viết xong Trang ${i + 1}`);
+            }
+          }));
+        }
+
+        hideLoading();
+        renderScriptDocument();
+        if (typeof autoSaveWorkspaceState === 'function') autoSaveWorkspaceState();
+        showToast(`🎉 Đã hoàn tất & tự động lưu kịch bản cho toàn bộ ${totalPages} trang slide!`);
+        return;
+      }
 
       // Thu thập và phân nhóm các mục theo từng Chương
       const chapterGroups = [];
@@ -11949,6 +12028,37 @@ ${foreshadowText}`;
       if (titleEl && activeProject) titleEl.textContent = activeProject.title || 'Dự Án Bài Giảng';
 
       if (metaEl && activeProject) {
+        if (window.isGridLayout) {
+          const sources = activeProject ? (activeProject.sources || []) : [];
+          let totalPages = 0;
+          sources.forEach(s => { totalPages += (s.pages || 0); });
+          if (totalPages === 0) totalPages = (activeProject?.detailedContent && activeProject.detailedContent.length > 0) ? activeProject.detailedContent.length : 1;
+
+          let totalSec = 0;
+          let totalWords = 0;
+          let completedPages = 0;
+
+          for (let i = 0; i < totalPages; i++) {
+            const itKey = `grid-page-${i}`;
+            const dur = parseInt(getNodeParam(itKey, 'duration', 20)) || 20;
+            totalSec += dur;
+            const narr = getNodeParam(itKey, 'narration', '');
+            if (narr && narr.trim().length > 0) {
+              completedPages++;
+              totalWords += narr.trim().split(/\s+/).length;
+            }
+          }
+
+          const totalM = Math.floor(totalSec / 60);
+          const totalS = totalSec % 60;
+
+          metaEl.innerHTML = `
+            <div class="meta-stat-row">⏱️ Thời lượng: <strong>${totalM}p ${totalS < 10 ? '0' : ''}${totalS}s</strong> (${totalSec}s)</div>
+            <div class="meta-stat-row">🎬 <strong>${completedPages}/${totalPages}</strong> trang có kịch bản (~${totalWords} từ)</div>
+          `;
+          return;
+        }
+
         const allSources = activeProject.sources || [];
         const activeSources = allSources.filter(s => s.active !== false);
 
@@ -12019,6 +12129,112 @@ ${foreshadowText}`;
             <div style="font-size: 12px; color: var(--text-muted);">Hãy tích chọn ít nhất 1 tài liệu ở danh sách bên trái để tạo kịch bản bài giảng.</div>
           </div>
         `;
+        updateScriptHeaderStats();
+        return;
+      }
+
+      // 1. NẾU Ở CHẾ ĐỘ SƠ ĐỒ TRANG (GRID): RENDER KỊCH BẢN THEO TỪNG TRANG SLIDE (1 -> N)
+      if (window.isGridLayout) {
+        let totalPages = 0;
+        activeSources.forEach(s => { totalPages += (s.pages || 0); });
+        if (totalPages === 0) totalPages = (activeProject?.detailedContent && activeProject.detailedContent.length > 0) ? activeProject.detailedContent.length : 1;
+
+        const gridSection = document.createElement('div');
+        gridSection.className = 'script-chapter-section';
+        gridSection.style.marginBottom = '20px';
+
+        const gridHeader = document.createElement('div');
+        gridHeader.className = 'script-chapter-header';
+        gridHeader.innerHTML = `
+          <div class="script-chapter-title-group">
+            <span class="depth-tag depth-core" style="background: rgba(99, 102, 241, 0.2); border-color: rgba(99, 102, 241, 0.5); color: #a5b4fc;">SƠ ĐỒ TRANG SLIDE</span>
+            <span class="script-chapter-name">${activeProject?.title || 'Slide Bài Giảng'} (${totalPages} trang)</span>
+          </div>
+        `;
+        gridSection.appendChild(gridHeader);
+
+        for (let i = 0; i < totalPages; i++) {
+          const itKey = `grid-page-${i}`;
+          const itCode = `Trang ${i + 1}`;
+          const itTitle = getNodeParam(itKey, 'title', `Trang ${i + 1}`);
+          const itDur = parseInt(getNodeParam(itKey, 'duration', 20)) || 20;
+          const itWpm = parseInt(getNodeParam(itKey, 'wpm', activeProject?.wpm || 140)) || 140;
+          const itNotes = getNodeParam(itKey, 'notes', '');
+          const itNarr = getNodeParam(itKey, 'narration', '');
+
+          const pageDetail = activeProject?.detailedContent?.[i];
+          const thumbnailImg = pageDetail?.thumbnail || pageDetail?.image_url || '';
+
+          const wordsCount = itNarr ? itNarr.trim().split(/\s+/).length : 0;
+          const estTime = wordsCount > 0 ? Math.round((wordsCount / itWpm) * 60) : 0;
+
+          const card = document.createElement('div');
+          card.className = 'script-segment-skeleton';
+          card.id = `seg-card-${itKey}`;
+          card.innerHTML = `
+            <!-- HÀNG 1: HEADER TRANG & NÚT SINH KỊCH BẢN RIÊNG -->
+            <div class="segment-header-row">
+              <div class="segment-title-wrap">
+                <span class="segment-code-badge" style="background: rgba(99, 102, 241, 0.25); color: #c4b5fd; border: 1px solid rgba(168, 85, 247, 0.4);">${itCode}</span>
+                <span class="segment-title">${itTitle}</span>
+                <span class="segment-breadcrumb">(Slide ${i + 1} / ${totalPages})</span>
+              </div>
+              <div style="display: flex; gap: 8px;">
+                <button type="button" class="btn-gen-single-script" id="btn-gen-${itKey}" onclick="generateSingleSegmentScript('${itKey}')" title="Dùng AI sinh kịch bản lời thoại chuẩn sư phạm riêng cho trang này">
+                  <span>✨</span> Sinh Kịch Bản Cho Trang Này
+                </button>
+              </div>
+            </div>
+
+            <!-- HÀNG 2: THÔNG SỐ ĐỒNG BỘ 2 CHIỀU & PREVIEW SLIDE -->
+            <div style="display: flex; gap: 14px; margin-bottom: 12px; align-items: stretch;">
+              <!-- Thumbnail slide -->
+              <div style="width: 140px; height: 95px; flex-shrink: 0; background: #000; border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 6px; overflow: hidden; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 8px rgba(0,0,0,0.4);">
+                ${thumbnailImg ? `<img src="${thumbnailImg}" style="width: 100%; height: 100%; object-fit: contain;" alt="Slide ${i+1}">` : `<div style="font-size: 10px; color: var(--text-dim); text-align: center; padding: 4px;">Chưa có ảnh slide<br><span style="font-size: 9px; opacity: 0.7;">(vào tab Nội Dung để quét)</span></div>`}
+              </div>
+
+              <!-- Cấu hình tham số -->
+              <div style="flex: 1; display: flex; flex-direction: column; justify-content: space-between; gap: 8px;">
+                <div class="segment-params-grid" style="margin-bottom: 0;">
+                  <div class="segment-param-item">
+                    <span class="segment-param-label">⏱️ Thời lượng:</span>
+                    <input type="number" class="segment-param-input" min="5" max="300" step="5" value="${itDur}" onchange="syncSegmentParam('${itKey}', 'duration', this.value)" title="Thời lượng (giây)">
+                  </div>
+                  <div class="segment-param-item">
+                    <span class="segment-param-label">🎙️ Tốc độ:</span>
+                    <input type="number" class="segment-param-input" min="80" max="220" step="5" value="${itWpm}" onchange="syncSegmentParam('${itKey}', 'wpm', this.value)" title="Tốc độ đọc (WPM)">
+                  </div>
+                  <div class="segment-param-item" style="grid-column: 1 / -1;">
+                    <span class="segment-param-label">📝 Ghi chú AI (Chỉ dẫn riêng):</span>
+                    <input type="text" class="segment-param-input" placeholder="Ghi chú riêng cho AI khi sinh trang này (vd: đọc chậm, nhấn mạnh công thức...)" value="${escapeHtml(itNotes)}" onchange="syncSegmentParam('${itKey}', 'notes', this.value)" title="Ghi chú riêng đồng bộ 2 chiều với Sơ đồ">
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- HÀNG 3: SOẠN THẢO KỊCH BẢN CHO TRANG -->
+            <div>
+              <textarea class="segment-script-editor" placeholder="Chưa có kịch bản cho trang này. Bạn có thể tự gõ lời thoại giảng dạy tại đây hoặc bấm nút [✨ Sinh Kịch Bản Cho Trang Này] ở trên để AI tự động viết..." onchange="syncSegmentParam('${itKey}', 'narration', this.value)" oninput="updateSegmentCardStats('${itKey}', this.value)">${escapeHtml(itNarr)}</textarea>
+            </div>
+
+            <!-- HÀNG 4: THỐNG KÊ SỐ TỪ & THỜI GIAN ĐỌC -->
+            <div class="segment-footer-stats">
+              <div>
+                <span class="stat-status-badge" style="font-weight: 700; color: ${wordsCount > 0 ? '#34d399' : '#94a3b8'};">
+                  ${wordsCount > 0 ? '🟢 Đã có kịch bản' : '⚪ Chưa sinh kịch bản'}
+                </span>
+                <span style="margin-left: 10px;">Số từ: <strong class="stat-words-val" style="color: #fff;">${wordsCount} từ</strong></span>
+                <span style="margin-left: 10px;">Ước tính: <strong class="stat-est-val" style="color: var(--cyan);">${estTime}s (Mục tiêu: ${itDur}s)</strong></span>
+              </div>
+              <div style="font-size: 10.5px; color: var(--text-dim);">
+                Tip: Dùng <code>[P1]</code> (0.5s), <code>[P2]</code> (1.0s), <code>[P3]</code> (1.5s) để căn nhịp ngắt sư phạm
+              </div>
+            </div>
+          `;
+          gridSection.appendChild(card);
+        }
+
+        paper.appendChild(gridSection);
         updateScriptHeaderStats();
         return;
       }
