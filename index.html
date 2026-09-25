@@ -3984,10 +3984,10 @@
           <div class="gcfg-group">
             <label>🎙️</label>
             <select class="gcfg-select" id="gcfg-voice" title="Giọng đọc AI toàn hệ thống" onchange="applyGlobalVoice()">
-              <optgroup label="🇻🇳 Tiếng Việt (Sư phạm & Diễn cảm)">
-                <option value="quynh_anh" selected>Quỳnh Anh (Nữ Bắc - Tự nhiên)</option>
-                <option value="nam_an">Nam An (Nam Bắc - Trầm ấm)</option>
-                <option value="mai_phuong">Mai Phương (Nữ Nam - Dịu dàng)</option>
+              <optgroup label="🇻🇳 Tiếng Việt (Tự nhiên & Truyền cảm)">
+                <option value="quynh_anh" selected>Quỳnh Anh (Nữ Bắc - Tự nhiên, trong trẻo)</option>
+                <option value="mai_phuong">Mai Phương (Nữ Nam - Dịu dàng, truyền cảm)</option>
+                <option value="nam_an">Nam An (Nam Bắc - Trầm ấm, dõng dạc)</option>
                 <option value="minh_quang">Minh Quang (Nam Nam - Chuyên nghiệp)</option>
               </optgroup>
               <optgroup label="🤖 OpenAI TTS (Đa ngữ chất lượng cao)">
@@ -4340,10 +4340,10 @@
               Giọng:</span>
             <select class="gcfg-select" id="gcfg-voice-right" style="flex: 1; font-size: 10px;"
               onchange="syncGlobalVoiceFromRight()">
-              <optgroup label="🇻🇳 Tiếng Việt (Sư phạm & Diễn cảm)">
-                <option value="quynh_anh" selected>Quỳnh Anh (Nữ Bắc - Tự nhiên)</option>
-                <option value="nam_an">Nam An (Nam Bắc - Trầm ấm)</option>
-                <option value="mai_phuong">Mai Phương (Nữ Nam - Dịu dàng)</option>
+              <optgroup label="🇻🇳 Tiếng Việt (Tự nhiên & Truyền cảm)">
+                <option value="quynh_anh" selected>Quỳnh Anh (Nữ Bắc - Tự nhiên, trong trẻo)</option>
+                <option value="mai_phuong">Mai Phương (Nữ Nam - Dịu dàng, truyền cảm)</option>
+                <option value="nam_an">Nam An (Nam Bắc - Trầm ấm, dõng dạc)</option>
                 <option value="minh_quang">Minh Quang (Nam Nam - Chuyên nghiệp)</option>
               </optgroup>
               <optgroup label="🤖 OpenAI TTS (Đa ngữ chất lượng cao)">
@@ -17222,90 +17222,221 @@ Yêu cầu trình bày:
     }
 
 
-    // ===== HỆ THỐNG NGHE THỬ GIỌNG ĐỌC AI TRỰC TIẾP TỪ KỊCH BẢN & THANH CHUNG =====
+    // ===== HỆ THỐNG PHÁT ÂM THANH & NGHE THỬ GIỌNG ĐỌC AI ĐA TẦNG =====
     let _currentSpeakingSegKey = null;
     let _isPlayingAllScript = false;
     let _scriptPlayIndex = 0;
     let _scriptPlayKeys = [];
+    let _globalTtsAudio = null;
 
-    function playSpeechWithVoice(text, voiceKey, onEnd) {
+    async function playSpeechWithVoice(text, voiceKey, onEnd) {
+      // 1. Dừng mọi trình phát đang chạy
+      if (_globalTtsAudio) {
+        try { _globalTtsAudio.pause(); } catch (e) { }
+        _globalTtsAudio = null;
+      }
+      if ('speechSynthesis' in window && window.speechSynthesis.speaking) {
+        window.speechSynthesis.cancel();
+      }
+
+      if (!text || text.trim().length === 0) {
+        if (onEnd) onEnd();
+        return;
+      }
+
+      const cleanText = text.replace(/\[P\d\]/g, '').replace(/\s+/g, ' ').trim();
+      const cfg = typeof LLMClient !== 'undefined' ? LLMClient.getConfig() : {};
+      const isEnglish = (voiceKey === 'jenny_en' || voiceKey === 'guy_en' || voiceKey === 'fable');
+
+      // TẦNG 1: GỌI /api/tts SERVERLESS PROXY (GOOGLE / OPENAI NEURAL TTS MP3)
+      try {
+        const serverUrl = (window.location.origin.startsWith('http') && !window.location.origin.includes('file:'))
+          ? `${window.location.origin}/api/tts`
+          : 'https://slide-to-video-sigma.vercel.app/api/tts';
+
+        const res = await fetch(serverUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            text: cleanText,
+            voice: voiceKey,
+            apiKey: cfg.apiKey || '',
+            provider: cfg.provider || 'openai'
+          })
+        });
+
+        if (res.ok) {
+          const blob = await res.blob();
+          if (blob && blob.size > 500) {
+            const audioUrl = URL.createObjectURL(blob);
+            const audio = new Audio(audioUrl);
+            _globalTtsAudio = audio;
+
+            const speed = parseFloat(document.getElementById('gcfg-speed')?.value || '1.0');
+            audio.playbackRate = speed;
+
+            audio.onended = () => {
+              _globalTtsAudio = null;
+              if (onEnd) onEnd();
+            };
+            audio.onerror = () => {
+              playFallbackWebSpeech(cleanText, voiceKey, onEnd);
+            };
+
+            await audio.play();
+            return;
+          }
+        }
+      } catch (err) {
+        console.warn('[TTS Server error, falling back to direct / Web Speech]:', err);
+      }
+
+      // TẦNG 2: GOOGLE TTS DIRECT NẾU VĂN BẢN NGẮN (< 180 KÝ TỰ)
+      try {
+        const lang = isEnglish ? 'en' : 'vi';
+        const directUrl = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(cleanText.slice(0, 180))}&tl=${lang}&client=tw-ob`;
+        const audio = new Audio(directUrl);
+        _globalTtsAudio = audio;
+        const speed = parseFloat(document.getElementById('gcfg-speed')?.value || '1.0');
+        audio.playbackRate = speed;
+
+        audio.onended = () => {
+          _globalTtsAudio = null;
+          if (onEnd) onEnd();
+        };
+        audio.onerror = () => {
+          playFallbackWebSpeech(cleanText, voiceKey, onEnd);
+        };
+
+        await audio.play();
+        return;
+      } catch (e) {
+        console.warn('[Direct Google TTS error]:', e);
+      }
+
+      // TẦNG 3: FALLBACK SANG WEB SPEECH API ĐÃ CHUẨN HÓA GIỚI TÍNH & FIX CHROMIUM DEADLOCK
+      playFallbackWebSpeech(cleanText, voiceKey, onEnd);
+    }
+
+    function playFallbackWebSpeech(cleanText, voiceKey, onEnd) {
       if (!('speechSynthesis' in window)) {
-        showToast('⚠️ Trình duyệt không hỗ trợ Web Speech API.');
+        showToast('⚠️ Không thể phát âm thanh trên trình duyệt này.');
         if (onEnd) onEnd();
         return;
       }
 
       window.speechSynthesis.cancel();
 
-      const isEnglish = (voiceKey === 'jenny_en' || voiceKey === 'guy_en');
-      const utter = new SpeechSynthesisUtterance(text);
-      utter.lang = isEnglish ? 'en-US' : 'vi-VN';
+      // Tránh Chromium cancel bug bằng timeout nhỏ
+      setTimeout(() => {
+        const isEnglish = (voiceKey === 'jenny_en' || voiceKey === 'guy_en' || voiceKey === 'fable');
+        const utter = new SpeechSynthesisUtterance(cleanText);
+        utter.lang = isEnglish ? 'en-US' : 'vi-VN';
 
-      const voices = window.speechSynthesis.getVoices();
-      let matchedVoice = null;
-      if (isEnglish) {
-        matchedVoice = voices.find(v => v.lang.includes('en-') && (voiceKey === 'guy_en' ? v.name.toLowerCase().includes('male') || v.name.toLowerCase().includes('guy') || v.name.toLowerCase().includes('david') : true)) || voices.find(v => v.lang.includes('en'));
-      } else {
-        matchedVoice = voices.find(v => v.lang.includes('vi') || v.lang.includes('VI'));
-      }
-      if (matchedVoice) utter.voice = matchedVoice;
+        const voices = window.speechSynthesis.getVoices() || [];
+        const isMale = (voiceKey === 'nam_an' || voiceKey === 'minh_quang' || voiceKey === 'echo' || voiceKey === 'onyx' || voiceKey === 'guy_en');
 
-      const speed = parseFloat(document.getElementById('gcfg-speed')?.value || '1.0');
-      utter.rate = speed;
+        let matchedVoice = null;
+        if (isEnglish) {
+          if (isMale) {
+            matchedVoice = voices.find(v => v.lang.includes('en') && (v.name.toLowerCase().includes('male') || v.name.toLowerCase().includes('guy') || v.name.toLowerCase().includes('david')));
+          } else {
+            matchedVoice = voices.find(v => v.lang.includes('en') && (v.name.toLowerCase().includes('female') || v.name.toLowerCase().includes('zira') || v.name.toLowerCase().includes('jenny')));
+          }
+          if (!matchedVoice) matchedVoice = voices.find(v => v.lang.includes('en'));
+        } else {
+          const viVoices = voices.filter(v => v.lang.includes('vi') || v.lang.includes('VI'));
+          if (isMale) {
+            matchedVoice = viVoices.find(v => v.name.toLowerCase().includes('an') || v.name.toLowerCase().includes('nam') || v.name.toLowerCase().includes('male'));
+          } else {
+            matchedVoice = viVoices.find(v => {
+              const n = v.name.toLowerCase();
+              return n.includes('hoaimy') || n.includes('female') || n.includes('google') || n.includes('linh') || n.includes('mai');
+            });
+          }
+          if (!matchedVoice && viVoices.length > 0) matchedVoice = viVoices[0];
+        }
 
-      if (voiceKey === 'nam_an' || voiceKey === 'minh_quang' || voiceKey === 'echo' || voiceKey === 'onyx' || voiceKey === 'guy_en') {
-        utter.pitch = 0.88;
-      } else if (voiceKey === 'quynh_anh' || voiceKey === 'mai_phuong' || voiceKey === 'nova' || voiceKey === 'shimmer' || voiceKey === 'jenny_en') {
-        utter.pitch = 1.05;
-      }
+        if (matchedVoice) utter.voice = matchedVoice;
 
-      utter.onend = () => { if (onEnd) onEnd(); };
-      utter.onerror = (e) => { console.warn('Speech error:', e); if (onEnd) onEnd(); };
+        const speed = parseFloat(document.getElementById('gcfg-speed')?.value || '1.0');
+        utter.rate = speed;
 
-      window.speechSynthesis.speak(utter);
+        // Nếu là giọng Nữ mà hệ điều hành chỉ có giọng Nam (Microsoft An), nâng cao độ lên 1.45 để nghe như giọng nữ
+        if (!isMale) {
+          if (matchedVoice && matchedVoice.name.toLowerCase().includes('an')) {
+            utter.pitch = 1.42;
+          } else {
+            utter.pitch = 1.1;
+          }
+        } else {
+          utter.pitch = 0.88;
+        }
+
+        utter.onend = () => {
+          window._activeUtterance = null;
+          if (onEnd) onEnd();
+        };
+        utter.onerror = (e) => {
+          console.warn('Utterance error:', e);
+          window._activeUtterance = null;
+          if (onEnd) onEnd();
+        };
+
+        window._activeUtterance = utter;
+        window.speechSynthesis.speak(utter);
+      }, 60);
     }
 
     function testGlobalVoiceSample() {
       const sel = document.getElementById('gcfg-voice');
       const voiceKey = sel?.value || 'quynh_anh';
       const voiceName = sel?.options[sel?.selectedIndex]?.text || voiceKey;
+      const testBtn = document.getElementById('btn-test-global-voice');
 
-      if ('speechSynthesis' in window && window.speechSynthesis.speaking) {
-        window.speechSynthesis.cancel();
+      if ((_globalTtsAudio && !_globalTtsAudio.paused) || ('speechSynthesis' in window && window.speechSynthesis.speaking)) {
+        if (_globalTtsAudio) { _globalTtsAudio.pause(); _globalTtsAudio = null; }
+        if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+        if (testBtn) testBtn.innerHTML = '▶️ Thử';
         showToast('⏹️ Đã dừng nghe thử giọng.');
         return;
       }
 
-      const isEnglish = (voiceKey === 'jenny_en' || voiceKey === 'guy_en');
-      const sampleText = isEnglish
-        ? "Hello! This is a preview of the selected voice for your lecture script."
-        : `Xin chào! Đây là giọng đọc thử nghiệm ${voiceName.split('-')[0].trim()} cho bài giảng của bạn.`;
+      const isEnglish = (voiceKey === 'jenny_en' || voiceKey === 'guy_en' || voiceKey === 'fable');
+      let sampleText = `Xin chào! Tôi là Quỳnh Anh, đây là giọng đọc thử nghiệm cho bài giảng của bạn.`;
+      if (voiceKey === 'mai_phuong') sampleText = `Xin chào! Tôi là Mai Phương, giọng đọc nữ miền Nam cho bài giảng.`;
+      else if (voiceKey === 'nam_an') sampleText = `Xin chào các bạn, tôi là Nam An, giọng đọc nam truyền cảm cho bài giảng.`;
+      else if (voiceKey === 'minh_quang') sampleText = `Xin chào các bạn, tôi là Minh Quang, giọng đọc nam chuyên nghiệp.`;
+      else if (voiceKey === 'nova') sampleText = `Xin chào! Đây là giọng đọc Nova cao cấp cho bài giảng đa phương thức.`;
+      else if (voiceKey === 'shimmer') sampleText = `Xin chào! Đây là giọng đọc Shimmer ấm áp cho bài giảng.`;
+      else if (isEnglish) sampleText = `Hello! This is a preview of the selected voice for your lecture script.`;
 
-      playSpeechWithVoice(sampleText, voiceKey);
-      showToast(`🎙️ Đang thử giọng: ${voiceName}`);
+      if (testBtn) testBtn.innerHTML = '⏹️ Dừng';
+      showToast(`🎙️ Đang phát thử giọng: ${voiceName}`);
+
+      playSpeechWithVoice(sampleText, voiceKey, () => {
+        if (testBtn) testBtn.innerHTML = '▶️ Thử';
+      });
     }
 
     function testSegmentScriptVoice(segKey) {
       const btn = document.getElementById(`btn-test-voice-${segKey}`);
 
-      if (_currentSpeakingSegKey === segKey && 'speechSynthesis' in window && window.speechSynthesis.speaking) {
-        window.speechSynthesis.cancel();
+      if (_currentSpeakingSegKey === segKey) {
+        if (_globalTtsAudio) { _globalTtsAudio.pause(); _globalTtsAudio = null; }
+        if ('speechSynthesis' in window) window.speechSynthesis.cancel();
         _currentSpeakingSegKey = null;
         if (btn) {
           btn.classList.remove('is-playing');
           btn.innerHTML = `<span>🔊</span> Nghe Thử Giọng`;
         }
+        document.querySelectorAll('.script-segment-skeleton').forEach(c => c.classList.remove('is-speaking'));
         showToast('⏹️ Đã dừng đọc đoạn này.');
         return;
       }
 
-      if ('speechSynthesis' in window && window.speechSynthesis.speaking) {
-        window.speechSynthesis.cancel();
-      }
-      if (window._currentAudioPlayer) {
-        window._currentAudioPlayer.pause();
-        window._currentAudioPlayer = null;
-      }
+      if (_globalTtsAudio) { _globalTtsAudio.pause(); _globalTtsAudio = null; }
+      if ('speechSynthesis' in window) window.speechSynthesis.cancel();
 
       document.querySelectorAll('.btn-test-script-voice').forEach(b => {
         b.classList.remove('is-playing');
@@ -17350,6 +17481,7 @@ Yêu cầu trình bày:
       const btnText = document.getElementById('btn-play-all-script-text');
       if (_isPlayingAllScript) {
         _isPlayingAllScript = false;
+        if (_globalTtsAudio) { _globalTtsAudio.pause(); _globalTtsAudio = null; }
         if ('speechSynthesis' in window) window.speechSynthesis.cancel();
         if (btnText) btnText.textContent = 'Nghe Toàn Bộ';
         document.querySelectorAll('.script-segment-skeleton').forEach(c => c.classList.remove('is-speaking'));
