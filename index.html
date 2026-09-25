@@ -7597,8 +7597,10 @@
       card.appendChild(btnEdit);
       card.appendChild(btnLock);
 
-      // Kích hoạt kéo thả theo nhánh cho mọi thẻ node
-      initNodeSubtreeDrag(card, node);
+      // Kích hoạt kéo thả theo nhánh (chỉ ở chế độ Cây, không cho phép kéo trong Grid)
+      if (!window.isGridLayout) {
+        initNodeSubtreeDrag(card, node);
+      }
 
       // 3. SỰ KIỆN CLICK ĐƯỢC ỦY QUYỀN (EVENT DELEGATION) ĐẢM BẢO 100% HOẠT ĐỘNG KHÔNG BỊ TRÔI MẤT
       card.addEventListener('click', (e) => {
