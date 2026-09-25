@@ -11754,39 +11754,65 @@ QUY TẮC:
 
         if (itKey.startsWith('grid-page-')) {
           const pageIndex = parseInt(itKey.replace('grid-page-', ''));
-          nodeCode = `Trang ${pageIndex + 1}`;
+          const sources = activeProject ? (activeProject.sources || []) : [];
+          let totalPages = 0; sources.forEach(s => { totalPages += (s.pages || 0); });
+          if (totalPages === 0) totalPages = activeProject?.detailedContent?.length || 1;
+
+          nodeCode = `Trang ${pageIndex + 1}/${totalPages}`;
           nodeText = getNodeParam(itKey, 'title', `Trang ${pageIndex + 1}`);
           duration = parseInt(getNodeParam(itKey, 'duration', 20)) || 20;
           wpm = parseInt(getNodeParam(itKey, 'wpm', activeProject?.wpm || 140)) || 140;
           notes = getNodeParam(itKey, 'notes', '');
           chapterTitle = activeProject?.title || 'Bài Giảng';
-          sectionTitle = `Slide ${pageIndex + 1}`;
+          sectionTitle = `Slide ${pageIndex + 1} / ${totalPages}`;
 
-          // Lấy nội dung chi tiết bóc tách từ tab Nội Dung nếu có
+          // ===== SLIDING CONTEXT WINDOW (3 TRANG: TRƯỚC - HIỆN TẠI - SAU) =====
           const pageDetail = activeProject?.detailedContent?.[pageIndex];
+          const prevDetail = pageIndex > 0 ? activeProject?.detailedContent?.[pageIndex - 1] : null;
+          const nextDetail = pageIndex < totalPages - 1 ? activeProject?.detailedContent?.[pageIndex + 1] : null;
+
+          // Nội dung chính của trang hiện tại
           if (pageDetail && pageDetail.explanation) {
             summary = pageDetail.explanation;
           }
 
-          // Sliding window bridge từ trang trước
+          // Bổ sung context trang trước & sau để AI nắm mạch giảng dạy
+          const contextParts = [];
+          if (prevDetail && prevDetail.explanation) {
+            contextParts.push(`[BỐI CẢNH TRANG TRƯỚC - Trang ${pageIndex}]:\n${prevDetail.explanation.slice(0, 300)}${prevDetail.explanation.length > 300 ? '...' : ''}`);
+          }
+          if (nextDetail && nextDetail.explanation) {
+            contextParts.push(`[NỘI DUNG TRANG SAU - Trang ${pageIndex + 2}]:\n${nextDetail.explanation.slice(0, 300)}${nextDetail.explanation.length > 300 ? '...' : ''}`);
+          }
+          if (contextParts.length > 0) {
+            mechanism = contextParts.join('\n\n');
+          }
+
+          // Vị trí trang trong bài giảng
+          if (pageIndex === 0) {
+            keyPoint = 'Đây là TRANG MỞ ĐẦU bài giảng. Hãy mở đầu hấp dẫn, giới thiệu chủ đề và tạo động lực học tập.';
+          } else if (pageIndex === totalPages - 1) {
+            keyPoint = 'Đây là TRANG KẾT THÚC bài giảng. Hãy tổng kết các ý chính, nhắc lại kiến thức cốt lõi và khuyến khích học viên thực hành.';
+          } else {
+            keyPoint = `Trang ${pageIndex + 1} / ${totalPages} — phần giữa bài giảng.`;
+          }
+
+          // Sliding window bridge từ kịch bản trang trước (nếu đã sinh)
           if (!bridgeIntro && pageIndex > 0) {
             const prevNarr = getNodeParam(`grid-page-${pageIndex - 1}`, 'narration', '');
             if (prevNarr) {
               const sents = prevNarr.trim().split(/(?<=[.!?])\s+/);
               const lastSent = sents.slice(-2).join(' ');
               if (lastSent.length > 5) {
-                bridgeIntro = `Nối tiếp câu kết của trang trước: "${lastSent.slice(0, 100)}"`;
+                bridgeIntro = `Nối tiếp câu kết của trang trước: "${lastSent.slice(0, 120)}"`;
               }
             }
           }
-          // Foreshadowing gợi mở sang trang tiếp theo
-          const sources = activeProject ? (activeProject.sources || []) : [];
-          let totalPages = 0; sources.forEach(s => { totalPages += (s.pages || 0); });
-          if (totalPages === 0) totalPages = activeProject?.detailedContent?.length || 1;
+
+          // Foreshadowing thông minh: truyền nội dung thực tế trang kế
           if (pageIndex < totalPages - 1) {
-            const nextDetail = activeProject?.detailedContent?.[pageIndex + 1];
-            const nextTitle = nextDetail ? `Slide ${pageIndex + 2}` : `Trang ${pageIndex + 2}`;
-            const fText = `=> LƯU Ý FORESHADOWING: Trang tiếp theo là "${nextTitle}". Hãy chèn 1 CÂU GỢI MỞ ngắn ở CUỐI kịch bản để dẫn dắt học viên sang trang tiếp theo một cách tự nhiên.`;
+            const nextTopic = nextDetail?.explanation ? nextDetail.explanation.slice(0, 150) : `Trang ${pageIndex + 2}`;
+            const fText = `=> FORESHADOWING: Trang tiếp theo nói về: "${nextTopic}". Hãy chèn 1 CÂU GỢI MỞ ngắn ở CUỐI kịch bản để dẫn dắt tự nhiên sang nội dung đó.`;
             bridgeIntro = bridgeIntro ? (bridgeIntro + '\n\n' + fText) : fText;
           }
         } else {
