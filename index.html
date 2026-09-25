@@ -12608,17 +12608,30 @@ ${foreshadowText}`;
         if (totalPages <= 60) isSlideDeck = true;
       }
 
-      // ƯU TIÊN SỐ 1 CHO SLIDE BÀI GIẢNG: BÓC TÁCH TOÀN NĂNG BẰNG AI CATALOG
+      // ƯU TIÊN SỐ 1 CHO SLIDE BÀI GIẢNG: TẠO SƠ ĐỒ PHẲNG 1 PAGE = 1 ITEM (GRID MODE)
       if (isSlideDeck) {
-        try {
-          updateLoading("Đang phân tích slide bằng AI...", "Đang bóc tách kiến thức toàn bộ bài giảng...");
-          const slideResult = await extractSlideDeckWithAI(pdf, totalPages, fileName);
-          if (slideResult && slideResult.chapters && slideResult.chapters.length > 0) {
-            return slideResult;
+          updateLoading("Đang thiết lập cấu trúc...", "Tạo sơ đồ 1-1 cho từng trang slide...");
+          const items = [];
+          for (let p = 1; p <= totalPages; p++) {
+              items.push({
+                  title: `Trang ${p}`,
+                  text: `Nội dung hiển thị trên trang ${p}`,
+                  duration: 20
+              });
           }
-        } catch (deckErr) {
-          console.warn('[PDF Extractor] Lỗi bóc tách Slide Deck qua AI Catalog, thử phương án tiếp theo:', deckErr);
-        }
+          return {
+             title: (fileName || '').replace(/\.[^/.]+$/, ""),
+             totalPages,
+             method: 'pdf-slide-direct',
+             chapters: [{
+                 chapter: "SLIDES",
+                 title: "Tất cả các trang",
+                 sections: [{
+                     title: "Danh sách",
+                     items: items
+                 }]
+             }]
+          };
       }
 
       // ƯU TIÊN SỐ 1 CHO SÁCH / GIÁO TRÌNH DÀY: BÓC TÁCH HYBRID THEO MỤC LỤC (TIẾT KIỆM TOKEN, CHUẨN TỪNG TRANG)
