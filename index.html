@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="vi">
 
 <head>
@@ -10693,7 +10693,7 @@ OUTPUT: Valid JSON only.
 
         let res = null;
 
-        const cfg = getLLMConfig();
+        const cfg = LLMClient.getConfig();
         const payload = {
             projectId: currentProjectId,
             query: msg,
@@ -15630,7 +15630,7 @@ ${foreshadowText}`;
             return;
         }
 
-        const cfg = getLLMConfig();
+        const cfg = LLMClient.getConfig();
         const response = await fetch('/api/rag_ingest', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -15740,7 +15740,7 @@ ${foreshadowText}`;
         
         activeProject.detailedContent = [];
         
-        const cfg = getLLMConfig();
+        const cfg = LLMClient.getConfig();
         const endpoint = `${cfg.baseUrl.replace(/\/+$/, '')}/chat/completions`;
         const headers = { 'Content-Type': 'application/json' };
         if (cfg.apiKey) headers['Authorization'] = `Bearer ${cfg.apiKey}`;
