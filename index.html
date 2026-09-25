@@ -4877,10 +4877,18 @@
   </div>
 
   <script>
-    // KHỞI TẠO BIẾN TOÀN CỤC HỆ THỐNG VIDEO & AUDIO
+    // KHỞI TẠO BIẾN TOÀN CỤC HỆ THỐNG VIDEO & AUDIO (HOISTED TRÁNH TDZ)
+    var _videoIsPlaying = false;
+    var _videoCurrentTime = 0;
+    var _videoDuration = 20;
+    var _videoTickerTimer = null;
+    var _videoCurrentSegKey = null;
+    var _exportSelectedRange = 'fast5';
+
     window._videoAudioCache = window._videoAudioCache || {};
     window._allVideoSegments = window._allVideoSegments || [];
     window._videoViewMode = window._videoViewMode || 'grid';
+    window._videoActiveSegKey = null;
 
     // DỮ LIỆU CÁC DỰ ÁN MẪU
     const defaultProjects = {
@@ -16730,17 +16738,17 @@ QUY TẮC:
     // HỆ THỐNG VIDEO BÀI GIẢNG: DUAL MODE (GRID TRANG / TREE CÂY)
     // =========================================================================
 
-    window._videoViewMode = window._videoViewMode || 'grid'; // 'grid' | 'tree'
-    window._videoAudioCache = window._videoAudioCache || {}; // { segKey: { audioUrl, duration, blob, voice } }
+    window._videoViewMode = window._videoViewMode || 'grid';
+    window._videoAudioCache = window._videoAudioCache || {};
     window._allVideoSegments = window._allVideoSegments || [];
-    window._videoActiveSegKey = null;
+    window._videoActiveSegKey = window._videoActiveSegKey || null;
 
-    let _videoIsPlaying = false;
-    let _videoCurrentTime = 0;
-    let _videoDuration = 20;
-    let _videoTickerTimer = null;
-    let _videoCurrentSegKey = null;
-    let _exportSelectedRange = 'fast5';
+    var _videoIsPlaying = false;
+    var _videoCurrentTime = 0;
+    var _videoDuration = 20;
+    var _videoTickerTimer = null;
+    var _videoCurrentSegKey = null;
+    var _exportSelectedRange = 'fast5';
 
     function setVideoViewMode(mode) {
       window._videoViewMode = mode;
