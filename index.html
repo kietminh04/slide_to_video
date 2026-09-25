@@ -11118,9 +11118,6 @@ QUY TẮC PHẢN HỒI QUAN TRỌNG:
               <span>${src.size || '1.0 MB'}</span>
               <span style="color: ${isChecked ? 'var(--emerald)' : 'var(--text-muted)'};">${isChecked ? '● Đang chọn' : '○ Đã bỏ qua'}</span>
             </div>
-            <button class="btn-source-dl-pill" onclick="downloadSingleSourceSlide(${idx})" title="Tải slide PowerPoint (.pptx) riêng cho tài liệu này" style="font-size: 10px; padding: 2px 8px; border-radius: 4px; background: rgba(56, 189, 248, 0.12); border: 1px solid rgba(56, 189, 248, 0.35); color: var(--cyan); cursor: pointer; display: inline-flex; align-items: center; gap: 4px; font-weight: 600;">
-              📥 Tải slide
-            </button>
           </div>
         `;
         // Sự kiện checkbox bật/tắt slide
@@ -11856,9 +11853,6 @@ ${foreshadowText}`;
                     <span class="segment-breadcrumb">(${chTitle} • ${secTitle})</span>
                   </div>
                   <div style="display: flex; gap: 8px;">
-                    <button type="button" class="btn-gen-single-script" onclick="downloadSingleNodeSlide('${itKey}')" style="background: rgba(56, 189, 248, 0.15); border-color: rgba(56, 189, 248, 0.4); color: var(--cyan);" title="Tải riêng slide PowerPoint (.pptx) cho mục kiến thức này">
-                      <span>📥</span> Tải Slide
-                    </button>
                     <button type="button" class="btn-gen-single-script" id="btn-gen-${itKey}" onclick="generateSingleSegmentScript('${itKey}')" title="Dùng AI sinh kịch bản lời thoại chuẩn sư phạm riêng cho phân đoạn này">
                       <span>✨</span> Sinh Kịch Bản Cho Mục Này
                     </button>

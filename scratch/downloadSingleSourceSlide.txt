@@ -1,0 +1,116 @@
+    async function downloadSingleSourceSlide(idx) {
+      const sources = activeProject ? (activeProject.sources || []) : [];
+      const src = sources[idx];
+      if (!src) {
+        showToast('⚠️ Không tìm thấy tài liệu/slide này!');
+        return;
+      }
+
+      showToast(`⏳ Đang tạo slide riêng cho [${src.name}]...`);
+      try {
+        if (typeof PptxGenJS === 'undefined') {
+          throw new Error('Thư viện tạo slide PptxGenJS chưa sẵn sàng');
+        }
+
+        let pres = new PptxGenJS();
+        pres.layout = 'LAYOUT_16x9';
+        pres.author = 'CLSG Studio Pro';
+        pres.company = 'CLSG';
+        pres.title = src.name || 'Slide Bài Giảng';
+
+        // 1. Slide bìa cho riêng tài liệu này
+        let coverSlide = pres.addSlide();
+        coverSlide.background = { color: '0F172A' };
+        coverSlide.addText(src.name.replace(/\.[^/.]+$/, ""), {
+          x: 1, y: 1.8, w: '80%', h: 1.6, fontSize: 32, bold: true, color: '38BDF8', align: 'center'
+        });
+        coverSlide.addText(`Slide học liệu chi tiết • ${src.pages || 1} trang/slide`, {
+          x: 1.5, y: 3.5, w: '70%', h: 0.8, fontSize: 16, color: '94A3B8', align: 'center'
+        });
+
+        const rootKey = getSourceKey(src, idx);
+        // 2. Lấy các chương/mục thuộc nguồn này
+        const sourceScenes = (src.scenes && src.scenes.length > 0)
+          ? src.scenes
+          : (idx === 0 ? currentScenes : (activeProject.scenes || []));
+        const chapters = (typeof getProjectHierarchy === 'function')
+          ? getProjectHierarchy(activeProject, sourceScenes, src, idx)
+          : (sourceScenes || []);
+
+        let slideCount = 0;
+
+        chapters.forEach((ch, cIdx) => {
+          const chTitle = ch.title || `Chương ${cIdx + 1}`;
+          const sections = ch.sections || [];
+          if (sections.length === 0) {
+            let s = pres.addSlide();
+            s.background = { color: 'FFFFFF' };
+            s.addText(chTitle, {
+              x: 0.6, y: 0.4, w: '88%', h: 0.8, fontSize: 24, bold: true, color: '0F172A',
+              border: [0, 0, { pt: 2, color: '3B82F6' }, 0]
+            });
+            if (ch.narration) {
+              s.addText(`• Lời giảng: ${ch.narration}`, { x: 0.6, y: 1.5, w: '88%', h: 3.5, fontSize: 16, color: '334155' });
+              s.addNotes(ch.narration);
+            }
+            slideCount++;
+          } else {
+            sections.forEach((sec, sIdx) => {
+              const secTitle = sec.title || sec.code || `Phần ${sIdx + 1}`;
+              const items = sec.items || [];
+              if (items.length === 0) {
+                let s = pres.addSlide();
+                s.background = { color: 'FFFFFF' };
+                s.addText(`${chTitle} — ${secTitle}`, {
+                  x: 0.6, y: 0.4, w: '88%', h: 0.8, fontSize: 22, bold: true, color: '0F172A',
+                  border: [0, 0, { pt: 2, color: '3B82F6' }, 0]
+                });
+                slideCount++;
+              } else {
+                items.forEach((it, iIdx) => {
+                  let s = pres.addSlide();
+                  s.background = { color: 'FFFFFF' };
+                  const itemTitle = it.text || it.title || it.code || `Mục ${iIdx + 1}`;
+                  s.addText(`[${sec.code || ''}] ${chTitle}`, {
+                    x: 0.6, y: 0.3, w: '88%', h: 0.4, fontSize: 13, bold: true, color: '64748B'
+                  });
+                  s.addText(itemTitle, {
+                    x: 0.6, y: 0.7, w: '88%', h: 0.8, fontSize: 22, bold: true, color: '0F172A',
+                    border: [0, 0, { pt: 2, color: '3B82F6' }, 0]
+                  });
+
+                  let content = [];
+                  const itKey = `item-${rootKey}-${cIdx}-${sIdx}-${iIdx}`;
+                  const summary = typeof getNodeParam === 'function' ? getNodeParam(itKey, 'summary', it.summary || '') : (it.summary || '');
+                  const mechanism = typeof getNodeParam === 'function' ? getNodeParam(itKey, 'mechanism', it.mechanism || '') : (it.mechanism || '');
+                  const keyPoint = typeof getNodeParam === 'function' ? getNodeParam(itKey, 'key_point', it.key_point || '') : (it.key_point || '');
+                  const details = typeof getNodeParam === 'function' ? getNodeParam(itKey, 'details', it.details || '') : (it.details || '');
+
+                  if (summary) content.push({ text: `📌 Khái niệm: ${summary}`, options: { bullet: true, color: '1E293B', breakLine: true } });
+                  if (keyPoint) content.push({ text: `🎯 Trọng tâm: ${keyPoint}`, options: { bullet: true, color: '1E293B', breakLine: true } });
+                  if (mechanism) content.push({ text: `⚙️ Phân tích: ${mechanism}`, options: { bullet: true, color: '334155', breakLine: true } });
+                  if (details) content.push({ text: `📋 Chi tiết: ${details}`, options: { bullet: true, color: '475569', breakLine: true } });
+
+                  if (content.length > 0) {
+                    s.addText(content, { x: 0.6, y: 1.6, w: '88%', h: 3.6, fontSize: 15, align: 'left', valign: 'top' });
+                  }
+
+                  const narration = typeof getNodeParam === 'function' ? getNodeParam(itKey, 'narration', it.narration || '') : (it.narration || '');
+                  if (narration) {
+                    s.addNotes(narration);
+                  }
+                  slideCount++;
+                });
+              }
+            });
+          }
+        });
+
+        const safeName = (src.name || 'Slide').replace(/\.[^/.]+$/, "").replace(/[^a-zA-Z0-9_\u00C0-\u1EF9]/gi, '_');
+        await pres.writeFile({ fileName: `Slide_${safeName}.pptx` });
+        showToast(`🎉 Đã tải riêng slide [${src.name}] (${slideCount} slide)!`);
+      } catch (err) {
+        console.error("Lỗi xuất slide riêng:", err);
+        showToast(`❌ Lỗi tạo slide: ${err.message}`);
+      }
+    }

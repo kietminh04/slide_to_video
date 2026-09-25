@@ -1,0 +1,83 @@
+    function renderSourcesList() {
+      const container = document.getElementById('sources-list');
+      if (!container) return;
+      container.innerHTML = '';
+      const sources = activeProject.sources || [];
+      // Tính thứ tự chỉ cho slide active (bỏ tích thì đánh lại số)
+      let activeCounter = 0;
+      const totalActive = sources.filter(s => s.active !== false).length;
+      const canReorder = totalActive > 1;
+
+      sources.forEach((src, idx) => {
+        const item = document.createElement('div');
+        const isChecked = src.active !== false;
+        const currentActiveNum = isChecked ? ++activeCounter : 0;
+        const disableOrder = !isChecked || !canReorder;
+        item.className = `source-item ${isChecked ? '' : 'is-inactive'}`;
+        item.innerHTML = `
+          <div class="source-item-header">
+            <input type="number" class="source-order-input ${disableOrder ? 'is-inactive-badge' : ''}" min="1" value="${isChecked ? currentActiveNum : ''}" placeholder="—" data-src-idx="${idx}" data-active-num="${currentActiveNum}" title="${!isChecked ? 'Bỏ tích → không tham gia kịch bản' : (!canReorder ? 'Chỉ có 1 slide — không thể sắp xếp' : 'Nhập số thứ tự mới để hoán đổi vị trí')}" ${disableOrder ? 'disabled' : ''}>
+            <input type="checkbox" ${isChecked ? 'checked' : ''} id="src-chk-${idx}">
+            <label for="src-chk-${idx}" class="source-name-label" style="cursor: pointer; font-size: 12px; color: var(--text-main); font-weight: 600; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${src.name}">
+              ${src.name}
+            </label>
+            <div class="source-actions-group">
+
+              <button class="btn-source-action btn-move-up" title="Đẩy lên trước trong kịch bản" ${idx === 0 || !canReorder ? 'disabled' : ''} onclick="moveSourceItem(${idx}, -1)">▲</button>
+              <button class="btn-source-action btn-move-down" title="Đẩy xuống sau trong kịch bản" ${idx === sources.length - 1 || !canReorder ? 'disabled' : ''} onclick="moveSourceItem(${idx}, 1)">▼</button>
+              <button class="btn-source-action btn-delete-src" title="Xoá slide này khỏi dự án" onclick="deleteSourceItem(${idx})">🗑️</button>
+            </div>
+          </div>
+          <div class="source-meta-row" style="display: flex; align-items: center; justify-content: space-between;">
+            <div style="display: flex; gap: 8px; align-items: center;">
+              <span>${src.pages || 10} trang / slide</span>
+              <span>${src.size || '1.0 MB'}</span>
+              <span style="color: ${isChecked ? 'var(--emerald)' : 'var(--text-muted)'};">${isChecked ? '● Đang chọn' : '○ Đã bỏ qua'}</span>
+            </div>
+            <button class="btn-source-dl-pill" onclick="downloadSingleSourceSlide(${idx})" title="Tải slide PowerPoint (.pptx) riêng cho tài liệu này" style="font-size: 10px; padding: 2px 8px; border-radius: 4px; background: rgba(56, 189, 248, 0.12); border: 1px solid rgba(56, 189, 248, 0.35); color: var(--cyan); cursor: pointer; display: inline-flex; align-items: center; gap: 4px; font-weight: 600;">
+              📥 Tải slide
+            </button>
+          </div>
+        `;
+        // Sự kiện checkbox bật/tắt slide
+        const chk = item.querySelector(`#src-chk-${idx}`);
+        if (chk) {
+          chk.addEventListener('change', () => {
+            src.active = chk.checked;
+            renderSourcesList();
+            renderMindmap();
+            renderScriptDocument();
+            const activeCount = sources.filter(s => s.active !== false).length;
+            const countEl = document.getElementById('source-active-count');
+            if (countEl) countEl.textContent = `${activeCount}/${sources.length} nguồn`;
+            showToast(src.active ? `Đã thêm [${src.name}] vào sơ đồ & kịch bản!` : `Đã bỏ [${src.name}] khỏi sơ đồ & kịch bản!`);
+          });
+        }
+        // Sự kiện nhập số thứ tự mới để hoán đổi / sắp xếp lại
+        const orderInput = item.querySelector('.source-order-input');
+        if (orderInput && isChecked) {
+          orderInput.addEventListener('focus', () => orderInput.select());
+          orderInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              orderInput.blur();
+            }
+          });
+          orderInput.addEventListener('blur', () => {
+            const newNum = parseInt(orderInput.value);
+            const oldNum = currentActiveNum;
+            if (!newNum || newNum < 1 || newNum === oldNum) {
+              orderInput.value = oldNum;
+              return;
+            }
+            reorderSourceByNumber(idx, oldNum, newNum);
+          });
+        }
+        container.appendChild(item);
+      });
+
+      const activeCount = sources.filter(s => s.active !== false).length;
+      const countEl = document.getElementById('source-active-count');
+      if (countEl) countEl.textContent = `${activeCount}/${sources.length} nguồn`;
+      updateBtnGenCountBadge();
+    }

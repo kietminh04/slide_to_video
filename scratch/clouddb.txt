@@ -1,0 +1,191 @@
+    const CloudDB = {
+      isOnline: false,
+      _chatSaveTimer: null,
+      _summarySaveTimer: null,
+
+      async ping() {
+        try {
+          const res = await fetch('/api/projects?ping=true', { cache: 'no-store' });
+          if (res.ok) {
+            const data = await res.json();
+            this.isOnline = Boolean(data.connected);
+          } else {
+            this.isOnline = false;
+          }
+        } catch (e) {
+          this.isOnline = false;
+        }
+        this.updateBadge();
+        return this.isOnline;
+      },
+
+      updateBadge() {
+        const badge = document.getElementById('cloud-db-badge');
+        if (badge) {
+          if (this.isOnline) {
+            badge.style.display = 'inline-flex';
+            badge.innerHTML = `<span style="display:inline-block; width:7px; height:7px; border-radius:50%; background:#10b981; box-shadow: 0 0 6px #10b981;"></span> <span>☁️ Neon Cloud (Đã kết nối)</span>`;
+            badge.style.borderColor = 'rgba(16, 185, 129, 0.3)';
+            badge.style.color = '#34d399';
+          } else {
+            badge.style.display = 'inline-flex';
+            badge.innerHTML = `<span style="display:inline-block; width:7px; height:7px; border-radius:50%; background:#f59e0b;"></span> <span>💾 Local Storage (Cục bộ)</span>`;
+            badge.style.borderColor = 'rgba(245, 158, 11, 0.3)';
+            badge.style.color = '#fbbf24';
+          }
+        }
+        const chatSync = document.getElementById('chat-sync-indicator');
+        if (chatSync) {
+          if (this.isOnline) {
+            chatSync.innerHTML = `<span style="display:inline-block; width:6px; height:6px; border-radius:50%; background:#10b981;"></span> <span>☁️ Đã lưu Cloud</span>`;
+            chatSync.style.color = '#10b981';
+          } else {
+            chatSync.innerHTML = `<span style="display:inline-block; width:6px; height:6px; border-radius:50%; background:#f59e0b;"></span> <span>💾 Bản cục bộ</span>`;
+            chatSync.style.color = '#f59e0b';
+          }
+        }
+      },
+
+      async loadAll() {
+        try {
+          const res = await fetch('/api/projects', { cache: 'no-store' });
+          if (res.ok) {
+            const list = await res.json();
+            if (Array.isArray(list)) {
+              let updated = false;
+              list.forEach(row => {
+                if (row.id && row.data) {
+                  defaultProjects[row.id] = row.data;
+                  if (typeof currentProjectId !== 'undefined' && row.id === currentProjectId && typeof activeProject !== 'undefined' && activeProject) {
+                    if (row.data.chatHistory && (!activeProject.chatHistory || activeProject.chatHistory.length === 0)) {
+                      activeProject.chatHistory = row.data.chatHistory;
+                      activeProject.chatHtml = row.data.chatHtml;
+                    }
+                    if (row.data.nodeCustomParams && typeof nodeCustomParams !== 'undefined') {
+                      Object.assign(nodeCustomParams, row.data.nodeCustomParams);
+                    }
+                  }
+                  updated = true;
+                }
+              });
+              if (updated && typeof renderProjectsGrid === 'function') {
+                renderProjectsGrid();
+              }
+            }
+          }
+        } catch (e) {
+          console.warn('[CloudDB] Không thể nạp dữ liệu từ Cloud:', e.message);
+        }
+      },
+
+      // Lưu nhanh Lịch sử Chat lên Cloud Database (Debounced 400ms)
+      saveChat(projectId, chatHistory, chatHtml, title) {
+        if (!projectId) return;
+        const chatSync = document.getElementById('chat-sync-indicator');
+        if (chatSync) {
+          chatSync.innerHTML = `<span style="display:inline-block; width:6px; height:6px; border-radius:50%; background:#38bdf8; animation: pulse 1s infinite;"></span> <span style="color:#38bdf8;">Đang lưu...</span>`;
+        }
+        if (this._chatSaveTimer) clearTimeout(this._chatSaveTimer);
+        this._chatSaveTimer = setTimeout(async () => {
+          try {
+            const res = await fetch('/api/projects', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                id: projectId,
+                title: title || (typeof activeProject !== 'undefined' && activeProject ? activeProject.title : 'Dự Án Bài Giảng'),
+                action: 'save_chat',
+                chatHistory: chatHistory || [],
+                chatHtml: chatHtml || ''
+              })
+            });
+            if (res.ok) {
+              this.isOnline = true;
+              this.updateBadge();
+            }
+          } catch (e) {
+            console.warn('[CloudDB] Đồng bộ Chat lên Cloud thất bại:', e.message);
+          }
+        }, 400);
+      },
+
+      // Lưu nhanh Tóm tắt & Tham số nhánh lên Cloud Database (Debounced 400ms)
+      saveSummaries(projectId, customParams, scenes, title) {
+        if (!projectId) return;
+        if (this._summarySaveTimer) clearTimeout(this._summarySaveTimer);
+        this._summarySaveTimer = setTimeout(async () => {
+          try {
+            const res = await fetch('/api/projects', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                id: projectId,
+                title: title || (typeof activeProject !== 'undefined' && activeProject ? activeProject.title : 'Dự Án Bài Giảng'),
+                action: 'save_summaries',
+                nodeCustomParams: customParams || {},
+                scenes: scenes || null
+              })
+            });
+            if (res.ok) {
+              this.isOnline = true;
+              this.updateBadge();
+            }
+          } catch (e) {
+            console.warn('[CloudDB] Đồng bộ Tóm tắt lên Cloud thất bại:', e.message);
+          }
+        }, 400);
+      },
+
+      async save(project) {
+        if (!project || !project.id) return;
+        const chatContainer = document.getElementById('ai-chat-messages');
+        const fullProject = {
+          ...project,
+          scenes: (typeof currentScenes !== 'undefined' && currentScenes) ? currentScenes : (project.scenes || []),
+          nodeCustomParams: (typeof nodeCustomParams !== 'undefined' && nodeCustomParams) ? nodeCustomParams : (project.nodeCustomParams || {}),
+          excludedNodes: (typeof excludedNodes !== 'undefined') ? Array.from(excludedNodes) : (project.excludedNodes || []),
+          chatHistory: (typeof clsgChatSessionHistory !== 'undefined') ? clsgChatSessionHistory : (project.chatHistory || []),
+          chatHtml: (chatContainer ? chatContainer.innerHTML : (project.chatHtml || ''))
+        };
+
+        // 1. Lưu LocalStorage trước (Offline-first)
+        try {
+          const userProjects = JSON.parse(localStorage.getItem('clsg_user_projects') || '{}');
+          userProjects[project.id] = fullProject;
+          localStorage.setItem('clsg_user_projects', JSON.stringify(userProjects));
+        } catch (e) { }
+
+        // 2. Đồng bộ lên Neon Cloud
+        try {
+          const res = await fetch('/api/projects', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              id: fullProject.id,
+              title: fullProject.title,
+              description: fullProject.desc || '',
+              data: fullProject
+            })
+          });
+          if (res.ok) {
+            this.isOnline = true;
+            this.updateBadge();
+            return true;
+          }
+        } catch (e) {
+          console.warn('[CloudDB] Lưu Cloud thất bại, đã giữ bản cục bộ:', e.message);
+        }
+        return false;
+      },
+
+      async delete(projectId) {
+        if (!projectId) return;
+        try {
+          await fetch(`/api/projects?id=${encodeURIComponent(projectId)}`, {
+            method: 'DELETE'
+          });
+        } catch (e) {
+          console.warn('[CloudDB] Xóa trên Cloud thất bại:', e.message);
+        }
+      }
+    };

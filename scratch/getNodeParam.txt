@@ -1,0 +1,6 @@
+    function getNodeParam(nodeKey, paramName, defaultValue) {
+      if (nodeCustomParams[nodeKey] && nodeCustomParams[nodeKey][paramName] !== undefined) {
+        return nodeCustomParams[nodeKey][paramName];
+      }
+      return defaultValue;
+    }

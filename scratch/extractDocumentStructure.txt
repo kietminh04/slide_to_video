@@ -1,0 +1,14 @@
+    async function extractDocumentStructure(file) {
+      const ext = (file.name.split('.').pop() || '').toLowerCase();
+      const buf = await file.arrayBuffer();
+
+      try {
+        if (ext === 'pdf') return await extractPdfStructure(buf, file.name);
+        if (ext === 'docx') return await extractDocxStructure(buf, file.name);
+        if (ext === 'pptx') return await extractPptxStructure(buf, file.name);
+        if (ext === 'txt' || ext === 'md') return await extractPlainTextStructure(file);
+      } catch (err) {
+        console.warn(`[Extractor] Lỗi bóc tách .${ext}:`, err);
+      }
+      return null; // Fallback → hệ thống cũ xử lý
+    }

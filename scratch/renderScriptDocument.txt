@@ -1,4 +1,4 @@
-function renderScriptDocument() {
+    function renderScriptDocument() {
       const paper = document.getElementById('script-paper-view');
       if (!paper) return;
       paper.innerHTML = '';
@@ -210,11 +210,3 @@ function renderScriptDocument() {
 
       updateScriptHeaderStats();
     }
-
-
-    // LOADING OVERLAY CONTROLLER
-    const overlay = document.getElementById('ai-loading-overlay');
-    const loadingTitle = document.getElementById('loading-title');
-    const loadingDesc = document.getElementById('loading-desc');
-
-    

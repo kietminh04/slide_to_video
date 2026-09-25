@@ -1,0 +1,15 @@
+3530:         <!-- Ô THÊM TÀI LIỆU Ở TRÊN -->
+3531:         <label class="source-drop-zone" id="source-drop-zone" for="source-file-input">
+3532:           <div style="font-size: 26px; margin-bottom: 4px;">📂</div>
+
+3535:             .docx</div>
+3536:           <input type="file" id="source-file-input" accept=".pptx,.pdf,.docx,.txt" style="display: none;">
+3537:         </label>
+
+13656:     // SOURCE UPLOAD INSIDE WORKSPACE (DRAG & DROP VÀ THÊM TÀI LIỆU ĐA NGUỒN)
+13657:     const sourceFileInput = document.getElementById('source-file-input');
+13658:     sourceFileInput.addEventListener('change', async (e) => {
+
+13984: 
+13985:     setupDropZone('source-drop-zone', 'source-file-input');
+13986: 

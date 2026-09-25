@@ -1,0 +1,38 @@
+    async function callMultiAgentGenerate(file, name, desc, duration = 300, wpm = 140) {
+      showLoading("Đang Bóc Tách Tài Liệu Với AI & Multi-Agent...", "Hệ thống đang đọc toàn bộ tài liệu và gọi LLM trích xuất sơ đồ chuẩn...");
+
+      // ƯU TIÊN SỐ 1: Sử dụng bộ bóc tách sư phạm chuẩn có tích hợp LLM làm luồng chính
+      try {
+        const projData = await clientSidePedagogicalGenerate(file, name, desc, duration, wpm);
+        if (projData) {
+          return projData;
+        }
+      } catch (err) {
+        console.warn("Client pedagogical generator gặp sự cố, thử gọi API server:", err);
+      }
+
+      // ƯU TIÊN SỐ 2: Fallback gọi server nếu có
+      try {
+        const b64 = await fileToBase64(file);
+        const res = await fetch(`${API_BASE}/api/generate`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            filename: file.name,
+            file_base64: b64,
+            project_name: name,
+            project_desc: desc,
+            target_duration: duration,
+            target_wpm: wpm
+          })
+        });
+        if (res.ok) {
+          const serverProj = await res.json();
+          hideLoading();
+          return serverProj;
+        }
+      } catch (e) { }
+
+      hideLoading();
+      throw new Error("Không thể bóc tách tài liệu.");
+    }
