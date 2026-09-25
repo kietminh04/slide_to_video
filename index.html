@@ -3579,6 +3579,9 @@
             <button class="center-nav-btn active" id="btn-tab-mindmap">
               <span>🗺️</span> Sơ Đồ
             </button>
+            <button class="center-nav-btn" id="btn-tab-content">
+              <span>📄</span> Nội dung
+            </button>
             <button class="center-nav-btn" id="btn-tab-script">
               <span>📜</span> Kịch Bản
             </button>
@@ -4821,6 +4824,10 @@
       if (tabName === 'mindmap') {
         document.getElementById('btn-tab-mindmap')?.classList.add('active');
         document.getElementById('tab-content-mindmap')?.classList.add('active');
+      } else if (tabName === 'content') {
+        document.getElementById('btn-tab-content')?.classList.add('active');
+        document.getElementById('tab-content-content')?.classList.add('active');
+        renderDetailedContentUI();
       } else if (tabName === 'script') {
         document.getElementById('btn-tab-script')?.classList.add('active');
         document.getElementById('tab-content-script')?.classList.add('active');
@@ -5092,6 +5099,7 @@
     }
 
     document.getElementById('btn-tab-mindmap')?.addEventListener('click', () => switchCenterTab('mindmap'));
+    document.getElementById('btn-tab-content')?.addEventListener('click', () => switchCenterTab('content'));
     document.getElementById('btn-tab-script')?.addEventListener('click', () => switchCenterTab('script'));
     document.getElementById('btn-tab-video')?.addEventListener('click', () => switchCenterTab('video'));
 
@@ -15629,7 +15637,173 @@ ${foreshadowText}`;
     } else {
       switchView('projects');
     }
-  </script>
+  
+    // =========================================================================
+    // TRÍCH XUẤT CHI TIẾT TỪNG TRANG (VISION AI)
+    // =========================================================================
+    
+    function renderDetailedContentUI() {
+      const container = document.getElementById('content-extraction-results');
+      if (!container) return;
+      
+      if (!activeProject) {
+        container.innerHTML = `<div style="text-align: center; padding: 60px 20px; color: var(--text-muted);">
+          <div style="font-size: 40px; margin-bottom: 16px;">⚠️</div>
+          <div>Vui lòng mở một dự án trước khi xem chi tiết.</div>
+        </div>`;
+        return;
+      }
+
+      if (activeProject.detailedContent && activeProject.detailedContent.length > 0) {
+        let html = '';
+        activeProject.detailedContent.forEach((page, idx) => {
+          html += `
+            <div style="display: flex; gap: 24px; background: rgba(30,41,59,0.5); border: 1px solid var(--border-color); border-radius: 12px; padding: 20px;">
+              <div style="flex: 0 0 350px; display: flex; flex-direction: column; gap: 12px;">
+                <div style="font-weight: 700; color: var(--cyan); font-size: 16px;">Trang ${page.pageNumber}</div>
+                <div style="border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; overflow: hidden; background: #000; box-shadow: 0 4px 6px rgba(0,0,0,0.3);">
+                  <img src="${page.image_url}" style="width: 100%; display: block; object-fit: contain;">
+                </div>
+              </div>
+              <div style="flex: 1; display: flex; flex-direction: column;">
+                <div style="font-size: 13px; color: #94a3b8; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 4px;">Nội dung chi tiết & Giải thích</div>
+                <div style="font-size: 15px; color: var(--text-main); line-height: 1.6; white-space: pre-wrap; font-family: 'Inter', sans-serif;">${page.explanation}</div>
+              </div>
+            </div>
+          `;
+        });
+        container.innerHTML = html;
+      } else {
+        container.innerHTML = `<div style="text-align: center; padding: 60px 20px; color: var(--text-muted);">
+          <div style="font-size: 48px; margin-bottom: 16px;">🔍</div>
+          <div style="font-size: 16px; margin-bottom: 8px; color: var(--text-main);">Chưa có dữ liệu trích xuất cho dự án này.</div>
+          <div>Vui lòng bấm nút <b>Nạp lại file PDF</b> ở góc trên bên phải để AI bắt đầu quét.</div>
+        </div>`;
+      }
+    }
+
+    async function startDetailedContentExtraction(inputEl) {
+      if (!inputEl.files || inputEl.files.length === 0) return;
+      const file = inputEl.files[0];
+      if (!activeProject) {
+        showToast('⚠️ Vui lòng lưu dự án hiện tại trước khi phân tích!');
+        return;
+      }
+
+      const container = document.getElementById('content-extraction-results');
+      const progressBox = document.getElementById('content-extraction-progress');
+      const pText = document.getElementById('content-progress-text');
+      const pPercent = document.getElementById('content-progress-percent');
+      const pBar = document.getElementById('content-progress-bar');
+      
+      container.innerHTML = '';
+      progressBox.style.display = 'block';
+
+      try {
+        const buf = await file.arrayBuffer();
+        const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
+        const totalPages = pdf.numPages;
+        
+        activeProject.detailedContent = [];
+        
+        const cfg = getLLMConfig();
+        const endpoint = `${cfg.baseUrl.replace(/\/+$/, '')}/chat/completions`;
+        const headers = { 'Content-Type': 'application/json' };
+        if (cfg.apiKey) headers['Authorization'] = `Bearer ${cfg.apiKey}`;
+
+        // Chạy tuần tự từng trang để không quá tải API (hoặc có thể gom batch nếu API xịn)
+        for (let p = 1; p <= totalPages; p++) {
+          pText.textContent = `Đang phân tích trang ${p} / ${totalPages}...`;
+          const pct = Math.round((p / totalPages) * 100);
+          pPercent.textContent = `${pct}%`;
+          pBar.style.width = `${pct}%`;
+
+          // Render canvas lấy base64
+          const page = await pdf.getPage(p);
+          const viewport = page.getViewport({ scale: 1.5 });
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+          canvas.height = viewport.height;
+          canvas.width = viewport.width;
+          await page.render({ canvasContext: ctx, viewport: viewport }).promise;
+          const base64Img = canvas.toDataURL('image/jpeg', 0.85);
+
+          // Gửi LLM Vision (Gemini 1.5 Flash hoặc GPT-4o)
+          const systemPrompt = `Bạn là một giáo sư đại học đang giảng bài dựa trên slide. 
+Hãy đọc kỹ bức ảnh slide này và thực hiện 2 việc:
+1. Trích xuất CHÍNH XÁC toàn bộ nội dung văn bản (chữ) có trên slide.
+2. Nếu có hình ảnh, biểu đồ, phương trình, đoạn code... hãy mô tả và giải thích chi tiết ý nghĩa của chúng. 
+Mục tiêu là tạo ra một tài liệu văn bản đọc hiểu hoàn chỉnh thay thế cho việc nhìn hình slide.`;
+
+          const llmPayload = {
+            model: cfg.model || 'gemini-1.5-flash',
+            messages: [
+              {
+                role: 'user',
+                content: [
+                  { type: 'text', text: systemPrompt },
+                  { type: 'image_url', image_url: { url: base64Img } }
+                ]
+              }
+            ],
+            max_tokens: 1500,
+            temperature: 0.2
+          };
+
+          const llmPayloadWithConfig = {
+            ...llmPayload,
+            apiKey: cfg.apiKey,
+            baseUrl: cfg.baseUrl,
+            provider: cfg.provider
+          };
+
+          const proxyUrl = (window.location.origin.startsWith('http') && !window.location.origin.includes('file:'))
+            ? `${window.location.origin}/api/llm/chat`
+            : '/api/llm/chat';
+
+          try {
+            const res = await fetch(proxyUrl, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(llmPayloadWithConfig)
+            });
+            if (res.ok) {
+              const data = await res.json();
+              const explanation = (data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) || '(Không thể trích xuất nội dung trang này)';
+              
+              activeProject.detailedContent.push({
+                pageNumber: p,
+                image_url: base64Img,
+                explanation: explanation.trim()
+              });
+              
+              // Cập nhật DOM trực tiếp cho từng trang để user không phải đợi
+              renderDetailedContentUI();
+            } else {
+               console.warn(`Lỗi API ở trang ${p}:`, await res.text());
+            }
+          } catch(e) {
+            console.error(`Lỗi kết nối API ở trang ${p}:`, e);
+          }
+        }
+
+        // Lưu vào Cloud
+        if (typeof CloudDB !== 'undefined' && CloudDB.save) {
+           CloudDB.save(activeProject.id, activeProject);
+        }
+        
+        showToast('✅ Đã phân tích chi tiết toàn bộ slide thành công!');
+        
+      } catch (err) {
+        console.error("Lỗi trích xuất chi tiết:", err);
+        showToast('❌ Lỗi khi phân tích PDF: ' + err.message);
+      } finally {
+        progressBox.style.display = 'none';
+        inputEl.value = ''; // Reset input
+      }
+    }
+
+</script>
 </body>
 
 </html>
