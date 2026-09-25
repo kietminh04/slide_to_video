@@ -16750,6 +16750,43 @@ QUY TẮC:
     var _videoCurrentSegKey = null;
     var _exportSelectedRange = 'fast5';
 
+    // ===== HÀM CĂN CHỈNH THỜI GIAN ĐỌC CHUẨN XÁC THEO TỪNG SLIDE =====
+    function getCalibratedReadingDuration(narr, segKey, defaultWpm = 135) {
+      // 1. Ưu tiên số 1: Thời lượng file audio thực tế đã sinh hoặc cache
+      if (window._videoAudioCache && window._videoAudioCache[segKey] && window._videoAudioCache[segKey].duration) {
+        return Math.max(3, Math.round(window._videoAudioCache[segKey].duration));
+      }
+
+      // 2. Nếu không có lời thoại: trả về thời lượng hiển thị tối thiểu
+      if (!narr || narr.trim().length === 0) {
+        return parseInt(getNodeParam(segKey, 'duration', 10)) || 10;
+      }
+
+      // 3. Tính toán thời gian đọc dựa trên số từ tiếng Việt & các nhịp ngắt sư phạm
+      const cleanWords = narr.replace(/\[P\d\]/g, '').trim().split(/\s+/).filter(Boolean);
+      const wordsCount = cleanWords.length;
+      if (wordsCount === 0) return 8;
+
+      // Lấy tốc độ đọc WPM (chuẩn sư phạm 130-140 WPM)
+      const wpm = parseInt(getNodeParam(segKey, 'wpm', activeProject?.wpm || defaultWpm)) || defaultWpm;
+      const speed = parseFloat(document.getElementById('gcfg-speed')?.value || '1.0');
+
+      // Tính tổng thời gian dừng nghỉ từ các thẻ [P1] (0.5s), [P2] (1.0s), [P3] (1.5s)
+      let pauseSec = 0;
+      const p1Count = (narr.match(/\[P1\]/g) || []).length;
+      const p2Count = (narr.match(/\[P2\]/g) || []).length;
+      const p3Count = (narr.match(/\[P3\]/g) || []).length;
+      pauseSec += p1Count * 0.5 + p2Count * 1.0 + p3Count * 1.5;
+
+      // Nhịp ngắt tự nhiên ở cuối câu (. ! ?)
+      const sentencesCount = (narr.match(/[\.\?\!]/g) || []).length;
+      pauseSec += Math.min(sentencesCount * 0.35, 3.5);
+
+      // Thời gian đọc chuẩn = (số từ / wpm) * 60 + đệm ngắt nhịp
+      const readingSec = ((wordsCount / wpm) * 60) / speed + pauseSec + 0.6;
+      return Math.max(4, Math.round(readingSec));
+    }
+
     function setVideoViewMode(mode) {
       window._videoViewMode = mode;
       document.querySelectorAll('[data-vmode]').forEach(btn => {
@@ -16765,7 +16802,6 @@ QUY TẮC:
       window._allVideoSegments = [];
       window._videoAudioCache = window._videoAudioCache || {};
 
-      // Lấy danh sách nguồn tài liệu hoặc fallback an toàn
       const allSources = (activeProject && activeProject.sources && activeProject.sources.length > 0)
         ? activeProject.sources
         : [{ name: (activeProject?.title || 'Tài Liệu') + '.pdf', pages: 35, size: '1.2 MB', active: true }];
@@ -16803,7 +16839,8 @@ QUY TẮC:
             }
           }
 
-          const dur = parseInt(getNodeParam(segKey, 'duration', 20)) || 20;
+          // CĂN THỜI GIAN ĐỌC CHUẨN XÁC CHO SLIDE NÀY
+          const dur = getCalibratedReadingDuration(narr, segKey);
           const title = getNodeParam(segKey, 'title', `Trang ${i + 1}`);
           const pageDetail = activeProject?.detailedContent?.[i];
           const thumb = pageDetail?.thumbnail || pageDetail?.image_url || '';
@@ -16855,7 +16892,9 @@ QUY TẮC:
 
                 let narr = getNodeParam(itKey, 'narration', it.narration || '');
                 if (!narr) narr = it.text || it.title || '';
-                const dur = parseInt(getNodeParam(itKey, 'duration', it.duration || 30)) || 30;
+
+                // CĂN THỜI GIAN ĐỌC CHUẨN XÁC CHO MỤC NÀY
+                const dur = getCalibratedReadingDuration(narr, itKey);
                 const itTitle = getNodeParam(itKey, 'title', it.text || it.title || itKey);
                 const audioData = window._videoAudioCache[itKey] || null;
 
@@ -16878,7 +16917,7 @@ QUY TẮC:
         });
       }
 
-      // Cập nhật badge tổng thời lượng
+      // Cập nhật badge tổng thời lượng chuẩn xác
       const dBadge = document.getElementById('video-total-duration-badge');
       if (dBadge) {
         const mins = Math.floor(totalDuration / 60);
@@ -16891,13 +16930,12 @@ QUY TẮC:
         aBadge.textContent = `${scriptReadyCount} đoạn`;
       }
 
-      // Cập nhật tiêu đề video studio
       const vTitle = document.getElementById('video-studio-title');
       if (vTitle && activeProject?.title) {
         vTitle.textContent = activeProject.title;
       }
 
-      // TỰ ĐỘNG CHỌN SLIDE ĐẦU TIÊN NẾU CHƯA CÓ SLIDE NÀO ĐƯỢC CHỌN
+      // Tự động chọn slide đầu tiên nếu chưa có slide nào được chọn
       if (window._allVideoSegments && window._allVideoSegments.length > 0) {
         const currentActive = window._videoActiveSegKey
           ? window._allVideoSegments.find(s => s.segKey === window._videoActiveSegKey)
@@ -16934,7 +16972,7 @@ QUY TẮC:
           <div class="video-seg-title">[${title}] ${subtitle}</div>
           <div class="video-seg-narr-preview">${escapeHtml(narrPreview)}</div>
           <div class="video-seg-meta">
-            <span>⏱️ ${dur}s</span>
+            <span>⏱️ ${dur}s đọc</span>
             <span>📝 ${wordsCount} từ</span>
             ${audioData ? `<span>🔊 ${audioData.duration || '?'}s</span>` : ''}
           </div>
@@ -16968,7 +17006,6 @@ QUY TẮC:
       const cleanText = narr.replace(/\[P\d\]/g, '').replace(/\s+/g, ' ').trim();
       const voiceKey = document.getElementById('gcfg-voice')?.value || 'quynh_anh';
 
-      // Đổi trạng thái nút bấm
       const cardBtns = document.querySelectorAll(`button[onclick*="'${segKey}'"]`);
       cardBtns.forEach(b => {
         b.disabled = true;
@@ -16998,7 +17035,7 @@ QUY TẮC:
           tempAudio.onerror = () => resolve();
           setTimeout(resolve, 2000);
         });
-        const realDur = Math.round(tempAudio.duration) || seg.dur || 20;
+        const realDur = Math.round(tempAudio.duration) || seg.dur || 15;
 
         window._videoAudioCache[segKey] = {
           audioUrl: audioUrl,
@@ -17074,7 +17111,7 @@ QUY TẮC:
               tempAudio.onerror = () => resolve();
               setTimeout(resolve, 1500);
             });
-            const realDur = Math.round(tempAudio.duration) || seg.dur || 20;
+            const realDur = Math.round(tempAudio.duration) || seg.dur || 15;
 
             window._videoAudioCache[seg.segKey] = {
               audioUrl: audioUrl,
@@ -17097,12 +17134,14 @@ QUY TẮC:
       showToast(`🎉 Đã sinh hoàn tất ${successCount}/${validSegs.length} audio bài giảng!`);
     }
 
-    // ===== TRÌNH XEM & KẾT XUẤT VIDEO TƯƠNG TÁC THỜI GIAN THỰC (INTERACTIVE VIDEO PLAYER) =====
+    // ===== TRÌNH XEM VIDEO TƯƠNG TÁC: ĐỒNG BỘ THỜI GIAN THẬT VỚI ÂM THANH =====
     function selectVideoSegment(segKey, thumb, title, narr, dur, autoStartPlay = true) {
       window._videoActiveSegKey = segKey;
       _videoCurrentSegKey = segKey;
       _videoCurrentTime = 0;
-      _videoDuration = parseInt(dur) || 20;
+
+      // CĂN THỜI LƯỢNG CHUẨN XÁC CHO SLIDE NÀY
+      _videoDuration = getCalibratedReadingDuration(narr, segKey);
 
       // Tìm vị trí phân đoạn trong danh sách
       const allSegs = window._allVideoSegments || [];
@@ -17168,6 +17207,10 @@ QUY TẮC:
       // 1. Dừng ticker cũ
       if (_videoTickerTimer) clearInterval(_videoTickerTimer);
 
+      // Cập nhật _videoDuration chuẩn trước khi phát
+      _videoDuration = getCalibratedReadingDuration(narr, segKey);
+      updateVideoTimeDisplay(_videoCurrentTime, _videoDuration);
+
       // 2. Chạy ticker cập nhật thanh thời gian mỗi 100ms
       const startTime = Date.now();
       const initialProgress = _videoCurrentTime;
@@ -17181,23 +17224,41 @@ QUY TẮC:
         updateVideoProgressBar((_videoCurrentTime / _videoDuration) * 100);
         updateVideoTimeDisplay(_videoCurrentTime, _videoDuration);
 
-        if (_videoCurrentTime >= _videoDuration) {
+        // Nếu không có âm thanh (narr trống), kết thúc khi hết thời gian
+        if (!narr && _videoCurrentTime >= _videoDuration) {
           clearInterval(_videoTickerTimer);
           onVideoSegmentFinished();
         }
       }, 100);
 
-      // 3. Phát âm thanh (ưu tiên cache audio, fallback sang TTS live)
+      // 3. Phát âm thanh (đồng bộ thời gian xuất hiện slide chuẩn theo giọng đọc)
       const audioData = window._videoAudioCache ? window._videoAudioCache[segKey] : null;
       if (audioData && audioData.audioUrl) {
-        playSegmentAudio(audioData.audioUrl);
+        playSegmentAudio(audioData.audioUrl, (realDur) => {
+          if (realDur) {
+            _videoDuration = Math.max(3, Math.round(realDur));
+            updateVideoTimeDisplay(_videoCurrentTime, _videoDuration);
+          }
+        });
       } else if (narr && narr.trim().length >= 5) {
         const cleanText = narr.replace(/\[P\d\]/g, '').replace(/\s+/g, ' ').trim();
         const voiceKey = document.getElementById('gcfg-voice')?.value || 'quynh_anh';
         playSpeechWithVoice(cleanText, voiceKey, () => {
+          // KHI GIỌNG ĐỌC KẾT THÚC: DỪNG CHÍNH XÁC & CHUYỂN SLIDE KẾ TIẾP
           if (_videoIsPlaying) {
             clearInterval(_videoTickerTimer);
-            onVideoSegmentFinished();
+            updateVideoProgressBar(100);
+            updateVideoTimeDisplay(_videoDuration, _videoDuration);
+            // Dừng nhẹ 0.5s để người học kịp nhìn hết trang trước khi lật slide
+            setTimeout(() => {
+              if (_videoIsPlaying) onVideoSegmentFinished();
+            }, 500);
+          }
+        }, (realDur) => {
+          // Căn chuẩn thời lượng theo audio metadata ngay khi nạp
+          if (realDur) {
+            _videoDuration = Math.max(3, Math.round(realDur));
+            updateVideoTimeDisplay(_videoCurrentTime, _videoDuration);
           }
         });
       }
@@ -17312,7 +17373,7 @@ QUY TẮC:
       timeDisplay.textContent = `${String(curM).padStart(2, '0')}:${String(curS).padStart(2, '0')} / ${String(totM).padStart(2, '0')}:${String(totS).padStart(2, '0')}`;
     }
 
-    function playSegmentAudio(audioUrl) {
+    function playSegmentAudio(audioUrl, onLoaded) {
       if (window._currentAudioPlayer) {
         try { window._currentAudioPlayer.pause(); } catch (e) { }
         window._currentAudioPlayer = null;
@@ -17322,6 +17383,24 @@ QUY TẮC:
         window._currentAudioPlayer = audio;
         const speed = parseFloat(document.getElementById('gcfg-speed')?.value || '1.0');
         audio.playbackRate = speed;
+
+        audio.onloadedmetadata = () => {
+          if (audio.duration && onLoaded) {
+            onLoaded(audio.duration / speed);
+          }
+        };
+
+        audio.onended = () => {
+          if (_videoIsPlaying) {
+            clearInterval(_videoTickerTimer);
+            updateVideoProgressBar(100);
+            updateVideoTimeDisplay(_videoDuration, _videoDuration);
+            setTimeout(() => {
+              if (_videoIsPlaying) onVideoSegmentFinished();
+            }, 500);
+          }
+        };
+
         audio.play().catch(e => console.warn('Không thể phát audio file:', e));
       } catch (e) {
         console.warn('Lỗi phát audio:', e);
@@ -17338,7 +17417,7 @@ QUY TẮC:
       }
     }
 
-    // ===== HỆ THỐNG XUẤT VIDEO BÀI GIẢNG (CANVAS + MEDIARECORDER VIDEO EXPORTER) =====
+    // ===== HỆ THỐNG XUẤT VIDEO: CĂN CHUẨN THỜI LƯỢNG XUẤT HIỆN TỪNG SLIDE =====
     function exportFinalVideo() {
       const allSegs = window._allVideoSegments || [];
       if (allSegs.length === 0) {
@@ -17403,7 +17482,7 @@ QUY TẮC:
       canvas.height = canvasH;
       const ctx = canvas.getContext('2d');
 
-      // Vẽ frame đầu tiên ngay lập tức để luồng captureStream có dữ liệu hợp lệ
+      // Vẽ frame đầu tiên ngay lập tức
       drawSlideCanvasFrame(ctx, canvasW, canvasH, {
         title: targetSegments[0].subtitle || targetSegments[0].title,
         badge: targetSegments[0].title,
@@ -17436,7 +17515,10 @@ QUY TẮC:
         mimeType = 'video/webm;codecs=vp8,opus';
       }
       if (!MediaRecorder.isTypeSupported(mimeType)) {
-        mimeType = MediaRecorder.isTypeSupported('video/webm') ? 'video/webm' : 'video/mp4';
+        mimeType = 'video/webm';
+      }
+      if (!MediaRecorder.isTypeSupported(mimeType)) {
+        mimeType = 'video/mp4';
       }
 
       const recordedChunks = [];
@@ -17458,7 +17540,7 @@ QUY TẮC:
       const stepText = document.getElementById('export-step-text');
       const pctText = document.getElementById('export-percent-text');
 
-      // 4. Render từng slide lần lượt (Đồng bộ thời gian thực với âm thanh)
+      // 4. Render từng slide lần lượt: CĂN CHUẨN THỜI GIAN XUẤT HIỆN THEO ĐÚNG GIỌNG ĐỌC
       for (let i = 0; i < totalSlides; i++) {
         const seg = targetSegments[i];
         const progressPct = Math.round((i / totalSlides) * 100);
@@ -17466,7 +17548,7 @@ QUY TẮC:
         if (pctText) pctText.textContent = `${progressPct}%`;
         if (statusTitle) statusTitle.textContent = `Đang dựng video: Slide ${i + 1} / ${totalSlides}`;
         if (statusSub) statusSub.textContent = seg.subtitle || seg.title;
-        if (stepText) stepText.textContent = `Đang kết xuất hình ảnh & âm thanh slide ${i + 1}...`;
+        if (stepText) stepText.textContent = `Đang đồng bộ giọng đọc & kết xuất khung hình slide ${i + 1}...`;
 
         // Tải ảnh slide nếu có
         let loadedImg = null;
@@ -17482,8 +17564,8 @@ QUY TẮC:
           } catch (e) { }
         }
 
-        // Lấy âm thanh cho slide (ưu tiên audio cache, fallback gọi TTS)
-        let audioDurationSec = Math.max(3, Math.min(10, parseInt(seg.dur) || 4));
+        // Lấy âm thanh chuẩn cho slide (ưu tiên audio cache, fallback gọi API TTS trọn vẹn)
+        let audioDurationSec = getCalibratedReadingDuration(seg.narr, seg.segKey);
         const cleanNarr = (seg.narr || '').replace(/\[P\d\]/g, '').replace(/\s+/g, ' ').trim();
         let decodedAudioBuf = null;
 
@@ -17497,10 +17579,11 @@ QUY TẮC:
                 ? `${window.location.origin}/api/tts`
                 : 'https://slide-to-video-sigma.vercel.app/api/tts';
 
+              // Gửi toàn bộ văn bản kịch bản (không cắt ngắn 160 ký tự)
               const res = await fetch(serverUrl, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ text: cleanNarr.slice(0, 160), voice: voiceKey })
+                body: JSON.stringify({ text: cleanNarr.slice(0, 3000), voice: voiceKey })
               });
 
               if (res.ok) {
@@ -17510,14 +17593,15 @@ QUY TẮC:
 
             if (arrayBuf) {
               decodedAudioBuf = await audioCtx.decodeAudioData(arrayBuf);
-              audioDurationSec = Math.max(2, decodedAudioBuf.duration);
+              // Lấy thời lượng âm thanh chính xác tuyệt đối
+              audioDurationSec = decodedAudioBuf.duration;
             }
           } catch (e) {
             console.warn('Lỗi nạp TTS audio khi render:', e);
           }
         }
 
-        // Bắt đầu phát âm thanh slide vào MediaStream audio track
+        // Bắt đầu phát âm thanh của slide này vào MediaStream audio track
         if (decodedAudioBuf && audioCtx && dest) {
           try {
             const source = audioCtx.createBufferSource();
@@ -17529,9 +17613,10 @@ QUY TẮC:
           }
         }
 
-        // Vẽ từng frame cho slide này đồng bộ theo tốc độ 30 FPS
-        const totalFrames = Math.max(30, Math.round(audioDurationSec * 30));
-        const frameIntervalMs = 33; // 30 FPS ~ 33ms
+        // CĂN ĐÚNG THỜI GIAN SLIDE XUẤT HIỆN: Bằng thời lượng đọc + 0.6s đệm tự nhiên
+        const totalSlideDuration = Math.max(3, audioDurationSec + 0.6);
+        const totalFrames = Math.round(totalSlideDuration * 30); // 30 FPS
+        const frameIntervalMs = 33; // 33ms per frame
 
         for (let f = 0; f < totalFrames; f++) {
           const currentSec = (f / 30);
@@ -17541,7 +17626,7 @@ QUY TẮC:
             code: `Slide ${i + 1}/${totalSlides}`,
             narr: seg.narr || '',
             img: loadedImg
-          }, currentSec, audioDurationSec);
+          }, currentSec, totalSlideDuration);
 
           await new Promise(r => setTimeout(r, frameIntervalMs));
         }
@@ -17877,7 +17962,7 @@ Yêu cầu trình bày:
     let _scriptPlayKeys = [];
     let _globalTtsAudio = null;
 
-    async function playSpeechWithVoice(text, voiceKey, onEnd) {
+    async function playSpeechWithVoice(text, voiceKey, onEnd, onReady) {
       // 1. Dừng mọi trình phát đang chạy
       if (_globalTtsAudio) {
         try { _globalTtsAudio.pause(); } catch (e) { }
@@ -17923,12 +18008,17 @@ Yêu cầu trình bày:
             const speed = parseFloat(document.getElementById('gcfg-speed')?.value || '1.0');
             audio.playbackRate = speed;
 
+            audio.onloadedmetadata = () => {
+              if (audio.duration && onReady) {
+                onReady(audio.duration / speed);
+              }
+            };
             audio.onended = () => {
               _globalTtsAudio = null;
               if (onEnd) onEnd();
             };
             audio.onerror = () => {
-              playFallbackWebSpeech(cleanText, voiceKey, onEnd);
+              playFallbackWebSpeech(cleanText, voiceKey, onEnd, onReady);
             };
 
             await audio.play();
@@ -17948,12 +18038,17 @@ Yêu cầu trình bày:
         const speed = parseFloat(document.getElementById('gcfg-speed')?.value || '1.0');
         audio.playbackRate = speed;
 
+        audio.onloadedmetadata = () => {
+          if (audio.duration && onReady) {
+            onReady(audio.duration / speed);
+          }
+        };
         audio.onended = () => {
           _globalTtsAudio = null;
           if (onEnd) onEnd();
         };
         audio.onerror = () => {
-          playFallbackWebSpeech(cleanText, voiceKey, onEnd);
+          playFallbackWebSpeech(cleanText, voiceKey, onEnd, onReady);
         };
 
         await audio.play();
@@ -17962,8 +18057,8 @@ Yêu cầu trình bày:
         console.warn('[Direct Google TTS error]:', e);
       }
 
-      // TẦNG 3: FALLBACK SANG WEB SPEECH API ĐÃ CHUẨN HÓA GIỚI TÍNH & FIX CHROMIUM DEADLOCK
-      playFallbackWebSpeech(cleanText, voiceKey, onEnd);
+      // TẦNG 3: FALLBACK SANG WEB SPEECH API
+      playFallbackWebSpeech(cleanText, voiceKey, onEnd, onReady);
     }
 
     function playFallbackWebSpeech(cleanText, voiceKey, onEnd) {
