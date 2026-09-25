@@ -7156,6 +7156,8 @@
       const maxX = Math.max(...visibleNodes.map(n => n.x + n.width));
       const minY = Math.min(...visibleNodes.map(n => n.y));
       const maxY = Math.max(...visibleNodes.map(n => n.y + n.height));
+      const worldWidth = Math.max(4800, maxX + 800);
+      const worldHeight = Math.max(3200, maxY + 800);
       world.style.minWidth = worldWidth + 'px';
       world.style.minHeight = worldHeight + 'px';
 
