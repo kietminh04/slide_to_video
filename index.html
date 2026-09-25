@@ -10063,6 +10063,40 @@ OUTPUT: Valid JSON only.
         return true;
       },
 
+      setNodeConfig(act) {
+        const nodes = this.findNodesByCode(act.code);
+        if (nodes.length > 0) {
+          const target = nodes[0];
+          let updated = false;
+          if (act.voice !== undefined) { setNodeParam(target.key, 'voice', act.voice); updated = true; }
+          if (act.speed !== undefined) { setNodeParam(target.key, 'speed', act.speed); updated = true; }
+          if (act.locked !== undefined) { setNodeParam(target.key, 'isLocked', act.locked); updated = true; }
+          if (updated) renderMindmap();
+          return updated;
+        }
+        return false;
+      },
+      setNarration(act) {
+        const nodes = this.findNodesByCode(act.code);
+        if (nodes.length > 0) {
+          const target = nodes[0];
+          setNodeParam(target.key, 'narration', act.narration);
+          renderMindmap();
+          return true;
+        }
+        return false;
+      },
+      requestIllustration(act) {
+        const nodes = this.findNodesByCode(act.code);
+        if (nodes.length > 0) {
+          const target = nodes[0];
+          setNodeParam(target.key, 'visual_prompt', act.prompt);
+          renderMindmap();
+          return true;
+        }
+        return false;
+      },
+
       keepOnlyTarget(act) {
         const targetChapNum = parseInt(act.chapter) || 1;
         const targetSec = (act.section || '').toLowerCase().replace(/phần\s*/gi, '').trim();
@@ -10167,6 +10201,9 @@ OUTPUT: Valid JSON only.
           else if (type === 'keep_chapters_and_sections') didSomething = this.keepChaptersAndSections(act.chapters || [], act.targetChapter, act.sections || []) || didSomething;
           else if (type === 'keep_only_target') didSomething = this.keepOnlyTarget(act) || didSomething;
           else if (type === 'speak_narration') didSomething = this.speakNarration(act.text || act.narration) || didSomething;
+          else if (type === 'set_node_config') didSomething = this.setNodeConfig(act) || didSomething;
+          else if (type === 'set_narration') didSomething = this.setNarration(act) || didSomething;
+          else if (type === 'request_illustration') didSomething = this.requestIllustration(act) || didSomething;
         });
         if (didSomething) {
           showToast('🤖 AI Copilot: Đã thực thi thao tác giao diện!');
