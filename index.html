@@ -2442,7 +2442,7 @@
       width: 0%;
       background: linear-gradient(90deg, #06b6d4, #6366f1);
       position: relative;
-      transition: width 0.1s linear;
+      transition: width 0.03s linear;
     }
 
     .video-progress-fill::after {
@@ -4959,6 +4959,126 @@
     var _videoTickerTimer = null;
     var _videoCurrentSegKey = null;
     var _exportSelectedRange = 'fast5';
+
+    // =========================================================================
+    // HỆ THỐNG TIỀN TẢI ÂM THANH TRƯỚC (ZERO-GAP AUDIO PRELOADER)
+    // Tải trước audio của slide kế tiếp trong nền, loại bỏ hoàn toàn khoảng lặng chết
+    // =========================================================================
+    window._videoAudioPreloadQueue = window._videoAudioPreloadQueue || {};
+
+    async function preloadSegmentAudio(segKey, narr) {
+      if (!segKey || !narr || narr.trim().length < 5) return;
+      window._videoAudioCache = window._videoAudioCache || {};
+      if (window._videoAudioCache[segKey] && window._videoAudioCache[segKey].audioUrl) return;
+      if (window._videoAudioPreloadQueue[segKey]) return; // Đang tiền tải rồi
+
+      window._videoAudioPreloadQueue[segKey] = true;
+      const cleanText = narr.replace(/\[P\d\]/g, '').replace(/\s+/g, ' ').trim();
+      const voiceKey = document.getElementById('gcfg-voice')?.value || 'quynh_anh';
+      const cfg = typeof LLMClient !== 'undefined' ? LLMClient.getConfig() : {};
+
+      try {
+        const serverUrl = (window.location.origin.startsWith('http') && !window.location.origin.includes('file:'))
+          ? `${window.location.origin}/api/tts`
+          : 'https://slide-to-video-sigma.vercel.app/api/tts';
+
+        const res = await fetch(serverUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            text: cleanText,
+            voice: voiceKey,
+            apiKey: cfg.apiKey || '',
+            provider: cfg.provider || 'openai'
+          })
+        });
+
+        if (res.ok) {
+          const blob = await res.blob();
+          if (blob && blob.size > 500) {
+            const audioUrl = URL.createObjectURL(blob);
+            const tempAudio = new Audio(audioUrl);
+            const speed = parseFloat(document.getElementById('gcfg-speed')?.value || '1.0');
+
+            await new Promise(resolve => {
+              tempAudio.onloadedmetadata = () => resolve(tempAudio.duration);
+              tempAudio.onerror = () => resolve(null);
+              setTimeout(() => resolve(null), 1800);
+            });
+
+            const realDur = (tempAudio.duration && !isNaN(tempAudio.duration))
+              ? Math.max(3, tempAudio.duration / speed)
+              : null;
+
+            window._videoAudioCache[segKey] = {
+              audioUrl: audioUrl,
+              duration: realDur ? Math.round(realDur) : 10,
+              blob: blob,
+              voice: voiceKey
+            };
+
+            // Cập nhật duration vào danh sách segments nếu đang hiển thị
+            if (window._allVideoSegments) {
+              const seg = window._allVideoSegments.find(s => s.segKey === segKey);
+              if (seg && realDur) {
+                seg.audioData = window._videoAudioCache[segKey];
+                seg.dur = Math.round(realDur);
+              }
+            }
+          }
+        }
+      } catch (err) {
+        // Tiền tải chạy ngầm, không chặn luồng chính
+      } finally {
+        delete window._videoAudioPreloadQueue[segKey];
+      }
+    }
+    window.preloadSegmentAudio = preloadSegmentAudio;
+
+    // =========================================================================
+    // TRÌNH ĐỒNG BỘ THỜI GIAN THỰC (REALTIME AUDIO SYNC ENGINE)
+    // Đọc trực tiếp audio.currentTime mỗi 30ms, thanh trượt bám sát 100% âm thanh thật
+    // =========================================================================
+    function startRealtimeAudioSync(audioElement, segKey, token) {
+      if (_videoTickerTimer) {
+        clearInterval(_videoTickerTimer);
+        _videoTickerTimer = null;
+      }
+      if (!audioElement) return;
+
+      window._currentAudioPlayer = audioElement;
+      window._globalTtsAudio = audioElement;
+
+      const syncNow = () => {
+        if (!_videoIsPlaying || !isAudioSessionValid(segKey, token)) {
+          if (_videoTickerTimer) {
+            clearInterval(_videoTickerTimer);
+            _videoTickerTimer = null;
+          }
+          return;
+        }
+        if (audioElement.paused && audioElement.currentTime === 0) return;
+
+        const curTime = audioElement.currentTime;
+        const totalDur = (audioElement.duration && !isNaN(audioElement.duration) && audioElement.duration > 0)
+          ? audioElement.duration
+          : (_videoDuration || 1);
+
+        _videoCurrentTime = curTime;
+        _videoDuration = totalDur;
+
+        const pct = Math.min(100, Math.max(0, (curTime / totalDur) * 100));
+        updateVideoProgressBar(pct);
+        updateVideoTimeDisplay(curTime, totalDur);
+      };
+
+      // Sự kiện chuẩn của Audio element
+      audioElement.ontimeupdate = syncNow;
+
+      // Vòng lặp tần số cao 30ms giúp thanh trượt lướt mượt mà 60fps không bị khựng
+      _videoTickerTimer = setInterval(syncNow, 30);
+    }
+    window.startRealtimeAudioSync = startRealtimeAudioSync;
 
     window._videoAudioCache = window._videoAudioCache || {};
     window._allVideoSegments = window._allVideoSegments || [];
@@ -17508,6 +17628,11 @@ QUY TẮC:
           const first = window._allVideoSegments[0];
           selectVideoSegment(first.segKey, first.thumb, first.subtitle, first.narr, first.dur, false);
         }
+        // TIỀN TẢI TRƯỚC ÂM THANH CHO 2 SLIDE ĐẦU TIÊN (LOẠI BỎ ĐỘ TRỄ KHI BẤM PLAY)
+        preloadSegmentAudio(window._allVideoSegments[0].segKey, window._allVideoSegments[0].narr);
+        if (window._allVideoSegments[1]) {
+          preloadSegmentAudio(window._allVideoSegments[1].segKey, window._allVideoSegments[1].narr);
+        }
       }
 
       // Kiểm tra và hiển thị bản video đã lưu trong DB (F5 khôi phục nguyên vẹn)
@@ -17766,6 +17891,16 @@ QUY TẮC:
         }
       });
 
+      // KÍCH HOẠT TIỀN TẢI CHO CÁC SLIDE TIẾP THEO (ZERO DEAD-SILENCE GAP)
+      if (segIndex >= 0 && segIndex + 1 < allSegs.length) {
+        preloadSegmentAudio(allSegs[segIndex + 1].segKey, allSegs[segIndex + 1].narr);
+      }
+      if (segIndex >= 0 && segIndex + 2 < allSegs.length) {
+        setTimeout(() => {
+          preloadSegmentAudio(allSegs[segIndex + 2].segKey, allSegs[segIndex + 2].narr);
+        }, 1200);
+      }
+
       if (_videoIsPlaying || autoStartPlay) {
         startVideoSegmentPlayback(segKey, narr);
       } else {
@@ -17787,31 +17922,18 @@ QUY TẮC:
       const currentToken = ++window._activeAudioSessionToken;
       window._activePlayingSegKey = segKey;
 
-      // Cập nhật _videoDuration chuẩn trước khi phát
+      // Cập nhật _videoDuration ước tính ban đầu & reset tiến trình về 0
       _videoDuration = getCalibratedReadingDuration(narr, segKey);
-      updateVideoTimeDisplay(_videoCurrentTime, _videoDuration);
+      _videoCurrentTime = 0;
+      updateVideoProgressBar(0);
+      updateVideoTimeDisplay(0, _videoDuration);
 
-      // Chạy ticker cập nhật thanh thời gian mỗi 100ms
-      const startTime = Date.now();
-      const initialProgress = _videoCurrentTime;
-      _videoTickerTimer = setInterval(() => {
-        if (!_videoIsPlaying || window._videoActiveSegKey !== segKey || currentToken !== window._activeAudioSessionToken) {
-          clearInterval(_videoTickerTimer);
-          return;
-        }
-        const elapsedSec = (Date.now() - startTime) / 1000 + initialProgress;
-        _videoCurrentTime = Math.min(elapsedSec, _videoDuration);
-        updateVideoProgressBar((_videoCurrentTime / _videoDuration) * 100);
-        updateVideoTimeDisplay(_videoCurrentTime, _videoDuration);
-
-        // Nếu không có âm thanh (narr trống), kết thúc khi hết thời gian
-        if (!narr && _videoCurrentTime >= _videoDuration) {
-          clearInterval(_videoTickerTimer);
-          if (window._videoActiveSegKey === segKey && currentToken === window._activeAudioSessionToken) {
-            onVideoSegmentFinished();
-          }
-        }
-      }, 100);
+      // TIỀN TẢI AUDIO CỦA SLIDE TIẾP THEO
+      const allSegs = window._allVideoSegments || [];
+      const curIdx = allSegs.findIndex(s => s.segKey === segKey);
+      if (curIdx >= 0 && curIdx + 1 < allSegs.length) {
+        preloadSegmentAudio(allSegs[curIdx + 1].segKey, allSegs[curIdx + 1].narr);
+      }
 
       // Phát âm thanh của DUY NHẤT slide đang mở
       const audioData = window._videoAudioCache ? window._videoAudioCache[segKey] : null;
@@ -17828,15 +17950,15 @@ QUY TẮC:
         playSpeechWithVoice(cleanText, voiceKey, () => {
           // KHI GIỌNG ĐỌC KẾT THÚC: CHỈ CHUYỂN SLIDE KHI SLIDE ĐÓ VẪN ĐANG LÀ SLIDE ĐƯỢC MỞ
           if (_videoIsPlaying && window._videoActiveSegKey === segKey && currentToken === window._activeAudioSessionToken) {
-            clearInterval(_videoTickerTimer);
+            if (_videoTickerTimer) { clearInterval(_videoTickerTimer); _videoTickerTimer = null; }
             updateVideoProgressBar(100);
             updateVideoTimeDisplay(_videoDuration, _videoDuration);
-            // Dừng nhẹ 0.5s để người học kịp nhìn hết trang trước khi lật slide
+            // Dừng nhẹ 150ms tự nhiên (thay vì 500ms làm khựng video)
             setTimeout(() => {
               if (_videoIsPlaying && window._videoActiveSegKey === segKey && currentToken === window._activeAudioSessionToken) {
                 onVideoSegmentFinished();
               }
-            }, 500);
+            }, 150);
           }
         }, (realDur) => {
           if (realDur && window._videoActiveSegKey === segKey && currentToken === window._activeAudioSessionToken) {
@@ -17844,6 +17966,29 @@ QUY TẮC:
             updateVideoTimeDisplay(_videoCurrentTime, _videoDuration);
           }
         }, segKey, currentToken);
+      } else {
+        // Slide không có lời thoại: chạy đồng hồ fallback
+        const startTime = Date.now();
+        if (_videoTickerTimer) clearInterval(_videoTickerTimer);
+        _videoTickerTimer = setInterval(() => {
+          if (!_videoIsPlaying || window._videoActiveSegKey !== segKey || currentToken !== window._activeAudioSessionToken) {
+            clearInterval(_videoTickerTimer);
+            _videoTickerTimer = null;
+            return;
+          }
+          const elapsedSec = (Date.now() - startTime) / 1000;
+          _videoCurrentTime = Math.min(elapsedSec, _videoDuration);
+          updateVideoProgressBar((_videoCurrentTime / _videoDuration) * 100);
+          updateVideoTimeDisplay(_videoCurrentTime, _videoDuration);
+
+          if (_videoCurrentTime >= _videoDuration) {
+            clearInterval(_videoTickerTimer);
+            _videoTickerTimer = null;
+            if (window._videoActiveSegKey === segKey && currentToken === window._activeAudioSessionToken) {
+              onVideoSegmentFinished();
+            }
+          }
+        }, 30);
       }
     }
 
@@ -17872,13 +18017,14 @@ QUY TẮC:
       _videoIsPlaying = false;
       const playBtn = document.getElementById('video-play-btn');
       if (playBtn) playBtn.textContent = '▶️';
-      if (_videoTickerTimer) clearInterval(_videoTickerTimer);
-
-      if (window._currentAudioPlayer) {
-        try { window._currentAudioPlayer.pause(); } catch (e) { }
+      if (_videoTickerTimer) {
+        clearInterval(_videoTickerTimer);
+        _videoTickerTimer = null;
       }
-      if (_globalTtsAudio) {
-        try { _globalTtsAudio.pause(); } catch (e) { }
+
+      const activeAudio = window._currentAudioPlayer || _globalTtsAudio;
+      if (activeAudio) {
+        try { activeAudio.pause(); } catch (e) { }
       }
       if ('speechSynthesis' in window && window.speechSynthesis.speaking) {
         window.speechSynthesis.cancel();
@@ -17895,6 +18041,20 @@ QUY TẮC:
       if (!_videoCurrentSegKey) {
         const first = allSegs[0];
         selectVideoSegment(first.segKey, first.thumb, first.subtitle, first.narr, first.dur, true);
+        return;
+      }
+
+      const activeAudio = window._currentAudioPlayer || _globalTtsAudio;
+      if (activeAudio && activeAudio.src && !activeAudio.ended && activeAudio.currentTime > 0) {
+        _videoIsPlaying = true;
+        const playBtn = document.getElementById('video-play-btn');
+        if (playBtn) playBtn.textContent = '⏸️';
+        activeAudio.play().then(() => {
+          startRealtimeAudioSync(activeAudio, _videoCurrentSegKey, window._activeAudioSessionToken);
+        }).catch(e => {
+          const curSeg = allSegs.find(s => s.segKey === _videoCurrentSegKey) || allSegs[0];
+          startVideoSegmentPlayback(curSeg.segKey, curSeg.narr);
+        });
         return;
       }
 
@@ -17926,19 +18086,22 @@ QUY TẮC:
 
     function seekVideoProgress(event) {
       const bar = document.getElementById('video-scrubber-bar');
-      if (!bar || !_videoDuration) return;
+      if (!bar) return;
       const rect = bar.getBoundingClientRect();
       const clickX = event.clientX - rect.left;
       const percent = Math.max(0, Math.min(1, clickX / rect.width));
-      _videoCurrentTime = percent * _videoDuration;
+
+      const activeAudio = window._currentAudioPlayer || _globalTtsAudio;
+      if (activeAudio && activeAudio.duration && !isNaN(activeAudio.duration)) {
+        activeAudio.currentTime = percent * activeAudio.duration;
+        _videoCurrentTime = activeAudio.currentTime;
+        _videoDuration = activeAudio.duration;
+      } else if (_videoDuration) {
+        _videoCurrentTime = percent * _videoDuration;
+      }
+
       updateVideoProgressBar(percent * 100);
       updateVideoTimeDisplay(_videoCurrentTime, _videoDuration);
-
-      if (window._currentAudioPlayer && window._currentAudioPlayer.duration) {
-        window._currentAudioPlayer.currentTime = percent * window._currentAudioPlayer.duration;
-      } else if (_globalTtsAudio && _globalTtsAudio.duration) {
-        _globalTtsAudio.currentTime = percent * _globalTtsAudio.duration;
-      }
     }
 
     function updateVideoProgressBar(percent) {
@@ -17966,6 +18129,7 @@ QUY TẮC:
       try {
         const audio = new Audio(audioUrl);
         window._currentAudioPlayer = audio;
+        window._globalTtsAudio = audio;
         const speed = parseFloat(document.getElementById('gcfg-speed')?.value || '1.0');
         audio.playbackRate = speed;
 
@@ -17980,22 +18144,29 @@ QUY TẮC:
         };
 
         audio.onended = () => {
+          if (_videoTickerTimer) {
+            clearInterval(_videoTickerTimer);
+            _videoTickerTimer = null;
+          }
           window._currentAudioPlayer = null;
+          window._globalTtsAudio = null;
           // CHỈ KHI SLIDE ĐÓ VẪN ĐANG MỞ MỚI CHUYỂN SLIDE KẾ TIẾP
           if (_videoIsPlaying && isAudioSessionValid(boundSegKey, boundToken)) {
-            clearInterval(_videoTickerTimer);
             updateVideoProgressBar(100);
             updateVideoTimeDisplay(_videoDuration, _videoDuration);
             setTimeout(() => {
               if (_videoIsPlaying && isAudioSessionValid(boundSegKey, boundToken)) {
                 onVideoSegmentFinished();
               }
-            }, 500);
+            }, 150);
           }
         };
 
         if (isAudioSessionValid(boundSegKey, boundToken)) {
-          audio.play().catch(e => console.warn('Không thể phát audio file:', e));
+          audio.play().then(() => {
+            // ĐỒNG BỘ REALTIME NGAY KHI AUDIO CHẠY THẬT SỰ
+            startRealtimeAudioSync(audio, boundSegKey, boundToken);
+          }).catch(e => console.warn('Không thể phát audio file:', e));
         } else {
           try { audio.pause(); audio.src = ''; } catch (e) { }
         }
@@ -18692,7 +18863,20 @@ Yêu cầu trình bày:
             };
 
             if (isAudioSessionValid(boundSegKey, currentToken)) {
+              window._currentAudioPlayer = audio;
+              if (boundSegKey) {
+                window._videoAudioCache = window._videoAudioCache || {};
+                window._videoAudioCache[boundSegKey] = {
+                  audioUrl: audioUrl,
+                  duration: audio.duration ? Math.round(audio.duration / speed) : null,
+                  blob: blob,
+                  voice: voiceKey
+                };
+              }
               await audio.play();
+              if (typeof startRealtimeAudioSync === 'function') {
+                startRealtimeAudioSync(audio, boundSegKey, currentToken);
+              }
               return;
             } else {
               try { audio.pause(); audio.src = ''; } catch (e) { }
@@ -18738,7 +18922,11 @@ Yêu cầu trình bày:
         };
 
         if (isAudioSessionValid(boundSegKey, currentToken)) {
+          window._currentAudioPlayer = audio;
           await audio.play();
+          if (typeof startRealtimeAudioSync === 'function') {
+            startRealtimeAudioSync(audio, boundSegKey, currentToken);
+          }
           return;
         } else {
           try { audio.pause(); audio.src = ''; } catch (e) { }
