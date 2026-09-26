@@ -10248,12 +10248,15 @@ LƯU Ý QUAN TRỌNG:
           practicalTakeaway = "Điều này cung cấp cơ sở định lượng vững chắc, [P1] cho phép người học ứng dụng linh hoạt vào đồ án và các bài toán thực tiễn.";
         }
 
-        // 2. Ghép nối kịch bản hoàn chỉnh
+        // 2. Ghép nối kịch bản hoàn chỉnh (Không dùng từ meta máy móc)
         let script = "";
         if (bridgeIntro && bridgeIntro.trim().length > 0) {
-          script += `${bridgeIntro} [P2] `;
+          const cleanBridge = bridgeIntro.replace(/Nối tiếp câu kết của.*?:\s*"?/gi, '').replace(/"?$/g, '').trim();
+          if (cleanBridge) {
+            script += `${cleanBridge} [P2] `;
+          }
         } else {
-          script += `Bước vào phân đoạn [${nodeCode}], [P1] chúng ta cùng làm rõ "${nodeText}". [P2] `;
+          script += `Đối với ${nodeText}, [P1] đây là khía cạnh then chốt cần làm rõ. [P2] `;
         }
 
         script += `${domainIntro} [P1] ${coreFormula} [P2] ${deepAnalysis} [P2] `;
@@ -10289,6 +10292,7 @@ QUY TẮC BẮT BUỘC:
 2. "bridges": Tạo câu nối ý mở đầu cho từng phân đoạn:
    - Phân đoạn 1: Bắt đầu từ chapter_hook dẫn nhập vào bài toán.
    - Các phân đoạn tiếp theo: Viết 1 câu chuyển ý đắt giá nối từ phân đoạn trước sang phân đoạn này (ví dụ: "Khi đã giải quyết xong bước A, thách thức tiếp theo là..."). Mỗi câu nối là duy nhất, tự nhiên, không lặp từ.
+   - 🚫 TUYỆT ĐỐI KHÔNG dùng từ "trang", "slide", "phần trước", "nối tiếp". Phải dùng liên từ tư duy tự nhiên ("Tiếp theo...", "Để làm rõ điều này...", "Một mắt xích quan trọng khác là...").
 
 Trả về DUY NHẤT JSON hợp lệ:
 {
@@ -10378,7 +10382,7 @@ Trả về DUY NHẤT JSON hợp lệ:
       },
 
       // TẦNG 2: SINH LỜI THOẠI PHÂN ĐOẠN (HỖ TRỢ CÂU NỐI Ý SƯ PHẠM BRIDGE INTRO)
-      async generateSegmentNarration({ projectTitle, projectDesc, nodeCode, nodeText, chapterTitle, sectionTitle, duration, wpm, visualType, summary, mechanism, keyPoint, notes, mediaAttachments, mediaNote, bridgeIntro }) {
+      async generateSegmentNarration({ projectTitle, projectDesc, nodeCode, nodeText, chapterTitle, sectionTitle, duration, wpm, visualType, summary, mechanism, keyPoint, notes, mediaAttachments, mediaNote, bridgeIntro, ragContext, isChapterTransition, nextChapterTopic }) {
         const cfg = this.getConfig();
         const dur = Math.max(10, parseInt(duration) || 30);
         const pace = Math.max(80, parseInt(wpm) || 140);
@@ -10394,30 +10398,52 @@ Trả về DUY NHẤT JSON hợp lệ:
           mediaInstruction = `Chỉ dẫn tư liệu: "${mediaNote}".`;
         }
 
-        // [QUY TẮC SƯ PHẠM ĐỈNH CAO: KHÔNG TẢ ẢNH NỀN / PHONG CẢNH TRANG TRÍ]
-        const systemPrompt = `Bạn là Chuyên gia Giảng dạy cấp cao & Nhà nghiên cứu Khoa học.
-Nhiệm vụ: Viết KỊCH BẢN LỜI THOẠI GIẢNG DẠY SƯ PHẠM (Narration Script) cho một phân đoạn kiến thức cụ thể thuộc bài giảng "${projectTitle || 'Tổng hợp'}".
+        // [QUY TẮC SƯ PHẠM ĐỈNH CAO: KHÔNG TẢ ẢNH NỀN & KHÔNG DÙNG TỪ NGỮ META MÁY MÓC]
+        const systemPrompt = `Bạn là Giáo sư Giảng dạy Đại học & Chuyên gia Nghiên cứu Khoa học hàng đầu.
+Nhiệm vụ: Viết KỊCH BẢN LỜI THOẠI GIẢNG DẠY (Narration Script) cho một phân đoạn kiến thức cụ thể thuộc bài giảng "${projectTitle || 'Tổng hợp'}".
 
 QUY TẮC CỐT LÕI BẮT BUỘC:
-1. ĐI THẲNG VÀO NỘI DUNG HỌC THUẬT: Lời thoại tự nhiên, giải thích sâu sắc bản chất vấn đề, logic kỹ thuật, không sáo rỗng chào hỏi ("Chào các bạn...", "Hôm nay chúng ta...").
-2. 🚫 TUYỆT ĐỐI CẤM MÔ TẢ ẢNH NỀN / HÌNH ẢNH TRANG TRÍ / LOGO TRƯỜNG:
-   - TUYỆT ĐỐI KHÔNG mô tả, bình luận hoặc nhắc đến ảnh nền slide, phong cảnh, tòa nhà, trường học (như trường VinUniversity, Bách Khoa, khuôn viên trường...), logo trường hay các chi tiết đồ họa trang trí bên lề.
-   - TUYỆT ĐỐI KHÔNG dùng các câu sáo rỗng ngớ ngẩn như: "Hãy quan sát hình ảnh bên cạnh...", "Như các bạn thấy trong ảnh...", "Hình ảnh này thể hiện môi trường học tập...". Người học cần nghe kiến thức chuyên môn chứ không phải nghe mô tả phong cảnh slide!
-   - CHỈ ĐƯỢC NHẮC ĐẾN YẾU TỐ HÌNH ẢNH KHI VÀ CHỈ KHI đó là SƠ ĐỒ KỸ THUẬT, KIẾN TRÚC MÔ HÌNH (Pipeline, Architecture), ĐỒ THỊ TOÁN HỌC hoặc BẢNG SỐ LIỆU trực tiếp chứa kiến thức cần phân tích.
-   - Với slide mở đầu / trang bìa: Tập trung giới thiệu bản chất và tầm quan trọng của chủ đề trong thực tiễn (ví dụ: ứng dụng trong xe tự hành, phân tích hành vi), không được bình luận ảnh nền.
-3. Chèn các thẻ nhịp ngắt chuẩn sư phạm để giọng đọc AI truyền cảm:
+1. DIỄN ĐẠT TỰ NHIÊN NHƯ BÀI THUYẾT TRÌNH BẬC THẦY:
+   - Lời thoại đĩnh đạc, cuốn hút, thông thái, tập trung giải thích sâu sắc bản chất toán học, thuật toán và logic chuyên môn.
+   - Tránh mở đầu sáo rỗng ("Chào các bạn...", "Hôm nay chúng ta..."). Hãy bắt đầu trực diện bằng một câu khẳng định, một thách thức kỹ thuật hoặc liên từ nối học thuật.
+
+2. 🚫 TUYỆT ĐỐI CẤM CÁC TỪ NGỮ VÀ MẪU CÂU META MÁY MÓC:
+   - TUYỆT ĐỐI KHÔNG dùng các từ: "trang", "slide", "trang này", "trang trước", "trang tiếp theo", "slide sau", "nối tiếp câu kết...", "ở trang số...".
+   - TUYỆT ĐỐI KHÔNG dùng mẫu câu máy móc: "Ở trang tiếp theo chúng ta sẽ...", "Trang tiếp theo sẽ giải thích về...", "Nối tiếp câu kết của trang trước...".
+   - Chuyển ý tự nhiên: Giữa các phân đoạn cùng chủ đề, dùng liên từ học thuật linh hoạt ("Tiếp tục với...", "Đi sâu vào cơ chế này...", "Để làm rõ bản chất...", "Cụ thể hơn...", "Một khía cạnh then chốt khác...", "Vậy làm thế nào để...") hoặc đi thẳng trực tiếp vào ý mới.
+
+3. QUY TẮC KẾT THÚC PHÂN ĐOẠN (TRANSITION RULE):
+   - Nếu là phân đoạn thông thường: Hãy kết thúc trọn vẹn luận điểm học thuật của phân đoạn đó, KHÔNG ĐƯỢC hé lộ hay nói "trang sau sẽ giải thích về...".
+   - CHỈ KHI đây là phân đoạn cuối của một Chương hoặc Phần lớn (có chỉ định chuyển chương): Mới dùng 1 câu khép lại vấn đề và mở ra định hướng cho chương tiếp theo một cách đĩnh đạc, khái quát.
+
+4. 🚫 TUYỆT ĐỐI CẤM MÔ TẢ ẢNH NỀN / PHONG CẢNH TRANG TRÍ:
+   - TUYỆT ĐỐI KHÔNG mô tả ảnh nền slide, phong cảnh, tòa nhà, trường học (như VinUni, Bách Khoa...), logo hay hình ảnh trang trí bên lề.
+   - CHỈ ĐƯỢC NHẮC ĐẾN HÌNH ẢNH khi đó là SƠ ĐỒ KỸ THUẬT, KIẾN TRÚC MÔ HÌNH (Pipeline, Architecture), ĐỒ THỊ TOÁN HỌC hoặc BẢNG SỐ LIỆU trực tiếp chứa kiến thức bài giảng.
+
+5. Chèn các thẻ nhịp ngắt chuẩn sư phạm để giọng đọc AI truyền cảm:
    - [P1] (ngắt ngắn 0.5s giữa các mệnh đề hoặc ý nhỏ)
    - [P2] (ngắt 1.0s khi chuyển ý quan trọng hoặc kết thúc luận điểm)
    - [P3] (ngắt 1.5s để người học ngẫm nghĩ sau khái niệm cốt lõi)
-4. Độ dài kịch bản phải khớp sát khoảng ${targetWords} từ (tương ứng ${dur} giây ở tốc độ đọc ${pace} WPM).
-5. Các thuật ngữ chuyên ngành phải giải thích dễ hiểu, chính xác. Công thức toán học (nếu có) dùng định dạng LaTeX kẹp giữa $...$.
-${mediaInstruction ? '6. ' + mediaInstruction : ''}
+
+6. Độ dài kịch bản phải khớp sát khoảng ${targetWords} từ (tương ứng ${dur} giây ở tốc độ đọc ${pace} WPM).
+7. Các thuật ngữ chuyên ngành phải giải thích dễ hiểu, chính xác. Công thức toán học (nếu có) dùng định dạng LaTeX kẹp giữa $...$.
+${mediaInstruction ? '8. ' + mediaInstruction : ''}
 
 Trả về DUY NHẤT văn bản kịch bản lời thoại hoàn chỉnh (không trả về JSON, không thêm lời dẫn giải ngoài lề).`;
 
         let bridgeNote = '';
         if (bridgeIntro && bridgeIntro.trim().length > 0) {
-          bridgeNote = `\n🔗 CÂU CHUYỂN Ý MỞ ĐẦU (BẮT ĐẦU PHÂN ĐOẠN TỰ NHIÊN THEO Ý NÀY): "${bridgeIntro}"`;
+          bridgeNote = `\n🔗 GỢI Ý MẠCH Ý TƯỞNG TIẾP NỐI: ${bridgeIntro}`;
+        }
+        if (isChapterTransition && nextChapterTopic) {
+          bridgeNote += `\n🎯 ĐIỂM CHUYỂN GIAO CHƯƠNG LỚN: Đây là phân đoạn kết thúc chương. Dành câu kết kịch bản để dẫn dắt đĩnh đạc sang chương mới: "${nextChapterTopic}".`;
+        }
+
+        let ragNote = '';
+        if (ragContext && ragContext.trim().length > 0) {
+          ragNote = `\n\n[TRI THỨC BỔ TRỢ TỪ TÀI LIỆU GỐC (RAG KNOWLEDGE)]:
+${ragContext}
+(Hãy tận dụng các chi tiết kỹ thuật, công thức, số liệu thực tế này để lời giảng giàu tính chuyên môn và sâu sắc).`;
         }
 
         const userPrompt = `Tên bài giảng: "${projectTitle || ''}"
@@ -10429,7 +10455,7 @@ Kiểu trực quan: [${visualType || 'split_screen'}]
 ${summary ? `Khái niệm trọng tâm: ${summary}` : ''}
 ${mechanism ? `Cơ chế/Công thức: ${mechanism}` : ''}
 ${keyPoint ? `Điểm then chốt: ${keyPoint}` : ''}
-${notes ? `GHI CHÚ RIÊNG CỦA GIẢNG VIÊN (BẮT BUỘC LÀM THEO): "${notes}"` : ''}${bridgeNote}
+${notes ? `GHI CHÚ RIÊNG CỦA GIẢNG VIÊN (BẮT BUỘC LÀM THEO): "${notes}"` : ''}${bridgeNote}${ragNote}
 
 Hãy viết kịch bản lời thoại giảng dạy:`;
 
@@ -12960,6 +12986,8 @@ QUY TẮC:
         let mechanism = '';
         let keyPoint = '';
         let bridgeIntro = optionalBridge || '';
+        let isChapterTransition = false;
+        let nextChapterTopic = '';
 
         if (itKey.startsWith('grid-page-')) {
           const pageIndex = parseInt(itKey.replace('grid-page-', ''));
@@ -12985,13 +13013,13 @@ QUY TẮC:
             summary = pageDetail.explanation;
           }
 
-          // Bổ sung context trang trước & sau để AI nắm mạch giảng dạy
+          // Bổ sung context trang trước & sau để AI nắm dòng chảy tư duy
           const contextParts = [];
           if (prevDetail && prevDetail.explanation) {
-            contextParts.push(`[BỐI CẢNH TRANG TRƯỚC - Trang ${pageIndex}]:\n${prevDetail.explanation.slice(0, 300)}${prevDetail.explanation.length > 300 ? '...' : ''}`);
+            contextParts.push(`[MẠCH KIẾN THỨC VỪA THẢO LUẬN]:\n${prevDetail.explanation.slice(0, 250)}${prevDetail.explanation.length > 250 ? '...' : ''}`);
           }
           if (nextDetail && nextDetail.explanation) {
-            contextParts.push(`[NỘI DUNG TRANG SAU - Trang ${pageIndex + 2}]:\n${nextDetail.explanation.slice(0, 300)}${nextDetail.explanation.length > 300 ? '...' : ''}`);
+            contextParts.push(`[MẠCH KIẾN THỨC TIẾP THEO]:\n${nextDetail.explanation.slice(0, 250)}${nextDetail.explanation.length > 250 ? '...' : ''}`);
           }
           if (contextParts.length > 0) {
             mechanism = contextParts.join('\n\n');
@@ -12999,30 +13027,35 @@ QUY TẮC:
 
           // Vị trí trang trong bài giảng
           if (pageIndex === 0) {
-            keyPoint = 'Đây là TRANG MỞ ĐẦU bài giảng. Hãy mở đầu hấp dẫn, giới thiệu chủ đề và tạo động lực học tập.';
+            keyPoint = 'Đây là PHẦN MỞ ĐẦU bài giảng. Hãy mở đầu cuốn hút, nêu bật bài toán thực tiễn và giá trị cốt lõi.';
           } else if (pageIndex === totalPages - 1) {
-            keyPoint = 'Đây là TRANG KẾT THÚC bài giảng. Hãy tổng kết các ý chính, nhắc lại kiến thức cốt lõi và khuyến khích học viên thực hành.';
+            keyPoint = 'Đây là PHẦN KẾT THÚC bài giảng. Hãy tổng kết bài học, đúc kết thông điệp then chốt và hướng ứng dụng.';
           } else {
-            keyPoint = `Trang ${pageIndex + 1} / ${totalPages} — phần giữa bài giảng.`;
+            keyPoint = `Phần kiến thức chuyên sâu giữa bài giảng.`;
           }
 
-          // Sliding window bridge từ kịch bản trang trước (nếu đã sinh)
+          // Nối tiếp tự nhiên từ ý của đoạn trước mà KHÔNG dùng từ meta 'trang trước'
           if (!bridgeIntro && pageIndex > 0) {
             const prevNarr = getNodeParam(`grid-page-${pageIndex - 1}`, 'narration', '');
             if (prevNarr) {
               const sents = prevNarr.trim().split(/(?<=[.!?])\s+/);
-              const lastSent = sents.slice(-2).join(' ');
-              if (lastSent.length > 5) {
-                bridgeIntro = `Nối tiếp câu kết của trang trước: "${lastSent.slice(0, 120)}"`;
+              const lastSent = sents[sents.length - 1] || '';
+              if (lastSent.length > 10) {
+                bridgeIntro = `Ý vừa phân tích ở phân đoạn trước: "${lastSent.slice(0, 100)}" (hãy tiếp nối tự nhiên bằng liên từ học thuật, tuyệt đối không nhắc chữ 'trang trước' hay 'câu kết').`;
               }
             }
           }
 
-          // Foreshadowing thông minh: truyền nội dung thực tế trang kế
-          if (pageIndex < totalPages - 1) {
-            const nextTopic = nextDetail?.explanation ? nextDetail.explanation.slice(0, 150) : `Trang ${pageIndex + 2}`;
-            const fText = `=> FORESHADOWING: Trang tiếp theo nói về: "${nextTopic}". Hãy chèn 1 CÂU GỢI MỞ ngắn ở CUỐI kịch bản để dẫn dắt tự nhiên sang nội dung đó.`;
-            bridgeIntro = bridgeIntro ? (bridgeIntro + '\n\n' + fText) : fText;
+          // CHỈ DÙNG GỢI MỞ CHUYỂN GIAO KHI LÀ RANH GIỚI CHƯƠNG LỚN
+          if (activeProject?.scenes && activeProject.scenes.length > 1) {
+            const totalScenes = activeProject.scenes.length;
+            const pagesPerScene = Math.max(1, Math.round(totalPages / totalScenes));
+            const currentSceneIdx = Math.min(totalScenes - 1, Math.floor(pageIndex / pagesPerScene));
+            const nextSceneIdx = Math.min(totalScenes - 1, Math.floor((pageIndex + 1) / pagesPerScene));
+            if (currentSceneIdx !== nextSceneIdx && nextSceneIdx < totalScenes) {
+              isChapterTransition = true;
+              nextChapterTopic = activeProject.scenes[nextSceneIdx]?.title || `Chương ${nextSceneIdx + 1}`;
+            }
           }
         } else {
           nodeCode = getNodeParam(itKey, 'code', itemData.code || '•');
@@ -13040,9 +13073,9 @@ QUY TẮC:
             const prevText = getPreviousSegmentNarration(itKey);
             if (prevText) {
               const sentences = prevText.trim().split(/(?<=[.!?])\s+/);
-              const lastSentence = sentences.slice(-2).join(' ');
+              const lastSentence = sentences[sentences.length - 1] || '';
               if (lastSentence.length > 8) {
-                bridgeIntro = `Nối tiếp câu kết của phần trước: "${lastSentence.slice(0, 120)}"`;
+                bridgeIntro = `Ý vừa trình bày trước đó: "${lastSentence.slice(0, 100)}" (tiếp nối tự nhiên bằng liên từ học thuật, không nhắc từ 'phần trước' hay 'nối tiếp').`;
               }
             }
           }
@@ -13063,6 +13096,35 @@ QUY TẮC:
           keyPoint = getNodeParam(itKey, 'key_point', itemData.key_point || '');
         }
 
+        // TRUY VẤN TRI THỨC BỔ TRỢ TỪ RAG VECTOR DATABASE (NEON DB)
+        let ragContext = '';
+        const projId = currentProjectId || activeProject?.id;
+        if (projId) {
+          try {
+            const queryText = `${nodeText} ${summary ? summary.slice(0, 100) : ''}`.trim();
+            const searchUrl = (window.location.origin.startsWith('http') && !window.location.origin.includes('file:'))
+              ? `${window.location.origin}/api/rag_search`
+              : 'https://slide-to-video-sigma.vercel.app/api/rag_search';
+            const searchCtl = new AbortController();
+            const searchTId = setTimeout(() => searchCtl.abort(), 3000);
+            const searchRes = await fetch(searchUrl, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ projectId: projId, query: queryText }),
+              signal: searchCtl.signal
+            });
+            clearTimeout(searchTId);
+            if (searchRes && searchRes.ok) {
+              const searchData = await searchRes.json();
+              if (searchData.chunks && searchData.chunks.length > 0) {
+                ragContext = searchData.chunks.slice(0, 2).map((c, i) => `[Tài liệu ${i + 1} - ${c.chapter}]: ${c.text}`).join('\n\n');
+              }
+            }
+          } catch (e) {
+            // RAG search failure is non-blocking
+          }
+        }
+
         const scriptText = await LLMClient.generateSegmentNarration({
           projectTitle: activeProject?.title || '',
           projectDesc: activeProject?.desc || '',
@@ -13079,7 +13141,10 @@ QUY TẮC:
           notes,
           mediaAttachments,
           mediaNote,
-          bridgeIntro
+          bridgeIntro,
+          ragContext,
+          isChapterTransition,
+          nextChapterTopic
         });
 
         if (scriptText) {
@@ -13113,7 +13178,6 @@ QUY TẮC:
       }
     };
 
-    // 4. Sinh kịch bản hai tầng siêu tốc (Two-Pass Parallel Fan-Out theo Chương)
     window.generateScriptFromSelection = async function () {
       const allSources = activeProject?.sources || [];
       const activeSources = allSources.filter(s => s.active !== false);
