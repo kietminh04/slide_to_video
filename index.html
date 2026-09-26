@@ -4489,6 +4489,9 @@
                 <button class="script-action-btn" id="btn-copy-full-script" title="Sao chép toàn bộ văn bản kịch bản">
                   <span>📋</span> Sao Chép Kịch Bản
                 </button>
+                <button class="script-action-btn" id="btn-clear-project-scripts" onclick="clearCurrentProjectScripts()" title="Xoá sạch toàn bộ kịch bản của bài này để viết mới từ đầu" style="color: #f87171; border-color: rgba(239, 68, 68, 0.35);">
+                  <span>🗑️</span> Làm Sạch Kịch Bản
+                </button>
               </div>
             </div>
 
@@ -4528,6 +4531,9 @@
                 <button class="script-action-btn" id="btn-export-video" onclick="exportFinalVideo()"
                   title="Ghép video hoàn chỉnh từ slide + audio + subtitle">
                   <span>📹</span> Xuất Video
+                </button>
+                <button class="script-action-btn" id="btn-clear-project-audios" onclick="clearCurrentProjectAudios()" title="Xoá sạch toàn bộ audio của bài này" style="color: #f87171; border-color: rgba(239, 68, 68, 0.35);">
+                  <span>🗑️</span> Xoá Audio Bài Này
                 </button>
               </div>
             </div>
@@ -6344,9 +6350,10 @@
         document.body.classList.add('is-workspace');
         viewProjects.style.display = 'none';
         viewWorkspace.style.display = 'flex';
-        const savedProjId = localStorage.getItem('clsg_active_project_id') || currentProjectId;
+        const savedProjId = currentProjectId || localStorage.getItem('clsg_active_project_id');
         if (savedProjId) {
           currentProjectId = savedProjId;
+          try { localStorage.setItem('clsg_active_project_id', savedProjId); } catch(e){}
           loadProjectIntoWorkspace(currentProjectId);
         }
       }
@@ -6417,6 +6424,7 @@
         `;
 
         card.addEventListener('click', () => {
+          try { localStorage.setItem('clsg_active_project_id', proj.id); } catch(e){}
           currentProjectId = proj.id;
           switchView('workspace');
         });
@@ -6424,6 +6432,7 @@
         const btnOpen = card.querySelector('.btn-open-action');
         btnOpen.addEventListener('click', (e) => {
           e.stopPropagation();
+          try { localStorage.setItem('clsg_active_project_id', proj.id); } catch(e){}
           currentProjectId = proj.id;
           switchView('workspace');
         });
@@ -7950,7 +7959,7 @@
     // =========================================================================
     let autoSaveTimer = null;
     function autoSaveWorkspaceState() {
-      if (!currentProjectId || !activeProject) return;
+      if (!currentProjectId || !activeProject || currentProjectId !== activeProject.id) return;
       try {
         localStorage.setItem(`clsg_node_params_${currentProjectId}`, JSON.stringify(nodeCustomParams));
         localStorage.setItem(`clsg_excluded_nodes_${currentProjectId}`, JSON.stringify(Array.from(excludedNodes)));
@@ -13089,8 +13098,21 @@ QUY TẮC BẮT BUỘC:
 
     // NẠP DỰ ÁN VÀO KHÔNG GIAN WORKSPACE
     function loadProjectIntoWorkspace(projId) {
+      if (autoSaveTimer) {
+        clearTimeout(autoSaveTimer);
+        autoSaveTimer = null;
+      }
       // DỪNG NGAY MỌI AUDIO/VIDEO KHI NẠP PROJECT
       stopAllAudioAndVideoPlayback();
+
+      // CÔ LẬP TUYỆT ĐỐI BỘ NHỚ: DỌN SẠCH TOÀN BỘ AUDIO & THAM SỐ CỦA PROJECT CŨ
+      window._videoAudioCache = {};
+      window._allVideoSegments = [];
+      window._audioCacheLoadedFromDB = false;
+      if (typeof nodeCustomParams !== 'undefined') {
+        Object.keys(nodeCustomParams).forEach(k => delete nodeCustomParams[k]);
+      }
+
       currentProjectId = projId;
 
       // Khôi phục dự án đã lưu từ localStorage nếu có, nếu chưa có mới dùng defaultProjects
@@ -13140,10 +13162,10 @@ QUY TẮC BẮT BUỘC:
       window._audioCacheLoadedFromDB = false;
       if (typeof AudioCacheDB !== 'undefined') {
         AudioCacheDB.loadAllProjectAudios(projId).then(audioMap => {
-          if (audioMap && Object.keys(audioMap).length > 0) {
-            window._videoAudioCache = Object.assign(window._videoAudioCache || {}, audioMap);
+          if (currentProjectId === projId) {
+            window._videoAudioCache = audioMap || {};
             window._audioCacheLoadedFromDB = true;
-            console.log(`[AudioCacheDB] Đã khôi phục ${Object.keys(audioMap).length} file audio của project ${projId}`);
+            console.log(`[AudioCacheDB] Đã khôi phục ${Object.keys(audioMap || {}).length} file audio của project ${projId}`);
             if (typeof renderVideoTimeline === 'function') {
               renderVideoTimeline();
             }
@@ -13694,6 +13716,48 @@ QUY TẮC BẮT BUỘC:
     }
 
     // 3. Sinh kịch bản riêng cho một mục con cụ thể (Hỗ trợ câu nối bridge mượt mà)
+    // HÀM LÀM SẠCH KỊCH BẢN VÀ AUDIO CỦA DỰ ÁN HIỆN TẠI
+    window.clearCurrentProjectScripts = function () {
+      if (!currentProjectId || !activeProject) return;
+      if (!confirm(`Bạn có chắc muốn xoá sạch toàn bộ kịch bản của dự án "${activeProject.title}" để viết lại mới từ đầu?`)) return;
+      
+      // Xoá narration khỏi nodeCustomParams
+      Object.keys(nodeCustomParams).forEach(k => {
+        if (nodeCustomParams[k]) {
+          delete nodeCustomParams[k].narration;
+        }
+      });
+      // Xoá narration khỏi detailedContent & scenes
+      if (activeProject.detailedContent && Array.isArray(activeProject.detailedContent)) {
+        activeProject.detailedContent.forEach(p => { delete p.narration; });
+      }
+      if (activeProject.scenes && Array.isArray(activeProject.scenes)) {
+        activeProject.scenes.forEach(s => { delete s.narration; });
+      }
+      if (typeof currentScenes !== 'undefined' && Array.isArray(currentScenes)) {
+        currentScenes.forEach(s => { delete s.narration; });
+      }
+
+      autoSaveWorkspaceState();
+      renderScriptDocument();
+      updateScriptHeaderStats();
+      if (typeof renderVideoTimeline === 'function') renderVideoTimeline();
+      showToast('🗑️ Đã làm sạch toàn bộ kịch bản của dự án này!');
+    };
+
+    window.clearCurrentProjectAudios = async function () {
+      if (!currentProjectId || !activeProject) return;
+      if (!confirm(`Bạn có chắc muốn xoá toàn bộ file audio đã tạo của dự án "${activeProject.title}"?`)) return;
+      
+      stopAllAudioAndVideoPlayback();
+      window._videoAudioCache = {};
+      if (typeof AudioCacheDB !== 'undefined' && AudioCacheDB.deleteProjectAudios) {
+        await AudioCacheDB.deleteProjectAudios(currentProjectId);
+      }
+      if (typeof renderVideoTimeline === 'function') renderVideoTimeline();
+      showToast('🗑️ Đã xoá toàn bộ audio của dự án này!');
+    };
+
     window.generateSingleSegmentScript = async function (itKey, optionalBridge = '') {
       const card = document.getElementById(`seg-card-${itKey}`);
       const btn = document.getElementById(`btn-gen-${itKey}`);
@@ -18472,8 +18536,8 @@ QUY TẮC BẮT BUỘC:
       if (projId && typeof AudioCacheDB !== 'undefined' && !window._audioCacheLoadedFromDB) {
         window._audioCacheLoadedFromDB = true;
         AudioCacheDB.loadAllProjectAudios(projId).then(audioMap => {
-          if (audioMap && Object.keys(audioMap).length > 0) {
-            window._videoAudioCache = Object.assign(window._videoAudioCache || {}, audioMap);
+          if (currentProjectId === projId) {
+            window._videoAudioCache = audioMap || {};
             renderVideoTimeline(preferredSegKey);
           }
         });
