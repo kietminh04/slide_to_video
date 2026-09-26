@@ -6342,20 +6342,13 @@
         window.scrollTo({ top: 0, behavior: 'smooth' });
       } else {
         document.body.classList.add('is-workspace');
-        const _userProjs = JSON.parse(localStorage.getItem('clsg_user_projects') || '{}');
-        if (!currentProjectId || (!defaultProjects[currentProjectId] && !_userProjs[currentProjectId])) {
-          const savedProjId = localStorage.getItem('clsg_active_project_id');
-          if (savedProjId && (defaultProjects[savedProjId] || _userProjs[savedProjId])) {
-            currentProjectId = savedProjId;
-          } else {
-            showToast('⚠️ Vui lòng chọn hoặc tạo 1 dự án để mở không gian làm việc!');
-            switchView('projects');
-            return;
-          }
-        }
         viewProjects.style.display = 'none';
         viewWorkspace.style.display = 'flex';
-        loadProjectIntoWorkspace(currentProjectId);
+        const savedProjId = localStorage.getItem('clsg_active_project_id') || currentProjectId;
+        if (savedProjId) {
+          currentProjectId = savedProjId;
+          loadProjectIntoWorkspace(currentProjectId);
+        }
       }
     }
 
@@ -13099,12 +13092,23 @@ QUY TẮC BẮT BUỘC:
       // DỪNG NGAY MỌI AUDIO/VIDEO KHI NẠP PROJECT
       stopAllAudioAndVideoPlayback();
       currentProjectId = projId;
+
       // Khôi phục dự án đã lưu từ localStorage nếu có, nếu chưa có mới dùng defaultProjects
       const userProjects = JSON.parse(localStorage.getItem('clsg_user_projects') || '{}');
-      if (userProjects[projId]) {
-        activeProject = userProjects[projId];
-      } else {
-        activeProject = defaultProjects[projId];
+      let proj = defaultProjects[projId] || userProjects[projId];
+      if (!proj) {
+        // Tìm kiếm linh hoạt theo ID hoặc Tiêu đề (VD: '13' hoặc 'proj_1790402662925')
+        proj = Object.values(defaultProjects).find(p => p.id === projId || p.title === projId)
+            || Object.values(userProjects).find(p => p.id === projId || p.title === projId);
+        if (proj) {
+          projId = proj.id;
+        }
+      }
+      currentProjectId = projId;
+      activeProject = proj || null;
+      if (!activeProject) {
+        console.log('[loadProjectIntoWorkspace] Đang chờ CloudDB nạp dự án:', projId);
+        return;
       }
       currentScenes = JSON.parse(JSON.stringify(activeProject.scenes || []));
 
@@ -13868,7 +13872,7 @@ QUY TẮC BẮT BUỘC:
           }
         }
 
-        const scriptText = await LLMClient.generateSegmentNarration({
+        let scriptText = await LLMClient.generateSegmentNarration({
           projectTitle: activeProject?.title || '',
           projectDesc: activeProject?.desc || '',
           nodeCode,
@@ -13944,8 +13948,11 @@ QUY TẮC BẮT BUỘC:
     };
 
     window.generateScriptFromSelection = async function (forceRewrite = false) {
-      const allSources = activeProject?.sources || [];
-      const activeSources = allSources.filter(s => s.active !== false);
+      let allSources = activeProject?.sources || [];
+      let activeSources = allSources.filter(s => s.active !== false);
+      if (activeSources.length === 0 && activeProject?.detailedContent && activeProject.detailedContent.length > 0) {
+        activeSources = [{ name: (activeProject?.title || 'Slide') + '.pdf', pages: activeProject.detailedContent.length, active: true }];
+      }
       if (activeSources.length === 0) {
         showToast('⚠️ Hãy chọn ít nhất 1 tài liệu để sinh kịch bản!');
         return;
@@ -14149,6 +14156,7 @@ QUY TẮC BẮT BUỘC:
             <div class="meta-stat-row">⏱️ Thời lượng: <strong>${totalM}p ${totalS < 10 ? '0' : ''}${totalS}s</strong> (${totalSec}s)</div>
             <div class="meta-stat-row">🎬 <strong>${completedPages}/${activePages}</strong> trang có kịch bản (~${totalWords} từ) ${excludedCount > 0 ? `<span style="color:#f87171; font-size:10.5px; margin-left:4px;">(đã ẩn ${excludedCount} trang)</span>` : ''}</div>
           `;
+          updateBtnGenCountBadge();
           return;
         }
 
@@ -14200,6 +14208,7 @@ QUY TẮC BẮT BUỘC:
           <div class="meta-stat-row">⏱️ Thời lượng: <strong>${totalM}p ${totalS < 10 ? '0' : ''}${totalS}s</strong> (${totalSec}s)</div>
           <div class="meta-stat-row">🎬 <strong>${completedSegments}/${totalSegments}</strong> mục có kịch bản (~${totalWords} từ)</div>
         `;
+        updateBtnGenCountBadge();
       }
     }
 
@@ -18229,8 +18238,9 @@ QUY TẮC BẮT BUỘC:
 
     renderProjectsGrid();
     const savedActiveView = localStorage.getItem('clsg_active_view') || 'projects';
-    const _startupUserProjs = JSON.parse(localStorage.getItem('clsg_user_projects') || '{}');
-    if (savedActiveView === 'workspace' && currentProjectId && (defaultProjects[currentProjectId] || _startupUserProjs[currentProjectId])) {
+    const savedProjId = localStorage.getItem('clsg_active_project_id');
+    if (savedActiveView === 'workspace' && (savedProjId || currentProjectId)) {
+      if (savedProjId) currentProjectId = savedProjId;
       switchView('workspace');
     } else {
       switchView('projects');
