@@ -21,28 +21,49 @@ module.exports = async function (req, res) {
     return res.status(500).json({ error: 'Chưa cấu hình DATABASE_URL' });
   }
 
-  const apiKey = req.body.apiKey || process.env.GEMINI_API_KEY;
+  const apiKey = req.body.apiKey || process.env.GEMINI_API_KEY || process.env.OPENAI_API_KEY;
   if (!apiKey) {
     // Trả về chunks rỗng để frontend tự fallback local
     return res.status(200).json({ chunks: [] });
   }
 
-  try {
-    // 1. Nhúng câu hỏi của User thành Vector (Gemini 768 chiều)
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:embedContent?key=${apiKey}`;
-    const embedRes = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'models/text-embedding-004',
-        content: { parts: [{ text: query }] }
-      })
-    });
+  const isOpenAI = apiKey.startsWith('sk-');
 
-    const embedData = await embedRes.json();
-    if (embedData.error) throw new Error(embedData.error.message);
-    
-    const queryEmbedding = '[' + embedData.embedding.values.join(',') + ']';
+  try {
+    let queryEmbedding;
+    if (isOpenAI) {
+      const embedRes = await fetch('https://api.openai.com/v1/embeddings', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({
+          model: 'text-embedding-3-small',
+          input: query,
+          dimensions: 768
+        })
+      });
+      const embedData = await embedRes.json();
+      if (embedData.error) throw new Error(embedData.error.message || JSON.stringify(embedData.error));
+      queryEmbedding = '[' + embedData.data[0].embedding.join(',') + ']';
+    } else {
+      // 1. Nhúng câu hỏi của User thành Vector (Gemini 768 chiều)
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:embedContent?key=${apiKey}`;
+      const embedRes = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'models/text-embedding-004',
+          content: { parts: [{ text: query }] }
+        })
+      });
+
+      const embedData = await embedRes.json();
+      if (embedData.error) throw new Error(embedData.error.message);
+      
+      queryEmbedding = '[' + embedData.embedding.values.join(',') + ']';
+    }
 
     // 2. Truy vấn Vector Database (Lấy 3 đoạn text liên quan nhất bằng Cosine Distance)
     const chunks = await sql`

@@ -21,14 +21,16 @@ module.exports = async function (req, res) {
     return res.status(500).json({ error: 'Chưa cấu hình DATABASE_URL trên Vercel' });
   }
 
-  // Chú ý: Bắt buộc dùng GEMINI_API_KEY trên Vercel để băm Vector (Tiết kiệm Token & Cố định 768 chiều)
-  const apiKey = process.env.GEMINI_API_KEY;
+  // Chấp nhận API Key từ Client gửi lên hoặc biến môi trường Vercel
+  const apiKey = req.body.apiKey || process.env.GEMINI_API_KEY || process.env.OPENAI_API_KEY;
   if (!apiKey) {
-    return res.status(500).json({ error: 'Chưa cấu hình biến môi trường GEMINI_API_KEY trên Vercel' });
+    return res.status(500).json({ error: 'Chưa cấu hình API Key (Vui lòng nhập Key trong Cấu hình AI ⚙️ hoặc cài biến trên Vercel)' });
   }
 
+  const isOpenAI = apiKey.startsWith('sk-');
+
   try {
-    // 0. Tạo bảng & Đảm bảo cột vector là 768 chiều (Dành riêng cho Gemini)
+    // 0. Tạo bảng & Đảm bảo cột vector là 768 chiều
     await sql`CREATE EXTENSION IF NOT EXISTS vector`;
     await sql`
       CREATE TABLE IF NOT EXISTS document_chunks (
@@ -41,11 +43,10 @@ module.exports = async function (req, res) {
       )
     `;
     
-    // Nếu bảng cũ đang là 1536 chiều, ALTER sẽ báo lỗi. Xóa hết data cũ rồi ALTER lại.
     try {
       await sql`ALTER TABLE document_chunks ALTER COLUMN embedding TYPE vector(768)`;
     } catch(e) {
-      // Nếu có lỗi do không khớp số chiều data cũ, truncate bảng rồi alter
+      // Nếu có xung đột kiểu dữ liệu cũ, truncate bảng rồi alter
       await sql`TRUNCATE TABLE document_chunks`;
       await sql`ALTER TABLE document_chunks ALTER COLUMN embedding TYPE vector(768)`;
     }
@@ -53,49 +54,124 @@ module.exports = async function (req, res) {
     // 1. Xóa dữ liệu cũ của project này nếu đang update lại slide
     await sql`DELETE FROM document_chunks WHERE project_id = ${projectId}`;
 
+    // Chuẩn bị danh sách chunk hợp lệ
+    const validChunks = [];
+    for (const chunk of chunks) {
+      const textToEmbed = `Chương: ${chunk.chapter_name || ''} - Phần: ${chunk.section_name || ''}. Nội dung: ${chunk.text}`.trim();
+      if (textToEmbed.length >= 10) {
+        validChunks.push({
+          chapter_name: chunk.chapter_name || '',
+          section_name: chunk.section_name || '',
+          textToEmbed
+        });
+      }
+    }
+
+    if (validChunks.length === 0) {
+      return res.status(200).json({ success: true, processed: 0, message: 'Không có đoạn văn bản nào đủ dài để nạp' });
+    }
+
     let processedCount = 0;
 
-    // 2. Quét qua từng đoạn text (chunk)
-    for (let chunk of chunks) {
-      const textToEmbed = `Chương: ${chunk.chapter_name || ''} - Phần: ${chunk.section_name || ''}. Nội dung: ${chunk.text}`.trim();
-      if (textToEmbed.length < 10) continue;
+    if (isOpenAI) {
+      // Dùng OpenAI text-embedding-3-small (cố định 768 chiều)
+      const batchSize = 50;
+      for (let i = 0; i < validChunks.length; i += batchSize) {
+        const batch = validChunks.slice(i, i + batchSize);
+        const embedRes = await fetch('https://api.openai.com/v1/embeddings', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${apiKey}`
+          },
+          body: JSON.stringify({
+            model: 'text-embedding-3-small',
+            input: batch.map(b => b.textToEmbed),
+            dimensions: 768
+          })
+        });
 
-      // 3. Gọi API Gemini để nhúng Vector (768 chiều)
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:embedContent?key=${apiKey}`;
-      const embedRes = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          model: 'models/text-embedding-004',
-          content: { parts: [{ text: textToEmbed }] }
-        })
-      });
+        const embedData = await embedRes.json();
+        if (embedData.error) throw new Error(embedData.error.message || JSON.stringify(embedData.error));
 
-      const embedData = await embedRes.json();
-      if (embedData.error) {
-        throw new Error(embedData.error.message);
+        for (let j = 0; j < batch.length; j++) {
+          const embValues = embedData.data[j]?.embedding;
+          if (embValues) {
+            const embStr = '[' + embValues.join(',') + ']';
+            await sql`
+              INSERT INTO document_chunks (project_id, chapter_name, section_name, chunk_text, embedding)
+              VALUES (${projectId}, ${batch[j].chapter_name}, ${batch[j].section_name}, ${batch[j].textToEmbed}, ${embStr})
+            `;
+            processedCount++;
+          }
+        }
       }
-      
-      const embeddingArray = embedData.embedding.values;
-      const embeddingStr = '[' + embeddingArray.join(',') + ']';
-      
-      // 4. Lưu vào Database Neon
-      await sql`
-        INSERT INTO document_chunks (project_id, chapter_name, section_name, chunk_text, embedding)
-        VALUES (
-          ${projectId}, 
-          ${chunk.chapter_name || ''}, 
-          ${chunk.section_name || ''}, 
-          ${textToEmbed}, 
-          ${embeddingStr}
-        )
-      `;
-      processedCount++;
+    } else {
+      // Dùng Google Gemini text-embedding-004 (768 chiều mặc định) với Batch Embed siêu tốc
+      const batchSize = 25;
+      for (let i = 0; i < validChunks.length; i += batchSize) {
+        const batch = validChunks.slice(i, i + batchSize);
+        try {
+          const url = `https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:batchEmbedContents?key=${apiKey}`;
+          const embedRes = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              requests: batch.map(b => ({
+                model: 'models/text-embedding-004',
+                content: { parts: [{ text: b.textToEmbed }] }
+              }))
+            })
+          });
+
+          const embedData = await embedRes.json();
+          if (embedData.error) throw new Error(embedData.error.message || JSON.stringify(embedData.error));
+
+          if (embedData.embeddings && Array.isArray(embedData.embeddings)) {
+            for (let j = 0; j < batch.length; j++) {
+              const embValues = embedData.embeddings[j]?.values;
+              if (embValues) {
+                const embStr = '[' + embValues.join(',') + ']';
+                await sql`
+                  INSERT INTO document_chunks (project_id, chapter_name, section_name, chunk_text, embedding)
+                  VALUES (${projectId}, ${batch[j].chapter_name}, ${batch[j].section_name}, ${batch[j].textToEmbed}, ${embStr})
+                `;
+                processedCount++;
+              }
+            }
+            continue;
+          }
+        } catch (batchErr) {
+          console.warn('Batch embed error, falling back to sequential embedContent:', batchErr.message);
+        }
+
+        // Fallback tuần tự nếu batch gặp lỗi
+        for (const item of batch) {
+          const url = `https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:embedContent?key=${apiKey}`;
+          const embedRes = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              model: 'models/text-embedding-004',
+              content: { parts: [{ text: item.textToEmbed }] }
+            })
+          });
+          const embedData = await embedRes.json();
+          if (embedData.error) throw new Error(embedData.error.message);
+          const embStr = '[' + embedData.embedding.values.join(',') + ']';
+          await sql`
+            INSERT INTO document_chunks (project_id, chapter_name, section_name, chunk_text, embedding)
+            VALUES (${projectId}, ${item.chapter_name}, ${item.section_name}, ${item.textToEmbed}, ${embStr})
+          `;
+          processedCount++;
+        }
+      }
     }
 
     return res.status(200).json({ 
       success: true, 
-      message: `Đã Vector hóa bằng Gemini và nạp thành công ${processedCount} đoạn (768 chiều) vào Neon DB.` 
+      processed: processedCount,
+      message: `Đã Vector hóa và nạp thành công ${processedCount} đoạn (768 chiều) vào Neon DB.` 
     });
 
   } catch (error) {
