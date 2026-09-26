@@ -5719,6 +5719,14 @@
                 if (row.id && row.data) {
                   defaultProjects[row.id] = row.data;
                   if (typeof currentProjectId !== 'undefined' && row.id === currentProjectId && typeof activeProject !== 'undefined' && activeProject) {
+                    // ĐỒNG BỘ DỮ LIỆU TỪ CLOUD VÀO WORKSPACE ĐANG MỞ
+                    if (row.data.detailedContent && Array.isArray(row.data.detailedContent)) {
+                      activeProject.detailedContent = row.data.detailedContent;
+                    }
+                    if (row.data.scenes && Array.isArray(row.data.scenes)) {
+                      activeProject.scenes = row.data.scenes;
+                      currentScenes = JSON.parse(JSON.stringify(row.data.scenes));
+                    }
                     if (row.data.chatHistory && (!activeProject.chatHistory || activeProject.chatHistory.length === 0)) {
                       activeProject.chatHistory = row.data.chatHistory;
                       activeProject.chatHtml = row.data.chatHtml;
@@ -5726,16 +5734,19 @@
                     if (row.data.nodeCustomParams && typeof nodeCustomParams !== 'undefined') {
                       Object.assign(nodeCustomParams, row.data.nodeCustomParams);
                     }
+                    if (typeof renderDetailedContentUI === 'function') renderDetailedContentUI();
+                    if (typeof renderMindmap === 'function') renderMindmap();
+                    if (typeof renderScriptDocument === 'function') renderScriptDocument();
                   }
                   updated = true;
                 }
               });
 
-              // Lưu bản cache sanitized vào localStorage để lần F5 sau nạp tức thì
+              // Lưu bản cache sanitized vào localStorage để lần F5 sau nạp tức thì (LUÔN CẬP NHẬT MỚI NHẤT TỪ CLOUD)
               try {
                 const uProjs = JSON.parse(localStorage.getItem('clsg_user_projects') || '{}');
                 list.forEach(row => {
-                  if (row.id && row.data && !uProjs[row.id]) {
+                  if (row.id && row.data) {
                     uProjs[row.id] = sanitizeProjectForStorage(row.data);
                   }
                 });
@@ -12591,7 +12602,10 @@ OUTPUT: Valid JSON only.
       if (typeof CloudDB !== 'undefined' && CloudDB && typeof CloudDB.saveChat === 'function') {
         CloudDB.saveChat(currentProjectId, [], '', activeProject?.title);
       }
-      if (typeof showToast === 'function') showToast('🔄 Đã làm mới đoạn chat!');
+      if (typeof CopilotQACache !== 'undefined' && CopilotQACache.clear) {
+        CopilotQACache.clear(currentProjectId);
+      }
+      if (typeof showToast === 'function') showToast('🔄 Đã làm mới đoạn chat & xóa bộ nhớ đệm!');
     }
 
     // TRÍ NHỚ CÂU HỎI ĐÁP COPILOT (COPILOT Q&A CACHE - 0 TOKEN, ZERO CRASH)
@@ -12602,25 +12616,80 @@ OUTPUT: Valid JSON only.
           : 'clsg_copilot_qa_cache_global';
       },
       normalize(q) {
-        return (q || '').toLowerCase().replace(/[?,.!]/g, '').trim();
+        return (q || '').toLowerCase()
+          .replace(/[?,.!]/g, '')
+          .replace(/\s+/g, ' ')
+          .replace(/\bkì\b/g, 'kỳ')
+          .replace(/\bkĩ\b/g, 'kỹ')
+          .replace(/\blí\b/g, 'lý')
+          .replace(/\bmĩ\b/g, 'mỹ')
+          .replace(/\btỉ\b/g, 'tỷ')
+          .trim();
       },
       get(q) {
         try {
           const cache = JSON.parse(localStorage.getItem(this.getStorageKey()) || '{}');
           const norm = this.normalize(q);
-          return cache[norm]?.answer || null;
+          const item = cache[norm];
+          if (!item || !item.answer) return null;
+          const lower = item.answer.toLowerCase();
+          // NẾU CACHE CHỨA CÂU TRẢ LỜI LỖI / BÁO THIẾU TÀI LIỆU -> XÓA NGAY VÀ TRẢ VỀ NULL!
+          if (lower.includes('không có trong tài liệu') || 
+              lower.includes('không tìm thấy') || 
+              lower.includes('chưa có thông tin') ||
+              lower.includes('xin lỗi')) {
+            delete cache[norm];
+            localStorage.setItem(this.getStorageKey(), JSON.stringify(cache));
+            return null;
+          }
+          return item.answer;
         } catch (e) { return null; }
       },
       set(q, answer) {
         if (!answer || answer.length < 20) return;
+        // TUYỆT ĐỐI KHÔNG CACHE CÂU TRẢ LỜI THẤT BẠI HOẶC BÁO THIẾU KIẾN THỨC
+        const lower = answer.toLowerCase();
+        if (lower.includes('không có trong tài liệu') || 
+            lower.includes('không tìm thấy') || 
+            lower.includes('chưa có thông tin') ||
+            lower.includes('xin lỗi') ||
+            lower.includes('gặp sự cố')) {
+          return;
+        }
         try {
           const cache = JSON.parse(localStorage.getItem(this.getStorageKey()) || '{}');
           const norm = this.normalize(q);
           cache[norm] = { answer, timestamp: Date.now() };
           localStorage.setItem(this.getStorageKey(), JSON.stringify(cache));
         } catch (e) { }
+      },
+      clear(projId) {
+        try {
+          const key = projId ? `clsg_copilot_qa_cache_${projId}` : this.getStorageKey();
+          localStorage.removeItem(key);
+        } catch(e) {}
       }
     };
+
+    // TỰ ĐỘNG DỌN SẠCH CÁC CÂU TRẢ LỜI LỖI CŨ TRONG LOCALSTORAGE
+    try {
+      Object.keys(localStorage).forEach(k => {
+        if (k.startsWith('clsg_copilot_qa_cache_')) {
+          try {
+            const cache = JSON.parse(localStorage.getItem(k) || '{}');
+            let modified = false;
+            Object.keys(cache).forEach(q => {
+              const ans = (cache[q]?.answer || '').toLowerCase();
+              if (ans.includes('không có trong tài liệu') || ans.includes('không tìm thấy') || ans.includes('xin lỗi')) {
+                delete cache[q];
+                modified = true;
+              }
+            });
+            if (modified) localStorage.setItem(k, JSON.stringify(cache));
+          } catch(e) {}
+        }
+      });
+    } catch(e) {}
 
     async function sendChatMessage(text) {
       const originalProjectId = currentProjectId;
@@ -12760,18 +12829,30 @@ OUTPUT: Valid JSON only.
     function findRelevantProjectContext(query) {
       if (!activeProject) return [];
       const results = [];
-      const qLower = (query || '').toLowerCase();
+      const qNorm = (query || '').toLowerCase()
+        .replace(/\bkì\b/g, 'kỳ')
+        .replace(/\bkĩ\b/g, 'kỹ')
+        .replace(/\blí\b/g, 'lý')
+        .replace(/\bmĩ\b/g, 'mỹ')
+        .replace(/\btỉ\b/g, 'tỷ');
       // Tách từ khóa loại bỏ stop words ngắn
-      const rawWords = qLower.match(/[\p{L}\p{N}]+/gu) || [];
+      const rawWords = qNorm.match(/[\p{L}\p{N}]+/gu) || [];
       const filterWords = rawWords.filter(w => w.length > 1 || !isNaN(w));
       if (filterWords.length === 0) return [];
 
       // 1. Quét toàn bộ slide trong detailedContent (Cực kỳ quan trọng vì chứa Vision AI + chữ trên slide)
       if (activeProject.detailedContent && Array.isArray(activeProject.detailedContent)) {
         activeProject.detailedContent.forEach(page => {
-          const text = page.explanation || '';
+          let text = page.explanation || '';
           if (!text || text.length < 10) return;
-          const tLower = text.toLowerCase();
+          // Tự động làm sạch văn bản nếu chứa khoảng cách chữ cái
+          if (typeof cleanSpacedLetters === 'function') {
+            text = cleanSpacedLetters(text);
+          }
+          const tLower = text.toLowerCase()
+            .replace(/\bkì\b/g, 'kỳ')
+            .replace(/\bkĩ\b/g, 'kỹ')
+            .replace(/\blí\b/g, 'lý');
           let score = 0;
           
           filterWords.forEach(w => {
@@ -12791,8 +12872,15 @@ OUTPUT: Valid JSON only.
             }
           });
 
+          // Khớp mạnh cụm từ khóa chuyên môn cốt lõi
+          if (qNorm.includes('dự trữ định kỳ') && tLower.includes('dự trữ định kỳ')) score += 30;
+          if (qNorm.includes('dự trữ an toàn') && tLower.includes('dự trữ an toàn')) score += 30;
+          if (qNorm.includes('dự trữ đầu cơ') && tLower.includes('dự trữ đầu cơ')) score += 30;
+          if (qNorm.includes('dự trữ chu kỳ') && tLower.includes('dự trữ chu kỳ')) score += 30;
+          if (qNorm.includes('optimal quantity') && tLower.includes('optimal quantity')) score += 30;
+
           // Ưu tiên đặc biệt nếu khớp nguyên cụm
-          if (qLower.includes('17 điểm') || qLower.includes('17 points') || qLower.includes('17 point')) {
+          if (qNorm.includes('17 điểm') || qNorm.includes('17 points') || qNorm.includes('17 point')) {
             if (tLower.includes('17 điểm') || tLower.includes('17 point') || tLower.includes('17 cái chấm')) {
               score += 15;
             }
