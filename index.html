@@ -4366,12 +4366,8 @@
             <div style="display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 2px solid var(--border-color); padding-bottom: 12px; margin-bottom: 24px;">
               <div>
                 <h2 style="font-size: 24px; color: var(--text-main); margin: 0 0 8px 0; font-weight: 700;">📄 Trích xuất chi tiết Slide</h2>
-                <div style="font-size: 14px; color: var(--text-muted);">Phân tích chuyên sâu hình ảnh và văn bản trên từng trang slide bằng Vision AI.</div>
+                <div style="font-size: 14px; color: var(--text-muted);">Tự động trích xuất hình ảnh và nội dung chi tiết từng trang, đồng bộ 1-1 với Sơ Đồ bài giảng.</div>
               </div>
-              <label class="clsg-btn clsg-btn-primary" style="cursor: pointer; padding: 10px 16px; background: var(--cyan); color: #000; font-weight: 600; border-radius: 8px; font-size: 14px; box-shadow: 0 4px 10px rgba(6, 182, 212, 0.3);" id="btn-upload-content-pdf">
-                <input type="file" accept=".pdf,.pptx,.docx,.txt" style="display: none;" onchange="startDetailedContentExtraction(this)">
-                <span>📥 Nạp lại file (PDF/Khác) để AI quét</span>
-              </label>
             </div>
             
             <div id="content-extraction-progress" style="display: none; background: rgba(56, 189, 248, 0.1); border: 1px solid var(--cyan); border-radius: 12px; padding: 16px; margin-bottom: 24px;">
@@ -14116,6 +14112,75 @@ QUY TẮC:
       return null;
     }
 
+    // HÀM TỰ ĐỘNG BÓC TÁCH TOÀN BỘ SLIDE (ẢNH CHỤP MÀN HÌNH + VĂN BẢN TỪNG TRANG)
+    async function ingestAllPdfSlides(pdf, totalPages) {
+      const detailed = [];
+      for (let p = 1; p <= totalPages; p++) {
+        try {
+          if (typeof updateLoading === 'function') {
+            updateLoading("Đang nạp toàn bộ slide...", `Đang trích xuất hình ảnh & nội dung trang ${p} / ${totalPages}`);
+          }
+          const page = await pdf.getPage(p);
+
+          // 1. Trích xuất text bằng getTextContent
+          let pageText = '';
+          try {
+            const textContent = await page.getTextContent();
+            let lastY = null;
+            let curLine = '';
+            (textContent.items || []).forEach(it => {
+              const str = it.str || '';
+              const y = it.transform ? Math.round(it.transform[5]) : null;
+              if (lastY !== null && y !== null && Math.abs(y - lastY) > 4) {
+                if (curLine.trim()) pageText += (pageText ? '\n' : '') + curLine.trim();
+                curLine = '';
+              }
+              curLine += (curLine ? ' ' : '') + str;
+              lastY = y;
+            });
+            if (curLine.trim()) pageText += (pageText ? '\n' : '') + curLine.trim();
+          } catch (errText) {
+            console.warn(`[AutoIngest] Lỗi đọc text trang ${p}:`, errText);
+          }
+          pageText = pageText.trim();
+
+          // 2. Chụp màn hình trang bằng Canvas (tự động điều chỉnh kích thước chuẩn HD sắc nét ~960px)
+          const vp1 = page.getViewport({ scale: 1.0 });
+          const targetWidth = Math.min(1024, Math.max(640, vp1.width));
+          const scale = targetWidth / vp1.width;
+          const viewport = page.getViewport({ scale: scale });
+
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+          canvas.width = Math.round(viewport.width);
+          canvas.height = Math.round(viewport.height);
+
+          await page.render({ canvasContext: ctx, viewport: viewport }).promise;
+          const base64Img = canvas.toDataURL('image/jpeg', 0.82);
+
+          // 3. Phân loại: full ảnh (như 4. Keypoint & Pose Data.pdf) vs có text (như day04-keypoint-pose-annotation.pdf)
+          const hasText = (pageText && pageText.length >= 20);
+          let explanation = pageText;
+          if (!hasText) {
+            explanation = pageText 
+              ? `${pageText}\n\n(Slide hình ảnh trực quan / biểu đồ / đồ họa)`
+              : `Slide hình ảnh bài giảng (Dạng hình ảnh trực quan / sơ đồ / minh họa)`;
+          }
+
+          detailed.push({
+            pageNumber: p,
+            image_url: base64Img,
+            thumbnail: base64Img,
+            explanation: explanation,
+            hasText: hasText
+          });
+        } catch (pageErr) {
+          console.warn(`[AutoIngest] Lỗi xử lý trang ${p}:`, pageErr);
+        }
+      }
+      return detailed;
+    }
+
     async function extractPdfStructure(arrayBuffer, fileName = "") {
       if (typeof pdfjsLib === 'undefined') {
         console.warn('[PDF Extractor] pdf.js chưa tải xong');
@@ -14131,21 +14196,26 @@ QUY TẮC:
       try {
         const page1 = await pdf.getPage(1);
         const vp = page1.getViewport({ scale: 1.0 });
-        if (vp.width > vp.height || totalPages <= 60) {
+        if (vp.width >= vp.height || totalPages <= 80) {
           isSlideDeck = true;
         }
       } catch (e) {
-        if (totalPages <= 60) isSlideDeck = true;
+        if (totalPages <= 80) isSlideDeck = true;
       }
 
       // ƯU TIÊN SỐ 1 CHO SLIDE BÀI GIẢNG: TẠO SƠ ĐỒ PHẲNG 1 PAGE = 1 ITEM (GRID MODE)
       if (isSlideDeck) {
-          updateLoading("Đang thiết lập cấu trúc...", "Tạo sơ đồ 1-1 cho từng trang slide...");
+          updateLoading("Đang thiết lập cấu trúc...", "Tự động trích xuất toàn bộ slide & chụp ảnh từng trang...");
+          const detailedContent = await ingestAllPdfSlides(pdf, totalPages);
           const items = [];
           for (let p = 1; p <= totalPages; p++) {
+              const dItem = detailedContent[p - 1];
+              const titleText = (dItem && dItem.explanation) 
+                  ? (dItem.explanation.split('\n')[0].replace(/^[-#*•\d.\s]+/, '').slice(0, 45) || `Trang ${p}`)
+                  : `Trang ${p}`;
               items.push({
-                  title: `Trang ${p}`,
-                  text: `Nội dung hiển thị trên trang ${p}`,
+                  title: titleText.trim() || `Trang ${p}`,
+                  text: dItem ? dItem.explanation.slice(0, 160) : `Nội dung hiển thị trên trang ${p}`,
                   duration: 20
               });
           }
@@ -14153,6 +14223,7 @@ QUY TẮC:
              title: (fileName || '').replace(/\.[^/.]+$/, ""),
              totalPages,
              method: 'pdf-slide-direct',
+             detailedContent: detailedContent,
              chapters: [{
                  chapter: "SLIDES",
                  title: "Tất cả các trang",
@@ -15073,6 +15144,7 @@ QUY TẮC:
             score: 95.8, dar: 96.5, tcr: 94.0, hsr: 96.0, vns: 95.0,
             critic_feedback: `Bóc tách thực [${structure.method}]: ${structure.chapters.length} chương, ${structure.totalPages || '?'} trang. Sơ đồ và tóm tắt sư phạm chuẩn xác 100%.`,
             tocText: structure.tocText || '',
+            detailedContent: structure.detailedContent || [],
             sources: [{
               name: file.name,
               pages: structure.totalPages || Math.max(1, Math.round(file.size / 35000)),
@@ -15588,9 +15660,15 @@ QUY TẮC:
           };
           activeProject.sources.push(newSourceItem);
 
+          // Tự động nạp toàn bộ ảnh và nội dung trang vào detailedContent
+          if (projData && projData.detailedContent && projData.detailedContent.length > 0) {
+            activeProject.detailedContent = projData.detailedContent;
+          }
+
           // Cập nhật lại giao diện ngay lập tức
           renderSourcesList();
           renderMindmap();
+          renderDetailedContentUI();
           renderScriptDocument();
           renderProjectsGrid();
 
@@ -15887,6 +15965,27 @@ QUY TẮC:
     }
 
     setupDropZone('source-drop-zone', 'source-file-input');
+
+    // HỖ TRỢ KÉO THẢ SLIDE TRỰC TIẾP VÀO TAB NỘI DUNG
+    const contentTabPane = document.getElementById('tab-content-content');
+    if (contentTabPane) {
+      contentTabPane.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        contentTabPane.style.outline = '2px dashed var(--cyan)';
+        contentTabPane.style.outlineOffset = '-4px';
+      });
+      contentTabPane.addEventListener('dragleave', (e) => {
+        e.preventDefault();
+        contentTabPane.style.outline = 'none';
+      });
+      contentTabPane.addEventListener('drop', (e) => {
+        e.preventDefault();
+        contentTabPane.style.outline = 'none';
+        if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+          handleDirectSlideIngest(e.dataTransfer.files[0]);
+        }
+      });
+    }
 
     // TIMELINE RENDER & TTS
     function formatTime(sec) {
@@ -18685,6 +18784,23 @@ QUY TẮC:
 
       if (activeProject.detailedContent && activeProject.detailedContent.length > 0) {
         let html = '';
+
+        // Nếu số trang trong detailedContent ít hơn tổng số trang của nguồn
+        if (activeProject.sources && activeProject.sources[0] && activeProject.sources[0].pages && activeProject.detailedContent.length < activeProject.sources[0].pages) {
+          html += `
+            <div style="margin-bottom: 24px; padding: 14px 20px; background: rgba(56,189,248,0.12); border: 1px solid var(--cyan); border-radius: 12px; display: flex; justify-content: space-between; align-items: center; gap: 16px;">
+              <div>
+                <div style="font-weight: 700; color: var(--cyan); font-size: 14px; margin-bottom: 4px;">⚡ Dự án đang có ${activeProject.detailedContent.length}/${activeProject.sources[0].pages} trang slide</div>
+                <div style="font-size: 13px; color: var(--text-muted);">Bấm hoặc kéo thả file slide vào đây để tự động nạp đầy đủ 100% hình ảnh vào Sơ Đồ bài giảng.</div>
+              </div>
+              <label class="clsg-btn clsg-btn-primary" style="cursor: pointer; padding: 8px 16px; background: var(--cyan); color: #000; font-weight: 600; border-radius: 8px; font-size: 13px; white-space: nowrap;">
+                <input type="file" accept=".pdf" style="display: none;" onchange="handleDirectSlideIngest(this)">
+                <span>📥 Nạp đủ ${activeProject.sources[0].pages} trang</span>
+              </label>
+            </div>
+          `;
+        }
+
         activeProject.detailedContent.forEach((page, idx) => {
           html += `
             <div style="display: flex; gap: 24px; background: rgba(30,41,59,0.5); border: 1px solid var(--border-color); border-radius: 12px; padding: 20px;">
@@ -18703,137 +18819,78 @@ QUY TẮC:
         });
         container.innerHTML = html;
       } else {
-        container.innerHTML = `<div style="text-align: center; padding: 60px 20px; color: var(--text-muted);">
-          <div style="font-size: 48px; margin-bottom: 16px;">🔍</div>
-          <div style="font-size: 16px; margin-bottom: 8px; color: var(--text-main);">Chưa có dữ liệu trích xuất cho dự án này.</div>
-          <div>Vui lòng bấm nút <b>Nạp lại file PDF</b> ở góc trên bên phải để AI bắt đầu quét.</div>
-        </div>`;
+        container.innerHTML = `
+          <div style="text-align: center; padding: 48px 24px; background: rgba(30,41,59,0.4); border: 2px dashed rgba(56,189,248,0.3); border-radius: 16px; max-width: 600px; margin: 32px auto;">
+            <div style="font-size: 44px; margin-bottom: 12px;">📑</div>
+            <div style="font-size: 18px; font-weight: 700; color: #fff; margin-bottom: 8px;">Tự Động Nạp Toàn Bộ Slide & Sơ Đồ</div>
+            <div style="font-size: 13.5px; color: var(--text-muted); margin-bottom: 20px; line-height: 1.5;">
+              Kéo thả file PDF vào đây hoặc chọn tệp để hệ thống tự động quét chụp màn hình từng trang và nạp trực tiếp vào Sơ Đồ cùng Tab Nội Dung.
+            </div>
+            <label class="clsg-btn clsg-btn-primary" style="cursor: pointer; padding: 10px 20px; background: var(--cyan); color: #000; font-weight: 600; border-radius: 8px; font-size: 14px; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 4px 12px rgba(6, 182, 212, 0.3);">
+              <input type="file" accept=".pdf" style="display: none;" onchange="handleDirectSlideIngest(this)">
+              <span>📥 Chọn File Slide Để Tự Động Nạp</span>
+            </label>
+          </div>
+        `;
       }
     }
 
-    async function startDetailedContentExtraction(inputEl) {
-      if (!inputEl.files || inputEl.files.length === 0) return;
-      const file = inputEl.files[0];
-      if (!activeProject) {
-        showToast('⚠️ Vui lòng lưu dự án hiện tại trước khi phân tích!');
+    async function handleDirectSlideIngest(fileOrInput) {
+      let file = null;
+      if (fileOrInput instanceof File) {
+        file = fileOrInput;
+      } else if (fileOrInput && fileOrInput.files && fileOrInput.files.length > 0) {
+        file = fileOrInput.files[0];
+      }
+      if (!file || !activeProject) {
+        showToast('⚠️ Vui lòng mở hoặc chọn một dự án trước khi nạp slide!');
         return;
       }
 
-      const container = document.getElementById('content-extraction-results');
-      const progressBox = document.getElementById('content-extraction-progress');
-      const pText = document.getElementById('content-progress-text');
-      const pPercent = document.getElementById('content-progress-percent');
-      const pBar = document.getElementById('content-progress-bar');
-      
-      container.innerHTML = '';
-      progressBox.style.display = 'block';
-
+      showLoading("Đang nạp toàn bộ slide...", `Đang trích xuất ảnh và nội dung từ ${file.name}...`);
       try {
         const buf = await file.arrayBuffer();
+        if (typeof pdfjsLib === 'undefined') {
+          throw new Error("Thư viện pdfjsLib chưa sẵn sàng");
+        }
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
         const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
         const totalPages = pdf.numPages;
-        
-        activeProject.detailedContent = [];
-        
-        const cfg = LLMClient.getConfig();
-        const endpoint = `${cfg.baseUrl.replace(/\/+$/, '')}/chat/completions`;
-        const headers = { 'Content-Type': 'application/json' };
-        if (cfg.apiKey) headers['Authorization'] = `Bearer ${cfg.apiKey}`;
 
-        // Chạy tuần tự từng trang để không quá tải API (hoặc có thể gom batch nếu API xịn)
-        for (let p = 1; p <= totalPages; p++) {
-          pText.textContent = `Đang phân tích trang ${p} / ${totalPages}...`;
-          const pct = Math.round((p / totalPages) * 100);
-          pPercent.textContent = `${pct}%`;
-          pBar.style.width = `${pct}%`;
+        const detailed = await ingestAllPdfSlides(pdf, totalPages);
+        activeProject.detailedContent = detailed;
 
-          // Render canvas lấy base64
-          const page = await pdf.getPage(p);
-          const viewport = page.getViewport({ scale: 1.5 });
-          const canvas = document.createElement('canvas');
-          const ctx = canvas.getContext('2d');
-          canvas.height = viewport.height;
-          canvas.width = viewport.width;
-          await page.render({ canvasContext: ctx, viewport: viewport }).promise;
-          const base64Img = canvas.toDataURL('image/jpeg', 0.85);
-
-          // Gửi LLM Vision (Gemini 1.5 Flash hoặc GPT-4o)
-          const systemPrompt = `Bạn là một giáo sư đại học đang giảng bài dựa trên slide. 
-Hãy đọc kỹ bức ảnh slide này và thực hiện 2 việc:
-1. Trích xuất CHÍNH XÁC toàn bộ nội dung văn bản (chữ) có trên slide.
-2. Nếu có hình ảnh, biểu đồ, phương trình, đoạn code... hãy mô tả và giải thích chi tiết ý nghĩa của chúng. 
-Mục tiêu là tạo ra một tài liệu văn bản đọc hiểu hoàn chỉnh thay thế cho việc nhìn hình slide.
-
-Yêu cầu trình bày:
-- Trình bày rõ ràng, mạch lạc, dễ đọc.
-- Tuyệt đối không dùng các ký hiệu markdown như dấu sao kép ** để in đậm, không dùng các ký tự thừa gây rối mắt.`;
-
-          const llmPayload = {
-            model: cfg.model || 'gemini-1.5-flash',
-            messages: [
-              {
-                role: 'user',
-                content: [
-                  { type: 'text', text: systemPrompt },
-                  { type: 'image_url', image_url: { url: base64Img } }
-                ]
-              }
-            ],
-            max_tokens: 1500,
-            temperature: 0.2
-          };
-
-          const llmPayloadWithConfig = {
-            ...llmPayload,
-            apiKey: cfg.apiKey,
-            baseUrl: cfg.baseUrl,
-            provider: cfg.provider
-          };
-
-          const proxyUrl = (window.location.origin.startsWith('http') && !window.location.origin.includes('file:'))
-            ? `${window.location.origin}/api/llm/chat`
-            : '/api/llm/chat';
-
-          try {
-            const res = await fetch(proxyUrl, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(llmPayloadWithConfig)
-            });
-            if (res.ok) {
-              const data = await res.json();
-              const explanation = (data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) || '(Không thể trích xuất nội dung trang này)';
-              
-              activeProject.detailedContent.push({
-                pageNumber: p,
-                image_url: base64Img,
-                explanation: explanation.trim()
-              });
-              
-              // Cập nhật DOM trực tiếp cho từng trang để user không phải đợi
-              renderDetailedContentUI();
-            } else {
-               console.warn(`Lỗi API ở trang ${p}:`, await res.text());
-            }
-          } catch(e) {
-            console.error(`Lỗi kết nối API ở trang ${p}:`, e);
-          }
+        // Cập nhật số trang của source nếu cần
+        if (activeProject.sources && activeProject.sources[0]) {
+          activeProject.sources[0].pages = totalPages;
         }
 
-        // Lưu vào Cloud
+        renderDetailedContentUI();
+        renderMindmap();
+        renderSourcesList();
+
+        // Lưu vào Cloud & LocalStorage
         if (typeof CloudDB !== 'undefined' && CloudDB.save) {
-           CloudDB.save(activeProject.id, activeProject);
+          CloudDB.save(activeProject);
         }
-        
-        showToast('✅ Đã phân tích chi tiết toàn bộ slide thành công!');
-        
+        try {
+          const userProjects = JSON.parse(localStorage.getItem('clsg_user_projects') || '{}');
+          userProjects[activeProject.id] = activeProject;
+          localStorage.setItem('clsg_user_projects', JSON.stringify(userProjects));
+        } catch(e) {}
+
+        hideLoading();
+        showToast(`✅ Đã nạp thành công toàn bộ ${detailed.length} trang slide vào Sơ đồ và Nội dung!`);
       } catch (err) {
-        console.error("Lỗi trích xuất chi tiết:", err);
-        showToast('❌ Lỗi khi phân tích PDF: ' + err.message);
-      } finally {
-        progressBox.style.display = 'none';
-        inputEl.value = ''; // Reset input
+        console.error("Lỗi nạp slide trực tiếp:", err);
+        hideLoading();
+        showToast(`❌ Lỗi nạp slide: ${err.message}`);
       }
+    }
+
+    // Alias tương thích ngược cho startDetailedContentExtraction
+    async function startDetailedContentExtraction(inputEl) {
+      return handleDirectSlideIngest(inputEl);
     }
 
 
