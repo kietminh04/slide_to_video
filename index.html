@@ -2294,21 +2294,31 @@
 
     /* PREVIEW AREA */
     .video-preview-area {
-      padding: 20px;
+      padding: 14px 20px;
       display: flex;
       gap: 18px;
       flex-shrink: 0;
+      height: 360px;
+      min-height: 180px;
+      max-height: 85%;
       overflow: hidden;
+      box-sizing: border-box;
     }
 
     .video-player-wrapper {
       flex: 1;
       min-width: 0;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
     .video-screen-mockup {
       width: 100%;
       max-width: 820px;
+      height: 100%;
+      max-height: 100%;
       aspect-ratio: 16 / 9;
       background: #000;
       border: 1px solid rgba(255, 255, 255, 0.12);
@@ -2318,7 +2328,60 @@
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8), 0 0 30px rgba(99, 102, 241, 0.15);
+      box-shadow: 0 15px 40px rgba(0, 0, 0, 0.8), 0 0 25px rgba(99, 102, 241, 0.15);
+    }
+
+    /* THANH RESIZER NGANG KÉO ĐỘ CAO KHUNG PREVIEW & TIMELINE */
+    .video-horizontal-resizer {
+      height: 14px;
+      background: rgba(15, 23, 42, 0.95);
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      cursor: row-resize;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      user-select: none;
+      flex-shrink: 0;
+      transition: background 0.2s ease, border-color 0.2s ease;
+      z-index: 10;
+    }
+
+    .video-horizontal-resizer:hover,
+    .video-horizontal-resizer.is-resizing {
+      background: rgba(99, 102, 241, 0.22);
+      border-top-color: rgba(99, 102, 241, 0.6);
+      border-bottom-color: rgba(99, 102, 241, 0.6);
+      box-shadow: 0 0 12px rgba(99, 102, 241, 0.3);
+    }
+
+    .video-resizer-knob {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 1px 14px;
+      background: rgba(30, 41, 59, 0.92);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 12px;
+      font-size: 10.5px;
+      font-weight: 600;
+      color: var(--text-dim);
+      pointer-events: none;
+      transition: all 0.2s ease;
+    }
+
+    .video-horizontal-resizer:hover .video-resizer-knob,
+    .video-horizontal-resizer.is-resizing .video-resizer-knob {
+      color: #fff;
+      border-color: rgba(99, 102, 241, 0.7);
+      background: rgba(49, 46, 129, 0.95);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+    }
+
+    .video-resizer-dots {
+      letter-spacing: 2px;
+      font-weight: 800;
+      color: var(--cyan);
     }
 
     .video-mock-slide {
@@ -4482,6 +4545,15 @@
               </div>
             </div>
 
+            <!-- THANH RESIZER NGANG: KÉO LÊN/XUỐNG ĐỂ MỞ RỘNG KHUNG TIMELINE DỄ NHÌN HƠN -->
+            <div class="video-horizontal-resizer" id="video-h-resizer" title="Kéo lên / kéo xuống để chỉnh độ cao Timeline (Nhấp đúp để đổi kích thước nhanh)">
+              <div class="video-resizer-knob">
+                <span class="video-resizer-dots">•••</span>
+                <span>Kéo lên / xuống để chỉnh độ cao Timeline</span>
+                <span class="video-resizer-dots">•••</span>
+              </div>
+            </div>
+
             <!-- TIMELINE SEGMENTS: RENDER ĐỘNG THEO MODE GRID / TREE -->
             <div class="video-timeline-container" id="video-timeline-container">
               <!-- Rendered via JS: renderVideoTimeline() -->
@@ -5825,6 +5897,7 @@
       } else if (tabName === 'video') {
         document.getElementById('btn-tab-video')?.classList.add('active');
         document.getElementById('tab-content-video')?.classList.add('active');
+        if (typeof initVideoHorizontalResizer === 'function') initVideoHorizontalResizer();
         if (typeof renderVideoTimeline === 'function') renderVideoTimeline();
       }
     }
@@ -9073,11 +9146,90 @@
       // Người dùng không bấm thì AI tuyệt đối không tự ý gọi request.
     }
 
+    function initVideoHorizontalResizer() {
+      const resizer = document.getElementById('video-h-resizer');
+      const previewArea = document.querySelector('.video-preview-area');
+      const studioContainer = document.querySelector('.video-studio-container');
+      if (!resizer || !previewArea || !studioContainer) return;
+
+      // Khôi phục chiều cao đã lưu từ localStorage (mặc định 350px để timeline lộ rõ)
+      const savedH = localStorage.getItem('clsg_video_preview_height');
+      if (savedH) {
+        const parsedH = parseInt(savedH);
+        if (!isNaN(parsedH) && parsedH >= 160) {
+          previewArea.style.height = `${parsedH}px`;
+        }
+      } else {
+        previewArea.style.height = '350px';
+      }
+
+      let isDragging = false;
+      let startY = 0;
+      let startH = 0;
+
+      resizer.addEventListener('mousedown', (e) => {
+        e.preventDefault();
+        isDragging = true;
+        startY = e.clientY;
+        startH = previewArea.offsetHeight;
+        document.body.style.cursor = 'row-resize';
+        document.body.style.userSelect = 'none';
+        resizer.classList.add('is-resizing');
+
+        function onMouseMove(ev) {
+          if (!isDragging) return;
+          const deltaY = ev.clientY - startY;
+          const totalH = studioContainer.offsetHeight || window.innerHeight;
+          // Giới hạn chiều cao preview: tối thiểu 160px, chừa lại tối thiểu 160px cho timeline
+          const minH = 160;
+          const maxH = Math.max(minH, totalH - 160);
+          const newH = Math.max(minH, Math.min(maxH, startH + deltaY));
+          previewArea.style.height = `${newH}px`;
+        }
+
+        function onMouseUp() {
+          if (isDragging) {
+            isDragging = false;
+            document.body.style.cursor = '';
+            document.body.style.userSelect = '';
+            resizer.classList.remove('is-resizing');
+            localStorage.setItem('clsg_video_preview_height', previewArea.offsetHeight);
+            window.removeEventListener('mousemove', onMouseMove);
+            window.removeEventListener('mouseup', onMouseUp);
+          }
+        }
+
+        window.addEventListener('mousemove', onMouseMove);
+        window.addEventListener('mouseup', onMouseUp);
+      });
+
+      // Nhấp đúp (Double-click): Chuyển đổi nhanh giữa Focus Timeline (200px) và Cân bằng (360px)
+      resizer.addEventListener('dblclick', () => {
+        const curH = previewArea.offsetHeight;
+        let targetH = 360;
+        if (curH > 250) {
+          targetH = 200; // Thu nhỏ preview, mở rộng tối đa Timeline
+          showToast('↕️ Đã mở rộng tối đa khung Timeline!');
+        } else {
+          targetH = 360; // Trở lại cân bằng
+          showToast('↕️ Đã đưa khung Video & Timeline về kích thước chuẩn!');
+        }
+        previewArea.style.transition = 'height 0.22s ease';
+        previewArea.style.height = `${targetH}px`;
+        localStorage.setItem('clsg_video_preview_height', targetH);
+        setTimeout(() => { previewArea.style.transition = ''; }, 230);
+      });
+    }
+    window.initVideoHorizontalResizer = initVideoHorizontalResizer;
+
     function initLayoutResizers() {
       const resizerLeft = document.getElementById('resizer-left');
       const resizerRight = document.getElementById('resizer-right');
       const paneSources = document.getElementById('pane-sources');
       const paneTuning = document.getElementById('pane-tuning');
+
+      // Khởi tạo thanh kéo ngang Timeline
+      initVideoHorizontalResizer();
 
       // Khôi phục độ rộng đã lưu từ localStorage
       const savedLeftW = localStorage.getItem('clsg_sources_width');
