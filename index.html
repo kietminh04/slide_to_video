@@ -15090,6 +15090,27 @@ QUY TẮC BẮT BUỘC:
       return null;
     }
 
+    // HÀM KHỬ TRIỆT ĐỂ LỖI KÝ TỰ BỊ TÁCH RỜI KHOẢNG TRẮNG DO PDF.JS KERNING (VD: "d ự   t r ữ" -> "dự trữ")
+    function cleanSpacedLetters(text) {
+      if (!text || typeof text !== 'string') return text || '';
+      const lines = text.split('\n');
+      const cleaned = lines.map(line => {
+        if (/(?:[a-zA-ZÀ-ỹ0-9]\s){3,}/.test(line)) {
+          const parts = line.trim().split(/\s{2,}/);
+          const newParts = parts.map(part => {
+            let collapsed = part;
+            while (/(\S)\s+(\S)/.test(collapsed)) {
+              collapsed = collapsed.replace(/(\S)\s+(\S)/g, '$1$2');
+            }
+            return collapsed;
+          });
+          return newParts.join(' ');
+        }
+        return line;
+      });
+      return cleaned.join('\n');
+    }
+
     // HÀM TỰ ĐỘNG BÓC TÁCH TOÀN BỘ SLIDE (ẢNH CHỤP MÀN HÌNH + VĂN BẢN TỪNG TRANG)
     async function ingestAllPdfSlides(pdf, totalPages) {
       const detailed = [];
@@ -15105,18 +15126,37 @@ QUY TẮC BẮT BUỘC:
           try {
             const textContent = await page.getTextContent();
             let lastY = null;
+            let lastX = null;
+            let lastWidth = null;
             let curLine = '';
             (textContent.items || []).forEach(it => {
               const str = it.str || '';
+              if (!str) return;
+              const x = it.transform ? it.transform[4] : null;
               const y = it.transform ? Math.round(it.transform[5]) : null;
               if (lastY !== null && y !== null && Math.abs(y - lastY) > 4) {
                 if (curLine.trim()) pageText += (pageText ? '\n' : '') + curLine.trim();
                 curLine = '';
+                lastX = null;
+                lastWidth = null;
               }
-              curLine += (curLine ? ' ' : '') + str;
+              // Tính khoảng cách ký tự (kerning / word gap): chỉ thêm space nếu có khoảng cách từ thực tế
+              if (curLine && !curLine.endsWith(' ') && !str.startsWith(' ')) {
+                if (lastX !== null && lastWidth !== null && x !== null) {
+                  const gap = x - (lastX + lastWidth);
+                  if (gap > 2.5) {
+                    curLine += ' ';
+                  }
+                }
+              }
+              curLine += str;
               lastY = y;
+              lastX = x;
+              lastWidth = it.width || 0;
             });
             if (curLine.trim()) pageText += (pageText ? '\n' : '') + curLine.trim();
+            // Khử triệt để lỗi ký tự bị tách rời
+            pageText = cleanSpacedLetters(pageText);
           } catch (errText) {
             console.warn(`[AutoIngest] Lỗi đọc text trang ${p}:`, errText);
           }
@@ -20186,57 +20226,75 @@ Yêu cầu trình bày:
           if (_visionEnrichAbortController.signal.aborted) break;
           const idx = currentIndex++;
           const pageItem = pagesToEnrich[idx];
-          if (!pageItem || !pageItem.image_url) continue;
+          const imgUrl = (pageItem && (pageItem.image_url || pageItem.thumbnail)) || '';
+          if (!pageItem || !imgUrl) continue;
 
-          try {
-            if (pText) pText.textContent = `✨ AI Vision đang phân tích sâu trang ${pageItem.pageNumber} / ${project.detailedContent.length}...`;
+          if (pText) pText.textContent = `✨ AI Vision đang phân tích sâu trang ${pageItem.pageNumber} / ${project.detailedContent.length}...`;
 
-            const payload = {
-              model: cfg.model || 'gemini-1.5-flash',
-              messages: [
-                {
-                  role: 'user',
-                  content: [
-                    { type: 'text', text: systemPrompt },
-                    { type: 'image_url', image_url: { url: pageItem.image_url } }
-                  ]
-                }
-              ],
-              max_tokens: 1500,
-              temperature: 0.2,
-              apiKey: cfg.apiKey,
-              baseUrl: cfg.baseUrl,
-              provider: cfg.provider
-            };
-
-            const res = await fetch(proxyUrl, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(payload),
-              signal: _visionEnrichAbortController.signal
-            });
-
-            if (res.ok) {
-              const data = await res.json();
-              const explanation = (data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) || '';
-              if (explanation.trim().length > 20) {
-                pageItem.explanation = explanation.trim();
-                pageItem.isVisionEnriched = true;
-
-                // Tự động cập nhật giao diện nếu đang mở Tab Nội Dung
-                const activeTab = document.querySelector('.center-tab-btn.active')?.dataset.tab;
-                if (activeTab === 'content') {
-                  renderDetailedContentUI();
-                }
-
-                // Tự động lưu tiến độ định kỳ cứ mỗi 2 trang phân tích xong (không lo mất dữ liệu nếu F5)
-                if (completedCount % 2 === 0 && typeof CloudDB !== 'undefined' && CloudDB.save) {
-                  CloudDB.save(project);
-                }
+          const payload = {
+            model: cfg.model || 'gemini-1.5-flash',
+            messages: [
+              {
+                role: 'user',
+                content: [
+                  { type: 'text', text: systemPrompt },
+                  { type: 'image_url', image_url: { url: imgUrl } }
+                ]
               }
+            ],
+            max_tokens: 1500,
+            temperature: 0.2,
+            apiKey: cfg.apiKey,
+            baseUrl: cfg.baseUrl,
+            provider: cfg.provider
+          };
+
+          let success = false;
+          let lastErr = null;
+          for (let attempt = 1; attempt <= 2 && !success; attempt++) {
+            if (_visionEnrichAbortController.signal.aborted) break;
+            try {
+              if (attempt > 1) {
+                if (pText) pText.textContent = `🔄 Thử lại phân tích trang ${pageItem.pageNumber} (lần ${attempt})...`;
+                await new Promise(r => setTimeout(r, 1500));
+              }
+
+              const res = await fetch(proxyUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload),
+                signal: _visionEnrichAbortController.signal
+              });
+
+              if (res.ok) {
+                const data = await res.json();
+                const explanation = (data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) || '';
+                if (explanation.trim().length > 20) {
+                  pageItem.explanation = explanation.trim();
+                  pageItem.isVisionEnriched = true;
+                  success = true;
+
+                  // Tự động cập nhật giao diện nếu đang mở Tab Nội Dung
+                  const activeTab = document.querySelector('.center-tab-btn.active')?.dataset.tab;
+                  if (activeTab === 'content') {
+                    renderDetailedContentUI();
+                  }
+
+                  // Tự động lưu tiến độ định kỳ cứ mỗi 2 trang phân tích xong
+                  if (completedCount % 2 === 0 && typeof CloudDB !== 'undefined' && CloudDB.save) {
+                    CloudDB.save(project);
+                  }
+                }
+              } else {
+                const errJson = await res.json().catch(() => ({}));
+                lastErr = new Error(errJson.error || `HTTP ${res.status}`);
+              }
+            } catch(e) {
+              lastErr = e;
             }
-          } catch(e) {
-            console.warn(`[Vision AI] Lỗi phân tích trang ${pageItem.pageNumber}:`, e);
+          }
+          if (!success && lastErr) {
+            console.warn(`[Vision AI] Lỗi phân tích trang ${pageItem.pageNumber}:`, lastErr);
           }
 
           completedCount++;

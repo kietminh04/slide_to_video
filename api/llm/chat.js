@@ -39,7 +39,7 @@ module.exports = async (req, res) => {
       }
 
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 9500); // 9.5s timeout cho Vercel
+      const timeoutId = setTimeout(() => controller.abort(), 45000); // 45s timeout (phù hợp vercel maxDuration: 60s và xử lý Vision AI)
 
       try {
         const upstreamRes = await fetch(targetUrl, {
@@ -69,7 +69,7 @@ module.exports = async (req, res) => {
       } catch (err) {
         clearTimeout(timeoutId);
         return res.status(504).json({
-          error: `Kết nối tới ${isOpenAI ? 'OpenAI' : 'Google Gemini'} bị quá thời gian (Timeout 9.5s)`,
+          error: `Kết nối tới ${isOpenAI ? 'OpenAI' : 'Google Gemini'} bị quá thời gian (Timeout 45s)`,
           details: err.message
         });
       }
@@ -92,7 +92,7 @@ module.exports = async (req, res) => {
     for (const cand of candidates) {
       try {
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 8000);
+        const timeoutId = setTimeout(() => controller.abort(), 35000);
         const upstreamRes = await fetch(`${cand.baseUrl.replace(/\/+$/, '')}/chat/completions`, {
           method: 'POST',
           headers: {
