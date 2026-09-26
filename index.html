@@ -12793,6 +12793,7 @@ QUY TẮC BẮT BUỘC:
                 if (typeof renderDetailedContentGrid === 'function') renderDetailedContentGrid();
                 if (typeof renderDetailedContentUI === 'function') renderDetailedContentUI();
                 if (typeof renderMindmap === 'function') renderMindmap();
+                if (typeof renderVideoTimeline === 'function') renderVideoTimeline();
               }
             }
           });
@@ -18281,7 +18282,8 @@ QUY TẮC BẮT BUỘC:
     function createVideoSegmentCard({ segKey, index, title, subtitle, narr, dur, thumb, audioData, totalPages }) {
       const card = document.createElement('div');
       card.className = 'video-segment-card' + (window._videoActiveSegKey === segKey ? ' is-active' : '');
-      card.onclick = () => selectVideoSegment(segKey, thumb, subtitle, narr, dur);
+      card.dataset.segKey = segKey;
+      card.onclick = () => selectVideoSegment(segKey, thumb, subtitle, narr, dur, true);
 
       const narrPreview = narr ? narr.replace(/\[P\d\]/g, '').substring(0, 100) + (narr.length > 100 ? '...' : '') : 'Chưa có kịch bản';
       const wordsCount = narr ? narr.trim().split(/\s+/).length : 0;
@@ -18506,11 +18508,14 @@ QUY TẮC BẮT BUỘC:
       }
       if (btnText) btnText.textContent = 'Sinh Toàn Bộ Video';
       renderVideoTimeline();
-      if (validSegs.length > 0) {
-        const first = validSegs[0];
-        selectVideoSegment(first.segKey, first.thumb, first.title, first.narr, first.dur, false);
+      
+      // [QUAN TRỌNG] Tự động chuyển thành video chạy được ngay lập tức từ slide đầu tiên
+      const allReadySegs = window._allVideoSegments || [];
+      const firstValid = allReadySegs.find(s => !isNodeExcluded(s.segKey)) || allReadySegs[0];
+      if (firstValid) {
+        selectVideoSegment(firstValid.segKey, firstValid.thumb, firstValid.subtitle || firstValid.title, firstValid.narr, firstValid.dur, true);
       }
-      showToast(`🎉 Đã sinh hoàn tất dữ liệu cho ${successCount}/${validSegs.length} slide video!`);
+      showToast(`🎬 Đã sinh xong toàn bộ audio! Đang tự động phát video bài giảng...`);
     }
 
     // ===== TRÌNH XEM VIDEO TƯƠNG TÁC: ĐỒNG BỘ THỜI GIAN THẬT VỚI ÂM THANH =====
@@ -18530,11 +18535,23 @@ QUY TẮC BẮT BUỘC:
       const segIndex = allSegs.findIndex(s => s.segKey === segKey);
       const totalCount = allSegs.length;
 
-      // Cập nhật màn hình video preview
+      // Tìm thumbnail thực tế nếu thumb truyền vào bị thiếu
+      let realThumb = thumb;
+      if (!realThumb && segIndex >= 0 && activeProject?.detailedContent?.[segIndex]) {
+        realThumb = activeProject.detailedContent[segIndex].image_url || activeProject.detailedContent[segIndex].thumbnail || '';
+      }
+      if (!realThumb && segKey && segKey.startsWith('grid-page-')) {
+        const pageIdx = parseInt(segKey.replace('grid-page-', ''));
+        if (!isNaN(pageIdx) && activeProject?.detailedContent?.[pageIdx]) {
+          realThumb = activeProject.detailedContent[pageIdx].image_url || activeProject.detailedContent[pageIdx].thumbnail || '';
+        }
+      }
+
+      // Cập nhật màn hình video preview (THAY THẾ HOÀN TOÀN KHUNG TĨNH THÀNH MÀN HÌNH SLIDE THẬT)
       const slideDisplay = document.getElementById('video-slide-display');
       if (slideDisplay) {
-        if (thumb) {
-          slideDisplay.innerHTML = `<img src="${thumb}" alt="${escapeHtml(title)}" style="width:100%;height:100%;object-fit:contain;position:absolute;inset:0;">`;
+        if (realThumb) {
+          slideDisplay.innerHTML = `<img src="${realThumb}" alt="${escapeHtml(title)}" style="width:100%;height:100%;object-fit:contain;position:absolute;inset:0;">`;
         } else {
           slideDisplay.innerHTML = `
             <div style="width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; background: radial-gradient(circle at 50% 30%, #1e1b4b 0%, #0f172a 60%, #030712 100%); padding: 32px; box-sizing: border-box; text-align: center; position: relative;">
@@ -18568,11 +18585,12 @@ QUY TẮC BẮT BUỘC:
       updateVideoTimeDisplay(0, _videoDuration);
 
       // Highlight active card trong timeline & cuộn tới
-      document.querySelectorAll('.video-segment-card').forEach(c => c.classList.remove('is-active'));
       document.querySelectorAll('.video-segment-card').forEach(c => {
-        if (c.onclick && c.onclick.toString().includes(segKey)) {
+        if (c.dataset.segKey === segKey) {
           c.classList.add('is-active');
           c.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        } else {
+          c.classList.remove('is-active');
         }
       });
 
