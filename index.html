@@ -5004,6 +5004,31 @@
     var _exportSelectedRange = 'fast5';
 
     // =========================================================================
+    // HÀM LỌC MARKDOWN/KÝ TỰ ĐẶC BIỆT TRƯỚC KHI GỬI TTS
+    // Tránh TTS đọc "sao sao" cho **, đọc "thăng" cho #, v.v.
+    // =========================================================================
+    function stripMarkdownForTTS(text) {
+      if (!text) return '';
+      return text
+        .replace(/\[P\d+\]/g, '')           // Xóa markers [P1], [P2]...
+        .replace(/\*\*([^*]+)\*\*/g, '$1')   // **bold** → bold
+        .replace(/\*([^*]+)\*/g, '$1')       // *italic* → italic
+        .replace(/__([^_]+)__/g, '$1')       // __bold__ → bold
+        .replace(/_([^_]+)_/g, '$1')         // _italic_ → italic
+        .replace(/`([^`]+)`/g, '$1')         // `code` → code
+        .replace(/```[\s\S]*?```/g, '')      // Xóa code blocks
+        .replace(/^#{1,6}\s+/gm, '')         // Xóa heading markers # ## ###
+        .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1') // [text](url) → text
+        .replace(/!\[([^\]]*)\]\([^)]+\)/g, '$1') // ![alt](url) → alt
+        .replace(/^\s*[-*+]\s+/gm, '')       // Xóa bullet markers
+        .replace(/^\s*\d+\.\s+/gm, '')       // Xóa ordered list markers
+        .replace(/^\s*>\s+/gm, '')           // Xóa blockquote markers
+        .replace(/\|/g, ', ')                // Table pipes → comma
+        .replace(/---+/g, '')                // Xóa horizontal rules
+        .replace(/\s+/g, ' ')               // Gộp whitespace
+        .trim();
+    }
+    // =========================================================================
     // HỆ THỐNG TIỀN TẢI ÂM THANH TRƯỚC (ZERO-GAP AUDIO PRELOADER)
     // Tải trước audio của slide kế tiếp trong nền, loại bỏ hoàn toàn khoảng lặng chết
     // =========================================================================
@@ -5016,7 +5041,7 @@
       if (window._videoAudioPreloadQueue[segKey]) return; // Đang tiền tải rồi
 
       window._videoAudioPreloadQueue[segKey] = true;
-      const cleanText = narr.replace(/\[P\d\]/g, '').replace(/\s+/g, ' ').trim();
+      const cleanText = stripMarkdownForTTS(narr);
       const voiceKey = document.getElementById('gcfg-voice')?.value || 'quynh_anh';
       const cfg = typeof LLMClient !== 'undefined' ? LLMClient.getConfig() : {};
 
@@ -18472,7 +18497,7 @@ QUY TẮC BẮT BUỘC:
         return;
       }
 
-      const cleanText = narr.replace(/\[P\d\]/g, '').replace(/\s+/g, ' ').trim();
+      const cleanText = stripMarkdownForTTS(narr);
       const voiceKey = document.getElementById('gcfg-voice')?.value || 'quynh_anh';
 
       const cardBtns = document.querySelectorAll(`button[onclick*="'${segKey}'"]`);
@@ -18588,7 +18613,7 @@ QUY TẮC BẮT BUỘC:
         const batch = validSegs.slice(b, b + BATCH_SIZE);
         await Promise.all(batch.map(async (seg) => {
           const narr = getNodeParam(seg.segKey, 'narration', seg.narr || '');
-          let cleanText = narr.replace(/\[P\d\]/g, '').replace(/\s+/g, ' ').trim();
+          let cleanText = stripMarkdownForTTS(narr);
           if (typeof window.sanitizeScriptForSpeech === 'function') {
             cleanText = window.sanitizeScriptForSpeech(cleanText);
           }
@@ -18794,7 +18819,7 @@ QUY TẮC BẮT BUỘC:
           }
         }, segKey, currentToken);
       } else if (narr && narr.trim().length >= 5) {
-        const cleanText = narr.replace(/\[P\d\]/g, '').replace(/\s+/g, ' ').trim();
+        const cleanText = stripMarkdownForTTS(narr);
         const voiceKey = document.getElementById('gcfg-voice')?.value || 'quynh_anh';
         playSpeechWithVoice(cleanText, voiceKey, () => {
           // KHI GIỌNG ĐỌC KẾT THÚC: CHỈ CHUYỂN SLIDE KHI SLIDE ĐÓ VẪN ĐANG LÀ SLIDE ĐƯỢC MỞ
@@ -19761,7 +19786,7 @@ Yêu cầu trình bày:
       // Kiểm tra ngay lập tức: Slide đó có còn đang mở không?
       if (!isAudioSessionValid(boundSegKey, currentToken)) return;
 
-      const cleanText = text.replace(/\[P\d\]/g, '').replace(/\s+/g, ' ').trim();
+      const cleanText = stripMarkdownForTTS(text);
 
       // Khởi tạo AbortController cho request fetch này
       window._activeTtsAbortController = new AbortController();
@@ -20000,7 +20025,7 @@ Yêu cầu trình bày:
         return;
       }
 
-      const cleanText = narr.replace(/\[P\d\]/g, '').replace(/\s+/g, ' ').trim();
+      const cleanText = stripMarkdownForTTS(narr);
       const voiceKey = document.getElementById('gcfg-voice')?.value || 'quynh_anh';
       const voiceName = document.getElementById('gcfg-voice')?.options[document.getElementById('gcfg-voice')?.selectedIndex]?.text || voiceKey;
 
@@ -20091,7 +20116,7 @@ Yêu cầu trình bày:
       }
 
       const narr = getNodeParam(key, 'narration', '');
-      const cleanText = narr.replace(/\[P\d\]/g, '').replace(/\s+/g, ' ').trim();
+      const cleanText = stripMarkdownForTTS(narr);
       const voiceKey = document.getElementById('gcfg-voice')?.value || 'quynh_anh';
 
       playSpeechWithVoice(cleanText, voiceKey, () => {
