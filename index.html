@@ -5007,9 +5007,143 @@
     // HÀM LỌC MARKDOWN/KÝ TỰ ĐẶC BIỆT TRƯỚC KHI GỬI TTS
     // Tránh TTS đọc "sao sao" cho **, đọc "thăng" cho #, v.v.
     // =========================================================================
+
+    // BẢNG PHIÊN ÂM THUẬT NGỮ AI/ML CHO TTS (có thể mở rộng bất cứ lúc nào)
+    // Key: regex pattern (case-insensitive), Value: cách đọc tiếng Việt
+    window._ttsPronunciationDict = window._ttsPronunciationDict || {
+      // ===== MÔ HÌNH PHÁT HIỆN & PHÂN ĐOẠN =====
+      'YOLO':         'dô-lô',
+      'YOLOv\\d+':    (m) => 'dô-lô v' + m.match(/\d+/)?.[0],
+      'SSD':          'ét-ét-đi',
+      'DETR':         'đê-tơ',
+      'Faster R-CNN': 'pha-xtơ a-xi-en-en',
+      'Fast R-CNN':   'pha-xt a-xi-en-en',
+      'R-CNN':        'a-xi-en-en',
+      'Mask R-CNN':   'mát-xcơ a-xi-en-en',
+      'RetinaNet':    'rê-ti-na-nét',
+      'EfficientDet': 'ê-phi-sần-đét',
+      'SAM':          'sam',
+      'SegFormer':    'xéc-pho-mơ',
+
+      // ===== MÔ HÌNH POSE & KEYPOINT =====
+      'OpenPose':     'ô-pần pô-zờ',
+      'HRNet':        'ết-a-nét',
+      'MediaPipe':    'mê-đi-a pai-pờ',
+      'AlphaPose':    'an-pha pô-zờ',
+      'SimpleBaseline': 'xim-pồ bết-lai-nờ',
+      'ViTPose':      'vít pô-zờ',
+
+      // ===== BACKBONE & KIẾN TRÚC =====
+      'ResNet':       'rét-nét',
+      'VGG':          'vi-gi-gi',
+      'InceptionNet': 'in-xép-sần nét',
+      'MobileNet':    'mô-bai-nét',
+      'EfficientNet': 'ê-phi-sần-nét',
+      'DenseNet':     'đen-xờ nét',
+      'ShuffleNet':   'sắp-phồ nét',
+      'ConvNeXt':     'con-nếch-xt',
+      'Swin':         'xouy-n',
+
+      // ===== NLP & MULTIMODAL =====
+      'GPT':          'gi-pi-ti',
+      'BERT':         'bớt',
+      'LLM':          'eo-eo-em',
+      'LLMs':         'eo-eo-em-zờ',
+      'CLIP':         'clip',
+      'DALL-E':       'đan-i',
+      'Gemini':       'giê-mi-nai',
+      'ChatGPT':      'chát gi-pi-ti',
+      'Transformer':  'trần-pho-mơ',
+      'Transformers':  'trần-pho-mơ-zờ',
+      'Attention':    'ờ-ten-sần',
+      'Encoder':      'en-cô-đơ',
+      'Decoder':      'đi-cô-đơ',
+      'Embedding':    'em-bé-đinh',
+      'Fine-tuning':  'phai-tiu-ninh',
+      'Fine-tune':    'phai-tiu-nờ',
+      'Pretrained':   'pri-trên-đờ',
+      'Pre-trained':  'pri-trên-đờ',
+
+      // ===== KHÁI NIỆM KỸ THUẬT =====
+      'CNN':          'xi-en-en',
+      'RNN':          'a-en-en',
+      'LSTM':         'eo-ét-ti-em',
+      'GAN':          'gan',
+      'VAE':          'vi-ây-i',
+      'FPN':          'ép-pi-en',
+      'NMS':          'en-em-ét',
+      'IoU':          'ai-ô-iu',
+      'mAP':          'em-ây-pi',
+      'AP':           'ây-pi',
+      'F1':           'ép-oăn',
+      'Top-down':     'tóp-đao-n',
+      'Bottom-up':    'bo-tầm-ấp',
+      'Backbone':     'bác-bôn',
+      'Bounding box': 'bao-đinh-bóc-xờ',
+      'bounding box': 'bao-đinh-bóc-xờ',
+      'Bbox':         'bi-bóc-xờ',
+      'bbox':         'bi-bóc-xờ',
+      'Ground truth': 'grao-n trú-thờ',
+      'ground truth': 'grao-n trú-thờ',
+      'Anchor':       'an-cơ',
+      'Feature map':  'phi-chơ mép',
+      'feature map':  'phi-chơ mép',
+      'Pooling':      'pu-linh',
+      'Dropout':      'đờ-ráp-ao-t',
+      'Batch':        'bách',
+      'Epoch':        'ê-pốc',
+      'Overfitting':  'ô-vơ-phít-tinh',
+      'Underfitting': 'ân-đơ-phít-tinh',
+      'Inference':    'in-phơ-rần-xờ',
+      'Latency':      'lây-tần-xi',
+      'Throughput':   'thrú-pút',
+
+      // ===== DATASET & BENCHMARK =====
+      'COCO':         'cô-cô',
+      'ImageNet':     'i-mít-nét',
+      'PASCAL VOC':   'pát-can vốc',
+      'CVAT':         'xi-vát',
+      'Cityscapes':   'xi-ti-xơ-kếp-xờ',
+
+      // ===== FRAMEWORK & CÔNG CỤ =====
+      'PyTorch':      'pai-toóc-chờ',
+      'TensorFlow':   'ten-xơ-phờ-lâu',
+      'OpenCV':       'ô-pần xi-vi',
+      'Kubernetes':   'ku-bơ-nê-tít-xờ',
+      'Docker':       'đóc-cơ',
+      'API':          'ây-pi-ai',
+      'APIs':         'ây-pi-ai-zờ',
+      'GPU':          'gi-pi-iu',
+      'CPU':          'xi-pi-iu',
+      'CUDA':         'cu-đa',
+      'TPU':          'ti-pi-iu',
+      'VRAM':         'vi-ram',
+      'FPS':          'ép-pi-ét',
+    };
+
+    function applyPronunciationDict(text) {
+      if (!text) return '';
+      const dict = window._ttsPronunciationDict || {};
+      // Sắp xếp key dài trước ngắn sau để tránh replace sai (VD: "Faster R-CNN" trước "R-CNN")
+      const sortedKeys = Object.keys(dict).sort((a, b) => b.length - a.length);
+      let result = text;
+      for (const key of sortedKeys) {
+        const val = dict[key];
+        // Tạo regex word-boundary cho key
+        const escaped = key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const regex = new RegExp(`\\b${escaped}\\b`, 'gi');
+        if (typeof val === 'function') {
+          result = result.replace(regex, val);
+        } else {
+          result = result.replace(regex, val);
+        }
+      }
+      return result;
+    }
+
     function stripMarkdownForTTS(text) {
       if (!text) return '';
-      return text
+      let cleaned = text
         .replace(/\[P\d+\]/g, '')           // Xóa markers [P1], [P2]...
         .replace(/\*\*([^*]+)\*\*/g, '$1')   // **bold** → bold
         .replace(/\*([^*]+)\*/g, '$1')       // *italic* → italic
@@ -5027,6 +5161,9 @@
         .replace(/---+/g, '')                // Xóa horizontal rules
         .replace(/\s+/g, ' ')               // Gộp whitespace
         .trim();
+      // ÁP DỤNG BẢNG PHIÊN ÂM AI/ML
+      cleaned = applyPronunciationDict(cleaned);
+      return cleaned;
     }
     // =========================================================================
     // HỆ THỐNG TIỀN TẢI ÂM THANH TRƯỚC (ZERO-GAP AUDIO PRELOADER)
