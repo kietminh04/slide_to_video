@@ -3110,6 +3110,82 @@
       }
     }
 
+    @keyframes pulseGlowVideo {
+      0% {
+        box-shadow: 0 0 0 0 rgba(56, 189, 248, 0.7);
+        border-color: rgba(56, 189, 248, 0.9);
+      }
+      50% {
+        box-shadow: 0 0 18px 4px rgba(56, 189, 248, 0.45);
+        border-color: rgba(14, 165, 233, 1);
+      }
+      100% {
+        box-shadow: 0 0 0 0 rgba(56, 189, 248, 0.7);
+        border-color: rgba(56, 189, 248, 0.9);
+      }
+    }
+
+    .btn-generating-video {
+      background: linear-gradient(135deg, #0284c7, #2563eb) !important;
+      animation: pulseGlowVideo 1.4s infinite !important;
+      cursor: wait !important;
+    }
+
+    .video-generating-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(11, 17, 32, 0.92);
+      backdrop-filter: blur(8px);
+      z-index: 100;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      text-align: center;
+      border-radius: 8px;
+    }
+
+    .video-generating-icon {
+      font-size: 42px;
+      margin-bottom: 12px;
+      animation: spin 3s linear infinite;
+    }
+
+    .video-generating-title {
+      font-size: 16px;
+      font-weight: 800;
+      color: #fff;
+      letter-spacing: 0.5px;
+      margin-bottom: 6px;
+      text-transform: uppercase;
+    }
+
+    .video-generating-sub {
+      font-size: 12px;
+      color: var(--cyan);
+      margin-bottom: 16px;
+      max-width: 80%;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .video-generating-bar-wrap {
+      width: 260px;
+      height: 6px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .video-generating-bar {
+      height: 100%;
+      background: linear-gradient(90deg, #38bdf8, #818cf8);
+      border-radius: 10px;
+      transition: width 0.3s ease;
+    }
+
     .source-drop-zone.dragover {
       border-color: var(--cyan) !important;
       background: rgba(56, 189, 248, 0.12) !important;
@@ -4419,6 +4495,11 @@
                   <span class="btn-gen-text">Sinh Tất Cả Kịch Bản</span>
                   <span class="btn-gen-badge" id="btn-gen-count-badge">0 mục</span>
                 </button>
+                <button class="script-action-btn btn-regenerate-all" id="btn-regenerate-all-scripts" onclick="regenerateAllScripts()"
+                  title="Ghi đè và sinh lại toàn bộ kịch bản bài giảng bằng giọng văn nói tự nhiên (loại bỏ công thức toán LaTeX thô)"
+                  style="border-color: rgba(245, 158, 11, 0.45); color: #fbbf24; font-weight: 600;">
+                  <span>🔄</span> <span class="btn-regen-text">Sinh Lại Toàn Bộ</span>
+                </button>
                 <button class="script-action-btn" id="btn-play-all-script" onclick="togglePlayAllScript()" title="Nghe thử toàn bộ kịch bản bài giảng từ đầu đến cuối với giọng đọc đã chọn ở thanh trên">
                   <span>🔊</span> <span id="btn-play-all-script-text">Nghe Toàn Bộ</span>
                 </button>
@@ -4456,9 +4537,9 @@
                 </div>
                 <!-- NÚT SINH AUDIO / VIDEO -->
                 <button class="btn-generate-script-now" id="btn-generate-all-audio" onclick="generateAllAudio()"
-                  title="Sinh giọng đọc AI cho tất cả phân đoạn có kịch bản">
-                  <span>🔊</span>
-                  <span class="btn-gen-text">Sinh Toàn Bộ Audio</span>
+                  title="Tự động sinh giọng đọc AI và dữ liệu video cho toàn bộ slide bài giảng">
+                  <span>🎬</span>
+                  <span class="btn-gen-text">Sinh Toàn Bộ Video</span>
                   <span class="btn-gen-badge" id="btn-audio-count-badge">0 đoạn</span>
                 </button>
                 <button class="script-action-btn" id="btn-export-video" onclick="exportFinalVideo()"
@@ -10002,6 +10083,49 @@
     }
 
     // =========================================================================
+    // 3.5. CHUẨN HÓA KỊCH BẢN ĐỌC THÀNH TIẾNG (SANITY & SPEECH ADAPTATION)
+    // Loại bỏ hoàn toàn công thức LaTeX, biến số thô ($v=0, $v=1) sang ngôn ngữ người nói
+    // =========================================================================
+    window.sanitizeScriptForSpeech = function (text) {
+      if (!text || typeof text !== 'string') return text;
+      let clean = text;
+
+      // 1. Chuyển đổi các điều kiện đặc thù trong Keypoint / Pose / AI
+      clean = clean.replace(/\$?\bv\s*=\s*0\b\$?/gi, 'biến v bằng không, tức bị che khuất');
+      clean = clean.replace(/\$?\bv\s*=\s*1\b\$?/gi, 'biến v bằng một, tức nhìn thấy rõ');
+      clean = clean.replace(/\$?\bv\s*=\s*2\b\$?/gi, 'biến v bằng hai, tức được gán nhãn');
+
+      // 2. Chuyển đổi biến tổng quát a=0, x=1, ...
+      clean = clean.replace(/\$?\b([a-zA-Z])\s*=\s*([0-9]+)\b\$?/g, 'biến $1 bằng $2');
+
+      // 3. Chuyển đổi biến đơn trong dấu $ ví dụ $v$, $x$, $y$ (tránh trùng từ 'biến')
+      clean = clean.replace(/\b(biến\s+)?\$([a-zA-Z])\$/gi, 'biến $2');
+
+      // 4. Toán tử LaTeX phổ biến sang ngôn ngữ đọc tự nhiên
+      clean = clean.replace(/\\approx/g, 'xấp xỉ');
+      clean = clean.replace(/\\neq/g, 'khác');
+      clean = clean.replace(/\\le/g, 'nhỏ hơn hoặc bằng');
+      clean = clean.replace(/\\ge/g, 'lớn hơn hoặc bằng');
+      clean = clean.replace(/\\times/g, 'nhân với');
+      clean = clean.replace(/\\rightarrow/g, 'suy ra');
+      clean = clean.replace(/\\in/g, 'thuộc');
+      clean = clean.replace(/\\sum/g, 'tổng các giá trị');
+      clean = clean.replace(/\\prod/g, 'tích các giá trị');
+      clean = clean.replace(/\\sqrt\{([^}]+)\}/g, 'căn bậc hai của $1');
+
+      // 5. Gỡ bỏ dấu đô la còn sót quanh biểu thức toán
+      clean = clean.replace(/\$\$([^$]+)\$\$/g, '$1');
+      clean = clean.replace(/\$([^$]+)\$/g, '$1');
+
+      // 6. Gỡ bỏ ký tự backslash thoát chữ
+      clean = clean.replace(/\\([a-zA-Z]+)/g, '$1');
+
+      // 7. Chuẩn hóa khoảng trắng
+      clean = clean.replace(/\s+/g, ' ').trim();
+      return clean;
+    };
+
+    // =========================================================================
     // 4. LLM CLIENT & NARRATION GENERATOR (TOKEN-FRUGAL ENGINE)
     // =========================================================================
     const LLMClient = {
@@ -10550,7 +10674,16 @@ QUY TẮC CỐT LÕI BẮT BUỘC:
    - [P3] (ngắt 1.5s để người học ngẫm nghĩ sau khái niệm cốt lõi)
 
 6. Độ dài kịch bản phải khớp sát khoảng ${targetWords} từ (tương ứng ${dur} giây ở tốc độ đọc ${pace} WPM).
-7. Các thuật ngữ chuyên ngành phải giải thích dễ hiểu, chính xác. Công thức toán học (nếu có) dùng định dạng LaTeX kẹp giữa $...$.
+7. 🗣️ QUY TẮC BẮT BUỘC VỀ CÔNG THỨC TOÁN & BIẾN SỐ (DÙNG 100% NGÔN NGỮ NÓI TỰ NHIÊN):
+   - Kịch bản này được thiết kế ĐỂ ĐỌC THÀNH TIẾNG (Voice-over / Text-to-Speech), người học chỉ tiếp nhận qua đôi tai.
+   - TUYỆT ĐỐI KHÔNG dùng ký hiệu LaTeX, KHÔNG kẹp dấu đô la ($...$), KHÔNG viết công thức thô kiểu "v = 0", "v = 1", "x_i", "P(A|B)", "\\sum", "\\frac".
+   - BẮT BUỘC DIỄN GIẢI TOÀN BỘ CÔNG THỨC & BIẾN SỐ THÀNH CÂU NÓI TỰ NHIÊN CỦA GIẢNG VIÊN ĐẠI HỌC:
+     * Thay vì viết "$v = 1$", hãy nói: "khi biến v bằng một, tức điểm đặc trưng hiển thị rõ ràng và không bị che khuất".
+     * Thay vì viết "$v = 0$", hãy nói: "ngược lại khi biến v nhận giá trị bằng không, biểu thị điểm này đang bị che khuất hoặc nằm ngoài khung hình".
+     * Thay vì viết "$v = 2$", hãy nói: "khi biến v bằng hai, tức điểm được gán nhãn nhưng không nhìn thấy trực tiếp".
+     * Thay vì viết "$x_i, y_i$", hãy nói: "tọa độ x và y của khớp thứ i".
+     * Thay vì viết "Loss = ...", hãy nói: "hàm mất mát đo lường tổng sai số giữa dự đoán và thực tế".
+   - Mọi ký hiệu toán học đều phải được phiên âm hoặc diễn giải ngữ nghĩa trực quan thành lời nói tự nhiên của con người.
 ${mediaInstruction ? '8. ' + mediaInstruction : ''}
 
 Trả về DUY NHẤT văn bản kịch bản lời thoại hoàn chỉnh (không trả về JSON, không thêm lời dẫn giải ngoài lề).`;
@@ -10635,7 +10768,10 @@ Hãy viết kịch bản lời thoại giảng dạy:`;
           if (res && res.ok) {
             const data = await res.json();
             const text = data.choices?.[0]?.message?.content || '';
-            if (text && text.trim().length > 10) return text.trim();
+            if (text && text.trim().length > 10) {
+              const clean = text.trim();
+              return typeof window.sanitizeScriptForSpeech === 'function' ? window.sanitizeScriptForSpeech(clean) : clean;
+            }
           }
         } catch (e) {
           console.warn('[LLMClient] generateSegmentNarration proxy error:', e);
@@ -10649,13 +10785,17 @@ Hãy viết kịch bản lời thoại giảng dạy:`;
           if (res.ok) {
             const data = await res.json();
             const text = data.choices?.[0]?.message?.content || '';
-            if (text && text.trim().length > 10) return text.trim();
+            if (text && text.trim().length > 10) {
+              const clean = text.trim();
+              return typeof window.sanitizeScriptForSpeech === 'function' ? window.sanitizeScriptForSpeech(clean) : clean;
+            }
           }
         } catch (e) {
           console.warn('[LLMClient] generateSegmentNarration direct error:', e);
         }
 
-        return this.synthesizePedagogicalNarrationLocally({ nodeCode, nodeText, chapterTitle, sectionTitle, duration, wpm, visualType, summary, mechanism, keyPoint, notes, mediaAttachments, mediaNote, bridgeIntro });
+        const localText = this.synthesizePedagogicalNarrationLocally({ nodeCode, nodeText, chapterTitle, sectionTitle, duration, wpm, visualType, summary, mechanism, keyPoint, notes, mediaAttachments, mediaNote, bridgeIntro });
+        return typeof window.sanitizeScriptForSpeech === 'function' ? window.sanitizeScriptForSpeech(localText) : localText;
       },
 
       async generateNarration({ title, depth, duration, wpm, visualDesc, sections, notes }) {
@@ -13433,6 +13573,9 @@ QUY TẮC BẮT BUỘC:
         });
 
         if (scriptText) {
+          if (typeof window.sanitizeScriptForSpeech === 'function') {
+            scriptText = window.sanitizeScriptForSpeech(scriptText);
+          }
           setNodeParam(itKey, 'narration', scriptText);
           if (node && node.data) node.data.narration = scriptText;
 
@@ -13463,7 +13606,20 @@ QUY TẮC BẮT BUỘC:
       }
     };
 
-    window.generateScriptFromSelection = async function () {
+    window.regenerateAllScripts = async function () {
+      const allSources = activeProject?.sources || [];
+      const activeSources = allSources.filter(s => s.active !== false);
+      if (activeSources.length === 0) {
+        showToast('⚠️ Hãy chọn ít nhất 1 tài liệu để sinh kịch bản!');
+        return;
+      }
+      if (!confirm("Bạn có chắc chắn muốn sinh lại toàn bộ kịch bản bài giảng?\n\nToàn bộ lời thoại sẽ được viết lại theo phong cách sư phạm tự nhiên (chuyển đổi hoàn toàn công thức toán và biến số như v=0, v=1 thành ngôn ngữ nói, loại bỏ ký hiệu LaTeX thô).")) {
+        return;
+      }
+      await window.generateScriptFromSelection(true);
+    };
+
+    window.generateScriptFromSelection = async function (forceRewrite = false) {
       const allSources = activeProject?.sources || [];
       const activeSources = allSources.filter(s => s.active !== false);
       if (activeSources.length === 0) {
@@ -13480,7 +13636,8 @@ QUY TẮC BẮT BUỘC:
         activeSources.forEach(s => { totalPages += (s.pages || 0); });
         if (totalPages === 0) totalPages = (activeProject?.detailedContent && activeProject.detailedContent.length > 0) ? activeProject.detailedContent.length : 1;
 
-        showLoading("Đang Sinh Kịch Bản Toàn Bộ Slide...", `Chuẩn bị sinh kịch bản cho ${totalPages} trang slide...`);
+        showLoading(forceRewrite ? "Đang Sinh Lại Toàn Bộ Kịch Bản..." : "Đang Sinh Kịch Bản Toàn Bộ Slide...", 
+          forceRewrite ? `Đang viết lại kịch bản cho ${totalPages} trang slide theo ngôn ngữ nói tự nhiên...` : `Chuẩn bị sinh kịch bản cho ${totalPages} trang slide...`);
 
         let completedCount = 0;
         const batchSize = 4;
@@ -13508,7 +13665,7 @@ QUY TẮC BẮT BUỘC:
         hideLoading();
         renderScriptDocument();
         if (typeof autoSaveWorkspaceState === 'function') autoSaveWorkspaceState();
-        showToast(`🎉 Đã hoàn tất & tự động lưu kịch bản cho toàn bộ ${totalPages} trang slide!`);
+        showToast(forceRewrite ? `🎉 Đã sinh lại toàn bộ kịch bản cho ${totalPages} trang slide (ngôn ngữ người nói tự nhiên)!` : `🎉 Đã hoàn tất & tự động lưu kịch bản cho toàn bộ ${totalPages} trang slide!`);
         return;
       }
 
@@ -18232,6 +18389,7 @@ QUY TẮC BẮT BUỘC:
       }
 
       const validSegs = allSegs.filter(s => {
+        if (typeof isNodeExcluded === 'function' && isNodeExcluded(s.segKey)) return false;
         const narr = getNodeParam(s.segKey, 'narration', s.narr || '');
         return narr && narr.trim().length >= 5;
       });
@@ -18244,61 +18402,108 @@ QUY TẮC BẮT BUỘC:
       const genBtn = document.getElementById('btn-generate-all-audio');
       const btnText = genBtn?.querySelector('.btn-gen-text');
       const badge = document.getElementById('btn-audio-count-badge');
-      if (genBtn) genBtn.disabled = true;
-
-      const voiceKey = document.getElementById('gcfg-voice')?.value || 'quynh_anh';
-      showToast(`🚀 Bắt đầu sinh toàn bộ ${validSegs.length} đoạn audio...`);
-
-      let successCount = 0;
-      for (let i = 0; i < validSegs.length; i++) {
-        const seg = validSegs[i];
-        if (btnText) btnText.textContent = `Đang sinh (${i + 1}/${validSegs.length})...`;
-        if (badge) badge.textContent = `${i + 1}/${validSegs.length}`;
-
-        const narr = getNodeParam(seg.segKey, 'narration', seg.narr || '');
-        const cleanText = narr.replace(/\[P\d\]/g, '').replace(/\s+/g, ' ').trim();
-
-        try {
-          const serverUrl = (window.location.origin.startsWith('http') && !window.location.origin.includes('file:'))
-            ? `${window.location.origin}/api/tts`
-            : 'https://slide-to-video-sigma.vercel.app/api/tts';
-
-          const res = await fetch(serverUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ text: cleanText, voice: voiceKey })
-          });
-
-          if (res.ok) {
-            const blob = await res.blob();
-            const audioUrl = URL.createObjectURL(blob);
-            const tempAudio = new Audio(audioUrl);
-            await new Promise((resolve) => {
-              tempAudio.onloadedmetadata = () => resolve();
-              tempAudio.onerror = () => resolve();
-              setTimeout(resolve, 1500);
-            });
-            const realDur = Math.round(tempAudio.duration) || seg.dur || 15;
-
-            window._videoAudioCache[seg.segKey] = {
-              audioUrl: audioUrl,
-              duration: realDur,
-              blob: blob,
-              voice: voiceKey
-            };
-            seg.audioData = window._videoAudioCache[seg.segKey];
-            seg.dur = realDur;
-            successCount++;
-          }
-        } catch (e) {
-          console.warn(`Lỗi sinh audio đoạn ${seg.segKey}:`, e);
-        }
+      if (genBtn) {
+        genBtn.disabled = true;
+        genBtn.classList.add('btn-generating-video');
       }
 
-      if (genBtn) genBtn.disabled = false;
-      if (btnText) btnText.textContent = 'Sinh Toàn Bộ Audio';
+      // Tạo hoặc kích hoạt Overlay đang sinh trực tiếp trên màn hình video player
+      const videoScreen = document.getElementById('video-main-screen');
+      let overlay = document.getElementById('video-generating-overlay');
+      if (!overlay && videoScreen) {
+        overlay = document.createElement('div');
+        overlay.id = 'video-generating-overlay';
+        overlay.className = 'video-generating-overlay';
+        overlay.innerHTML = `
+          <div class="video-generating-icon">🎬</div>
+          <div class="video-generating-title" id="video-gen-title">ĐANG SINH VIDEO BÀI GIẢNG...</div>
+          <div class="video-generating-sub" id="video-gen-sub">Đang khởi tạo luồng giọng đọc AI cho các slide...</div>
+          <div class="video-generating-bar-wrap">
+            <div class="video-generating-bar" id="video-gen-bar" style="width: 0%;"></div>
+          </div>
+          <div style="font-size: 11px; color: var(--text-dim); margin-top: 8px;" id="video-gen-pct">0%</div>
+        `;
+        videoScreen.appendChild(overlay);
+      }
+      if (overlay) overlay.style.display = 'flex';
+
+      const voiceKey = document.getElementById('gcfg-voice')?.value || 'quynh_anh';
+      showToast(`🚀 Bắt đầu sinh toàn bộ ${validSegs.length} slide video với tốc độ cao...`);
+
+      const BATCH_SIZE = 4;
+      let completedCount = 0;
+      let successCount = 0;
+
+      for (let b = 0; b < validSegs.length; b += BATCH_SIZE) {
+        const batch = validSegs.slice(b, b + BATCH_SIZE);
+        await Promise.all(batch.map(async (seg) => {
+          const narr = getNodeParam(seg.segKey, 'narration', seg.narr || '');
+          let cleanText = narr.replace(/\[P\d\]/g, '').replace(/\s+/g, ' ').trim();
+          if (typeof window.sanitizeScriptForSpeech === 'function') {
+            cleanText = window.sanitizeScriptForSpeech(cleanText);
+          }
+
+          try {
+            const serverUrl = (window.location.origin.startsWith('http') && !window.location.origin.includes('file:'))
+              ? `${window.location.origin}/api/tts`
+              : 'https://slide-to-video-sigma.vercel.app/api/tts';
+
+            const res = await fetch(serverUrl, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ text: cleanText, voice: voiceKey })
+            });
+
+            if (res.ok) {
+              const blob = await res.blob();
+              const audioUrl = URL.createObjectURL(blob);
+              const tempAudio = new Audio(audioUrl);
+              await new Promise((resolve) => {
+                tempAudio.onloadedmetadata = () => resolve();
+                tempAudio.onerror = () => resolve();
+                setTimeout(resolve, 1500);
+              });
+              const realDur = Math.round(tempAudio.duration) || seg.dur || 15;
+
+              window._videoAudioCache[seg.segKey] = {
+                audioUrl: audioUrl,
+                duration: realDur,
+                blob: blob,
+                voice: voiceKey
+              };
+              seg.audioData = window._videoAudioCache[seg.segKey];
+              seg.dur = realDur;
+              successCount++;
+            }
+          } catch (e) {
+            console.warn(`Lỗi sinh audio đoạn ${seg.segKey}:`, e);
+          } finally {
+            completedCount++;
+            const pct = Math.round((completedCount / validSegs.length) * 100);
+            if (btnText) btnText.textContent = `Đang sinh (${completedCount}/${validSegs.length})...`;
+            if (badge) badge.textContent = `${completedCount}/${validSegs.length}`;
+            const subEl = document.getElementById('video-gen-sub');
+            if (subEl) subEl.textContent = `Đang xử lý ${seg.subtitle || seg.title || seg.segKey}... (${completedCount}/${validSegs.length})`;
+            const barEl = document.getElementById('video-gen-bar');
+            if (barEl) barEl.style.width = `${pct}%`;
+            const pctEl = document.getElementById('video-gen-pct');
+            if (pctEl) pctEl.textContent = `${pct}%`;
+          }
+        }));
+      }
+
+      if (overlay) overlay.style.display = 'none';
+      if (genBtn) {
+        genBtn.classList.remove('btn-generating-video');
+        genBtn.disabled = false;
+      }
+      if (btnText) btnText.textContent = 'Sinh Toàn Bộ Video';
       renderVideoTimeline();
-      showToast(`🎉 Đã sinh hoàn tất ${successCount}/${validSegs.length} audio bài giảng!`);
+      if (validSegs.length > 0) {
+        const first = validSegs[0];
+        selectVideoSegment(first.segKey, first.thumb, first.title, first.narr, first.dur, false);
+      }
+      showToast(`🎉 Đã sinh hoàn tất dữ liệu cho ${successCount}/${validSegs.length} slide video!`);
     }
 
     // ===== TRÌNH XEM VIDEO TƯƠNG TÁC: ĐỒNG BỘ THỜI GIAN THẬT VỚI ÂM THANH =====
