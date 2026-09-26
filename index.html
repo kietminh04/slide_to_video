@@ -4156,7 +4156,7 @@
           <span>←</span> Danh Sách Dự Án
         </button>
         <span style="color: var(--border-subtle);">/</span>
-        <span class="ws-title" id="ws-current-title">Phân Cụm Dữ Liệu (Clustering Analysis)</span>
+        <span class="ws-title" id="ws-current-title">Đang nạp dự án...</span>
 
         <button class="btn-ws-delete-project" id="btn-cloud-sync" title="Lưu đồng bộ dự án lên Neon Cloud"
           style="border-color: rgba(16, 185, 129, 0.3); color: #34d399; margin-left: 6px; display: inline-flex; align-items: center; gap: 6px;">
@@ -5469,6 +5469,14 @@
     // =========================================================================
     // GRID / SNAKE LAYOUT CHO CHẾ ĐỘ SLIDE
     // =========================================================================
+        // LOẠI BỎ TRIỆT ĐỂ CÁC DỰ ÁN ĐÃ BỊ XOÁ KHỎI BỘ NHỚ KHỞI ĐỘNG
+    try {
+      const _initDeleted = JSON.parse(localStorage.getItem('clsg_deleted_projects') || '[]');
+      _initDeleted.forEach(dId => {
+        delete defaultProjects[dId];
+      });
+    } catch (e) {}
+
     window.isGridLayout = true; // Mặc định là Grid
     
     function toggleMindmapLayout() {
@@ -5705,7 +5713,9 @@
             const list = await res.json();
             if (Array.isArray(list)) {
               let updated = false;
+              const _cloudDeleted = JSON.parse(localStorage.getItem('clsg_deleted_projects') || '[]');
               list.forEach(row => {
+                if (row.id && _cloudDeleted.includes(row.id)) return; // Không nạp lại dự án đã bị xóa
                 if (row.id && row.data) {
                   defaultProjects[row.id] = row.data;
                   if (typeof currentProjectId !== 'undefined' && row.id === currentProjectId && typeof activeProject !== 'undefined' && activeProject) {
@@ -6125,16 +6135,14 @@
 
     // Khởi tạo kiểm tra kết nối Cloud Database tức thời
     CloudDB.ping().then(online => {
-      if (online) CloudDB.loadAll();
+      if (online) window._cloudLoadPromise = CloudDB.loadAll();
     });
     CloudDB.loadAll();
 
     // QUẢN LÝ TRẠNG THÁI HIỆN TẠI (GIỮ NGUYÊN DỰ ÁN ĐANG LÀM VIỆC KHI RELOAD)
-    const initialAvailableIds = Object.keys(defaultProjects);
+    // QUẢN LÝ TRẠNG THÁI HIỆN TẠI (GIỮ NGUYÊN DỰ ÁN ĐANG LÀM VIỆC KHI RELOAD)
     const savedActiveProjId = localStorage.getItem('clsg_active_project_id');
-    let currentProjectId = (savedActiveProjId && defaultProjects[savedActiveProjId])
-      ? savedActiveProjId
-      : (savedActiveProjId || (initialAvailableIds.includes("cnn_intro") ? "cnn_intro" : (initialAvailableIds[0] || null)));
+    let currentProjectId = savedActiveProjId || null;
     let activeProject = (currentProjectId && defaultProjects[currentProjectId]) ? defaultProjects[currentProjectId] : null;
     let currentScenes = (activeProject && activeProject.scenes) ? JSON.parse(JSON.stringify(activeProject.scenes)) : [];
 
@@ -18298,17 +18306,75 @@ QUY TẮC BẮT BUỘC:
     document.getElementById('btn-rag-ingest')?.addEventListener('click', triggerRagIngestion);
     // --- KẾT THÚC: RAG INGESTION TÍCH HỢP ---
 
-    // INITIALIZE PROJECTS DASHBOARD & KHÔI PHỤC VIEW ĐANG LÀM VIỆC (KHÔNG BỊ QUAY VỀ TRANG ĐẦU)
+    // INITIALIZE PROJECTS DASHBOARD & KHÔI PHỤC VIEW ĐANG LÀM VIỆC (RELOAD TẠI CHỖ CHUẨN XÁC 100%)
 
-    renderProjectsGrid();
-    const savedActiveView = localStorage.getItem('clsg_active_view') || 'projects';
-    const savedProjId = localStorage.getItem('clsg_active_project_id');
-    if (savedActiveView === 'workspace' && (savedProjId || currentProjectId)) {
-      if (savedProjId) currentProjectId = savedProjId;
-      switchView('workspace');
-    } else {
-      switchView('projects');
+    async function restoreWorkspaceOnStartup() {
+      renderProjectsGrid();
+      const savedActiveView = localStorage.getItem('clsg_active_view') || 'projects';
+      let targetProjId = localStorage.getItem('clsg_active_project_id');
+      const savedTab = localStorage.getItem('clsg_active_tab') || 'mindmap';
+
+      if (savedActiveView !== 'workspace' || !targetProjId) {
+        switchView('projects');
+        return;
+      }
+
+      // Giữ người dùng ngay tại không gian Workspace mà không bị giật về trang chính
+      document.body.classList.add('is-workspace');
+      viewProjects.style.display = 'none';
+      viewWorkspace.style.display = 'flex';
+      const titleEl = document.getElementById('ws-current-title');
+      if (titleEl) titleEl.textContent = 'Đang nạp dự án...';
+
+      // 1. Kiểm tra trong bộ nhớ local trước
+      let userProjects = {};
+      try { userProjects = JSON.parse(localStorage.getItem('clsg_user_projects') || '{}'); } catch(e){}
+      let proj = defaultProjects[targetProjId] || userProjects[targetProjId];
+
+      // Tìm kiếm dự phòng theo title nếu id dạng số
+      if (!proj) {
+        proj = Object.values(defaultProjects).find(p => p.id === targetProjId || p.title === targetProjId)
+            || Object.values(userProjects).find(p => p.id === targetProjId || p.title === targetProjId);
+        if (proj) targetProjId = proj.id;
+      }
+
+      // 2. Nếu local chưa có, kéo trực tiếp từ CloudDB ngay lập tức!
+      if (!proj) {
+        try {
+          const res = await fetch(`/api/projects?id=${encodeURIComponent(targetProjId)}`, { cache: 'no-store' });
+          if (res.ok) {
+            const row = await res.json();
+            if (row && (row.data || row.id)) {
+              proj = row.data || row;
+              defaultProjects[targetProjId] = proj;
+            }
+          }
+        } catch(e) {
+          console.warn('[Startup] Kéo dự án từ Cloud:', e);
+        }
+      }
+
+      // 3. Nếu vẫn chưa có, chờ CloudDB.loadAll() hoàn tất
+      if (!proj && window._cloudLoadPromise) {
+        await window._cloudLoadPromise;
+        proj = defaultProjects[targetProjId];
+      }
+
+      if (proj) {
+        currentProjectId = targetProjId;
+        try { localStorage.setItem('clsg_active_project_id', targetProjId); } catch(e){}
+        loadProjectIntoWorkspace(targetProjId);
+        // Khôi phục chính xác Tab người dùng đang đứng (Kịch bản / Video / Sơ đồ)
+        if (savedTab && typeof switchCenterTab === 'function') {
+          switchCenterTab(savedTab);
+        }
+      } else {
+        // Dự án thực sự không tồn tại ở bất kỳ đâu -> mới về Dashboard
+        switchView('projects');
+      }
     }
+
+    restoreWorkspaceOnStartup();
   
     // =========================================================================
     // TRÍCH XUẤT CHI TIẾT TỪNG TRANG (VISION AI)
