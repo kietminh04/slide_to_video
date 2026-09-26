@@ -17362,19 +17362,53 @@ QUY TẮC:
         showToast('Đang nạp tri thức bài giảng vào Database...');
         
         let chunks = [];
-        activeProject.scenes.forEach(scene => {
-          if (!scene.beats) return;
-          scene.beats.forEach(beat => {
-            const content = [beat.details, beat.mechanism, beat.key_point, beat.summary].filter(Boolean).join('. ');
-            if (content.length > 20) {
+
+        // 1. Thu thập từ detailedContent (Nội dung chi tiết từng trang slide)
+        if (activeProject.detailedContent && Array.isArray(activeProject.detailedContent)) {
+          activeProject.detailedContent.forEach(page => {
+            const txt = (page.explanation || '').trim();
+            if (txt.length > 20) {
+              const firstLine = txt.split('\n')[0].replace(/^[-#*•\d.\s]+/, '').trim();
               chunks.push({
-                chapter_name: scene.title,
-                section_name: beat.title,
-                text: content
+                chapter_name: `Trang ${page.pageNumber}`,
+                section_name: firstLine.slice(0, 60) || `Slide ${page.pageNumber}`,
+                text: txt
               });
             }
           });
-        });
+        }
+
+        // 2. Thu thập từ sơ đồ phân cảnh (Beats hoặc Sections/Items)
+        if (activeProject.scenes && Array.isArray(activeProject.scenes)) {
+          activeProject.scenes.forEach(scene => {
+            if (scene.beats && Array.isArray(scene.beats)) {
+              scene.beats.forEach(beat => {
+                const content = [beat.details, beat.mechanism, beat.key_point, beat.summary].filter(Boolean).join('. ');
+                if (content.length > 20) {
+                  chunks.push({
+                    chapter_name: scene.title || 'Bài giảng',
+                    section_name: beat.title || 'Tiểu mục',
+                    text: content
+                  });
+                }
+              });
+            }
+            if (scene.sections && Array.isArray(scene.sections)) {
+              scene.sections.forEach(sec => {
+                (sec.items || []).forEach(it => {
+                  const itContent = [it.text, it.summary, it.mechanism, it.key_point, it.details].filter(Boolean).join('. ');
+                  if (itContent.length > 20) {
+                    chunks.push({
+                      chapter_name: scene.title || 'Bài giảng',
+                      section_name: it.title || sec.title || 'Mục',
+                      text: itContent
+                    });
+                  }
+                });
+              });
+            }
+          });
+        }
 
         if (chunks.length === 0) {
             showToast('⚠️ Sơ đồ trống, không có văn bản nào đủ dài để nạp.');
