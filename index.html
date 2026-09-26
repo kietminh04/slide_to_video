@@ -7824,9 +7824,16 @@
           ex(currentNodesMap[nodeKey]);
         }
       }
+
+      // Nếu slide bị loại trừ đang là slide hiển thị trên Video Player -> reset để tự động chuyển sang trang tiếp theo
+      if (window._videoActiveSegKey === nodeKey || (typeof _videoCurrentSegKey !== 'undefined' && _videoCurrentSegKey === nodeKey)) {
+        window._videoActiveSegKey = null;
+        if (typeof _videoCurrentSegKey !== 'undefined') _videoCurrentSegKey = null;
+      }
+
       renderMindmap();
       renderScriptDocument();
-      if (typeof renderVideoGridTimeline === 'function') renderVideoGridTimeline();
+      if (typeof renderVideoTimeline === 'function') renderVideoTimeline();
       if (typeof updateLockedBadge === 'function') updateLockedBadge();
       if (typeof syncGlobalConfigFromProject === 'function') syncGlobalConfigFromProject();
       if (typeof autoSaveWorkspaceState === 'function') autoSaveWorkspaceState();
@@ -8599,9 +8606,7 @@
 
       // Cập nhật video studio title
       const videoTitle = document.getElementById('video-studio-title');
-      if (videoTitle) videoTitle.textContent = activeProject.title;
-      const videoSlideTitle = document.getElementById('video-current-slide-title');
-      if (videoSlideTitle) videoSlideTitle.textContent = activeProject.title;
+      if (videoTitle && activeProject?.title) videoTitle.textContent = activeProject.title;
     }
 
     let currentNodesMap = {};
@@ -13586,6 +13591,12 @@ QUY TẮC BẮT BUỘC:
             updateSegmentCardStats(itKey, scriptText);
           }
           updateScriptHeaderStats();
+          // TỰ ĐỘNG CHỌN VÀ NẠP NGAY SLIDE NÀY VÀO VIDEO STUDIO PLAYER (VÍ DỤ SINH LẺ TRANG 3 THÌ HIỆN TRANG 3)
+          window._videoActiveSegKey = itKey;
+          if (typeof _videoCurrentSegKey !== 'undefined') _videoCurrentSegKey = itKey;
+          if (typeof renderVideoTimeline === 'function') {
+            renderVideoTimeline(itKey);
+          }
           // TỰ ĐỘNG LƯU VĨNH VIỄN VÀO DB NGAY LẬP TỨC (F5 KHÔNG MẤT)
           if (typeof autoSaveWorkspaceState === 'function') {
             autoSaveWorkspaceState();
@@ -13664,6 +13675,24 @@ QUY TẮC BẮT BUỘC:
 
         hideLoading();
         renderScriptDocument();
+
+        // TỰ ĐỘNG BẬT VÀ NẠP SLIDE ĐẦU TIÊN CÓ THỂ HIỂN THỊ ĐƯỢC (BỎ QUA TRANG ĐÃ BỊ 'x')
+        let firstValidKey = null;
+        for (let i = 0; i < totalPages; i++) {
+          const k = `grid-page-${i}`;
+          if (!isNodeExcluded(k)) {
+            firstValidKey = k;
+            break;
+          }
+        }
+        if (firstValidKey) {
+          window._videoActiveSegKey = firstValidKey;
+          if (typeof _videoCurrentSegKey !== 'undefined') _videoCurrentSegKey = firstValidKey;
+          if (typeof renderVideoTimeline === 'function') {
+            renderVideoTimeline(firstValidKey);
+          }
+        }
+
         if (typeof autoSaveWorkspaceState === 'function') autoSaveWorkspaceState();
         showToast(forceRewrite ? `🎉 Đã sinh lại toàn bộ kịch bản cho ${totalPages} trang slide (ngôn ngữ người nói tự nhiên)!` : `🎉 Đã hoàn tất & tự động lưu kịch bản cho toàn bộ ${totalPages} trang slide!`);
         return;
@@ -18108,7 +18137,7 @@ QUY TẮC BẮT BUỘC:
       checkAndDisplaySavedVideoBanner();
     }
 
-    function renderVideoTimeline() {
+    function renderVideoTimeline(preferredSegKey = null) {
       const container = document.getElementById('video-timeline-container');
       if (!container) return;
       container.innerHTML = '';
@@ -18249,19 +18278,32 @@ QUY TẮC BẮT BUỘC:
         vTitle.textContent = activeProject.title;
       }
 
-      // Tự động chọn slide đầu tiên nếu chưa có slide nào được chọn
+      // TỰ ĐỘNG BẬT VÀ HIỂN THỊ NGAY KHUNG HÌNH SLIDE HỢP LỆ (LUÔN CẬP NHẬT UI TRÌNH CHIẾU)
       if (window._allVideoSegments && window._allVideoSegments.length > 0) {
-        const currentActive = window._videoActiveSegKey
-          ? window._allVideoSegments.find(s => s.segKey === window._videoActiveSegKey)
-          : null;
-        if (!currentActive) {
-          const first = window._allVideoSegments[0];
-          selectVideoSegment(first.segKey, first.thumb, first.subtitle, first.narr, first.dur, false);
+        let targetSeg = null;
+
+        // 1. Ưu tiên preferredSegKey nếu được chỉ định (ví dụ slide vừa sinh lẻ xong)
+        if (preferredSegKey) {
+          targetSeg = window._allVideoSegments.find(s => s.segKey === preferredSegKey && !isNodeExcluded(s.segKey));
         }
-        // TIỀN TẢI TRƯỚC ÂM THANH CHO 2 SLIDE ĐẦU TIÊN (LOẠI BỎ ĐỘ TRỄ KHI BẤM PLAY)
-        preloadSegmentAudio(window._allVideoSegments[0].segKey, window._allVideoSegments[0].narr);
-        if (window._allVideoSegments[1]) {
-          preloadSegmentAudio(window._allVideoSegments[1].segKey, window._allVideoSegments[1].narr);
+
+        // 2. Tiếp theo ưu tiên window._videoActiveSegKey hiện tại nếu hợp lệ (không bị 'x')
+        if (!targetSeg && window._videoActiveSegKey) {
+          targetSeg = window._allVideoSegments.find(s => s.segKey === window._videoActiveSegKey && !isNodeExcluded(s.segKey));
+        }
+
+        // 3. Fallback: Chọn slide đầu tiên có thể hiển thị được (bỏ qua trang đã bị 'x')
+        if (!targetSeg) {
+          targetSeg = window._allVideoSegments.find(s => !isNodeExcluded(s.segKey)) || window._allVideoSegments[0];
+        }
+
+        if (targetSeg) {
+          // BẮT BUỘC GỌI selectVideoSegment ĐỂ NẠP NGAY KHUNG HÌNH/ẢNH SLIDE LÊN MÀN HÌNH PREVIEW
+          selectVideoSegment(targetSeg.segKey, targetSeg.thumb, targetSeg.subtitle || targetSeg.title, targetSeg.narr, targetSeg.dur, false);
+          // TIỀN TẢI TRƯỚC ÂM THANH CHO SLIDE NÀY VÀ SLIDE TIẾP THEO
+          preloadSegmentAudio(targetSeg.segKey, targetSeg.narr);
+          const nextSeg = window._allVideoSegments.find(s => s.segKey !== targetSeg.segKey && !isNodeExcluded(s.segKey));
+          if (nextSeg) preloadSegmentAudio(nextSeg.segKey, nextSeg.narr);
         }
       }
 
@@ -18716,9 +18758,24 @@ QUY TẮC BẮT BUỘC:
         return;
       }
 
-      if (!_videoCurrentSegKey) {
-        const first = allSegs[0];
-        selectVideoSegment(first.segKey, first.thumb, first.subtitle, first.narr, first.dur, true);
+      // 1. Tìm segment mục tiêu hợp lệ (không bị 'x')
+      let curSeg = null;
+      if (_videoCurrentSegKey) {
+        curSeg = allSegs.find(s => s.segKey === _videoCurrentSegKey && !isNodeExcluded(s.segKey));
+      }
+      if (!curSeg && window._videoActiveSegKey) {
+        curSeg = allSegs.find(s => s.segKey === window._videoActiveSegKey && !isNodeExcluded(s.segKey));
+      }
+      if (!curSeg) {
+        curSeg = allSegs.find(s => !isNodeExcluded(s.segKey)) || allSegs[0];
+      }
+
+      // 2. Nếu player chưa được nạp khung hình slide thật, hoặc đổi sang slide khác -> Nạp và phát ngay!
+      const slideDisplay = document.getElementById('video-slide-display');
+      const isMockupPlaceholder = !slideDisplay || slideDisplay.querySelector('#video-current-slide-info') !== null;
+
+      if (!_videoCurrentSegKey || _videoCurrentSegKey !== curSeg.segKey || isMockupPlaceholder) {
+        selectVideoSegment(curSeg.segKey, curSeg.thumb, curSeg.subtitle || curSeg.title, curSeg.narr, curSeg.dur, true);
         return;
       }
 
@@ -18730,13 +18787,11 @@ QUY TẮC BẮT BUỘC:
         activeAudio.play().then(() => {
           startRealtimeAudioSync(activeAudio, _videoCurrentSegKey, window._activeAudioSessionToken);
         }).catch(e => {
-          const curSeg = allSegs.find(s => s.segKey === _videoCurrentSegKey) || allSegs[0];
           startVideoSegmentPlayback(curSeg.segKey, curSeg.narr);
         });
         return;
       }
 
-      const curSeg = allSegs.find(s => s.segKey === _videoCurrentSegKey) || allSegs[0];
       startVideoSegmentPlayback(curSeg.segKey, curSeg.narr);
     }
 
