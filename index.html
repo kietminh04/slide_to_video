@@ -5801,6 +5801,116 @@
     };
     window.VideoDB = VideoDB;
 
+    // =========================================================================
+    // AUDIO CACHE DB (INDEXEDDB): LƯU VĨNH VIỄN TẤT CẢ FILE AUDIO CỦA CÁC SLIDE
+    // (DÙ F5 HAY RELOAD TRÌNH DUYỆT CŨNG KHÔNG BAO GIỜ BỊ MẤT AUDIO/VIDEO)
+    // =========================================================================
+    const AudioCacheDB = {
+      dbName: 'CLSG_Audio_Cache_DB',
+      storeName: 'segment_audios',
+      version: 1,
+      _db: null,
+
+      async getDB() {
+        if (this._db) return this._db;
+        return new Promise((resolve, reject) => {
+          const req = indexedDB.open(this.dbName, this.version);
+          req.onupgradeneeded = (e) => {
+            const db = e.target.result;
+            if (!db.objectStoreNames.contains(this.storeName)) {
+              db.createObjectStore(this.storeName, { keyPath: 'id' });
+            }
+          };
+          req.onsuccess = (e) => {
+            this._db = e.target.result;
+            resolve(this._db);
+          };
+          req.onerror = (e) => {
+            console.error('[AudioCacheDB] Không thể khởi tạo IndexedDB:', e);
+            reject(e);
+          };
+        });
+      },
+
+      async saveAudio(projectId, segKey, blob, duration, voice = 'quynh_anh') {
+        if (!projectId || !segKey || !blob) return null;
+        try {
+          const db = await this.getDB();
+          const id = `${projectId}_${segKey}`;
+          const record = {
+            id,
+            projectId,
+            segKey,
+            blob,
+            duration,
+            voice,
+            createdAt: Date.now()
+          };
+          return new Promise((resolve) => {
+            const tx = db.transaction([this.storeName], 'readwrite');
+            const store = tx.objectStore(this.storeName);
+            store.put(record);
+            tx.oncomplete = () => resolve(record);
+            tx.onerror = () => resolve(null);
+          });
+        } catch (e) {
+          console.warn('[AudioCacheDB] Lỗi lưu Audio vào IndexedDB:', e);
+          return null;
+        }
+      },
+
+      async loadAllProjectAudios(projectId) {
+        if (!projectId) return {};
+        try {
+          const db = await this.getDB();
+          return new Promise((resolve) => {
+            const tx = db.transaction([this.storeName], 'readonly');
+            const store = tx.objectStore(this.storeName);
+            const req = store.getAll();
+            req.onsuccess = () => {
+              const list = req.result || [];
+              const map = {};
+              list.forEach(item => {
+                if (item.projectId === projectId && item.blob) {
+                  try {
+                    const audioUrl = URL.createObjectURL(item.blob);
+                    map[item.segKey] = {
+                      audioUrl,
+                      duration: item.duration,
+                      blob: item.blob,
+                      voice: item.voice || 'quynh_anh'
+                    };
+                  } catch (e) { }
+                }
+              });
+              resolve(map);
+            };
+            req.onerror = () => resolve({});
+          });
+        } catch (e) {
+          return {};
+        }
+      },
+
+      async deleteProjectAudios(projectId) {
+        if (!projectId) return;
+        try {
+          const db = await this.getDB();
+          const tx = db.transaction([this.storeName], 'readwrite');
+          const store = tx.objectStore(this.storeName);
+          const req = store.getAll();
+          req.onsuccess = () => {
+            (req.result || []).forEach(item => {
+              if (item.projectId === projectId) {
+                store.delete(item.id);
+              }
+            });
+          };
+        } catch (e) { }
+      }
+    };
+    window.AudioCacheDB = AudioCacheDB;
+
     // ĐỒNG BỘ VÀ KHÔI PHỤC DỰ ÁN TỪ LOCALSTORAGE
     try {
       const deletedList = JSON.parse(localStorage.getItem('clsg_deleted_projects') || '[]');
@@ -12800,6 +12910,21 @@ QUY TẮC BẮT BUỘC:
         }
       }
 
+      // Tự động khôi phục toàn bộ file audio của từng slide từ IndexedDB (AudioCacheDB)
+      window._audioCacheLoadedFromDB = false;
+      if (typeof AudioCacheDB !== 'undefined') {
+        AudioCacheDB.loadAllProjectAudios(projId).then(audioMap => {
+          if (audioMap && Object.keys(audioMap).length > 0) {
+            window._videoAudioCache = Object.assign(window._videoAudioCache || {}, audioMap);
+            window._audioCacheLoadedFromDB = true;
+            console.log(`[AudioCacheDB] Đã khôi phục ${Object.keys(audioMap).length} file audio của project ${projId}`);
+            if (typeof renderVideoTimeline === 'function') {
+              renderVideoTimeline();
+            }
+          }
+        });
+      }
+
       // Xoá trắng lịch sử Chat AI khi chuyển Project để tránh rò rỉ context
       if (typeof clsgChatSessionHistory !== 'undefined') {
         clsgChatSessionHistory.length = 0;
@@ -18110,6 +18235,17 @@ QUY TẮC BẮT BUỘC:
       window._allVideoSegments = [];
       window._videoAudioCache = window._videoAudioCache || {};
 
+      const projId = currentProjectId || activeProject?.id;
+      if (projId && typeof AudioCacheDB !== 'undefined' && !window._audioCacheLoadedFromDB) {
+        window._audioCacheLoadedFromDB = true;
+        AudioCacheDB.loadAllProjectAudios(projId).then(audioMap => {
+          if (audioMap && Object.keys(audioMap).length > 0) {
+            window._videoAudioCache = Object.assign(window._videoAudioCache || {}, audioMap);
+            renderVideoTimeline(preferredSegKey);
+          }
+        });
+      }
+
       const allSources = (activeProject && activeProject.sources && activeProject.sources.length > 0)
         ? activeProject.sources
         : [{ name: (activeProject?.title || 'Tài Liệu') + '.pdf', pages: 35, size: '1.2 MB', active: true }];
@@ -18377,6 +18513,11 @@ QUY TẮC BẮT BUỘC:
           voice: voiceKey
         };
 
+        const projId = currentProjectId || activeProject?.id;
+        if (projId && typeof AudioCacheDB !== 'undefined') {
+          AudioCacheDB.saveAudio(projId, segKey, blob, realDur, voiceKey);
+        }
+
         seg.audioData = window._videoAudioCache[segKey];
         seg.dur = realDur;
 
@@ -18480,6 +18621,11 @@ QUY TẮC BẮT BUỘC:
                 blob: blob,
                 voice: voiceKey
               };
+
+              const projId = currentProjectId || activeProject?.id;
+              if (projId && typeof AudioCacheDB !== 'undefined') {
+                AudioCacheDB.saveAudio(projId, seg.segKey, blob, realDur, voiceKey);
+              }
               seg.audioData = window._videoAudioCache[seg.segKey];
               seg.dur = realDur;
               successCount++;
@@ -19675,12 +19821,17 @@ Yêu cầu trình bày:
               window._currentAudioPlayer = audio;
               if (boundSegKey) {
                 window._videoAudioCache = window._videoAudioCache || {};
+                const audioDur = audio.duration ? Math.round(audio.duration / speed) : null;
                 window._videoAudioCache[boundSegKey] = {
                   audioUrl: audioUrl,
-                  duration: audio.duration ? Math.round(audio.duration / speed) : null,
+                  duration: audioDur,
                   blob: blob,
                   voice: 'quynh_anh'
                 };
+                const projId = currentProjectId || activeProject?.id;
+                if (projId && typeof AudioCacheDB !== 'undefined') {
+                  AudioCacheDB.saveAudio(projId, boundSegKey, blob, audioDur, 'quynh_anh');
+                }
               }
               await audio.play();
               if (typeof startRealtimeAudioSync === 'function') {
