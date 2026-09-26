@@ -6292,6 +6292,7 @@
 
     function stopAllAudioAndVideoPlayback() {
       try {
+        if (typeof BgmEngine !== 'undefined') BgmEngine.stop();
         stopCurrentSlideAudio();
 
         if (typeof _videoIsPlaying !== 'undefined') {
@@ -6594,6 +6595,22 @@
     // =========================================================================
     // GLOBAL CONFIG BAR FUNCTIONS (THỜI GIAN TỔNG 2 CHIỀU, GIỌNG ĐỌC, TỐC ĐỘ, KHÓA)
     // =========================================================================
+    document.getElementById('video-bgm')?.addEventListener('change', (e) => {
+      const val = e.target.value;
+      if (_videoIsPlaying) {
+        BgmEngine.start(val);
+      } else if (val !== 'none') {
+        // Phát thử 3s cho người dùng nghe thẩm âm
+        BgmEngine.start(val);
+        showToast(`🎵 Đang phát thử nhạc nền: ${e.target.options[e.target.selectedIndex]?.text}`);
+        setTimeout(() => {
+          if (!_videoIsPlaying) BgmEngine.stop();
+        }, 4000);
+      } else {
+        BgmEngine.stop();
+      }
+    });
+
     function applyGlobalDuration() {
       const input = document.getElementById('gcfg-total-minutes');
       if (!input || !activeProject) return;
@@ -10017,12 +10034,28 @@
     // =========================================================================
     let currentScriptViewMode = 'badges'; // 'badges' | 'ssml' | 'plain'
 
+    // HÀM ĐỊNH DẠNG KỊCH BẢN THEO CHẾ ĐỘ XEM ĐANG CHỌN (SSML, PLAIN, BADGES)
+    function formatScriptForViewMode(rawText, wpm = 140) {
+      if (!rawText || !rawText.trim()) return '';
+      if (typeof ProsodyPlanner === 'undefined' || !ProsodyPlanner.plan) return rawText;
+      const planned = ProsodyPlanner.plan(rawText, wpm);
+      if (currentScriptViewMode === 'ssml') {
+        return planned.ssml || rawText;
+      } else if (currentScriptViewMode === 'plain') {
+        return planned.plain || rawText;
+      } else {
+        return planned.marked || rawText;
+      }
+    }
+
     function setScriptViewMode(mode) {
       currentScriptViewMode = mode;
       document.querySelectorAll('.view-mode-pill').forEach(btn => {
         btn.classList.toggle('active', btn.dataset.mode === mode);
       });
       renderScriptDocument();
+      const label = (mode === 'ssml') ? '🔊 Chuẩn W3C SSML (XML Tags)' : (mode === 'plain' ? '📄 Văn Bản Thuần (Phụ đề)' : '👁️ Nhịp Ngắt [P1/P2/P3]');
+      showToast(`Chuyển sang chế độ: ${label}`);
     }
 
     function escapeHtml(str) {
@@ -14390,9 +14423,13 @@ QUY TẮC BẮT BUỘC:
               </div>
             </div>
 
-            <!-- HÀNG 3: SOẠN THẢO KỊCH BẢN CHO TRANG -->
+            <!-- HÀNG 3: SOẠN THẢO KỊCH BẢN CHO TRANG (HỖ TRỢ W3C SSML / NHỊP NGẮT / VĂN BẢN THUẦN) -->
             <div>
-              <textarea class="segment-script-editor" placeholder="Chưa có kịch bản cho trang này. Bạn có thể tự gõ lời thoại giảng dạy tại đây hoặc bấm nút [✨ Sinh Kịch Bản Cho Trang Này] ở trên để AI tự động viết..." onchange="syncSegmentParam('${itKey}', 'narration', this.value)" oninput="updateSegmentCardStats('${itKey}', this.value)">${escapeHtml(itNarr)}</textarea>
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; font-size: 11px;">
+                <span style="color: var(--text-dim);">Định dạng hiển thị: <strong style="color: ${currentScriptViewMode === 'ssml' ? '#38bdf8' : (currentScriptViewMode === 'plain' ? '#a3e635' : '#fbbf24')};">${currentScriptViewMode === 'ssml' ? '🔊 Chuẩn W3C SSML' : (currentScriptViewMode === 'plain' ? '📄 Văn Bản Thuần' : '👁️ Nhịp Ngắt [P1/P2/P3]')}</strong></span>
+                <span style="font-size: 10px; opacity: 0.7;">(Chọn chế độ ở thanh trên)</span>
+              </div>
+              <textarea class="segment-script-editor" style="${currentScriptViewMode === 'ssml' ? 'font-family: monospace; font-size: 12px; color: #7dd3fc; background: rgba(15,23,42,0.85);' : ''}" placeholder="Chưa có kịch bản cho trang này. Bạn có thể tự gõ lời thoại giảng dạy tại đây hoặc bấm nút [✨ Sinh Kịch Bản Cho Trang Này] ở trên để AI tự động viết..." onchange="syncSegmentParam('${itKey}', 'narration', this.value)" oninput="updateSegmentCardStats('${itKey}', this.value)">${escapeHtml(formatScriptForViewMode(itNarr, itWpm))}</textarea>
             </div>
 
             <!-- HÀNG 4: THỐNG KÊ SỐ TỪ & THỜI GIAN ĐỌC -->
@@ -19121,9 +19158,131 @@ QUY TẮC BẮT BUỘC:
       }
     }
 
+    // =========================================================================
+    // PROCEDURAL BGM ENGINE (NHẠC NỀN PIANO THƯ GIÃN & AMBIENT NHẸ QUA WEB AUDIO)
+    // =========================================================================
+    const BgmEngine = {
+      _ctx: null,
+      _masterGain: null,
+      _timer: null,
+      _currentTrack: 'none',
+      _isPlaying: false,
+      _chordIndex: 0,
+
+      // Các hợp âm ấm áp thư giãn phong cách Lofi/Piano (Fmaj7 - Cmaj7 - Dm7 - Bbmaj7)
+      _chords: [
+        [174.61, 220.00, 261.63, 329.63], // Fmaj7 (F3, A3, C4, E4)
+        [130.81, 196.00, 246.94, 329.63], // Cmaj7 (C3, G3, B3, E4)
+        [146.83, 174.61, 220.00, 261.63], // Dm7 (D3, F3, A3, C4)
+        [116.54, 174.61, 220.00, 293.66]  // Bbmaj7 (Bb2, F3, A3, D4)
+      ],
+
+      init(existingCtx = null) {
+        if (existingCtx) {
+          this._ctx = existingCtx;
+        } else if (!this._ctx) {
+          const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+          if (AudioContextClass) this._ctx = new AudioContextClass();
+        }
+        if (this._ctx && !this._masterGain) {
+          this._masterGain = this._ctx.createGain();
+          this._masterGain.gain.setValueAtTime(0.08, this._ctx.currentTime); // Nhẹ nhàng 8% để không đè giọng đọc
+          this._masterGain.connect(this._ctx.destination);
+        }
+      },
+
+      start(trackType = 'piano', targetDest = null) {
+        if (!trackType || trackType === 'none') {
+          this.stop();
+          return;
+        }
+        this.init();
+        if (!this._ctx) return;
+        if (this._ctx.state === 'suspended') {
+          this._ctx.resume().catch(() => {});
+        }
+        this._currentTrack = trackType;
+        this._isPlaying = true;
+
+        if (targetDest && this._masterGain) {
+          try { this._masterGain.connect(targetDest); } catch(e){}
+        }
+
+        if (!this._timer) {
+          this._playNextChord();
+        }
+      },
+
+      stop() {
+        this._isPlaying = false;
+        if (this._timer) {
+          clearTimeout(this._timer);
+          this._timer = null;
+        }
+        if (this._masterGain && this._ctx) {
+          try {
+            this._masterGain.gain.linearRampToValueAtTime(0.0001, this._ctx.currentTime + 0.3);
+            setTimeout(() => {
+              if (!this._isPlaying && this._masterGain && this._ctx) {
+                this._masterGain.gain.setValueAtTime(0.08, this._ctx.currentTime);
+              }
+            }, 350);
+          } catch(e){}
+        }
+      },
+
+      _playNextChord() {
+        if (!this._isPlaying || !this._ctx) return;
+        const chord = this._chords[this._chordIndex % this._chords.length];
+        this._chordIndex++;
+
+        const now = this._ctx.currentTime;
+        const chordDur = 3.8; // 3.8 giây mỗi hợp âm êm ái
+
+        chord.forEach((freq, idx) => {
+          try {
+            const osc = this._ctx.createOscillator();
+            const gain = this._ctx.createGain();
+            const filter = this._ctx.createBiquadFilter();
+
+            osc.type = (this._currentTrack === 'piano') ? 'triangle' : 'sine';
+            osc.frequency.setValueAtTime(freq, now + idx * 0.07); // Arpeggio nhẹ
+
+            filter.type = 'lowpass';
+            filter.frequency.setValueAtTime(this._currentTrack === 'piano' ? 950 : 550, now);
+
+            const noteVol = (this._currentTrack === 'piano') ? 0.045 : 0.035;
+            gain.gain.setValueAtTime(0.0001, now + idx * 0.07);
+            gain.gain.linearRampToValueAtTime(noteVol, now + idx * 0.07 + 0.06);
+            gain.gain.exponentialRampToValueAtTime(0.0001, now + idx * 0.07 + 3.2);
+
+            osc.connect(filter);
+            filter.connect(gain);
+            gain.connect(this._masterGain);
+
+            osc.start(now + idx * 0.07);
+            osc.stop(now + idx * 0.07 + 3.3);
+          } catch(e){}
+        });
+
+        this._timer = setTimeout(() => {
+          if (this._isPlaying) this._playNextChord();
+        }, (chordDur - 0.2) * 1000);
+      }
+    };
+    window.BgmEngine = BgmEngine;
+
     function startVideoSegmentPlayback(segKey, narr) {
       // Dừng triệt để mọi nguồn âm thanh trước đó
       stopCurrentSlideAudio();
+
+      // BẬT NHẠC NỀN BGM NẾU NGƯỜI DÙNG ĐÃ CHỌN
+      const selectedBgm = document.getElementById('video-bgm')?.value || 'none';
+      if (selectedBgm !== 'none') {
+        BgmEngine.start(selectedBgm);
+      } else {
+        BgmEngine.stop();
+      }
 
       _videoIsPlaying = true;
       const playBtn = document.getElementById('video-play-btn');
@@ -19227,6 +19386,7 @@ QUY TẮC BẮT BUỘC:
 
     function pauseVideoPreview() {
       _videoIsPlaying = false;
+      if (typeof BgmEngine !== 'undefined') BgmEngine.stop();
       const playBtn = document.getElementById('video-play-btn');
       if (playBtn) playBtn.textContent = '▶️';
       if (_videoTickerTimer) {
@@ -19493,6 +19653,12 @@ QUY TẮC BẮT BUỘC:
           await audioCtx.resume();
         }
         dest = audioCtx.createMediaStreamDestination();
+        // TRỘN NHẠC NỀN BGM (PIANO THƯ GIÃN / AMBIENT) VÀO VIDEO XUẤT RA
+        const selectedBgm = document.getElementById('video-bgm')?.value || 'none';
+        if (selectedBgm !== 'none' && typeof BgmEngine !== 'undefined') {
+          BgmEngine.init(audioCtx);
+          BgmEngine.start(selectedBgm, dest);
+        }
       } catch (e) {
         console.warn('AudioContext not available:', e);
       }
@@ -19635,6 +19801,7 @@ QUY TẮC BẮT BUỘC:
         try { recorder.stop(); } catch (e) { }
 
         recorder.onstop = async () => {
+          if (typeof BgmEngine !== 'undefined') BgmEngine.stop();
           const videoBlob = new Blob(recordedChunks, { type: mimeType });
           const videoUrl = URL.createObjectURL(videoBlob);
           const ext = mimeType.includes('mp4') ? 'mp4' : 'webm';
