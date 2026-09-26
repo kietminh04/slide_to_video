@@ -13476,12 +13476,14 @@ QUY TẮC BẮT BUỘC:
       renderMindmap();
       initMindmapPanZoom();
 
-      // TỰ ĐỘNG CHẠY VISION AI NẾU CÓ TRANG CHƯA PHÂN TÍCH THỊ GIÁC
-      if (activeProject && activeProject.detailedContent && activeProject.detailedContent.some(p => !p.isVisionEnriched)) {
-        setTimeout(() => {
-          startBackgroundVisionEnrichment(activeProject);
-        }, 800);
+      // Dừng tác vụ Vision AI ngầm nếu đang chạy để bảo vệ tài nguyên máy và tránh lag khi F5 / mở dự án
+      if (typeof _visionEnrichAbortController !== 'undefined' && _visionEnrichAbortController) {
+        _visionEnrichAbortController.abort();
+        _visionEnrichAbortController = null;
       }
+      _isVisionEnriching = false;
+      const progressBox = document.getElementById('content-extraction-progress');
+      if (progressBox) progressBox.style.display = 'none';
       initNodeTuningDrawerEvents();
       initLayoutResizers();
       renderScriptDocument();
@@ -16732,10 +16734,11 @@ QUY TẮC BẮT BUỘC:
         switchView('workspace');
         showToast(`Đã sinh kịch bản bài giảng thành công từ ${file.name}!`);
         
-        // TỰ ĐỘNG NẠP RAG VÀ KÍCH HOẠT VISION AI PHÂN TÍCH CHI TIẾT
+        // Chỉ kích hoạt Vision AI nếu người dùng chủ động bật tùy chọn Quét Ảnh (Vision AI)
         setTimeout(() => {
           if (typeof triggerRagIngestion === 'function') triggerRagIngestion();
-          if (typeof startBackgroundVisionEnrichment === 'function' && projData && projData.detailedContent) {
+          const useVisualOcr = document.getElementById('use-visual-ocr')?.checked;
+          if (useVisualOcr && typeof startBackgroundVisionEnrichment === 'function' && projData && projData.detailedContent) {
             startBackgroundVisionEnrichment(projData);
           }
         }, 1000);
@@ -20503,10 +20506,13 @@ Yêu cầu trình bày:
         hideLoading();
         showToast(`✅ Đã nạp thành công toàn bộ ${detailed.length} trang slide! AI Vision đang bắt đầu phân tích sâu...`);
 
-        // Tự động kích hoạt Vision AI phân tích chuyên sâu từng trang ngầm
-        setTimeout(() => {
-          startBackgroundVisionEnrichment(activeProject);
-        }, 500);
+        // Chỉ kích hoạt Vision AI nếu người dùng chủ động bật tùy chọn Quét Ảnh
+        const useVisualOcr = document.getElementById('use-visual-ocr')?.checked;
+        if (useVisualOcr) {
+          setTimeout(() => {
+            startBackgroundVisionEnrichment(activeProject);
+          }, 500);
+        }
 
       } catch (err) {
         console.error("Lỗi nạp slide trực tiếp:", err);
