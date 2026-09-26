@@ -10807,87 +10807,92 @@ LƯU Ý QUAN TRỌNG:
         const pace = Math.max(80, parseInt(wpm) || 140);
         const targetWords = Math.round((dur * pace) / 60);
 
-        const textAll = `${nodeText || ''} ${chapterTitle || ''} ${sectionTitle || ''} ${summary || ''}`.toLowerCase();
+        // 1. Lọc sạch triệt để toàn bộ rác meta và comment từ Vision AI / OCR
+        let rawContent = (summary || '').trim();
+        let cleanSum = rawContent
+          .replace(/Nội dung văn bản trên slide như sau:?/gi, '')
+          .replace(/\d+\.\s*Nội dung văn bản trên slide:?/gi, '')
+          .replace(/Mô tả và giải thích:[\s\S]*$/gi, '') // Bóc bỏ hoàn toàn phần nhận xét ngoài lề của Vision AI
+          .replace(/Slide này (trình bày|là|có|chứa|thể hiện)[\s\S]*$/gi, '')
+          .replace(/Hình ảnh nền[\s\S]*$/gi, '')
+          .replace(/Bên cạnh nội dung văn bản[\s\S]*$/gi, '')
+          .replace(/Tiêu đề:?/gi, '')
+          .replace(/---\s*/g, '')
+          .replace(/\$\$[\s\S]*?\$\$/g, '')
+          .replace(/\$[^\$]*?\$/g, '')
+          .replace(/[*_#`]/g, '')
+          .trim();
 
-        // 1. Phân tích miền kiến thức & ưu tiên dữ liệu thực trích xuất từ slide
-        let domainIntro = "";
-        let coreFormula = "";
-        let deepAnalysis = "";
-        let practicalTakeaway = "";
+        // 2. Tách các dòng / đề mục nếu slide là danh sách hoặc mục tiêu
+        const lines = cleanSum.split('\n').map(l => l.trim()).filter(Boolean);
+        let slideTitle = '';
+        let bulletPoints = [];
 
-        if (summary && summary.trim().length > 25) {
-          let cleanSum = summary
-            .replace(/Nội dung văn bản trên slide như sau:?/gi, '')
-            .replace(/Tiêu đề:?/gi, 'Trọng tâm:')
-            .replace(/---\s*/g, '')
-            .replace(/\$\$[\s\S]*?\$\$/g, '')
-            .replace(/\$[^\$]*?\$/g, '')
-            .replace(/[*_#`]/g, '')
-            .replace(/\s+/g, ' ')
-            .trim();
-          domainIntro = `Trong phân đoạn này, [P1] chúng ta cùng phân tích nội dung của ${nodeText}.`;
-          deepAnalysis = cleanSum.slice(0, 350);
-          practicalTakeaway = "Nắm vững luận điểm này giúp chúng ta làm chủ toàn diện nội dung bài giảng và vận dụng hiệu quả vào thực tiễn.";
-        } else if (textAll.includes('mtcnn') || textAll.includes('facenet') || textAll.includes('khuôn mặt') || textAll.includes('face') || textAll.includes('cnn')) {
-          if (textAll.includes('mtcnn')) {
-            domainIntro = "Mạng tích chập đa tầng MTCNN (Multi-task Cascaded Convolutional Networks) đóng vai trò là kiến trúc xương sống trong bài toán phát hiện khuôn mặt thời gian thực.";
-            coreFormula = "Cấu trúc gồm 3 mạng nối tiếp: P-Net đề xuất vùng, R-Net tinh lọc ứng viên, và O-Net xuất tọa độ bounding box cùng 5 điểm mốc khuôn mặt: [P1] $$\mathcal{L}_{det} + \alpha \mathcal{L}_{box} + \beta \mathcal{L}_{landmark}$$ [P2]";
-            deepAnalysis = "Mỗi mạng con được tối ưu hóa đồng thời trên nhiều nhánh mất mát (Multi-task Loss), [P1] giúp cân bằng giữa tốc độ tính toán và độ chính xác của hộp bao khuôn mặt.";
-            practicalTakeaway = "Điều này cho phép hệ thống loại bỏ nhanh chóng các vùng nền không chứa khuôn mặt ngay từ tầng P-Net, [P1] giảm thiểu áp lực tính toán cho các tầng mạng sâu phía sau.";
-          } else if (textAll.includes('facenet')) {
-            domainIntro = "Mạng FaceNet giải quyết bài toán nhận diện và xác thực khuôn mặt bằng cách ánh xạ trực tiếp ảnh mặt người thành véc-tơ đặc trưng 128 chiều trong không gian Euclid.";
-            coreFormula = "Mô hình được huấn luyện bằng hàm mất mát bộ ba Triplet Loss: [P1] $$\mathcal{L} = \sum_{i=1}^N \max(0, \|f(x_i^a) - f(x_i^p)\|_2^2 - \|f(x_i^a) - f(x_i^n)\|_2^2 + \alpha)$$ [P2]";
-            deepAnalysis = "Hàm mục tiêu ép khoảng cách giữa ảnh mỏ neo (Anchor) và ảnh cùng người (Positive) phải nhỏ hơn khoảng cách tới ảnh người khác (Negative) tối thiểu một biên độ $\\alpha$.";
-            practicalTakeaway = "Nhờ vậy, khoảng cách $L_2$ giữa hai véc-tơ đặc trưng phản ánh trực tiếp mức độ tương đồng giữa hai khuôn mặt, [P1] cho phép so khớp với độ chính xác vượt trội.";
+        lines.forEach(l => {
+          const m = l.match(/^(\d+[\.\)]|\-|\*|•)\s*(.*)/);
+          if (m) {
+            bulletPoints.push(m[2].trim());
+          } else if (!slideTitle && l.length < 60) {
+            slideTitle = l;
           } else {
-            domainIntro = "Mạng nơ-ron tích chập (Convolutional Neural Networks) là công cụ nền tảng xử lý dữ liệu ảnh thông qua các phép trích xuất đặc trưng đa tầng.";
-            coreFormula = "Phép tích chập ánh xạ qua bộ lọc học được: [P1] $$(I * K)(i, j) = \sum_m \sum_n I(i-m, j-n) K(m, n)$$ [P2]";
-            deepAnalysis = "Các tầng tích chập ban đầu nhận diện các cạnh và vân bề mặt, [P1] trong khi các tầng sâu hơn tổng hợp thành các cấu trúc ngữ nghĩa phức tạp.";
-            practicalTakeaway = "Kết hợp tầng gộp (Pooling) và chuẩn hóa BatchNorm giúp mô hình duy trì tính bất biến đối với các phép tịnh tiến và biến dạng ảnh.";
+            bulletPoints.push(l);
           }
-        } else if (textAll.includes('time') || textAll.includes('chuỗi thời gian') || textAll.includes('dự báo') || textAll.includes('arima') || textAll.includes('stationary')) {
-          domainIntro = "Trong phân tích dữ liệu chuỗi thời gian, tính dừng (Stationarity) là điều kiện tiên quyết đảm bảo các quy luật thống kê không bị dịch chuyển theo thời gian.";
-          coreFormula = "Mô hình kết hợp tự hồi quy và trung bình trượt được biểu diễn: [P1] $$X_t = c + \sum_{i=1}^p \phi_i X_{t-i} + \sum_{j=1}^q \theta_j \varepsilon_{t-j} + \varepsilon_t$$ [P2]";
-          deepAnalysis = "Phương pháp sai phân bậc $d$ loại bỏ thành phần xu hướng, [P1] kết hợp phân tích hàm tự tương quan $ACF$ và tự tương quan riêng phần $PACF$ để xác định bậc $(p, q)$ tối ưu.";
-          practicalTakeaway = "Nắm vững chu trình này giúp mô hình thích ứng chuẩn xác với biến động thực tế mà không bị sai số giả tạo do hiện tượng tương quan ảo.";
-        } else if (textAll.includes('cluster') || textAll.includes('phân cụm') || textAll.includes('k-means') || textAll.includes('gmm')) {
-          domainIntro = "Kỹ thuật phân cụm thống kê không giám sát hướng tới việc nhóm các đối tượng dữ liệu sao cho độ tương đồng nội cụm là lớn nhất và giữa các cụm là nhỏ nhất.";
-          coreFormula = "Mục tiêu tối thiểu hóa tổng bình phương khoảng cách tới tâm cụm: [P1] $$J = \sum_{k=1}^K \sum_{x_i \in S_k} \|x_i - \mu_k\|^2$$ [P2]";
-          deepAnalysis = "Thuật toán luân phiên giữa hai pha: gán từng điểm dữ liệu vào cụm gần nhất và cập nhật lại tọa độ trọng tâm $\mu_k$.";
-          practicalTakeaway = "Việc tiền xử lý chuẩn hóa thang đo và lựa chọn số cụm $K$ tối ưu (qua chỉ số Silhouette hoặc phương pháp Elbow) quyết định trực tiếp chất lượng phân cụm.";
-        } else {
-          domainIntro = `Phân đoạn kiến thức [${nodeCode}] "${nodeText}" giữ vai trò trọng yếu trong việc xây dựng hệ thống bài giảng chuyên sâu.`;
-          coreFormula = "Quy trình thực thi tối ưu hóa hàm mục tiêu: [P1] $$\min_\theta \mathcal{L}(\theta) + \lambda \|\theta\|^2$$ [P2]";
-          deepAnalysis = "Chúng ta phân tích từng biến số và điều kiện biên, [P1] làm sáng tỏ sự tương tác giữa các tham số cấu thành hệ thống.";
-          practicalTakeaway = "Điều này cung cấp cơ sở định lượng vững chắc, [P1] cho phép người học ứng dụng linh hoạt vào đồ án và các bài toán thực tiễn.";
-        }
+        });
 
-        // 2. Ghép nối kịch bản hoàn chỉnh (Không dùng từ meta máy móc)
+        // 3. Xây dựng lời thoại sư phạm tự nhiên (TUYỆT ĐỐI KHÔNG xưng "Đối với Trang X")
         let script = "";
+
         if (bridgeIntro && bridgeIntro.trim().length > 0) {
           const cleanBridge = bridgeIntro.replace(/Nối tiếp câu kết của.*?:\s*"?/gi, '').replace(/"?$/g, '').trim();
           if (cleanBridge) {
             script += `${cleanBridge} [P2] `;
           }
-        } else {
-          script += `Đối với ${nodeText}, [P1] đây là khía cạnh then chốt cần làm rõ. [P2] `;
         }
 
-        script += `${domainIntro} [P1] ${coreFormula} [P2] ${deepAnalysis} [P2] `;
+        const isPageNumberName = !nodeText || /^(Trang|Slide)\s*\d+/i.test(nodeText.trim());
+
+        if (bulletPoints.length >= 2) {
+          // Xử lý dạng danh sách mục tiêu / các ý chính
+          const transitions = ['Trước hết,', 'Tiếp theo,', 'Trọng tâm thứ ba là', 'Thứ tư,', 'Và cuối cùng,'];
+          const introTopic = slideTitle || (!isPageNumberName ? nodeText : 'bài học');
+          
+          if (/mục tiêu/i.test(introTopic)) {
+            script += `Bước vào ${introTopic.toLowerCase()}, bài học hướng tới các mục tiêu then chốt sau đây. [P1] `;
+          } else {
+            script += `Đi sâu vào ${introTopic.toLowerCase()}, chúng ta cùng làm rõ các nội dung trọng tâm. [P1] `;
+          }
+
+          bulletPoints.forEach((p, idx) => {
+            const trans = transitions[idx] || 'Bên cạnh đó,';
+            const pClean = p.replace(/[\.\,\;]+$/, '');
+            const pTag = (idx === bulletPoints.length - 1) ? '[P3]' : (idx % 2 === 0 ? '[P1]' : '[P2]');
+            script += `${trans} ${pClean}. ${pTag} `;
+          });
+        } else if (cleanSum && cleanSum.length > 20) {
+          // Xử lý dạng đoạn văn phân tích khái niệm / cơ chế
+          const cleanText = cleanSum.replace(/\s+/g, ' ');
+          if (!isPageNumberName) {
+            script += `Tiếp nối mạch bài giảng, chúng ta cùng phân tích ${nodeText}. [P1] `;
+          } else if (slideTitle) {
+            script += `Về ${slideTitle.toLowerCase()}, đây là khía cạnh then chốt cần làm rõ. [P1] `;
+          } else {
+            script += `Trong phần kiến thức này, chúng ta cùng làm rõ các luận điểm trọng tâm. [P1] `;
+          }
+          script += `${cleanText.slice(0, 320)}. [P2] `;
+          script += `Nắm vững nguyên lý này giúp chúng ta làm chủ toàn diện nội dung bài giảng và vận dụng hiệu quả vào thực tiễn. [P3]`;
+        } else {
+          // Fallback mặc định theo miền kiến thức chung
+          const topicName = (!isPageNumberName ? nodeText : (slideTitle || chapterTitle || 'chuyên đề'));
+          script += `Tiếp tục với ${topicName}, chúng ta đi sâu vào cơ chế vận hành và các tham số cốt lõi. [P1] `;
+          script += `Hệ thống được tối ưu hóa nhằm đảm bảo tính ổn định và độ tin cậy cao nhất khi ứng dụng vào thực tế. [P2] `;
+          script += `Việc thấu hiểu tường minh nguyên lý này là nền tảng để triển khai hiệu quả các bài toán tiếp theo. [P3]`;
+        }
 
         // Lồng ghép chỉ dẫn hình ảnh/video nếu có
         if (Array.isArray(mediaAttachments) && mediaAttachments.length > 0) {
-          script += `[HIỂN THỊ HÌNH ẢNH: Sơ đồ kiến trúc ${mediaAttachments[0].name}] [P1] `;
+          script += ` [HIỂN THỊ HÌNH ẢNH: Sơ đồ kiến trúc ${mediaAttachments[0].name}] [P1]`;
         } else if (mediaNote) {
-          script += `[CHỈ DẪN THỊ GIÁC: ${mediaNote}] [P1] `;
-        }
-
-        script += `${practicalTakeaway} [P3]`;
-
-        // 3. Cân đối độ dài khớp thời lượng
-        let words = script.split(/\s+/);
-        if (words.length < targetWords - 15) {
-          script += ` [P2] Như vậy, việc thấu hiểu tường minh nguyên lý này không chỉ giúp tối ưu hóa thời gian thực thi [P1] mà còn đảm bảo tính ổn định và độ tin cậy cao nhất khi vận hành mô hình trong môi trường thực tế.`;
+          script += ` [CHỈ DẪN THỊ GIÁC: ${mediaNote}] [P1]`;
         }
 
         return script.trim();
@@ -11096,22 +11101,28 @@ Hãy viết kịch bản lời thoại giảng dạy:`;
 
         const startTime = Date.now();
         let res = null;
-        try {
-          const serverUrl = (window.location.origin.startsWith('http') && !window.location.origin.includes('file:'))
-            ? `${window.location.origin}/api/llm/chat`
-            : 'https://slide-to-video-sigma.vercel.app/api/llm/chat';
-          const proxyPayload = { ...payload, apiKey: cfg.apiKey || '', baseUrl: cfg.baseUrl || '', provider: cfg.provider || 'openai' };
-          const ctl = new AbortController();
-          const tId = setTimeout(() => ctl.abort(), 12000);
-          res = await fetch(serverUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(proxyPayload),
-            signal: ctl.signal
-          });
-          clearTimeout(tId);
-        } catch (e) {
-          console.warn("[LLM] Server proxy error:", e);
+        const serverUrl = (window.location.origin.startsWith('http') && !window.location.origin.includes('file:'))
+          ? `${window.location.origin}/api/llm/chat`
+          : 'https://slide-to-video-sigma.vercel.app/api/llm/chat';
+        const proxyPayload = { ...payload, apiKey: cfg.apiKey || '', baseUrl: cfg.baseUrl || '', provider: cfg.provider || 'openai' };
+
+        // 1. Thử gọi qua server proxy (tối đa 2 lần với timeout 22s)
+        for (let attempt = 1; attempt <= 2; attempt++) {
+          try {
+            const ctl = new AbortController();
+            const tId = setTimeout(() => ctl.abort(), 22000);
+            res = await fetch(serverUrl, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(proxyPayload),
+              signal: ctl.signal
+            });
+            clearTimeout(tId);
+            if (res && res.ok) break;
+          } catch (e) {
+            console.warn(`[LLM] Server proxy attempt ${attempt} error:`, e.message);
+            if (attempt < 2) await new Promise(r => setTimeout(r, 600));
+          }
         }
 
         if ((!res || !res.ok) && cfg.apiKey) {
