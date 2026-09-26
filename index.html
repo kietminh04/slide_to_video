@@ -12794,40 +12794,22 @@ OUTPUT: Valid JSON only.
         return out;
       }
 
-      try {
-        const treeSkeleton = buildTreeSkeleton();
-        const rollingHistory = clsgChatSessionHistory.slice(-6);
-
-        let res = null;
-
-        const cfg = LLMClient.getConfig();
-        const payload = {
-            projectId: currentProjectId,
-            query: msg,
-            history: rollingHistory,
-            treeSkeleton: treeSkeleton,
-            apiKey: cfg.apiKey,
-            geminiApiKey: cfg.geminiApiKey,
-            openaiApiKey: cfg.openaiApiKey
-        };
-        
-        try {
-          const searchUrl = (window.location.origin.startsWith('http') && !window.location.origin.includes('file:'))
-            ? `${window.location.origin}/api/rag_search`
-            : '/api/rag_search';
-          const searchCtl = new AbortController();
-          const searchTId = setTimeout(() => searchCtl.abort(), 15000);
-          const searchRes = await fetch(searchUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload),
-            signal: searchCtl.signal
-          });
-          clearTimeout(searchTId);
-
     // HÀM TÌM KIẾM NGỮ NGHĨA & TỪ KHÓA TỨC THÌ TẠI CHỖ (LOCAL HYBRID CONTEXT SEARCH)
     function findRelevantProjectContext(query) {
-      if (!activeProject) return [];
+      let dc = (activeProject && Array.isArray(activeProject.detailedContent)) ? activeProject.detailedContent : [];
+      if (dc.length < 5 && typeof defaultProjects !== 'undefined' && currentProjectId && defaultProjects[currentProjectId]?.detailedContent) {
+        dc = defaultProjects[currentProjectId].detailedContent;
+      }
+      if (dc.length < 5) {
+        try {
+          const uProjs = JSON.parse(localStorage.getItem('clsg_user_projects') || '{}');
+          if (uProjs[currentProjectId]?.detailedContent && uProjs[currentProjectId].detailedContent.length > dc.length) {
+            dc = uProjs[currentProjectId].detailedContent;
+          }
+        } catch(e) {}
+      }
+      if (!dc || dc.length === 0) return [];
+
       const results = [];
       const qNorm = (query || '').toLowerCase()
         .replace(/\bkì\b/g, 'kỳ')
@@ -12835,71 +12817,57 @@ OUTPUT: Valid JSON only.
         .replace(/\blí\b/g, 'lý')
         .replace(/\bmĩ\b/g, 'mỹ')
         .replace(/\btỉ\b/g, 'tỷ');
-      // Tách từ khóa loại bỏ stop words ngắn
+
       const rawWords = qNorm.match(/[\p{L}\p{N}]+/gu) || [];
       const filterWords = rawWords.filter(w => w.length > 1 || !isNaN(w));
       if (filterWords.length === 0) return [];
 
       // 1. Quét toàn bộ slide trong detailedContent (Cực kỳ quan trọng vì chứa Vision AI + chữ trên slide)
-      if (activeProject.detailedContent && Array.isArray(activeProject.detailedContent)) {
-        activeProject.detailedContent.forEach(page => {
-          let text = page.explanation || '';
-          if (!text || text.length < 10) return;
-          // Tự động làm sạch văn bản nếu chứa khoảng cách chữ cái
-          if (typeof cleanSpacedLetters === 'function') {
-            text = cleanSpacedLetters(text);
+      dc.forEach(page => {
+        let text = page.explanation || '';
+        if (!text || text.length < 10) return;
+        if (typeof cleanSpacedLetters === 'function') {
+          text = cleanSpacedLetters(text);
+        }
+        const tLower = text.toLowerCase()
+          .replace(/\bkì\b/g, 'kỳ')
+          .replace(/\bkĩ\b/g, 'kỹ')
+          .replace(/\blí\b/g, 'lý');
+        let score = 0;
+        
+        filterWords.forEach(w => {
+          if (tLower.includes(w)) score += 4;
+          if ((w === 'points' || w === 'point' || w === 'keypoint' || w === 'keypoints') && (tLower.includes('điểm') || tLower.includes('chấm') || tLower.includes('keypoint'))) {
+            score += 6;
           }
-          const tLower = text.toLowerCase()
-            .replace(/\bkì\b/g, 'kỳ')
-            .replace(/\bkĩ\b/g, 'kỹ')
-            .replace(/\blí\b/g, 'lý');
-          let score = 0;
-          
-          filterWords.forEach(w => {
-            if (tLower.includes(w)) score += 3;
-            // Ánh xạ đồng nghĩa: 17, points, điểm, keypoint, nối, cạnh
-            if ((w === 'points' || w === 'point' || w === 'keypoint' || w === 'keypoints') && (tLower.includes('điểm') || tLower.includes('chấm') || tLower.includes('keypoint'))) {
-              score += 5;
-            }
-            if ((w === 'điểm' || w === 'diem' || w === 'chấm') && (tLower.includes('point') || tLower.includes('keypoint') || tLower.includes('17'))) {
-              score += 5;
-            }
-            if (w === '17' && tLower.includes('17')) {
-              score += 8;
-            }
-            if (w === '19' && tLower.includes('19')) {
-              score += 8;
-            }
-          });
-
-          // Khớp mạnh cụm từ khóa chuyên môn cốt lõi
-          if (qNorm.includes('dự trữ định kỳ') && tLower.includes('dự trữ định kỳ')) score += 30;
-          if (qNorm.includes('dự trữ an toàn') && tLower.includes('dự trữ an toàn')) score += 30;
-          if (qNorm.includes('dự trữ đầu cơ') && tLower.includes('dự trữ đầu cơ')) score += 30;
-          if (qNorm.includes('dự trữ chu kỳ') && tLower.includes('dự trữ chu kỳ')) score += 30;
-          if (qNorm.includes('optimal quantity') && tLower.includes('optimal quantity')) score += 30;
-
-          // Ưu tiên đặc biệt nếu khớp nguyên cụm
-          if (qNorm.includes('17 điểm') || qNorm.includes('17 points') || qNorm.includes('17 point')) {
-            if (tLower.includes('17 điểm') || tLower.includes('17 point') || tLower.includes('17 cái chấm')) {
-              score += 15;
-            }
+          if ((w === 'điểm' || w === 'diem' || w === 'chấm') && (tLower.includes('point') || tLower.includes('keypoint') || tLower.includes('17'))) {
+            score += 6;
           }
-
-          if (score > 0) {
-            const firstLine = text.split('\n')[0].replace(/^[-#*•\d.\s]+/, '').trim();
-            results.push({
-              source: `Trang ${page.pageNumber}`,
-              title: firstLine.slice(0, 50) || `Slide ${page.pageNumber}`,
-              text: text,
-              score: score
-            });
-          }
+          if (w === '17' && tLower.includes('17')) score += 10;
+          if (w === '19' && tLower.includes('19')) score += 10;
         });
-      }
+
+        // Khớp mạnh cụm từ khóa chuyên môn cốt lõi (Logistics & Quản lý dự trữ)
+        if ((qNorm.includes('dự trữ định kỳ') || qNorm.includes('định kỳ')) && (tLower.includes('dự trữ định kỳ') || tLower.includes('định kỳ'))) score += 50;
+        if ((qNorm.includes('dự trữ an toàn') || qNorm.includes('an toàn')) && (tLower.includes('dự trữ an toàn') || tLower.includes('an toàn'))) score += 40;
+        if ((qNorm.includes('dự trữ đầu cơ') || qNorm.includes('đầu cơ')) && (tLower.includes('dự trữ đầu cơ') || tLower.includes('đầu cơ'))) score += 40;
+        if ((qNorm.includes('dự trữ chu kỳ') || qNorm.includes('chu kỳ')) && (tLower.includes('dự trữ chu kỳ') || tLower.includes('chu kỳ'))) score += 40;
+        if ((qNorm.includes('công thức') || qNorm.includes('tính')) && (tLower.includes('công thức') || tLower.includes('m x t') || tLower.includes('dđk') || tLower.includes('ddk') || tLower.includes('dk = m x t'))) score += 35;
+        if (qNorm.includes('optimal quantity') && tLower.includes('optimal quantity')) score += 40;
+
+        if (score > 0) {
+          const firstLine = text.split('\n')[0].replace(/^[-#*•\d.\s]+/, '').trim();
+          results.push({
+            source: `Trang ${page.pageNumber}`,
+            title: firstLine.slice(0, 50) || `Slide ${page.pageNumber}`,
+            text: text,
+            score: score
+          });
+        }
+      });
 
       // 2. Quét qua cấu trúc phân cảnh bài giảng (scenes / beats / items)
-      if (activeProject.scenes && Array.isArray(activeProject.scenes)) {
+      if (activeProject && activeProject.scenes && Array.isArray(activeProject.scenes)) {
         activeProject.scenes.forEach(scene => {
           (scene.beats || []).forEach(b => {
             const fullContent = [b.title, b.details, b.mechanism, b.key_point, b.summary].filter(Boolean).join('. ');
@@ -12939,41 +12907,75 @@ OUTPUT: Valid JSON only.
       }
 
       results.sort((a, b) => b.score - a.score);
-      return results.slice(0, 3);
+      return results.slice(0, 5);
     }
 
-          let retrievedChunks = [];
-          if (searchRes && searchRes.ok) {
-            try {
-              const searchData = await searchRes.json();
-              if (searchData.chunks && searchData.chunks.length > 0) {
-                retrievedChunks.push(...searchData.chunks.map(c => ({
-                  source: `${c.chapter} - ${c.section}`,
-                  text: c.text
-                })));
-              }
-            } catch(e) {}
-          }
+      try {
+        const treeSkeleton = buildTreeSkeleton();
+        const rollingHistory = clsgChatSessionHistory.slice(-6);
 
-          // NẾU DATABASE CHƯA KỊP VECTOR HOẶC TRẢ VỀ RỖNG -> TỰ ĐỘNG FALLBACK BẰNG TRI THỨC TẠI CHỖ (detailedContent + scenes)
-          if (retrievedChunks.length === 0) {
-            const localHits = findRelevantProjectContext(msg);
-            if (localHits && localHits.length > 0) {
-              retrievedChunks.push(...localHits.map(h => ({
-                source: `[${h.source}] ${h.title}`,
-                text: h.text
-              })));
+        let res = null;
+
+        const cfg = LLMClient.getConfig();
+        const payload = {
+            projectId: currentProjectId,
+            query: msg,
+            history: rollingHistory,
+            treeSkeleton: treeSkeleton,
+            apiKey: cfg.apiKey,
+            geminiApiKey: cfg.geminiApiKey,
+            openaiApiKey: cfg.openaiApiKey
+        };
+
+        // BƯỚC 1: TRUY VẤN TRI THỨC CỤC BỘ TỨC THÌ (0ms latency, chính xác tuyệt đối từng slide)
+        let retrievedChunks = [];
+        const localHits = findRelevantProjectContext(msg);
+        if (localHits && localHits.length > 0) {
+          retrievedChunks.push(...localHits.map(h => ({
+            source: `[${h.source}] ${h.title}`,
+            text: h.text
+          })));
+        }
+
+        // BƯỚC 2: TRUY VẤN THÊM VECTOR DATABASE TỪ CLOUD (CÔ LẬP TRÁNH BỊ BLOCK GỌI LLM KHI RAG CHẬM/LỖI)
+        try {
+          const searchUrl = (window.location.origin.startsWith('http') && !window.location.origin.includes('file:'))
+            ? `${window.location.origin}/api/rag_search`
+            : '/api/rag_search';
+          const searchCtl = new AbortController();
+          const searchTId = setTimeout(() => searchCtl.abort(), 3500); // 3.5s timeout nhanh
+          const searchRes = await fetch(searchUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+            signal: searchCtl.signal
+          });
+          clearTimeout(searchTId);
+          if (searchRes && searchRes.ok) {
+            const searchData = await searchRes.json();
+            if (searchData.chunks && Array.isArray(searchData.chunks)) {
+              searchData.chunks.forEach(c => {
+                if (!retrievedChunks.some(rc => rc.text && rc.text.slice(0, 40) === (c.text || '').slice(0, 40))) {
+                  retrievedChunks.push({
+                    source: `${c.chapter} - ${c.section}`,
+                    text: c.text
+                  });
+                }
+              });
             }
           }
+        } catch (ragErr) {
+          console.log('[Copilot] Vector DB search bypassed or timed out, relying on local slide context:', ragErr.message);
+        }
 
-          let contextText = "Không tìm thấy kiến thức liên quan trong CSDL.";
-          if (retrievedChunks.length > 0) {
-            contextText = retrievedChunks.map((c, i) => 
-              `[Mục ${i + 1}] ${c.source}\nNội dung: ${c.text}`
-            ).join('\n\n');
-          }
+        let contextText = "Không tìm thấy kiến thức liên quan trong CSDL.";
+        if (retrievedChunks.length > 0) {
+          contextText = retrievedChunks.map((c, i) => 
+            `[Mục ${i + 1}] ${c.source}\nNội dung: ${c.text}`
+          ).join('\n\n');
+        }
 
-          const systemPrompt = `Bạn là SIÊU TRỢ LÝ AI & TRỢ GIẢNG ĐA NĂNG CỦA HỆ THỐNG CLSG STUDIO (HUST AI COPILOT).
+        const systemPrompt = `Bạn là SIÊU TRỢ LÝ AI & TRỢ GIẢNG ĐA NĂNG CỦA HỆ THỐNG CLSG STUDIO (HUST AI COPILOT).
 Người dùng là giảng viên hoặc học viên. Bạn phải thân thiện, thông thái: đọc hộ, giải thích hộ kiến thức và TRỰC TIẾP ĐIỀU KHIỂN GIAO DIỆN HỘ người dùng.
 
 [KIẾN THỨC BÀI GIẢNG ĐƯỢC RÚT TRÍCH TỪ DATABASE (RAG)]:
@@ -13027,23 +13029,23 @@ QUY TẮC BẮT BUỘC:
             provider: cfg.provider
           };
 
-          const endpoint = (window.location.origin.startsWith('http') && !window.location.origin.includes('file:'))
-            ? `${window.location.origin}/api/llm/chat`
-            : '/api/llm/chat';
-            
-          const llmCtl = new AbortController();
-          const llmTId = setTimeout(() => llmCtl.abort(), 60000);
-          res = await fetch(endpoint, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(llmPayloadWithConfig),
-            signal: llmCtl.signal
-          });
-          clearTimeout(llmTId);
-
-        } catch (e) {
-          console.warn("[Copilot] Lỗi gọi Backend RAG / LLM:", e);
-        }
+          try {
+            const endpoint = (window.location.origin.startsWith('http') && !window.location.origin.includes('file:'))
+              ? `${window.location.origin}/api/llm/chat`
+              : '/api/llm/chat';
+              
+            const llmCtl = new AbortController();
+            const llmTId = setTimeout(() => llmCtl.abort(), 60000);
+            res = await fetch(endpoint, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(llmPayloadWithConfig),
+              signal: llmCtl.signal
+            });
+            clearTimeout(llmTId);
+          } catch (e) {
+            console.warn("[Copilot] Lỗi gọi Backend LLM:", e);
+          }
 
         if (res && res.ok) {
           const data = await res.json();
@@ -13327,6 +13329,40 @@ QUY TẮC BẮT BUỘC:
         return;
       }
       currentScenes = JSON.parse(JSON.stringify(activeProject.scenes || []));
+
+      // [TỰ ĐỘNG ĐỒNG BỘ DỮ LIỆU SLIDE TỪ NEON CLOUD VÀO WORKSPACE]
+      fetch(`/api/projects?id=${encodeURIComponent(projId)}`, { cache: 'no-store' })
+        .then(r => r.ok ? r.json() : null)
+        .then(cloudRow => {
+          if (cloudRow && cloudRow.data && activeProject && (activeProject.id === projId || currentProjectId === projId)) {
+            const cloudData = cloudRow.data;
+            let needReRender = false;
+            if (Array.isArray(cloudData.detailedContent) && cloudData.detailedContent.length > 0) {
+              const currentLen = (activeProject.detailedContent || []).length;
+              if (cloudData.detailedContent.length > currentLen || !activeProject.detailedContent || activeProject.detailedContent.length === 0) {
+                console.log(`[Cloud Sync] Đã cập nhật ${cloudData.detailedContent.length} slide từ Neon Cloud vào Workspace!`);
+                activeProject.detailedContent = cloudData.detailedContent;
+                needReRender = true;
+              }
+            }
+            if (Array.isArray(cloudData.scenes) && cloudData.scenes.length > 0 && (!activeProject.scenes || activeProject.scenes.length === 0)) {
+              activeProject.scenes = cloudData.scenes;
+              currentScenes = JSON.parse(JSON.stringify(cloudData.scenes));
+              needReRender = true;
+            }
+            if (needReRender) {
+              try {
+                const uProjs = JSON.parse(localStorage.getItem('clsg_user_projects') || '{}');
+                uProjs[projId] = sanitizeProjectForStorage(activeProject);
+                localStorage.setItem('clsg_user_projects', JSON.stringify(uProjs));
+              } catch(e) {}
+              if (typeof renderDetailedContentUI === 'function') renderDetailedContentUI();
+              if (typeof renderMindmap === 'function') renderMindmap();
+              if (typeof renderScriptDocument === 'function') renderScriptDocument();
+            }
+          }
+        })
+        .catch(err => console.warn('[Cloud Sync Background Error]:', err));
 
       // Tự động khôi phục ảnh slide từ IndexedDB nếu đang thiếu ảnh
       if (activeProject && activeProject.detailedContent && Array.isArray(activeProject.detailedContent)) {
@@ -20231,9 +20267,16 @@ QUY TẮC BẮT BUỘC:
                   <div style="font-weight: 700; color: var(--cyan); font-size: 16px;">Trang ${page.pageNumber}</div>
                   ${page.isVisionEnriched ? '<span style="font-size: 11px; padding: 2px 8px; border-radius: 4px; background: rgba(16, 185, 129, 0.2); color: #34d399; font-weight: 600;">✨ Vision AI</span>' : '<span style="font-size: 11px; padding: 2px 8px; border-radius: 4px; background: rgba(56, 189, 248, 0.1); color: var(--text-dim); font-weight: 500;">⏳ Text gốc</span>'}
                 </div>
+                ${(page.image_url && typeof page.image_url === 'string' && (page.image_url.startsWith('data:image') || page.image_url.startsWith('http'))) ? `
                 <div style="border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; overflow: hidden; background: #000; box-shadow: 0 4px 6px rgba(0,0,0,0.3);">
-                  <img src="${page.image_url}" style="width: 100%; display: block; object-fit: contain;">
-                </div>
+                  <img src="${page.image_url}" style="width: 100%; display: block; object-fit: contain;" alt="Slide ${page.pageNumber}">
+                </div>` : `
+                <div style="border: 1px dashed rgba(56,189,248,0.35); border-radius: 8px; overflow: hidden; background: rgba(15,23,42,0.65); padding: 36px 16px; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 160px; box-shadow: 0 4px 6px rgba(0,0,0,0.2);">
+                  <div style="font-size: 32px; margin-bottom: 8px; opacity: 0.85;">📑</div>
+                  <div style="font-weight: 700; color: var(--cyan); font-size: 13px; margin-bottom: 4px;">Slide ${page.pageNumber}</div>
+                  <div style="font-size: 11.5px; color: var(--text-muted);">Đã bóc tách nội dung văn bản</div>
+                </div>`
+                }
               </div>
               <div style="flex: 1; display: flex; flex-direction: column;">
                 <div style="font-size: 13px; color: #94a3b8; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 4px;">Nội dung chi tiết & Giải thích</div>
