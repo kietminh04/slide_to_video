@@ -7745,8 +7745,10 @@
       }
       renderMindmap();
       renderScriptDocument();
+      if (typeof renderVideoGridTimeline === 'function') renderVideoGridTimeline();
       if (typeof updateLockedBadge === 'function') updateLockedBadge();
       if (typeof syncGlobalConfigFromProject === 'function') syncGlobalConfigFromProject();
+      if (typeof autoSaveWorkspaceState === 'function') autoSaveWorkspaceState();
     }
 
 
@@ -13292,8 +13294,9 @@ QUY TẮC BẮT BUỘC:
           if (prevDetail && prevDetail.explanation) {
             contextParts.push(`[MẠCH KIẾN THỨC VỪA THẢO LUẬN]:\n${prevDetail.explanation.slice(0, 250)}${prevDetail.explanation.length > 250 ? '...' : ''}`);
           }
-          if (nextDetail && nextDetail.explanation) {
-            contextParts.push(`[MẠCH KIẾN THỨC TIẾP THEO]:\n${nextDetail.explanation.slice(0, 250)}${nextDetail.explanation.length > 250 ? '...' : ''}`);
+          // Chỉ thêm nextDetail nếu KHÔNG phải trang bìa (tránh Trang 1 cướp nội dung câu hỏi cụ thể của Trang 2)
+          if (pageIndex > 0 && nextDetail && nextDetail.explanation) {
+            contextParts.push(`[MẠCH KIẾN THỨC TIẾP THEO (chỉ tham khảo định hướng, TUYỆT ĐỐI KHÔNG giảng hộ hay trích dẫn lại nội dung trang sau)]:\n${nextDetail.explanation.slice(0, 250)}${nextDetail.explanation.length > 250 ? '...' : ''}`);
           }
           if (contextParts.length > 0) {
             mechanism = contextParts.join('\n\n');
@@ -13301,7 +13304,8 @@ QUY TẮC BẮT BUỘC:
 
           // Vị trí trang trong bài giảng
           if (pageIndex === 0) {
-            keyPoint = 'Đây là PHẦN MỞ ĐẦU bài giảng. Hãy mở đầu cuốn hút, nêu bật bài toán thực tiễn và giá trị cốt lõi.';
+            keyPoint = 'ĐÂY LÀ SLIDE BÌA MỞ ĐẦU BÀI GIẢNG (TITLE COVER SLIDE). Hãy mở đầu trang trọng, chào mừng người học, nêu rõ tên chuyên đề bài giảng, giảng viên/đơn vị đào tạo (nếu có trên slide), và giới thiệu tổng quan mục tiêu của bài học. TUYỆT ĐỐI KHÔNG giải thích chi tiết, không đặt câu hỏi tình huống hoặc nói trước bài toán cụ thể của các slide tiếp theo!';
+            mechanism = ''; // Xóa sạch mechanism để trang bìa không bị lẫn nội dung tình huống của trang 2
           } else if (pageIndex === totalPages - 1) {
             keyPoint = 'Đây là PHẦN KẾT THÚC bài giảng. Hãy tổng kết bài học, đúc kết thông điệp then chốt và hướng ứng dụng.';
           } else {
@@ -13483,6 +13487,8 @@ QUY TẮC BẮT BUỘC:
         for (let b = 0; b < totalPages; b += batchSize) {
           const batchIndices = [];
           for (let i = b; i < Math.min(totalPages, b + batchSize); i++) {
+            const itKey = `grid-page-${i}`;
+            if (isNodeExcluded(itKey)) continue; // Bỏ qua trang đã bị 'x'
             batchIndices.push(i);
           }
           updateLoading(`Đang sinh trang ${b + 1} - ${Math.min(totalPages, b + batchSize)} / ${totalPages}...`, `Tự động phân tích nội dung slide & thiết lập lời thoại...`);
@@ -13621,9 +13627,12 @@ QUY TẮC BẮT BUỘC:
           let totalSec = 0;
           let totalWords = 0;
           let completedPages = 0;
+          let activePages = 0;
 
           for (let i = 0; i < totalPages; i++) {
             const itKey = `grid-page-${i}`;
+            if (isNodeExcluded(itKey)) continue; // Bỏ qua trang đã bị loại trừ
+            activePages++;
             const dur = parseInt(getNodeParam(itKey, 'duration', 20)) || 20;
             totalSec += dur;
             const narr = getNodeParam(itKey, 'narration', '');
@@ -13635,10 +13644,11 @@ QUY TẮC BẮT BUỘC:
 
           const totalM = Math.floor(totalSec / 60);
           const totalS = totalSec % 60;
+          const excludedCount = totalPages - activePages;
 
           metaEl.innerHTML = `
             <div class="meta-stat-row">⏱️ Thời lượng: <strong>${totalM}p ${totalS < 10 ? '0' : ''}${totalS}s</strong> (${totalSec}s)</div>
-            <div class="meta-stat-row">🎬 <strong>${completedPages}/${totalPages}</strong> trang có kịch bản (~${totalWords} từ)</div>
+            <div class="meta-stat-row">🎬 <strong>${completedPages}/${activePages}</strong> trang có kịch bản (~${totalWords} từ) ${excludedCount > 0 ? `<span style="color:#f87171; font-size:10.5px; margin-left:4px;">(đã ẩn ${excludedCount} trang)</span>` : ''}</div>
           `;
           return;
         }
@@ -13739,6 +13749,7 @@ QUY TẮC BẮT BUỘC:
 
         for (let i = 0; i < totalPages; i++) {
           const itKey = `grid-page-${i}`;
+          if (isNodeExcluded(itKey)) continue; // LOẠI BỎ TRANG ĐÃ BỊ 'x' TRÊN SƠ ĐỒ
           const itCode = `Trang ${i + 1}`;
           const itTitle = getNodeParam(itKey, 'title', `Trang ${i + 1}`);
           const itDur = parseInt(getNodeParam(itKey, 'duration', 20)) || 20;
@@ -17974,6 +17985,7 @@ QUY TẮC BẮT BUỘC:
 
         for (let i = 0; i < totalPages; i++) {
           const segKey = `grid-page-${i}`;
+          if (isNodeExcluded(segKey)) continue; // BỎ QUA TRANG ĐÃ BỊ 'x' TRÊN SƠ ĐỒ
           let narr = getNodeParam(segKey, 'narration', '');
           // Fallback tự động lấy kịch bản nếu chưa gán riêng cho trang
           if (!narr) {
