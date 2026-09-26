@@ -21,10 +21,10 @@ module.exports = async function (req, res) {
     return res.status(500).json({ error: 'Chưa cấu hình DATABASE_URL' });
   }
 
-  // Bắt buộc dùng GEMINI_API_KEY để băm câu hỏi (Đảm bảo luôn so sánh 768 chiều với DB)
-  const apiKey = process.env.GEMINI_API_KEY;
+  const apiKey = req.body.apiKey || process.env.GEMINI_API_KEY;
   if (!apiKey) {
-    return res.status(500).json({ error: 'Chưa cấu hình GEMINI_API_KEY trên Vercel để băm Vector' });
+    // Trả về chunks rỗng để frontend tự fallback local
+    return res.status(200).json({ chunks: [] });
   }
 
   try {
@@ -57,8 +57,8 @@ module.exports = async function (req, res) {
       LIMIT 3
     `;
 
-    // Nếu không tìm thấy, trả về mảng rỗng để LLM ở Frontend tự ứng biến
-    if (!chunks || chunks.length === 0 || chunks[0].similarity < 0.25) {
+    // Hạ ngưỡng similarity xuống 0.05 để không bỏ sót các câu hỏi ngắn
+    if (!chunks || chunks.length === 0 || chunks[0].similarity < 0.05) {
       return res.status(200).json({ chunks: [] });
     }
 

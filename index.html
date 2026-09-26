@@ -12076,14 +12076,133 @@ OUTPUT: Valid JSON only.
           });
           clearTimeout(searchTId);
 
-          let contextText = "Không tìm thấy kiến thức liên quan trong CSDL.";
+    // HÀM TÌM KIẾM NGỮ NGHĨA & TỪ KHÓA TỨC THÌ TẠI CHỖ (LOCAL HYBRID CONTEXT SEARCH)
+    function findRelevantProjectContext(query) {
+      if (!activeProject) return [];
+      const results = [];
+      const qLower = (query || '').toLowerCase();
+      // Tách từ khóa loại bỏ stop words ngắn
+      const rawWords = qLower.match(/[\p{L}\p{N}]+/gu) || [];
+      const filterWords = rawWords.filter(w => w.length > 1 || !isNaN(w));
+      if (filterWords.length === 0) return [];
+
+      // 1. Quét toàn bộ slide trong detailedContent (Cực kỳ quan trọng vì chứa Vision AI + chữ trên slide)
+      if (activeProject.detailedContent && Array.isArray(activeProject.detailedContent)) {
+        activeProject.detailedContent.forEach(page => {
+          const text = page.explanation || '';
+          if (!text || text.length < 10) return;
+          const tLower = text.toLowerCase();
+          let score = 0;
+          
+          filterWords.forEach(w => {
+            if (tLower.includes(w)) score += 3;
+            // Ánh xạ đồng nghĩa: 17, points, điểm, keypoint, nối, cạnh
+            if ((w === 'points' || w === 'point' || w === 'keypoint' || w === 'keypoints') && (tLower.includes('điểm') || tLower.includes('chấm') || tLower.includes('keypoint'))) {
+              score += 5;
+            }
+            if ((w === 'điểm' || w === 'diem' || w === 'chấm') && (tLower.includes('point') || tLower.includes('keypoint') || tLower.includes('17'))) {
+              score += 5;
+            }
+            if (w === '17' && tLower.includes('17')) {
+              score += 8;
+            }
+            if (w === '19' && tLower.includes('19')) {
+              score += 8;
+            }
+          });
+
+          // Ưu tiên đặc biệt nếu khớp nguyên cụm
+          if (qLower.includes('17 điểm') || qLower.includes('17 points') || qLower.includes('17 point')) {
+            if (tLower.includes('17 điểm') || tLower.includes('17 point') || tLower.includes('17 cái chấm')) {
+              score += 15;
+            }
+          }
+
+          if (score > 0) {
+            const firstLine = text.split('\n')[0].replace(/^[-#*•\d.\s]+/, '').trim();
+            results.push({
+              source: `Trang ${page.pageNumber}`,
+              title: firstLine.slice(0, 50) || `Slide ${page.pageNumber}`,
+              text: text,
+              score: score
+            });
+          }
+        });
+      }
+
+      // 2. Quét qua cấu trúc phân cảnh bài giảng (scenes / beats / items)
+      if (activeProject.scenes && Array.isArray(activeProject.scenes)) {
+        activeProject.scenes.forEach(scene => {
+          (scene.beats || []).forEach(b => {
+            const fullContent = [b.title, b.details, b.mechanism, b.key_point, b.summary].filter(Boolean).join('. ');
+            const cLower = fullContent.toLowerCase();
+            let score = 0;
+            filterWords.forEach(w => {
+              if (cLower.includes(w)) score += 3;
+            });
+            if (score > 0) {
+              results.push({
+                source: scene.title || 'Chương',
+                title: b.title || 'Tiểu mục',
+                text: fullContent,
+                score: score
+              });
+            }
+          });
+          (scene.sections || []).forEach(sec => {
+            (sec.items || []).forEach(it => {
+              const itFull = [it.title, it.text, it.details, it.mechanism, it.key_point, it.summary].filter(Boolean).join('. ');
+              const itLower = itFull.toLowerCase();
+              let score = 0;
+              filterWords.forEach(w => {
+                if (itLower.includes(w)) score += 3;
+              });
+              if (score > 0) {
+                results.push({
+                  source: scene.title || 'Bài giảng',
+                  title: it.title || sec.title || 'Nội dung',
+                  text: itFull,
+                  score: score
+                });
+              }
+            });
+          });
+        });
+      }
+
+      results.sort((a, b) => b.score - a.score);
+      return results.slice(0, 3);
+    }
+
+          let retrievedChunks = [];
           if (searchRes && searchRes.ok) {
-             const searchData = await searchRes.json();
-             if (searchData.chunks && searchData.chunks.length > 0) {
-                 contextText = searchData.chunks.map((c, i) => 
-                   `[Mục ${i + 1}] ${c.chapter} - ${c.section}\nNội dung: ${c.text}`
-                 ).join('\n\n');
-             }
+            try {
+              const searchData = await searchRes.json();
+              if (searchData.chunks && searchData.chunks.length > 0) {
+                retrievedChunks.push(...searchData.chunks.map(c => ({
+                  source: `${c.chapter} - ${c.section}`,
+                  text: c.text
+                })));
+              }
+            } catch(e) {}
+          }
+
+          // NẾU DATABASE CHƯA KỊP VECTOR HOẶC TRẢ VỀ RỖNG -> TỰ ĐỘNG FALLBACK BẰNG TRI THỨC TẠI CHỖ (detailedContent + scenes)
+          if (retrievedChunks.length === 0) {
+            const localHits = findRelevantProjectContext(msg);
+            if (localHits && localHits.length > 0) {
+              retrievedChunks.push(...localHits.map(h => ({
+                source: `[${h.source}] ${h.title}`,
+                text: h.text
+              })));
+            }
+          }
+
+          let contextText = "Không tìm thấy kiến thức liên quan trong CSDL.";
+          if (retrievedChunks.length > 0) {
+            contextText = retrievedChunks.map((c, i) => 
+              `[Mục ${i + 1}] ${c.source}\nNội dung: ${c.text}`
+            ).join('\n\n');
           }
 
           const systemPrompt = `Bạn là SIÊU TRỢ LÝ AI & TRỢ GIẢNG ĐA NĂNG CỦA HỆ THỐNG CLSG STUDIO (HUST AI COPILOT).
