@@ -6025,13 +6025,13 @@
       }
 
       // 4. Dừng và giải phóng HTML5 Audio TTS toàn cục
-      if (typeof _globalTtsAudio !== 'undefined' && _globalTtsAudio) {
+      if (window._globalTtsAudio) {
         try {
-          _globalTtsAudio.pause();
-          _globalTtsAudio.currentTime = 0;
-          _globalTtsAudio.src = '';
+          window._globalTtsAudio.pause();
+          window._globalTtsAudio.currentTime = 0;
+          window._globalTtsAudio.src = '';
         } catch (e) { }
-        _globalTtsAudio = null;
+        window._globalTtsAudio = null;
       }
       if (typeof _currentAudio !== 'undefined' && _currentAudio) {
         try {
@@ -18871,7 +18871,7 @@ QUY TẮC BẮT BUỘC:
         _videoTickerTimer = null;
       }
 
-      const activeAudio = window._currentAudioPlayer || _globalTtsAudio;
+      const activeAudio = window._currentAudioPlayer || window._globalTtsAudio;
       if (activeAudio) {
         try { activeAudio.pause(); } catch (e) { }
       }
@@ -18908,7 +18908,7 @@ QUY TẮC BẮT BUỘC:
         return;
       }
 
-      const activeAudio = window._currentAudioPlayer || _globalTtsAudio;
+      const activeAudio = window._currentAudioPlayer || window._globalTtsAudio;
       if (activeAudio && activeAudio.src && !activeAudio.ended && activeAudio.currentTime > 0) {
         _videoIsPlaying = true;
         const playBtn = document.getElementById('video-play-btn');
@@ -18953,7 +18953,7 @@ QUY TẮC BẮT BUỘC:
       const clickX = event.clientX - rect.left;
       const percent = Math.max(0, Math.min(1, clickX / rect.width));
 
-      const activeAudio = window._currentAudioPlayer || _globalTtsAudio;
+      const activeAudio = window._currentAudioPlayer || window._globalTtsAudio;
       if (activeAudio && activeAudio.duration && !isNaN(activeAudio.duration)) {
         activeAudio.currentTime = percent * activeAudio.duration;
         _videoCurrentTime = activeAudio.currentTime;
@@ -19742,7 +19742,7 @@ Yêu cầu trình bày:
     let _isPlayingAllScript = false;
     let _scriptPlayIndex = 0;
     let _scriptPlayKeys = [];
-    let _globalTtsAudio = null;
+    window._globalTtsAudio = window._globalTtsAudio || null;
 
     async function playSpeechWithVoice(text, voiceKey, onEnd, onReady, boundSegKey = null, boundToken = null) {
       const currentToken = boundToken || (++window._activeAudioSessionToken);
@@ -19790,7 +19790,7 @@ Yêu cầu trình bày:
           if (blob && blob.size > 500) {
             const audioUrl = URL.createObjectURL(blob);
             const audio = new Audio(audioUrl);
-            _globalTtsAudio = audio;
+            window._globalTtsAudio = audio;
 
             const speed = parseFloat(document.getElementById('gcfg-speed')?.value || '1.0');
             audio.playbackRate = speed;
@@ -19806,7 +19806,7 @@ Yêu cầu trình bày:
             };
 
             audio.onended = () => {
-              _globalTtsAudio = null;
+              window._globalTtsAudio = null;
               // CHỈ KHI SLIDE ĐÓ VẪN ĐANG MỞ MỚI GỌI ONEND
               if (isAudioSessionValid(boundSegKey, currentToken) && onEnd) {
                 onEnd();
@@ -19854,7 +19854,7 @@ Yêu cầu trình bày:
       try {
         const directUrl = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(cleanText.slice(0, 180))}&tl=vi&client=tw-ob`;
         const audio = new Audio(directUrl);
-        _globalTtsAudio = audio;
+        window._globalTtsAudio = audio;
         const speed = parseFloat(document.getElementById('gcfg-speed')?.value || '1.0');
         audio.playbackRate = speed;
 
@@ -19869,7 +19869,7 @@ Yêu cầu trình bày:
         };
 
         audio.onended = () => {
-          _globalTtsAudio = null;
+          window._globalTtsAudio = null;
           if (isAudioSessionValid(boundSegKey, currentToken) && onEnd) {
             onEnd();
           }
@@ -19951,8 +19951,8 @@ Yêu cầu trình bày:
     function testGlobalVoiceSample() {
       const testBtn = document.getElementById('btn-test-global-voice');
 
-      if ((_globalTtsAudio && !_globalTtsAudio.paused) || ('speechSynthesis' in window && window.speechSynthesis.speaking)) {
-        if (_globalTtsAudio) { _globalTtsAudio.pause(); _globalTtsAudio = null; }
+      if ((window._globalTtsAudio && !window._globalTtsAudio.paused) || ('speechSynthesis' in window && window.speechSynthesis.speaking)) {
+        if (window._globalTtsAudio) { window._globalTtsAudio.pause(); window._globalTtsAudio = null; }
         if ('speechSynthesis' in window) window.speechSynthesis.cancel();
         if (testBtn) testBtn.innerHTML = '▶️ Thử';
         showToast('⏹️ Đã dừng nghe thử giọng.');
@@ -19973,7 +19973,7 @@ Yêu cầu trình bày:
       const btn = document.getElementById(`btn-test-voice-${segKey}`);
 
       if (_currentSpeakingSegKey === segKey) {
-        if (_globalTtsAudio) { _globalTtsAudio.pause(); _globalTtsAudio = null; }
+        if (window._globalTtsAudio) { window._globalTtsAudio.pause(); window._globalTtsAudio = null; }
         if ('speechSynthesis' in window) window.speechSynthesis.cancel();
         _currentSpeakingSegKey = null;
         if (btn) {
@@ -19985,7 +19985,7 @@ Yêu cầu trình bày:
         return;
       }
 
-      if (_globalTtsAudio) { _globalTtsAudio.pause(); _globalTtsAudio = null; }
+      if (window._globalTtsAudio) { window._globalTtsAudio.pause(); window._globalTtsAudio = null; }
       if ('speechSynthesis' in window) window.speechSynthesis.cancel();
 
       document.querySelectorAll('.btn-test-script-voice').forEach(b => {
@@ -20031,7 +20031,7 @@ Yêu cầu trình bày:
       const btnText = document.getElementById('btn-play-all-script-text');
       if (_isPlayingAllScript) {
         _isPlayingAllScript = false;
-        if (_globalTtsAudio) { _globalTtsAudio.pause(); _globalTtsAudio = null; }
+        if (window._globalTtsAudio) { window._globalTtsAudio.pause(); window._globalTtsAudio = null; }
         if ('speechSynthesis' in window) window.speechSynthesis.cancel();
         if (btnText) btnText.textContent = 'Nghe Toàn Bộ';
         document.querySelectorAll('.script-segment-skeleton').forEach(c => c.classList.remove('is-speaking'));
