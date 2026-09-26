@@ -77,7 +77,7 @@ module.exports = async (req, res) => {
 
     // TRƯỜNG HỢP 2: DÙNG KEY HỆ THỐNG MẶC ĐỊNH
     const envGemini = process.env.GEMINI_API_KEY || '';
-    const envOpenai = process.env.OPENAI_API_KEY || '';
+    const envOpenai = process.env.OPENAI_API_KEY || process.env.CLSG_OPENAI_API_KEY || '';
 
     const candidates = [];
     if (body.provider === 'openai' || requestedModel?.includes('gpt')) {

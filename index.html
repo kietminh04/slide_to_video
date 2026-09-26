@@ -5002,6 +5002,16 @@
     var _videoTickerTimer = null;
     var _videoCurrentSegKey = null;
     var _exportSelectedRange = 'fast5';
+    var _isPlayingAllScript = false;
+    var _currentSpeakingSegKey = null;
+    var _scriptPlayIndex = 0;
+    var _scriptPlayKeys = [];
+    window._isPlayingAllScript = false;
+    window._currentSpeakingSegKey = null;
+    window._scriptPlayIndex = 0;
+    window._scriptPlayKeys = [];
+    window._globalTtsAudio = null;
+    window._currentAudioPlayer = null;
 
     // =========================================================================
     // HÀM LỌC MARKDOWN/KÝ TỰ ĐẶC BIỆT TRƯỚC KHI GỬI TTS
@@ -5704,6 +5714,30 @@
                   updated = true;
                 }
               });
+
+              // Lưu bản cache sanitized vào localStorage để lần F5 sau nạp tức thì
+              try {
+                const uProjs = JSON.parse(localStorage.getItem('clsg_user_projects') || '{}');
+                list.forEach(row => {
+                  if (row.id && row.data && !uProjs[row.id]) {
+                    uProjs[row.id] = sanitizeProjectForStorage(row.data);
+                  }
+                });
+                localStorage.setItem('clsg_user_projects', JSON.stringify(uProjs));
+              } catch (e) { }
+
+              // Khôi phục chính xác dự án mà người dùng đang mở trước đó khi reload (F5)
+              const savedProjId = localStorage.getItem('clsg_active_project_id');
+              const savedView = localStorage.getItem('clsg_active_view') || 'projects';
+              if (savedProjId && defaultProjects[savedProjId]) {
+                if (!activeProject || activeProject.id !== savedProjId) {
+                  currentProjectId = savedProjId;
+                  if (savedView === 'workspace') {
+                    loadProjectIntoWorkspace(savedProjId);
+                  }
+                }
+              }
+
               if (updated && typeof renderProjectsGrid === 'function') {
                 renderProjectsGrid();
               }
@@ -6083,20 +6117,19 @@
       Object.assign(defaultProjects, userProjects);
     } catch (e) { }
 
-    // Khởi tạo kiểm tra kết nối Cloud Database
-    setTimeout(() => {
-      CloudDB.ping().then(online => {
-        if (online) CloudDB.loadAll();
-      });
-    }, 200);
+    // Khởi tạo kiểm tra kết nối Cloud Database tức thời
+    CloudDB.ping().then(online => {
+      if (online) CloudDB.loadAll();
+    });
+    CloudDB.loadAll();
 
     // QUẢN LÝ TRẠNG THÁI HIỆN TẠI (GIỮ NGUYÊN DỰ ÁN ĐANG LÀM VIỆC KHI RELOAD)
     const initialAvailableIds = Object.keys(defaultProjects);
     const savedActiveProjId = localStorage.getItem('clsg_active_project_id');
     let currentProjectId = (savedActiveProjId && defaultProjects[savedActiveProjId])
       ? savedActiveProjId
-      : (initialAvailableIds.includes("cnn_intro") ? "cnn_intro" : (initialAvailableIds[0] || null));
-    let activeProject = currentProjectId ? defaultProjects[currentProjectId] : null;
+      : (savedActiveProjId || (initialAvailableIds.includes("cnn_intro") ? "cnn_intro" : (initialAvailableIds[0] || null)));
+    let activeProject = (currentProjectId && defaultProjects[currentProjectId]) ? defaultProjects[currentProjectId] : null;
     let currentScenes = (activeProject && activeProject.scenes) ? JSON.parse(JSON.stringify(activeProject.scenes)) : [];
 
     // HÀM XÓA DỰ ÁN (HỖ TRỢ CẢ TRÊN DASHBOARD LẪN TRONG WORKSPACE)
@@ -6195,13 +6228,13 @@
         } catch (e) { }
         window._globalTtsAudio = null;
       }
-      if (typeof _currentAudio !== 'undefined' && _currentAudio) {
+      if (window._currentAudio) {
         try {
-          _currentAudio.pause();
-          _currentAudio.currentTime = 0;
-          _currentAudio.src = '';
+          window._currentAudio.pause();
+          window._currentAudio.currentTime = 0;
+          window._currentAudio.src = '';
         } catch (e) { }
-        _currentAudio = null;
+        window._currentAudio = null;
       }
 
       // 5. Quét dừng tất cả các thẻ audio khác trong DOM
@@ -6258,12 +6291,8 @@
         }
 
         // Dừng chế độ đọc kịch bản tuần tự trong tab Kịch Bản
-        if (typeof _isPlayingAllScript !== 'undefined') {
-          _isPlayingAllScript = false;
-        }
-        if (typeof _currentSpeakingSegKey !== 'undefined') {
-          _currentSpeakingSegKey = null;
-        }
+        window._isPlayingAllScript = false;
+        window._currentSpeakingSegKey = null;
         if (typeof isPlayingAll !== 'undefined') {
           isPlayingAll = false;
         }
@@ -6313,10 +6342,16 @@
         window.scrollTo({ top: 0, behavior: 'smooth' });
       } else {
         document.body.classList.add('is-workspace');
-        if (!currentProjectId || !defaultProjects[currentProjectId]) {
-          showToast('⚠️ Vui lòng chọn hoặc tạo 1 dự án để mở không gian làm việc!');
-          switchView('projects');
-          return;
+        const _userProjs = JSON.parse(localStorage.getItem('clsg_user_projects') || '{}');
+        if (!currentProjectId || (!defaultProjects[currentProjectId] && !_userProjs[currentProjectId])) {
+          const savedProjId = localStorage.getItem('clsg_active_project_id');
+          if (savedProjId && (defaultProjects[savedProjId] || _userProjs[savedProjId])) {
+            currentProjectId = savedProjId;
+          } else {
+            showToast('⚠️ Vui lòng chọn hoặc tạo 1 dự án để mở không gian làm việc!');
+            switchView('projects');
+            return;
+          }
         }
         viewProjects.style.display = 'none';
         viewWorkspace.style.display = 'flex';
@@ -7939,7 +7974,7 @@
         }
 
         const userProjects = JSON.parse(localStorage.getItem('clsg_user_projects') || '{}');
-        userProjects[currentProjectId] = activeProject;
+        userProjects[currentProjectId] = sanitizeProjectForStorage(activeProject);
         localStorage.setItem('clsg_user_projects', JSON.stringify(userProjects));
 
         // Đồng bộ Tóm tắt & Kịch bản lên Neon Cloud Database trên Vercel
@@ -8234,8 +8269,16 @@
         currentNodesMap[nodeKey].data[paramName] = value;
       }
 
-      // 2. Đồng bộ ngược thẳng vào activeProject.scenes và currentScenes
-      if (nodeKey && nodeKey.startsWith('item-')) {
+      // 2. Đồng bộ ngược thẳng vào activeProject.scenes, currentScenes và detailedContent
+      if (nodeKey && nodeKey.startsWith('grid-page-')) {
+        const pIdx = parseInt(nodeKey.replace('grid-page-', ''));
+        if (!isNaN(pIdx) && typeof activeProject !== 'undefined' && activeProject && activeProject.detailedContent && activeProject.detailedContent[pIdx]) {
+          activeProject.detailedContent[pIdx][paramName] = value;
+          if (paramName === 'narration') {
+            activeProject.detailedContent[pIdx].script = value;
+          }
+        }
+      } else if (nodeKey && nodeKey.startsWith('item-')) {
         const parts = nodeKey.split('-');
         if (parts.length >= 5) {
           const itIdx = parseInt(parts.pop());
@@ -10698,13 +10741,26 @@ LƯU Ý QUAN TRỌNG:
 
         const textAll = `${nodeText || ''} ${chapterTitle || ''} ${sectionTitle || ''} ${summary || ''}`.toLowerCase();
 
-        // 1. Phân tích miền kiến thức
+        // 1. Phân tích miền kiến thức & ưu tiên dữ liệu thực trích xuất từ slide
         let domainIntro = "";
         let coreFormula = "";
         let deepAnalysis = "";
         let practicalTakeaway = "";
 
-        if (textAll.includes('mtcnn') || textAll.includes('facenet') || textAll.includes('khuôn mặt') || textAll.includes('face') || textAll.includes('cnn')) {
+        if (summary && summary.trim().length > 25) {
+          let cleanSum = summary
+            .replace(/Nội dung văn bản trên slide như sau:?/gi, '')
+            .replace(/Tiêu đề:?/gi, 'Trọng tâm:')
+            .replace(/---\s*/g, '')
+            .replace(/\$\$[\s\S]*?\$\$/g, '')
+            .replace(/\$[^\$]*?\$/g, '')
+            .replace(/[*_#`]/g, '')
+            .replace(/\s+/g, ' ')
+            .trim();
+          domainIntro = `Trong phân đoạn này, [P1] chúng ta cùng phân tích nội dung của ${nodeText}.`;
+          deepAnalysis = cleanSum.slice(0, 350);
+          practicalTakeaway = "Nắm vững luận điểm này giúp chúng ta làm chủ toàn diện nội dung bài giảng và vận dụng hiệu quả vào thực tiễn.";
+        } else if (textAll.includes('mtcnn') || textAll.includes('facenet') || textAll.includes('khuôn mặt') || textAll.includes('face') || textAll.includes('cnn')) {
           if (textAll.includes('mtcnn')) {
             domainIntro = "Mạng tích chập đa tầng MTCNN (Multi-task Cascaded Convolutional Networks) đóng vai trò là kiến trúc xương sống trong bài toán phát hiện khuôn mặt thời gian thực.";
             coreFormula = "Cấu trúc gồm 3 mạng nối tiếp: P-Net đề xuất vùng, R-Net tinh lọc ứng viên, và O-Net xuất tọa độ bounding box cùng 5 điểm mốc khuôn mặt: [P1] $$\mathcal{L}_{det} + \alpha \mathcal{L}_{box} + \beta \mathcal{L}_{landmark}$$ [P2]";
@@ -10977,7 +11033,7 @@ Hãy viết kịch bản lời thoại giảng dạy:`;
             : 'https://slide-to-video-sigma.vercel.app/api/llm/chat';
           const proxyPayload = { ...payload, apiKey: cfg.apiKey || '', baseUrl: cfg.baseUrl || '', provider: cfg.provider || 'openai' };
           const ctl = new AbortController();
-          const tId = setTimeout(() => ctl.abort(), 55000);
+          const tId = setTimeout(() => ctl.abort(), 12000);
           res = await fetch(serverUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -10994,7 +11050,7 @@ Hãy viết kịch bản lời thoại giảng dạy:`;
             const endpoint = `${cfg.baseUrl.replace(/\/+$/, '')}/chat/completions`;
             const headers = { 'Content-Type': 'application/json', 'Authorization': `Bearer ${cfg.apiKey}` };
             const ctl = new AbortController();
-            const tId = setTimeout(() => ctl.abort(), 55000);
+            const tId = setTimeout(() => ctl.abort(), 12000);
             res = await fetch(endpoint, {
               method: 'POST',
               headers,
@@ -11019,21 +11075,25 @@ Hãy viết kịch bản lời thoại giảng dạy:`;
           console.warn('[LLMClient] generateSegmentNarration proxy error:', e);
         }
 
-        try {
-          const endpoint = `${cfg.baseUrl.replace(/\/+$/, '')}/chat/completions`;
-          const headers = { 'Content-Type': 'application/json' };
-          if (cfg.apiKey) headers['Authorization'] = `Bearer ${cfg.apiKey}`;
-          const res = await fetch(endpoint, { method: 'POST', headers, body: JSON.stringify(payload) });
-          if (res.ok) {
-            const data = await res.json();
-            const text = data.choices?.[0]?.message?.content || '';
-            if (text && text.trim().length > 10) {
-              const clean = text.trim();
-              return typeof window.sanitizeScriptForSpeech === 'function' ? window.sanitizeScriptForSpeech(clean) : clean;
+        if (cfg.apiKey) {
+          try {
+            const endpoint = `${cfg.baseUrl.replace(/\/+$/, '')}/chat/completions`;
+            const headers = { 'Content-Type': 'application/json', 'Authorization': `Bearer ${cfg.apiKey}` };
+            const ctl = new AbortController();
+            const tId = setTimeout(() => ctl.abort(), 10000);
+            const r2 = await fetch(endpoint, { method: 'POST', headers, body: JSON.stringify(payload), signal: ctl.signal });
+            clearTimeout(tId);
+            if (r2.ok) {
+              const data = await r2.json();
+              const text = data.choices?.[0]?.message?.content || '';
+              if (text && text.trim().length > 10) {
+                const clean = text.trim();
+                return typeof window.sanitizeScriptForSpeech === 'function' ? window.sanitizeScriptForSpeech(clean) : clean;
+              }
             }
+          } catch (e) {
+            console.warn('[LLMClient] generateSegmentNarration direct error:', e);
           }
-        } catch (e) {
-          console.warn('[LLMClient] generateSegmentNarration direct error:', e);
         }
 
         const localText = this.synthesizePedagogicalNarrationLocally({ nodeCode, nodeText, chapterTitle, sectionTitle, duration, wpm, visualType, summary, mechanism, keyPoint, notes, mediaAttachments, mediaNote, bridgeIntro });
@@ -16315,7 +16375,7 @@ QUY TẮC BẮT BUỘC:
         }
         try {
           const userProjects = JSON.parse(localStorage.getItem('clsg_user_projects') || '{}');
-          userProjects[projData.id] = projData;
+          userProjects[projData.id] = sanitizeProjectForStorage(projData);
           localStorage.setItem('clsg_user_projects', JSON.stringify(userProjects));
         } catch (e) { }
         // Tự động lưu lên Neon Cloud Database
@@ -18169,7 +18229,8 @@ QUY TẮC BẮT BUỘC:
 
     renderProjectsGrid();
     const savedActiveView = localStorage.getItem('clsg_active_view') || 'projects';
-    if (savedActiveView === 'workspace' && currentProjectId && defaultProjects[currentProjectId]) {
+    const _startupUserProjs = JSON.parse(localStorage.getItem('clsg_user_projects') || '{}');
+    if (savedActiveView === 'workspace' && currentProjectId && (defaultProjects[currentProjectId] || _startupUserProjs[currentProjectId])) {
       switchView('workspace');
     } else {
       switchView('projects');
@@ -19900,10 +19961,10 @@ Yêu cầu trình bày:
 
 
     // ===== HỆ THỐNG PHÁT ÂM THANH & NGHE THỬ GIỌNG ĐỌC AI ĐA TẦNG =====
-    let _currentSpeakingSegKey = null;
-    let _isPlayingAllScript = false;
-    let _scriptPlayIndex = 0;
-    let _scriptPlayKeys = [];
+    window._currentSpeakingSegKey = window._currentSpeakingSegKey || null;
+    window._isPlayingAllScript = window._isPlayingAllScript || false;
+    window._scriptPlayIndex = window._scriptPlayIndex || 0;
+    window._scriptPlayKeys = window._scriptPlayKeys || [];
     window._globalTtsAudio = window._globalTtsAudio || null;
 
     async function playSpeechWithVoice(text, voiceKey, onEnd, onReady, boundSegKey = null, boundToken = null) {
