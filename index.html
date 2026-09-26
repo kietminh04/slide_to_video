@@ -10061,28 +10061,26 @@ Trả về DUY NHẤT JSON hợp lệ:
           mediaInstruction = `Chỉ dẫn tư liệu: "${mediaNote}".`;
         }
 
-        // [UPGRADE 2: Visual Taxonomy Prompting]
-        let visualTaxonomyRule = '';
-        if (visualType === 'split_screen') visualTaxonomyRule = 'QUY TẮC ĐẠO DIỄN THỊ GIÁC (Split Screen): Hình ảnh minh họa nằm ở MỘT NỬA màn hình. Bạn phải dùng từ ngữ chỉ hướng để điều hướng mắt học viên (Ví dụ: "Hãy quan sát biểu đồ bên cạnh...", "Như chúng ta thấy ở nửa bên kia...").';
-        else if (visualType === 'immersive') visualTaxonomyRule = 'QUY TẮC ĐẠO DIỄN THỊ GIÁC (Immersive): Hình ảnh minh họa ĐANG BAO TRÙM TOÀN MÀN HÌNH. TUYỆT ĐỐI KHÔNG dùng từ "hãy nhìn vào chữ" hay "bảng bên cạnh". Thay vào đó, dùng ngôn ngữ mô tả sâu vào hình ảnh và kể chuyện để học viên chìm đắm vào hình ảnh trước mắt.';
-        else if (visualType === 'lower_third') visualTaxonomyRule = 'QUY TẮC ĐẠO DIỄN THỊ GIÁC (Lower Third): Chữ chỉ xuất hiện như một dải nhỏ ở dưới cùng, bạn đang chiếm trọn khung hình. Hãy nói chuyện trực tiếp, duy trì giao tiếp bằng mắt (eye contact) với người học qua camera, không chỉ trỏ.';
-        else visualTaxonomyRule = `QUY TẮC ĐẠO DIỄN THỊ GIÁC: Định dạng là [${visualType}]. Điều chỉnh lời dẫn cho phù hợp.`;
-
-        const systemPrompt = `Bạn là Chuyên gia Giảng dạy cấp cao.
+        // [QUY TẮC SƯ PHẠM ĐỈNH CAO: KHÔNG TẢ ẢNH NỀN / PHONG CẢNH TRANG TRÍ]
+        const systemPrompt = `Bạn là Chuyên gia Giảng dạy cấp cao & Nhà nghiên cứu Khoa học.
 Nhiệm vụ: Viết KỊCH BẢN LỜI THOẠI GIẢNG DẠY SƯ PHẠM (Narration Script) cho một phân đoạn kiến thức cụ thể thuộc bài giảng "${projectTitle || 'Tổng hợp'}".
 
-QUY TẮC BẮT BUỘC:
-1. Lời thoại tự nhiên, hấp dẫn, giải thích sâu sắc bản chất vấn đề, đi thẳng vào kiến thức trọng tâm, không sáo rỗng chào hỏi ("Chào các bạn...", "Hôm nay chúng ta...").
-2. Chèn các thẻ nhịp ngắt chuẩn sư phạm để giọng đọc AI truyền cảm:
+QUY TẮC CỐT LÕI BẮT BUỘC:
+1. ĐI THẲNG VÀO NỘI DUNG HỌC THUẬT: Lời thoại tự nhiên, giải thích sâu sắc bản chất vấn đề, logic kỹ thuật, không sáo rỗng chào hỏi ("Chào các bạn...", "Hôm nay chúng ta...").
+2. 🚫 TUYỆT ĐỐI CẤM MÔ TẢ ẢNH NỀN / HÌNH ẢNH TRANG TRÍ / LOGO TRƯỜNG:
+   - TUYỆT ĐỐI KHÔNG mô tả, bình luận hoặc nhắc đến ảnh nền slide, phong cảnh, tòa nhà, trường học (như trường VinUniversity, Bách Khoa, khuôn viên trường...), logo trường hay các chi tiết đồ họa trang trí bên lề.
+   - TUYỆT ĐỐI KHÔNG dùng các câu sáo rỗng ngớ ngẩn như: "Hãy quan sát hình ảnh bên cạnh...", "Như các bạn thấy trong ảnh...", "Hình ảnh này thể hiện môi trường học tập...". Người học cần nghe kiến thức chuyên môn chứ không phải nghe mô tả phong cảnh slide!
+   - CHỈ ĐƯỢC NHẮC ĐẾN YẾU TỐ HÌNH ẢNH KHI VÀ CHỈ KHI đó là SƠ ĐỒ KỸ THUẬT, KIẾN TRÚC MÔ HÌNH (Pipeline, Architecture), ĐỒ THỊ TOÁN HỌC hoặc BẢNG SỐ LIỆU trực tiếp chứa kiến thức cần phân tích.
+   - Với slide mở đầu / trang bìa: Tập trung giới thiệu bản chất và tầm quan trọng của chủ đề trong thực tiễn (ví dụ: ứng dụng trong xe tự hành, phân tích hành vi), không được bình luận ảnh nền.
+3. Chèn các thẻ nhịp ngắt chuẩn sư phạm để giọng đọc AI truyền cảm:
    - [P1] (ngắt ngắn 0.5s giữa các mệnh đề hoặc ý nhỏ)
    - [P2] (ngắt 1.0s khi chuyển ý quan trọng hoặc kết thúc luận điểm)
    - [P3] (ngắt 1.5s để người học ngẫm nghĩ sau khái niệm cốt lõi)
-3. Độ dài kịch bản phải khớp sát khoảng ${targetWords} từ (tương ứng ${dur} giây ở tốc độ đọc ${pace} WPM).
-4. Các thuật ngữ chuyên ngành phải giải thích dễ hiểu. Các công thức (nếu có) dùng định dạng LaTeX kẹp giữa $...$.
-5. ${visualTaxonomyRule}
+4. Độ dài kịch bản phải khớp sát khoảng ${targetWords} từ (tương ứng ${dur} giây ở tốc độ đọc ${pace} WPM).
+5. Các thuật ngữ chuyên ngành phải giải thích dễ hiểu, chính xác. Công thức toán học (nếu có) dùng định dạng LaTeX kẹp giữa $...$.
 ${mediaInstruction ? '6. ' + mediaInstruction : ''}
 
-Trả về DUY NHẤT văn bản kịch bản lời thoại hoàn chỉnh (không trả về JSON, không bao giờ thêm lời chào ngoài lề ở đầu hay cuối).`;
+Trả về DUY NHẤT văn bản kịch bản lời thoại hoàn chỉnh (không trả về JSON, không thêm lời dẫn giải ngoài lề).`;
 
         let bridgeNote = '';
         if (bridgeIntro && bridgeIntro.trim().length > 0) {
