@@ -12488,6 +12488,13 @@ QUY TẮC:
       renderSourcesList();
       renderMindmap();
       initMindmapPanZoom();
+
+      // TỰ ĐỘNG CHẠY VISION AI NẾU CÓ TRANG CHƯA PHÂN TÍCH THỊ GIÁC
+      if (activeProject && activeProject.detailedContent && activeProject.detailedContent.some(p => !p.isVisionEnriched)) {
+        setTimeout(() => {
+          startBackgroundVisionEnrichment(activeProject);
+        }, 800);
+      }
       initNodeTuningDrawerEvents();
       initLayoutResizers();
       renderScriptDocument();
@@ -14203,37 +14210,9 @@ QUY TẮC:
         if (totalPages <= 80) isSlideDeck = true;
       }
 
-      // ƯU TIÊN SỐ 1 CHO SLIDE BÀI GIẢNG: TẠO SƠ ĐỒ PHẲNG 1 PAGE = 1 ITEM (GRID MODE)
-      if (isSlideDeck) {
-          updateLoading("Đang thiết lập cấu trúc...", "Tự động trích xuất toàn bộ slide & chụp ảnh từng trang...");
-          const detailedContent = await ingestAllPdfSlides(pdf, totalPages);
-          const items = [];
-          for (let p = 1; p <= totalPages; p++) {
-              const dItem = detailedContent[p - 1];
-              const titleText = (dItem && dItem.explanation) 
-                  ? (dItem.explanation.split('\n')[0].replace(/^[-#*•\d.\s]+/, '').slice(0, 45) || `Trang ${p}`)
-                  : `Trang ${p}`;
-              items.push({
-                  title: titleText.trim() || `Trang ${p}`,
-                  text: dItem ? dItem.explanation.slice(0, 160) : `Nội dung hiển thị trên trang ${p}`,
-                  duration: 20
-              });
-          }
-          return {
-             title: (fileName || '').replace(/\.[^/.]+$/, ""),
-             totalPages,
-             method: 'pdf-slide-direct',
-             detailedContent: detailedContent,
-             chapters: [{
-                 chapter: "SLIDES",
-                 title: "Tất cả các trang",
-                 sections: [{
-                     title: "Danh sách",
-                     items: items
-                 }]
-             }]
-          };
-      }
+      // 1. Tự động trích xuất toàn bộ ảnh thumbnail cho Sơ Đồ và Tab Nội Dung
+      updateLoading("Đang nạp toàn bộ slide...", "Chụp ảnh và trích xuất sơ bộ từng trang...");
+      const detailedContent = await ingestAllPdfSlides(pdf, totalPages);
 
       // ƯU TIÊN SỐ 1 CHO SÁCH / GIÁO TRÌNH DÀY: BÓC TÁCH HYBRID THEO MỤC LỤC (TIẾT KIỆM TOKEN, CHUẨN TỪNG TRANG)
       try {
@@ -14241,6 +14220,7 @@ QUY TẮC:
         const tocResult = await extractPdfHybridTOC(pdf, totalPages, fileName);
         if (tocResult && tocResult.chapters && tocResult.chapters.length > 0) {
           console.log(`[PDF Extractor] 🌟 Bóc tách thành công qua Mục lục Hybrid TOC: ${tocResult.chapters.length} chương!`);
+          tocResult.detailedContent = detailedContent;
           return tocResult;
         }
       } catch (tocErr) {
@@ -14260,6 +14240,7 @@ QUY TẮC:
               title: (fileName || '').replace(/\.[^/.]+$/, ""),
               totalPages,
               chapters: aiResult.chapters,
+              detailedContent: detailedContent,
               method: 'llm-openai'
             };
           }
@@ -15616,9 +15597,12 @@ QUY TẮC:
         switchView('workspace');
         showToast(`Đã sinh kịch bản bài giảng thành công từ ${file.name}!`);
         
-        // TỰ ĐỘNG NẠP RAG NGAY KHI PHÂN TÍCH XONG
+        // TỰ ĐỘNG NẠP RAG VÀ KÍCH HOẠT VISION AI PHÂN TÍCH CHI TIẾT
         setTimeout(() => {
           if (typeof triggerRagIngestion === 'function') triggerRagIngestion();
+          if (typeof startBackgroundVisionEnrichment === 'function' && projData && projData.detailedContent) {
+            startBackgroundVisionEnrichment(projData);
+          }
         }, 1000);
       } catch (err) {
         console.error("[Create Project Error]", err);
@@ -18839,7 +18823,10 @@ QUY TẮC:
           html += `
             <div style="display: flex; gap: 24px; background: rgba(30,41,59,0.5); border: 1px solid var(--border-color); border-radius: 12px; padding: 20px;">
               <div style="flex: 0 0 350px; display: flex; flex-direction: column; gap: 12px;">
-                <div style="font-weight: 700; color: var(--cyan); font-size: 16px;">Trang ${page.pageNumber}</div>
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                  <div style="font-weight: 700; color: var(--cyan); font-size: 16px;">Trang ${page.pageNumber}</div>
+                  ${page.isVisionEnriched ? '<span style="font-size: 11px; padding: 2px 8px; border-radius: 4px; background: rgba(16, 185, 129, 0.2); color: #34d399; font-weight: 600;">✨ Vision AI</span>' : '<span style="font-size: 11px; padding: 2px 8px; border-radius: 4px; background: rgba(56, 189, 248, 0.1); color: var(--text-dim); font-weight: 500;">⏳ Text gốc</span>'}
+                </div>
                 <div style="border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; overflow: hidden; background: #000; box-shadow: 0 4px 6px rgba(0,0,0,0.3);">
                   <img src="${page.image_url}" style="width: 100%; display: block; object-fit: contain;">
                 </div>
@@ -18867,6 +18854,141 @@ QUY TẮC:
           </div>
         `;
       }
+    }
+
+    // =========================================================================
+    // HỆ THỐNG PHÂN TÍCH THỊ GIÁC CHUYÊN SÂU TỰ ĐỘNG (BACKGROUND VISION AI ENRICHMENT)
+    // Tự động phân tích từng ảnh slide bằng Vision AI (Gemini / GPT-4o) để bóc tách
+    // cả chữ lẫn cơ chế sơ đồ/hình ảnh chuyên sâu, cập nhật trực tiếp vào kho RAG
+    // =========================================================================
+    let _isVisionEnriching = false;
+    let _visionEnrichAbortController = null;
+
+    async function startBackgroundVisionEnrichment(project) {
+      if (!project || !project.detailedContent || project.detailedContent.length === 0) return;
+      if (_isVisionEnriching) return;
+      _isVisionEnriching = true;
+      _visionEnrichAbortController = new AbortController();
+
+      const progressBox = document.getElementById('content-extraction-progress');
+      const pText = document.getElementById('content-progress-text');
+      const pPercent = document.getElementById('content-progress-percent');
+      const pBar = document.getElementById('content-progress-bar');
+
+      const pagesToEnrich = project.detailedContent.filter(p => !p.isVisionEnriched);
+      if (pagesToEnrich.length === 0) {
+        _isVisionEnriching = false;
+        return;
+      }
+
+      if (progressBox) progressBox.style.display = 'block';
+
+      const cfg = (typeof LLMClient !== 'undefined') ? LLMClient.getConfig() : {};
+      const proxyUrl = (window.location.origin.startsWith('http') && !window.location.origin.includes('file:'))
+        ? `${window.location.origin}/api/llm/chat`
+        : '/api/llm/chat';
+
+      const systemPrompt = `Bạn là một giáo sư đại học đang giảng bài dựa trên slide. 
+Hãy đọc kỹ bức ảnh slide này và thực hiện 2 việc:
+1. Trích xuất CHÍNH XÁC toàn bộ nội dung văn bản (chữ) có trên slide.
+2. Nếu có hình ảnh, biểu đồ, phương trình, đoạn code... hãy mô tả và giải thích chi tiết ý nghĩa của chúng. 
+Mục tiêu là tạo ra một tài liệu văn bản đọc hiểu hoàn chỉnh thay thế cho việc nhìn hình slide.
+
+Yêu cầu trình bày:
+- Trình bày rõ ràng, mạch lạc, dễ đọc.
+- Tuyệt đối không dùng các ký hiệu markdown như dấu sao kép ** để in đậm, không dùng các ký tự thừa gây rối mắt.`;
+
+      let completedCount = 0;
+      const total = pagesToEnrich.length;
+
+      // Xử lý tuần tự nhẹ nhàng (Concurrency 2) để không quá tải trình duyệt và tránh rate limit API
+      const CONCURRENCY = 2;
+      let currentIndex = 0;
+
+      async function worker() {
+        while (currentIndex < total) {
+          if (_visionEnrichAbortController.signal.aborted) break;
+          const idx = currentIndex++;
+          const pageItem = pagesToEnrich[idx];
+          if (!pageItem || !pageItem.image_url) continue;
+
+          try {
+            if (pText) pText.textContent = `✨ AI Vision đang phân tích sâu trang ${pageItem.pageNumber} / ${project.detailedContent.length}...`;
+
+            const payload = {
+              model: cfg.model || 'gemini-1.5-flash',
+              messages: [
+                {
+                  role: 'user',
+                  content: [
+                    { type: 'text', text: systemPrompt },
+                    { type: 'image_url', image_url: { url: pageItem.image_url } }
+                  ]
+                }
+              ],
+              max_tokens: 1500,
+              temperature: 0.2,
+              apiKey: cfg.apiKey,
+              baseUrl: cfg.baseUrl,
+              provider: cfg.provider
+            };
+
+            const res = await fetch(proxyUrl, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(payload),
+              signal: _visionEnrichAbortController.signal
+            });
+
+            if (res.ok) {
+              const data = await res.json();
+              const explanation = (data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) || '';
+              if (explanation.trim().length > 20) {
+                pageItem.explanation = explanation.trim();
+                pageItem.isVisionEnriched = true;
+
+                // Tự động cập nhật giao diện nếu đang mở Tab Nội Dung
+                const activeTab = document.querySelector('.center-tab-btn.active')?.dataset.tab;
+                if (activeTab === 'content') {
+                  renderDetailedContentUI();
+                }
+              }
+            }
+          } catch(e) {
+            console.warn(`[Vision AI] Lỗi phân tích trang ${pageItem.pageNumber}:`, e);
+          }
+
+          completedCount++;
+          const pct = Math.round((completedCount / total) * 100);
+          if (pPercent) pPercent.textContent = `${pct}%`;
+          if (pBar) pBar.style.width = `${pct}%`;
+        }
+      }
+
+      const workers = [];
+      for (let i = 0; i < Math.min(CONCURRENCY, total); i++) {
+        workers.push(worker());
+      }
+      await Promise.all(workers);
+
+      if (progressBox) progressBox.style.display = 'none';
+      _isVisionEnriching = false;
+
+      // Lưu lại vào Neon Cloud & LocalStorage
+      if (typeof CloudDB !== 'undefined' && CloudDB.save) {
+        CloudDB.save(project.id, project);
+      }
+      try {
+        const userProjects = JSON.parse(localStorage.getItem('clsg_user_projects') || '{}');
+        userProjects[project.id] = project;
+        localStorage.setItem('clsg_user_projects', JSON.stringify(userProjects));
+      } catch(e) {}
+
+      // Tự động đồng bộ vào Vector Database (RAG)
+      if (typeof triggerRagIngestion === 'function') {
+        triggerRagIngestion();
+      }
+      showToast('✅ Đã hoàn tất phân tích thị giác Vision AI cho toàn bộ slide!');
     }
 
     async function handleDirectSlideIngest(fileOrInput) {
@@ -18914,7 +19036,13 @@ QUY TẮC:
         } catch(e) {}
 
         hideLoading();
-        showToast(`✅ Đã nạp thành công toàn bộ ${detailed.length} trang slide vào Sơ đồ và Nội dung!`);
+        showToast(`✅ Đã nạp thành công toàn bộ ${detailed.length} trang slide! AI Vision đang bắt đầu phân tích sâu...`);
+
+        // Tự động kích hoạt Vision AI phân tích chuyên sâu từng trang ngầm
+        setTimeout(() => {
+          startBackgroundVisionEnrichment(activeProject);
+        }, 500);
+
       } catch (err) {
         console.error("Lỗi nạp slide trực tiếp:", err);
         hideLoading();
