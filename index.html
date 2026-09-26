@@ -12059,7 +12059,9 @@ OUTPUT: Valid JSON only.
             query: msg,
             history: rollingHistory,
             treeSkeleton: treeSkeleton,
-            apiKey: cfg.apiKey
+            apiKey: cfg.apiKey,
+            geminiApiKey: cfg.geminiApiKey,
+            openaiApiKey: cfg.openaiApiKey
         };
         
         try {
@@ -13229,10 +13231,17 @@ QUY TẮC:
               : 'https://slide-to-video-sigma.vercel.app/api/rag_search';
             const searchCtl = new AbortController();
             const searchTId = setTimeout(() => searchCtl.abort(), 3000);
+            const cfgSearch = (typeof LLMClient !== 'undefined') ? LLMClient.getConfig() : {};
             const searchRes = await fetch(searchUrl, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ projectId: projId, query: queryText }),
+              body: JSON.stringify({ 
+                projectId: projId, 
+                query: queryText,
+                apiKey: cfgSearch.apiKey,
+                geminiApiKey: cfgSearch.geminiApiKey,
+                openaiApiKey: cfgSearch.openaiApiKey
+              }),
               signal: searchCtl.signal
             });
             clearTimeout(searchTId);
@@ -17529,7 +17538,9 @@ QUY TẮC:
           body: JSON.stringify({ 
             projectId: currentProjectId, 
             chunks: chunks,
-            apiKey: cfg.apiKey
+            apiKey: cfg.apiKey,
+            geminiApiKey: cfg.geminiApiKey,
+            openaiApiKey: cfg.openaiApiKey
           })
         });
 

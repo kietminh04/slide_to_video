@@ -21,13 +21,18 @@ module.exports = async function (req, res) {
     return res.status(500).json({ error: 'Chưa cấu hình DATABASE_URL' });
   }
 
-  const apiKey = req.body.apiKey || process.env.GEMINI_API_KEY || process.env.OPENAI_API_KEY;
+  // Ưu tiên số 1: Luôn dùng Gemini Key để băm câu hỏi (768 chiều khớp với vector DB)
+  const geminiKey = req.body.geminiApiKey || (req.body.apiKey && !req.body.apiKey.startsWith('sk-') ? req.body.apiKey : '') || process.env.GEMINI_API_KEY;
+  const openaiKey = req.body.openaiApiKey || (req.body.apiKey && req.body.apiKey.startsWith('sk-') ? req.body.apiKey : '') || process.env.OPENAI_API_KEY;
+
+  const apiKey = geminiKey || openaiKey;
   if (!apiKey) {
     // Trả về chunks rỗng để frontend tự fallback local
     return res.status(200).json({ chunks: [] });
   }
 
-  const isOpenAI = apiKey.startsWith('sk-');
+  // Chỉ dùng OpenAI băm nếu hoàn toàn KHÔNG có Gemini Key
+  const isOpenAI = !geminiKey && !!openaiKey;
 
   try {
     let queryEmbedding;

@@ -21,13 +21,17 @@ module.exports = async function (req, res) {
     return res.status(500).json({ error: 'Chưa cấu hình DATABASE_URL trên Vercel' });
   }
 
-  // Chấp nhận API Key từ Client gửi lên hoặc biến môi trường Vercel
-  const apiKey = req.body.apiKey || process.env.GEMINI_API_KEY || process.env.OPENAI_API_KEY;
+  // Ưu tiên số 1: Luôn dùng Gemini Key để băm (tiết kiệm token & chi phí)
+  const geminiKey = req.body.geminiApiKey || (req.body.apiKey && !req.body.apiKey.startsWith('sk-') ? req.body.apiKey : '') || process.env.GEMINI_API_KEY;
+  const openaiKey = req.body.openaiApiKey || (req.body.apiKey && req.body.apiKey.startsWith('sk-') ? req.body.apiKey : '') || process.env.OPENAI_API_KEY;
+
+  const apiKey = geminiKey || openaiKey;
   if (!apiKey) {
     return res.status(500).json({ error: 'Chưa cấu hình API Key (Vui lòng nhập Key trong Cấu hình AI ⚙️ hoặc cài biến trên Vercel)' });
   }
 
-  const isOpenAI = apiKey.startsWith('sk-');
+  // Chỉ dùng OpenAI băm nếu hoàn toàn KHÔNG có Gemini Key
+  const isOpenAI = !geminiKey && !!openaiKey;
 
   try {
     // 0. Tạo bảng & Đảm bảo cột vector là 768 chiều
