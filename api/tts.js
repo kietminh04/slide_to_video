@@ -1,4 +1,4 @@
-// Vercel Serverless Function: High Quality TTS Audio Proxy (OpenAI TTS + Google Neural Fallback)
+// Vercel Serverless Function: Unified High Quality Vietnamese Speech Engine
 const https = require('https');
 
 function fetchGoogleTTSChunk(text, lang = 'vi') {
@@ -30,7 +30,6 @@ async function fetchGoogleTTSFull(text, lang = 'vi') {
     }
   }
   if (cur && cur.trim()) chunks.push(cur.trim());
-
   if (chunks.length === 0) chunks.push(text.slice(0, 180));
 
   const buffers = [];
@@ -57,59 +56,18 @@ module.exports = async (req, res) => {
   }
 
   try {
-    const { text, voice = 'quynh_anh', model = 'tts-1', apiKey } = req.body || {};
+    const { text } = req.body || {};
 
     if (!text || text.trim().length === 0) {
       return res.status(400).json({ error: 'Missing text parameter' });
     }
 
     const cleanText = text.replace(/\[P\d\]/g, '').replace(/\s+/g, ' ').trim();
-    const key = apiKey || process.env.OPENAI_API_KEY;
 
-    // 1. NẾU CÓ OPENAI KEY VÀ CHỌN GIỌNG OPENAI HOẶC USER MUỐN CHẤT LƯỢNG CAO
-    const openaiVoices = ['alloy', 'echo', 'fable', 'onyx', 'nova', 'shimmer'];
-    const isExplicitOpenAIVoice = openaiVoices.includes(voice);
-
-    if (key && (isExplicitOpenAIVoice || voice === 'quynh_anh' || voice === 'mai_phuong')) {
-      // Map giọng tiếng Việt sang giọng OpenAI tương ứng
-      let chosenVoice = voice;
-      if (voice === 'quynh_anh') chosenVoice = 'nova';      // Nữ nhẹ nhàng, rõ ràng
-      else if (voice === 'mai_phuong') chosenVoice = 'shimmer'; // Nữ ấm áp, dịu dàng
-      else if (voice === 'nam_an') chosenVoice = 'echo';        // Nam trầm ấm
-      else if (voice === 'minh_quang') chosenVoice = 'onyx';    // Nam sâu lắng, chuyên nghiệp
-      else if (!openaiVoices.includes(chosenVoice)) chosenVoice = 'nova';
-
-      try {
-        const openaiRes = await fetch('https://api.openai.com/v1/audio/speech', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${key}`
-          },
-          body: JSON.stringify({
-            model: model || 'tts-1',
-            input: cleanText.slice(0, 4000),
-            voice: chosenVoice
-          })
-        });
-
-        if (openaiRes.ok) {
-          const audioBuffer = await openaiRes.arrayBuffer();
-          res.setHeader('Content-Type', 'audio/mpeg');
-          return res.status(200).send(Buffer.from(audioBuffer));
-        }
-      } catch (err) {
-        console.warn('[OpenAI TTS Error, falling back to Google TTS]:', err);
-      }
-    }
-
-    // 2. GIỌNG NỮ TIẾNG VIỆT CHUẨN TỰ NHIÊN / QUỐC TẾ (GOOGLE TTS ENGINE)
-    const isEnglish = (voice === 'jenny_en' || voice === 'guy_en' || voice === 'fable');
-    const lang = isEnglish ? 'en' : 'vi';
-
-    const googleMp3Buffer = await fetchGoogleTTSFull(cleanText, lang);
+    // 100% ĐỒNG BỘ: Sử dụng DUY NHẤT 1 loại giọng đọc tiếng Việt chuẩn sư phạm (Google TTS vi)
+    const audioBuffer = await fetchGoogleTTSFull(cleanText, 'vi');
     res.setHeader('Content-Type', 'audio/mpeg');
-    return res.status(200).send(googleMp3Buffer);
+    return res.status(200).send(audioBuffer);
 
   } catch (error) {
     console.error('[TTS Server Error]:', error);

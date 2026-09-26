@@ -4292,27 +4292,10 @@
           <div class="gcfg-divider"></div>
           <div class="gcfg-group">
             <label>🎙️</label>
-            <select class="gcfg-select" id="gcfg-voice" title="Giọng đọc AI toàn hệ thống" onchange="applyGlobalVoice()">
-              <optgroup label="🇻🇳 Tiếng Việt (Tự nhiên & Truyền cảm)">
-                <option value="quynh_anh" selected>Quỳnh Anh (Nữ Bắc - Tự nhiên, trong trẻo)</option>
-                <option value="mai_phuong">Mai Phương (Nữ Nam - Dịu dàng, truyền cảm)</option>
-                <option value="nam_an">Nam An (Nam Bắc - Trầm ấm, dõng dạc)</option>
-                <option value="minh_quang">Minh Quang (Nam Nam - Chuyên nghiệp)</option>
-              </optgroup>
-              <optgroup label="🤖 OpenAI TTS (Đa ngữ chất lượng cao)">
-                <option value="nova">Nova (Nữ nhẹ nhàng - OpenAI)</option>
-                <option value="shimmer">Shimmer (Nữ ấm áp - OpenAI)</option>
-                <option value="alloy">Alloy (Trung tính cân bằng - OpenAI)</option>
-                <option value="echo">Echo (Nam trầm ấm - OpenAI)</option>
-                <option value="onyx">Onyx (Nam sâu lắng - OpenAI)</option>
-                <option value="fable">Fable (Anh Anh truyền cảm - OpenAI)</option>
-              </optgroup>
-              <optgroup label="🌐 Tiếng Anh (Edge / Global)">
-                <option value="jenny_en">Jenny (Nữ - US English)</option>
-                <option value="guy_en">Guy (Nam - UK English)</option>
-              </optgroup>
+            <select class="gcfg-select" id="gcfg-voice" title="Giọng đọc AI chuẩn hóa thống nhất toàn hệ thống" onchange="applyGlobalVoice()">
+              <option value="quynh_anh" selected>Quỳnh Anh (Nữ Chuẩn Sư Phạm - Tiếng Việt)</option>
             </select>
-            <button type="button" class="gcfg-test-voice-btn" id="btn-test-global-voice" onclick="testGlobalVoiceSample()" title="Nghe thử một câu mẫu với giọng đọc này">▶️ Thử</button>
+            <button type="button" class="gcfg-test-voice-btn" id="btn-test-global-voice" onclick="testGlobalVoiceSample()" title="Nghe thử giọng đọc chuẩn">▶️ Thử</button>
           </div>
           <div class="gcfg-divider"></div>
           <div class="gcfg-group">
@@ -4669,24 +4652,7 @@
               Giọng:</span>
             <select class="gcfg-select" id="gcfg-voice-right" style="flex: 1; font-size: 10px;"
               onchange="syncGlobalVoiceFromRight()">
-              <optgroup label="🇻🇳 Tiếng Việt (Tự nhiên & Truyền cảm)">
-                <option value="quynh_anh" selected>Quỳnh Anh (Nữ Bắc - Tự nhiên, trong trẻo)</option>
-                <option value="mai_phuong">Mai Phương (Nữ Nam - Dịu dàng, truyền cảm)</option>
-                <option value="nam_an">Nam An (Nam Bắc - Trầm ấm, dõng dạc)</option>
-                <option value="minh_quang">Minh Quang (Nam Nam - Chuyên nghiệp)</option>
-              </optgroup>
-              <optgroup label="🤖 OpenAI TTS (Đa ngữ chất lượng cao)">
-                <option value="nova">Nova (Nữ nhẹ nhàng - OpenAI)</option>
-                <option value="shimmer">Shimmer (Nữ ấm áp - OpenAI)</option>
-                <option value="alloy">Alloy (Trung tính cân bằng - OpenAI)</option>
-                <option value="echo">Echo (Nam trầm ấm - OpenAI)</option>
-                <option value="onyx">Onyx (Nam sâu lắng - OpenAI)</option>
-                <option value="fable">Fable (Anh Anh truyền cảm - OpenAI)</option>
-              </optgroup>
-              <optgroup label="🌐 Tiếng Anh (Edge / Global)">
-                <option value="jenny_en">Jenny (Nữ - US English)</option>
-                <option value="guy_en">Guy (Nam - UK English)</option>
-              </optgroup>
+              <option value="quynh_anh" selected>Quỳnh Anh (Nữ Chuẩn Sư Phạm)</option>
             </select>
           </div>
           <!-- Tốc độ đọc -->
@@ -6363,21 +6329,19 @@
     }
 
     function applyGlobalVoice() {
-      const sel = document.getElementById('gcfg-voice');
-      if (!sel) return;
-      const voiceVal = sel.value;
-      const voiceText = sel.options[sel.selectedIndex]?.text || voiceVal;
+      const voiceVal = 'quynh_anh';
+      const voiceText = 'Quỳnh Anh (Nữ Chuẩn Sư Phạm - Tiếng Việt)';
       if (activeProject) activeProject.voice = voiceVal;
 
-      // Đồng bộ sang cột phải nếu có
       const rightSel = document.getElementById('gcfg-voice-right');
-      if (rightSel && rightSel.value !== voiceVal) rightSel.value = voiceVal;
+      if (rightSel) rightSel.value = voiceVal;
+      const centerSel = document.getElementById('gcfg-voice');
+      if (centerSel) centerSel.value = voiceVal;
 
-      // Cập nhật nhãn hiển thị trong Video Studio config panel
       const videoVoiceDisplay = document.getElementById('video-cfg-voice-display');
       if (videoVoiceDisplay) videoVoiceDisplay.textContent = voiceText;
 
-      showToast(`🎙️ Giọng đọc: ${voiceText}`);
+      showToast(`🎙️ Đã đồng bộ chuẩn hóa giọng đọc: ${voiceText}`);
     }
 
     function applyGlobalSpeed() {
@@ -6432,11 +6396,12 @@
       // Đồng bộ cột giữa
       const gcfgMin = document.getElementById('gcfg-total-minutes');
       if (gcfgMin) gcfgMin.value = totalMin;
+      activeProject.voice = 'quynh_anh';
       const gcfgVoice = document.getElementById('gcfg-voice');
-      if (gcfgVoice && activeProject.voice) {
-        gcfgVoice.value = activeProject.voice;
+      if (gcfgVoice) {
+        gcfgVoice.value = 'quynh_anh';
         const videoVoiceDisplay = document.getElementById('video-cfg-voice-display');
-        if (videoVoiceDisplay) videoVoiceDisplay.textContent = gcfgVoice.options[gcfgVoice.selectedIndex]?.text || activeProject.voice;
+        if (videoVoiceDisplay) videoVoiceDisplay.textContent = 'Quỳnh Anh (Nữ Chuẩn Sư Phạm - Tiếng Việt)';
       }
       const gcfgSpeed = document.getElementById('gcfg-speed');
       if (gcfgSpeed && activeProject.speechRate) gcfgSpeed.value = String(activeProject.speechRate);
@@ -6447,7 +6412,7 @@
       const gcfgSecR = document.getElementById('gcfg-total-sec-right');
       if (gcfgSecR) gcfgSecR.textContent = totalSec + 's';
       const gcfgVoiceR = document.getElementById('gcfg-voice-right');
-      if (gcfgVoiceR && activeProject.voice) gcfgVoiceR.value = activeProject.voice;
+      if (gcfgVoiceR) gcfgVoiceR.value = 'quynh_anh';
       const gcfgSpeedR = document.getElementById('gcfg-speed-right');
       if (gcfgSpeedR && activeProject.speechRate) gcfgSpeedR.value = String(activeProject.speechRate);
 
@@ -19633,8 +19598,6 @@ Yêu cầu trình bày:
       if (!isAudioSessionValid(boundSegKey, currentToken)) return;
 
       const cleanText = text.replace(/\[P\d\]/g, '').replace(/\s+/g, ' ').trim();
-      const cfg = typeof LLMClient !== 'undefined' ? LLMClient.getConfig() : {};
-      const isEnglish = (voiceKey === 'jenny_en' || voiceKey === 'guy_en' || voiceKey === 'fable');
 
       // Khởi tạo AbortController cho request fetch này
       window._activeTtsAbortController = new AbortController();
@@ -19649,12 +19612,7 @@ Yêu cầu trình bày:
         const res = await fetch(serverUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            text: cleanText,
-            voice: voiceKey,
-            apiKey: cfg.apiKey || '',
-            provider: cfg.provider || 'openai'
-          }),
+          body: JSON.stringify({ text: cleanText }),
           signal: abortSignal
         });
 
@@ -19692,9 +19650,7 @@ Yêu cầu trình bày:
             };
 
             audio.onerror = () => {
-              if (isAudioSessionValid(boundSegKey, currentToken)) {
-                playFallbackWebSpeech(cleanText, voiceKey, onEnd, onReady, boundSegKey, currentToken);
-              }
+              if (isAudioSessionValid(boundSegKey, currentToken) && onEnd) onEnd();
             };
 
             if (isAudioSessionValid(boundSegKey, currentToken)) {
@@ -19705,7 +19661,7 @@ Yêu cầu trình bày:
                   audioUrl: audioUrl,
                   duration: audio.duration ? Math.round(audio.duration / speed) : null,
                   blob: blob,
-                  voice: voiceKey
+                  voice: 'quynh_anh'
                 };
               }
               await audio.play();
@@ -19721,14 +19677,13 @@ Yêu cầu trình bày:
         }
       } catch (err) {
         if (err.name === 'AbortError') return; // Đã bị hủy do chuyển slide -> thoát âm thầm
-        console.warn('[TTS Server error, falling back to direct / Web Speech]:', err);
+        console.warn('[TTS Server error, falling back to direct Google TTS]:', err);
       }
 
-      // TẦNG 2: GOOGLE TTS DIRECT NẾU VĂN BẢN NGẮN (< 180 KÝ TỰ)
+      // TẦNG 2: GOOGLE TTS DIRECT (ĐỒNG BỘ 100% CÙNG 1 GIỌNG TIẾNG VIỆT)
       if (!isAudioSessionValid(boundSegKey, currentToken)) return;
       try {
-        const lang = isEnglish ? 'en' : 'vi';
-        const directUrl = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(cleanText.slice(0, 180))}&tl=${lang}&client=tw-ob`;
+        const directUrl = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(cleanText.slice(0, 180))}&tl=vi&client=tw-ob`;
         const audio = new Audio(directUrl);
         _globalTtsAudio = audio;
         const speed = parseFloat(document.getElementById('gcfg-speed')?.value || '1.0');
@@ -19751,9 +19706,7 @@ Yêu cầu trình bày:
           }
         };
         audio.onerror = () => {
-          if (isAudioSessionValid(boundSegKey, currentToken)) {
-            playFallbackWebSpeech(cleanText, voiceKey, onEnd, onReady, boundSegKey, currentToken);
-          }
+          if (isAudioSessionValid(boundSegKey, currentToken) && onEnd) onEnd();
         };
 
         if (isAudioSessionValid(boundSegKey, currentToken)) {
@@ -19768,12 +19721,7 @@ Yêu cầu trình bày:
           return;
         }
       } catch (e) {
-        if (!isAudioSessionValid(boundSegKey, currentToken)) return;
-      }
-
-      // TẦNG 3: WEB SPEECH API DỰ PHÒNG
-      if (isAudioSessionValid(boundSegKey, currentToken)) {
-        playFallbackWebSpeech(cleanText, voiceKey, onEnd, onReady, boundSegKey, currentToken);
+        if (isAudioSessionValid(boundSegKey, currentToken) && onEnd) onEnd();
       }
     }
 
@@ -19790,33 +19738,15 @@ Yêu cầu trình bày:
       // Tránh Chromium cancel bug bằng timeout nhỏ
       setTimeout(() => {
         if (!isAudioSessionValid(boundSegKey, boundToken)) return;
-        const isEnglish = (voiceKey === 'jenny_en' || voiceKey === 'guy_en' || voiceKey === 'fable');
         const utter = new SpeechSynthesisUtterance(cleanText);
-        utter.lang = isEnglish ? 'en-US' : 'vi-VN';
+        utter.lang = 'vi-VN';
 
         const voices = window.speechSynthesis.getVoices() || [];
-        const isMale = (voiceKey === 'nam_an' || voiceKey === 'minh_quang' || voiceKey === 'echo' || voiceKey === 'onyx' || voiceKey === 'guy_en');
-
-        let matchedVoice = null;
-        if (isEnglish) {
-          if (isMale) {
-            matchedVoice = voices.find(v => v.lang.includes('en') && (v.name.toLowerCase().includes('male') || v.name.toLowerCase().includes('guy') || v.name.toLowerCase().includes('david')));
-          } else {
-            matchedVoice = voices.find(v => v.lang.includes('en') && (v.name.toLowerCase().includes('female') || v.name.toLowerCase().includes('zira') || v.name.toLowerCase().includes('jenny')));
-          }
-          if (!matchedVoice) matchedVoice = voices.find(v => v.lang.includes('en'));
-        } else {
-          const viVoices = voices.filter(v => v.lang.includes('vi') || v.lang.includes('VI'));
-          if (isMale) {
-            matchedVoice = viVoices.find(v => v.name.toLowerCase().includes('an') || v.name.toLowerCase().includes('nam') || v.name.toLowerCase().includes('male'));
-          } else {
-            matchedVoice = viVoices.find(v => {
-              const n = v.name.toLowerCase();
-              return n.includes('hoaimy') || n.includes('female') || n.includes('google') || n.includes('linh') || n.includes('mai');
-            });
-          }
-          if (!matchedVoice && viVoices.length > 0) matchedVoice = viVoices[0];
-        }
+        const viVoices = voices.filter(v => v.lang.includes('vi') || v.lang.includes('VI'));
+        let matchedVoice = viVoices.find(v => {
+          const n = v.name.toLowerCase();
+          return n.includes('hoaimy') || n.includes('female') || n.includes('google') || n.includes('linh') || n.includes('mai');
+        }) || viVoices[0];
 
         if (matchedVoice) utter.voice = matchedVoice;
 
@@ -19850,9 +19780,6 @@ Yêu cầu trình bày:
     }
 
     function testGlobalVoiceSample() {
-      const sel = document.getElementById('gcfg-voice');
-      const voiceKey = sel?.value || 'quynh_anh';
-      const voiceName = sel?.options[sel?.selectedIndex]?.text || voiceKey;
       const testBtn = document.getElementById('btn-test-global-voice');
 
       if ((_globalTtsAudio && !_globalTtsAudio.paused) || ('speechSynthesis' in window && window.speechSynthesis.speaking)) {
@@ -19863,19 +19790,12 @@ Yêu cầu trình bày:
         return;
       }
 
-      const isEnglish = (voiceKey === 'jenny_en' || voiceKey === 'guy_en' || voiceKey === 'fable');
-      let sampleText = `Xin chào! Tôi là Quỳnh Anh, đây là giọng đọc thử nghiệm cho bài giảng của bạn.`;
-      if (voiceKey === 'mai_phuong') sampleText = `Xin chào! Tôi là Mai Phương, giọng đọc nữ miền Nam cho bài giảng.`;
-      else if (voiceKey === 'nam_an') sampleText = `Xin chào các bạn, tôi là Nam An, giọng đọc nam truyền cảm cho bài giảng.`;
-      else if (voiceKey === 'minh_quang') sampleText = `Xin chào các bạn, tôi là Minh Quang, giọng đọc nam chuyên nghiệp.`;
-      else if (voiceKey === 'nova') sampleText = `Xin chào! Đây là giọng đọc Nova cao cấp cho bài giảng đa phương thức.`;
-      else if (voiceKey === 'shimmer') sampleText = `Xin chào! Đây là giọng đọc Shimmer ấm áp cho bài giảng.`;
-      else if (isEnglish) sampleText = `Hello! This is a preview of the selected voice for your lecture script.`;
+      const sampleText = 'Xin chào các bạn! Tôi là Quỳnh Anh, giọng đọc nữ chuẩn sư phạm được thống nhất cho toàn bộ bài giảng của bạn.';
 
       if (testBtn) testBtn.innerHTML = '⏹️ Dừng';
-      showToast(`🎙️ Đang phát thử giọng: ${voiceName}`);
+      showToast('🎙️ Đang phát thử giọng chuẩn: Quỳnh Anh (Nữ Chuẩn Sư Phạm)');
 
-      playSpeechWithVoice(sampleText, voiceKey, () => {
+      playSpeechWithVoice(sampleText, 'quynh_anh', () => {
         if (testBtn) testBtn.innerHTML = '▶️ Thử';
       });
     }
@@ -19924,9 +19844,9 @@ Yêu cầu trình bày:
         btn.innerHTML = `<span>⏹️</span> Dừng Đọc`;
       }
 
-      showToast(`🎙️ Đang đọc thử với [${voiceName.split('-')[0].trim()}]...`);
+      showToast('🎙️ Đang đọc thử với Quỳnh Anh (Nữ Chuẩn Sư Phạm)...');
 
-      playSpeechWithVoice(cleanText, voiceKey, () => {
+      playSpeechWithVoice(cleanText, 'quynh_anh', () => {
         if (_currentSpeakingSegKey === segKey) {
           _currentSpeakingSegKey = null;
           if (btn) {
