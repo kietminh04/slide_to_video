@@ -34,3 +34,6 @@ studio/uploads/
 
 # Node
 node_modules/
+
+# Scratch scripts
+scratch/

@@ -4388,12 +4388,12 @@
                 <span class="video-studio-badge" id="video-total-duration-badge">0:00</span>
               </div>
               <div class="video-studio-actions">
-                <!-- CHUYỂN ĐỔI CHẾ ĐỘ HIỂN THỊ -->
+                <!-- CHUYỂN ĐỔI CHẾ ĐỘ HIỂN THỊ (1 DỰ ÁN CÓ 2 LOẠI VIDEO ĐỘC LẬP: GRID & TREE) -->
                 <div class="view-mode-group">
                   <button class="view-mode-pill active" data-vmode="grid" onclick="setVideoViewMode('grid')"
-                    title="Hiển thị từng trang slide">📄 Theo Trang</button>
+                    title="Hiển thị video từng trang slide">📄 Theo Trang</button>
                   <button class="view-mode-pill" data-vmode="tree" onclick="setVideoViewMode('tree')"
-                    title="Hiển thị theo cấu trúc cây">🌳 Theo Cây</button>
+                    title="Hiển thị video theo sơ đồ cây cấu trúc sư phạm">🌳 Theo Cây</button>
                 </div>
                 <!-- NÚT SINH AUDIO / VIDEO -->
                 <button class="btn-generate-script-now" id="btn-generate-all-audio" onclick="generateAllAudio()"
@@ -4408,6 +4408,9 @@
                 </button>
               </div>
             </div>
+
+            <!-- BANNER THÔNG BÁO VIDEO ĐÃ XUẤT (TỰ ĐỘNG KHÔI PHỤC TỪ INDEXEDDB/CLOUD KHI F5) -->
+            <div id="video-saved-banner-container" style="display: none; padding: 10px 16px 0 16px;"></div>
 
             <!-- KHU VỰC PREVIEW VIDEO CHÍNH -->
             <div class="video-preview-area">
@@ -5316,8 +5319,129 @@
         } catch (e) {
           console.warn('[CloudDB] Xóa trên Cloud thất bại:', e.message);
         }
+      },
+
+      // Lưu Metadata Video theo Project & Loại (grid: slide / tree: cây cấu trúc) lên Cloud DB
+      async saveVideoMeta(projectId, videoType, videoMeta) {
+        if (!projectId) return;
+        try {
+          const res = await fetch('/api/projects', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              id: projectId,
+              title: (typeof activeProject !== 'undefined' && activeProject ? activeProject.title : 'Dự Án Bài Giảng'),
+              action: 'save_video_meta',
+              videoType: videoType || 'grid',
+              videoMeta: videoMeta || {}
+            })
+          });
+          if (res.ok) {
+            this.isOnline = true;
+            this.updateBadge();
+          }
+        } catch (e) {
+          console.warn('[CloudDB] Lưu Video Meta lên Cloud thất bại:', e.message);
+        }
       }
     };
+
+    // =====================================================================
+    // HỆ THỐNG LƯU TRỮ VIDEO CHUẨN INDEXEDDB (F5 HOÀN TOÀN KHÔNG BỊ MẤT)
+    // Tách biệt theo từng Project ID và từng Loại Video (grid / tree)
+    // =====================================================================
+    const VideoDB = {
+      dbName: 'CLSG_Videos_DB',
+      storeName: 'project_videos',
+      version: 1,
+      _db: null,
+
+      async getDB() {
+        if (this._db) return this._db;
+        return new Promise((resolve, reject) => {
+          const request = indexedDB.open(this.dbName, this.version);
+          request.onupgradeneeded = (e) => {
+            const db = e.target.result;
+            if (!db.objectStoreNames.contains(this.storeName)) {
+              db.createObjectStore(this.storeName, { keyPath: 'id' });
+            }
+          };
+          request.onsuccess = (e) => {
+            this._db = e.target.result;
+            resolve(this._db);
+          };
+          request.onerror = (e) => {
+            console.error('[VideoDB] Không thể khởi tạo IndexedDB:', e);
+            reject(e);
+          };
+        });
+      },
+
+      async saveVideo(projectId, videoType, blob, meta = {}) {
+        if (!projectId || !blob) return null;
+        try {
+          const db = await this.getDB();
+          const id = `${projectId}_${videoType}`;
+          const record = {
+            id,
+            projectId,
+            videoType,
+            blob,
+            mimeType: blob.type || 'video/webm',
+            size: blob.size,
+            filename: meta.filename || `${projectId}_${videoType}_video.webm`,
+            duration: meta.duration || 0,
+            totalSlides: meta.totalSlides || 0,
+            createdAt: meta.createdAt || new Date().toISOString()
+          };
+          return new Promise((resolve, reject) => {
+            const tx = db.transaction([this.storeName], 'readwrite');
+            const store = tx.objectStore(this.storeName);
+            const req = store.put(record);
+            req.onsuccess = () => resolve(record);
+            req.onerror = (e) => reject(e);
+          });
+        } catch (e) {
+          console.warn('[VideoDB] Lỗi lưu Video vào IndexedDB:', e);
+          return null;
+        }
+      },
+
+      async getVideo(projectId, videoType) {
+        if (!projectId) return null;
+        try {
+          const db = await this.getDB();
+          const id = `${projectId}_${videoType}`;
+          return new Promise((resolve) => {
+            const tx = db.transaction([this.storeName], 'readonly');
+            const store = tx.objectStore(this.storeName);
+            const req = store.get(id);
+            req.onsuccess = () => resolve(req.result || null);
+            req.onerror = () => resolve(null);
+          });
+        } catch (e) {
+          return null;
+        }
+      },
+
+      async deleteVideo(projectId, videoType) {
+        if (!projectId) return false;
+        try {
+          const db = await this.getDB();
+          const id = `${projectId}_${videoType}`;
+          return new Promise((resolve) => {
+            const tx = db.transaction([this.storeName], 'readwrite');
+            const store = tx.objectStore(this.storeName);
+            const req = store.delete(id);
+            req.onsuccess = () => resolve(true);
+            req.onerror = () => resolve(false);
+          });
+        } catch (e) {
+          return false;
+        }
+      }
+    };
+    window.VideoDB = VideoDB;
 
     // ĐỒNG BỘ VÀ KHÔI PHỤC DỰ ÁN TỪ LOCALSTORAGE
     try {
@@ -5400,11 +5524,90 @@
       showToast(`Đã xóa thành công dự án: ${proj.title}`);
     }
 
+    // =====================================================================
+    // HÀM TOÀN CỤC: TỰ ĐỘNG DỪNG TOÀN BỘ PHÁT VIDEO, ÂM THANH & GIỌNG ĐỌC
+    // Kích hoạt ngay khi chuyển tab, chuyển view hoặc thoát khỏi project
+    // =====================================================================
+    function stopAllAudioAndVideoPlayback() {
+      try {
+        // 1. Dừng video preview trong Video Studio
+        if (typeof _videoIsPlaying !== 'undefined') {
+          _videoIsPlaying = false;
+        }
+        const playBtn = document.getElementById('video-play-btn');
+        if (playBtn) playBtn.textContent = '▶️';
+        if (typeof _videoTickerTimer !== 'undefined' && _videoTickerTimer) {
+          clearInterval(_videoTickerTimer);
+          _videoTickerTimer = null;
+        }
+        if (typeof pauseVideoPreview === 'function') {
+          try { pauseVideoPreview(); } catch (e) { }
+        }
+
+        // 2. Dừng tất cả HTML5 Audio và Edge TTS
+        if (typeof _globalTtsAudio !== 'undefined' && _globalTtsAudio) {
+          try { _globalTtsAudio.pause(); _globalTtsAudio.currentTime = 0; } catch (e) { }
+        }
+        if (typeof _currentAudioPlayer !== 'undefined' && _currentAudioPlayer) {
+          try { _currentAudioPlayer.pause(); _currentAudioPlayer.currentTime = 0; } catch (e) { }
+        }
+        if (typeof _currentAudio !== 'undefined' && _currentAudio) {
+          try { _currentAudio.pause(); _currentAudio.currentTime = 0; } catch (e) { }
+        }
+        document.querySelectorAll('audio').forEach(a => {
+          try { a.pause(); a.currentTime = 0; } catch (e) { }
+        });
+
+        // 3. Dừng Web Speech API
+        if ('speechSynthesis' in window) {
+          try { window.speechSynthesis.cancel(); } catch (e) { }
+        }
+
+        // 4. Dừng chế độ đọc kịch bản tuần tự trong tab Kịch Bản
+        if (typeof _isPlayingAllScript !== 'undefined') {
+          _isPlayingAllScript = false;
+        }
+        if (typeof _currentSpeakingSegKey !== 'undefined') {
+          _currentSpeakingSegKey = null;
+        }
+        if (typeof isPlayingAll !== 'undefined') {
+          isPlayingAll = false;
+        }
+        if (typeof clearSpeakingHighlights === 'function') {
+          try { clearSpeakingHighlights(); } catch (e) { }
+        }
+        const pIcon = document.getElementById('play-all-icon'); if (pIcon) pIcon.textContent = '🔊';
+        const pText = document.getElementById('play-all-text'); if (pText) pText.textContent = 'Nghe Toàn Bộ';
+        const sBtn = document.getElementById('btn-stop-speech'); if (sBtn) sBtn.style.display = 'none';
+        const btnPlayAllScript = document.getElementById('btn-play-all-script');
+        if (btnPlayAllScript) {
+          btnPlayAllScript.innerHTML = '<i class="fa-solid fa-play"></i> Nghe Toàn Bộ';
+        }
+
+        // 5. Reset các nút play phân đoạn về trạng thái chờ
+        document.querySelectorAll('.btn-play-segment, .chat-pill-btn, .seg-play-btn').forEach(btn => {
+          if (btn.textContent.includes('Dừng') || btn.innerHTML.includes('fa-stop') || btn.innerHTML.includes('fa-pause')) {
+            btn.innerHTML = '<i class="fa-solid fa-volume-high"></i> Nghe Thử';
+          }
+        });
+      } catch (err) {
+        console.warn('Lỗi khi dừng audio/video playback:', err);
+      }
+    }
+    window.stopAllAudioAndVideoPlayback = stopAllAudioAndVideoPlayback;
+
+    // Tự động ngắt khi đóng trình duyệt hoặc reload trang
+    window.addEventListener('beforeunload', () => {
+      stopAllAudioAndVideoPlayback();
+    });
+
     // ĐIỀU HƯỚNG VIEW (PROJECTS vs WORKSPACE)
     const viewProjects = document.getElementById('view-projects');
     const viewWorkspace = document.getElementById('view-workspace');
 
     function switchView(viewName) {
+      // DỪNG NGAY TẤT CẢ ÂM THANH / VIDEO KHI THOÁT HOẶC ĐỔI VIEW
+      stopAllAudioAndVideoPlayback();
       try {
         localStorage.setItem('clsg_active_view', viewName);
       } catch (e) { }
@@ -5517,6 +5720,9 @@
 
     // CHUYỂN ĐỔI TAB Ở Ô GIỮA (SƠ ĐỒ TƯ DUY, KỊCH BẢN, VIDEO)
     function switchCenterTab(tabName) {
+      // DỪNG NGAY TOÀN BỘ VIDEO & GIỌNG ĐỌC KHI ẤN SANG TAB KHÁC
+      stopAllAudioAndVideoPlayback();
+
       try {
         localStorage.setItem('clsg_active_tab', tabName);
       } catch (e) { }
@@ -11845,6 +12051,8 @@ QUY TẮC:
 
     // NẠP DỰ ÁN VÀO KHÔNG GIAN WORKSPACE
     function loadProjectIntoWorkspace(projId) {
+      // DỪNG NGAY MỌI AUDIO/VIDEO KHI NẠP PROJECT
+      stopAllAudioAndVideoPlayback();
       currentProjectId = projId;
       // Khôi phục dự án đã lưu từ localStorage nếu có, nếu chưa có mới dùng defaultProjects
       const userProjects = JSON.parse(localStorage.getItem('clsg_user_projects') || '{}');
@@ -12268,6 +12476,11 @@ QUY TẮC:
       }
 
       updateScriptHeaderStats();
+
+      // TỰ ĐỘNG ĐỒNG BỘ VÀO DB KHI CHỈNH SỬA LỜI THOẠI HOẶC THAM SỐ
+      if (typeof autoSaveWorkspaceState === 'function') {
+        autoSaveWorkspaceState();
+      }
     };
 
     function updateSegmentCardStats(itKey, narrText) {
@@ -12549,6 +12762,10 @@ QUY TẮC:
             updateSegmentCardStats(itKey, scriptText);
           }
           updateScriptHeaderStats();
+          // TỰ ĐỘNG LƯU VĨNH VIỄN VÀO DB NGAY LẬP TỨC (F5 KHÔNG MẤT)
+          if (typeof autoSaveWorkspaceState === 'function') {
+            autoSaveWorkspaceState();
+          }
           showToast(`✨ Đã sinh kịch bản cho mục: [${nodeCode}] ${nodeText.substring(0, 20)}...`);
         } else {
           showToast('⚠️ AI không thể tạo kịch bản lúc này, vui lòng kiểm tra kết nối!');
@@ -16787,12 +17004,148 @@ QUY TẮC:
       return Math.max(4, Math.round(readingSec));
     }
 
+    // =====================================================================
+    // KHÔI PHỤC VÀ HIỂN THỊ VIDEO ĐÃ LƯU (DÙ F5 HAY ĐỔI PROJECT CŨNG CÒN)
+    // Tách biệt theo 2 loại: 'grid' (Theo Trang) và 'tree' (Theo Cây)
+    // =====================================================================
+    async function checkAndDisplaySavedVideoBanner() {
+      const bannerContainer = document.getElementById('video-saved-banner-container');
+      if (!bannerContainer) return;
+
+      const projId = currentProjectId || activeProject?.id;
+      if (!projId) {
+        bannerContainer.style.display = 'none';
+        return;
+      }
+
+      const modeKey = (window._videoViewMode === 'tree') ? 'tree' : 'grid';
+      let saved = null;
+
+      if (typeof VideoDB !== 'undefined' && VideoDB.getVideo) {
+        saved = await VideoDB.getVideo(projId, modeKey);
+      }
+
+      // Fallback kiểm tra metadata từ Cloud DB nếu IndexedDB trên máy này chưa có file blob
+      const cloudMeta = activeProject?.videos?.[modeKey];
+
+      if (!saved && !cloudMeta) {
+        bannerContainer.style.display = 'none';
+        bannerContainer.innerHTML = '';
+        return;
+      }
+
+      const typeLabel = (modeKey === 'tree') ? '🌳 Theo Cây Cấu Trúc' : '📄 Theo Từng Trang Slide';
+      const filename = saved?.filename || cloudMeta?.filename || `${projId}_${modeKey}_video.webm`;
+      const sizeStr = saved ? `${(saved.size / (1024 * 1024)).toFixed(1)} MB` : (cloudMeta?.size ? `${(cloudMeta.size / (1024 * 1024)).toFixed(1)} MB` : 'Bản lưu Cloud');
+      const timeStr = saved?.createdAt ? new Date(saved.createdAt).toLocaleTimeString('vi-VN') + ' ' + new Date(saved.createdAt).toLocaleDateString('vi-VN') : '';
+
+      bannerContainer.style.display = 'block';
+      bannerContainer.innerHTML = `
+        <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; background:linear-gradient(135deg, rgba(30, 27, 75, 0.85), rgba(15, 23, 42, 0.95)); border:1px solid rgba(99, 102, 241, 0.45); border-radius:10px; padding:10px 16px; box-shadow:0 4px 18px rgba(0,0,0,0.35);">
+          <div style="display:flex; align-items:center; gap:12px;">
+            <div style="width:36px; height:36px; border-radius:8px; background:rgba(99, 102, 241, 0.25); display:flex; align-items:center; justify-content:center; font-size:18px;">
+              🎬
+            </div>
+            <div>
+              <div style="font-size:13px; font-weight:700; color:#fff; display:flex; align-items:center; gap:8px;">
+                <span>Đã có Video đã xuất (${typeLabel})</span>
+                <span style="font-size:10px; padding:2px 8px; border-radius:12px; background:rgba(16, 185, 129, 0.2); color:#34d399; border:1px solid rgba(16, 185, 129, 0.4);">
+                  ✅ Đã Lưu Vĩnh Viễn Trong DB
+                </span>
+              </div>
+              <div style="font-size:11.5px; color:var(--cyan); margin-top:2px;">
+                <code>${filename}</code> • <span>${sizeStr}</span> ${timeStr ? '• <span>' + timeStr + '</span>' : ''}
+              </div>
+            </div>
+          </div>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <button class="script-action-btn" onclick="playSavedVideoFromDB()" style="background:rgba(99, 102, 241, 0.3); border-color:rgba(99, 102, 241, 0.7); color:#fff; padding:6px 14px; font-size:12px;" title="Xem lại video đã kết xuất">
+              <span>▶️</span> Xem Lại Video
+            </button>
+            <button class="script-action-btn" onclick="downloadSavedVideoFromDB()" style="background:rgba(16, 185, 129, 0.2); border-color:rgba(16, 185, 129, 0.5); color:#34d399; padding:6px 14px; font-size:12px;" title="Tải file video về máy tính">
+              <span>⬇️</span> Tải Về
+            </button>
+            <button class="script-action-btn" onclick="deleteSavedVideoFromDB()" style="background:rgba(239, 68, 68, 0.15); border-color:rgba(239, 68, 68, 0.4); color:#f87171; padding:6px 10px; font-size:12px;" title="Xóa video đã lưu để xuất lại bản mới">
+              <span>🗑️</span>
+            </button>
+          </div>
+        </div>
+      `;
+    }
+    window.checkAndDisplaySavedVideoBanner = checkAndDisplaySavedVideoBanner;
+
+    // Xem lại video đã lưu trực tiếp trong IndexedDB
+    async function playSavedVideoFromDB() {
+      const projId = currentProjectId || activeProject?.id;
+      const modeKey = (window._videoViewMode === 'tree') ? 'tree' : 'grid';
+      const saved = await VideoDB.getVideo(projId, modeKey);
+      if (!saved || !saved.blob) {
+        showToast('⚠️ Không tìm thấy tệp video nhị phân trong cơ sở dữ liệu trình duyệt!');
+        return;
+      }
+      const videoUrl = URL.createObjectURL(saved.blob);
+      const modal = document.getElementById('video-export-modal');
+      if (modal) {
+        modal.classList.add('active');
+        document.getElementById('export-modal-config-view').style.display = 'none';
+        document.getElementById('export-modal-rendering-view').style.display = 'none';
+        document.getElementById('export-completed-view').style.display = 'flex';
+        const resultVideo = document.getElementById('export-result-video');
+        if (resultVideo) {
+          resultVideo.src = videoUrl;
+          resultVideo.play().catch(e => console.warn('Preview video play:', e));
+        }
+        const downloadBtn = document.getElementById('export-download-link');
+        if (downloadBtn) {
+          downloadBtn.href = videoUrl;
+          downloadBtn.download = saved.filename;
+        }
+      }
+    }
+    window.playSavedVideoFromDB = playSavedVideoFromDB;
+
+    // Tải xuống file video đã lưu
+    async function downloadSavedVideoFromDB() {
+      const projId = currentProjectId || activeProject?.id;
+      const modeKey = (window._videoViewMode === 'tree') ? 'tree' : 'grid';
+      const saved = await VideoDB.getVideo(projId, modeKey);
+      if (!saved || !saved.blob) {
+        showToast('⚠️ Không tìm thấy tệp video nhị phân để tải xuống!');
+        return;
+      }
+      const videoUrl = URL.createObjectURL(saved.blob);
+      const a = document.createElement('a');
+      a.href = videoUrl;
+      a.download = saved.filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      showToast(`⬇️ Đang tải video: ${saved.filename}`);
+    }
+    window.downloadSavedVideoFromDB = downloadSavedVideoFromDB;
+
+    // Xóa video đã lưu để xuất lại
+    async function deleteSavedVideoFromDB() {
+      const projId = currentProjectId || activeProject?.id;
+      const modeKey = (window._videoViewMode === 'tree') ? 'tree' : 'grid';
+      if (!confirm('Bạn có chắc chắn muốn xóa bản video đã lưu này khỏi cơ sở dữ liệu không?')) return;
+      await VideoDB.deleteVideo(projId, modeKey);
+      if (activeProject && activeProject.videos) {
+        delete activeProject.videos[modeKey];
+      }
+      if (typeof autoSaveWorkspaceState === 'function') autoSaveWorkspaceState();
+      checkAndDisplaySavedVideoBanner();
+      showToast('🗑️ Đã xóa bản video đã lưu!');
+    }
+    window.deleteSavedVideoFromDB = deleteSavedVideoFromDB;
+
     function setVideoViewMode(mode) {
       window._videoViewMode = mode;
       document.querySelectorAll('[data-vmode]').forEach(btn => {
         btn.classList.toggle('active', btn.dataset.vmode === mode);
       });
       renderVideoTimeline();
+      checkAndDisplaySavedVideoBanner();
     }
 
     function renderVideoTimeline() {
@@ -16944,6 +17297,11 @@ QUY TẮC:
           const first = window._allVideoSegments[0];
           selectVideoSegment(first.segKey, first.thumb, first.subtitle, first.narr, first.dur, false);
         }
+      }
+
+      // Kiểm tra và hiển thị bản video đã lưu trong DB (F5 khôi phục nguyên vẹn)
+      if (typeof checkAndDisplaySavedVideoBanner === 'function') {
+        checkAndDisplaySavedVideoBanner();
       }
     }
 
@@ -17641,14 +17999,64 @@ QUY TẮC:
       setTimeout(() => {
         try { recorder.stop(); } catch (e) { }
 
-        recorder.onstop = () => {
+        recorder.onstop = async () => {
           const videoBlob = new Blob(recordedChunks, { type: mimeType });
           const videoUrl = URL.createObjectURL(videoBlob);
-          const safeTitle = (activeProject?.title || 'Video_Bai_Giang').replace(/[^a-zA-Z0-9_À-ɏẠ-ỹ]/g, '_');
           const ext = mimeType.includes('mp4') ? 'mp4' : 'webm';
-          const filename = `${safeTitle}.${ext}`;
 
-          // Tự động tải file về máy
+          // 1. ĐỊNH DANH RÕ RÀNG THEO ID PROJECT VÀ LOẠI VIDEO (grid / tree)
+          const modeKey = (window._videoViewMode === 'tree') ? 'tree' : 'grid';
+          const modeLabel = (modeKey === 'tree') ? 'Cay_Cau_Truc' : 'Theo_Trang_Slide';
+          const safeTitle = (activeProject?.title || 'Video_Bai_Giang').replace(/[^a-zA-Z0-9_À-ɏẠ-ỹ]/g, '_');
+          const projId = activeProject?.id || currentProjectId || 'project';
+          const filename = `${projId}_${modeKey}_${safeTitle}.${ext}`;
+
+          const videoMeta = {
+            id: `${projId}_${modeKey}`,
+            projectId: projId,
+            videoType: modeKey,
+            modeLabel: (modeKey === 'tree') ? 'Theo Cây Cấu Trúc Sư Phạm' : 'Theo Từng Trang Slide',
+            filename,
+            mimeType,
+            size: videoBlob.size,
+            duration: Math.round(targetSegments.reduce((acc, s) => acc + (s.dur || 10), 0)),
+            totalSlides: targetSegments.length,
+            createdAt: new Date().toISOString()
+          };
+
+          // 2. LƯU BLOB VIDEO VÀO INDEXEDDB (F5 HOÀN TOÀN KHÔNG BỊ MẤT)
+          if (typeof VideoDB !== 'undefined' && VideoDB.saveVideo) {
+            try {
+              await VideoDB.saveVideo(projId, modeKey, videoBlob, videoMeta);
+            } catch (err) {
+              console.warn('[VideoDB] Lỗi khi lưu blob video:', err);
+            }
+          }
+
+          // 3. LƯU METADATA VIDEO LÊN CLOUD DATABASE (NEON POSTGRES)
+          if (typeof CloudDB !== 'undefined' && CloudDB.saveVideoMeta) {
+            try {
+              await CloudDB.saveVideoMeta(projId, modeKey, videoMeta);
+            } catch (err) {
+              console.warn('[CloudDB] Lỗi lưu Video Meta:', err);
+            }
+          }
+
+          // 4. CẬP NHẬT VÀO activeProject & LƯU WORKSPACE STATE
+          if (activeProject) {
+            activeProject.videos = activeProject.videos || {};
+            activeProject.videos[modeKey] = videoMeta;
+          }
+          if (typeof autoSaveWorkspaceState === 'function') {
+            autoSaveWorkspaceState();
+          }
+
+          // 5. CẬP NHẬT BANNER HIỂN THỊ VIDEO ĐÃ LƯU TRONG VIDEO STUDIO
+          if (typeof checkAndDisplaySavedVideoBanner === 'function') {
+            checkAndDisplaySavedVideoBanner();
+          }
+
+          // 6. Tự động tải file về máy
           const a = document.createElement('a');
           a.href = videoUrl;
           a.download = filename;
@@ -17656,7 +18064,7 @@ QUY TẮC:
           a.click();
           document.body.removeChild(a);
 
-          // Hiển thị màn hình hoàn thành
+          // 7. Hiển thị màn hình hoàn thành
           document.getElementById('export-modal-rendering-view').style.display = 'none';
           document.getElementById('export-completed-view').style.display = 'flex';
           const resultVideo = document.getElementById('export-result-video');
@@ -17669,7 +18077,7 @@ QUY TẮC:
             downloadBtn.href = videoUrl;
             downloadBtn.download = filename;
           }
-          showToast(`✅ Đã xuất video thành công (${filename})!`);
+          showToast(`✅ Đã xuất & lưu vĩnh viễn video (${filename})!`);
         };
       }, 500);
     }

@@ -150,6 +150,42 @@ module.exports = async (req, res) => {
         return res.status(200).json({ status: 'ok', id, message: 'Đã lưu tóm tắt & tham số lên Cloud Database' });
       }
 
+      // Xử lý lưu riêng Thông tin Video đã xuất theo Project & Loại (grid / tree)
+      if (body.action === 'save_video_meta') {
+        const videoType = body.videoType || 'grid';
+        const videoMeta = body.videoMeta || {};
+
+        let updated = await sql`
+          UPDATE clsg_projects
+          SET data = jsonb_set(
+            COALESCE(data, '{}'::jsonb),
+            ARRAY['videos', ${videoType}],
+            ${JSON.stringify(videoMeta)}::jsonb,
+            true
+          ),
+          updated_at = CURRENT_TIMESTAMP
+          WHERE id = ${id}
+          RETURNING id;
+        `;
+
+        if (updated.length === 0) {
+          const initialData = { id, title, description, videos: { [videoType]: videoMeta } };
+          await sql`
+            INSERT INTO clsg_projects (id, title, description, data, updated_at)
+            VALUES (${id}, ${title}, ${description}, ${JSON.stringify(initialData)}, CURRENT_TIMESTAMP)
+            ON CONFLICT (id) DO UPDATE SET
+              data = jsonb_set(
+                COALESCE(clsg_projects.data, '{}'::jsonb),
+                ARRAY['videos', ${videoType}],
+                ${JSON.stringify(videoMeta)}::jsonb,
+                true
+              ),
+              updated_at = CURRENT_TIMESTAMP;
+          `;
+        }
+        return res.status(200).json({ status: 'ok', id, videoType, message: `Đã lưu thông tin video (${videoType}) lên Cloud Database` });
+      }
+
       // Lưu toàn bộ dự án
       const dataPayload = body.data || body;
 
