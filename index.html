@@ -5316,6 +5316,113 @@
     }
 
     // =========================================================================
+    // HỆ THỐNG LƯU TRỮ ẢNH SLIDE QUA INDEXEDDB (BẢO VỆ CHỐNG TRÀN QUOTA 5MB)
+    // =========================================================================
+    const SlideDB = {
+      dbName: 'CLSG_Slides_DB',
+      storeName: 'slide_images',
+      version: 1,
+      _db: null,
+
+      async getDB() {
+        if (this._db) return this._db;
+        return new Promise((resolve, reject) => {
+          const req = indexedDB.open(this.dbName, this.version);
+          req.onupgradeneeded = (e) => {
+            const db = e.target.result;
+            if (!db.objectStoreNames.contains(this.storeName)) {
+              db.createObjectStore(this.storeName);
+            }
+          };
+          req.onsuccess = (e) => {
+            this._db = e.target.result;
+            resolve(this._db);
+          };
+          req.onerror = (e) => {
+            console.error('[SlideDB] Không thể khởi tạo IndexedDB:', e);
+            reject(e);
+          };
+        });
+      },
+
+      async saveSlideImages(projectId, detailedContent) {
+        if (!projectId || !Array.isArray(detailedContent)) return false;
+        try {
+          const db = await this.getDB();
+          const imgMap = {};
+          let count = 0;
+          detailedContent.forEach((p, idx) => {
+            const key = p.pageNumber || (idx + 1);
+            if (p.image_url && p.image_url.startsWith('data:')) {
+              imgMap[key] = p.image_url;
+              count++;
+            }
+          });
+          if (count === 0) return true;
+          return new Promise((resolve) => {
+            const tx = db.transaction([this.storeName], 'readwrite');
+            const store = tx.objectStore(this.storeName);
+            store.put(imgMap, projectId);
+            tx.oncomplete = () => resolve(true);
+            tx.onerror = () => resolve(false);
+          });
+        } catch (e) {
+          console.warn('[SlideDB] Lỗi lưu Slide Images vào IndexedDB:', e);
+          return false;
+        }
+      },
+
+      async loadSlideImages(projectId) {
+        if (!projectId) return null;
+        try {
+          const db = await this.getDB();
+          return new Promise((resolve) => {
+            const tx = db.transaction([this.storeName], 'readonly');
+            const store = tx.objectStore(this.storeName);
+            const req = store.get(projectId);
+            req.onsuccess = () => resolve(req.result || null);
+            req.onerror = () => resolve(null);
+          });
+        } catch (e) {
+          return null;
+        }
+      },
+
+      async deleteSlideImages(projectId) {
+        if (!projectId) return false;
+        try {
+          const db = await this.getDB();
+          return new Promise((resolve) => {
+            const tx = db.transaction([this.storeName], 'readwrite');
+            const store = tx.objectStore(this.storeName);
+            store.delete(projectId);
+            tx.oncomplete = () => resolve(true);
+            tx.onerror = () => resolve(false);
+          });
+        } catch(e) {
+          return false;
+        }
+      }
+    };
+    window.SlideDB = SlideDB;
+
+    // Hàm chuẩn hóa loại bỏ chuỗi ảnh Base64 khổng lồ trước khi lưu vào LocalStorage và CloudDB
+    function sanitizeProjectForStorage(proj) {
+      if (!proj) return null;
+      const clean = { ...proj };
+      if (clean.detailedContent && Array.isArray(clean.detailedContent)) {
+        clean.detailedContent = clean.detailedContent.map(p => {
+          const { image_url, ...rest } = p;
+          return {
+            ...rest,
+            hasImage: Boolean(image_url || p.hasImage)
+          };
+        });
+      }
+      return clean;
+    }
+
+    // =========================================================================
     // CLOUD DATABASE SYNC (NEON SERVERLESS POSTGRES)
     // =========================================================================
     const CloudDB = {
@@ -5468,23 +5575,39 @@
           chatHtml: (chatContainer ? chatContainer.innerHTML : (project.chatHtml || ''))
         };
 
-        // 1. Lưu LocalStorage trước (Offline-first)
+        // Giữ nguyên fullProject trong RAM bộ nhớ
+        defaultProjects[project.id] = fullProject;
+
+        // 1. Lưu ảnh slide vào IndexedDB an toàn (dung lượng vô hạn, không nghẽn mạng)
+        if (fullProject.detailedContent && Array.isArray(fullProject.detailedContent)) {
+          if (typeof SlideDB !== 'undefined' && SlideDB.saveSlideImages) {
+            SlideDB.saveSlideImages(project.id, fullProject.detailedContent);
+          }
+        }
+
+        // 2. Chuẩn hóa để lưu nhẹ nhàng (< 100KB, không chứa base64)
+        const cleanProject = sanitizeProjectForStorage(fullProject);
+
+        // 3. Lưu LocalStorage trước (Offline-first, không bao giờ lo QuotaExceededError)
         try {
           const userProjects = JSON.parse(localStorage.getItem('clsg_user_projects') || '{}');
-          userProjects[project.id] = fullProject;
+          userProjects[project.id] = cleanProject;
           localStorage.setItem('clsg_user_projects', JSON.stringify(userProjects));
-        } catch (e) { }
+          localStorage.setItem('clsg_active_project_id', project.id);
+        } catch (e) {
+          console.warn('[LocalStorage] Lỗi lưu dự án:', e.message);
+        }
 
-        // 2. Đồng bộ lên Neon Cloud
+        // 4. Đồng bộ lên Neon Cloud (Nhẹ nhàng, không bao giờ bị 413 Payload Too Large)
         try {
           const res = await fetch('/api/projects', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              id: fullProject.id,
-              title: fullProject.title,
-              description: fullProject.desc || '',
-              data: fullProject
+              id: cleanProject.id,
+              title: cleanProject.title,
+              description: cleanProject.desc || '',
+              data: cleanProject
             })
           });
           if (res.ok) {
@@ -5686,8 +5809,11 @@
         localStorage.setItem('clsg_user_projects', JSON.stringify(userProjects));
       } catch (e) { }
 
-      // Xóa đồng bộ trên Neon Cloud Database
+      // Xóa đồng bộ trên Neon Cloud Database & IndexedDB ảnh slide
       CloudDB.delete(projectId);
+      if (typeof SlideDB !== 'undefined' && SlideDB.deleteSlideImages) {
+        SlideDB.deleteSlideImages(projectId);
+      }
 
       // 2. Xóa khỏi bộ nhớ runtime
       delete defaultProjects[projectId];
@@ -12538,6 +12664,29 @@ QUY TẮC BẮT BUỘC:
       }
       currentScenes = JSON.parse(JSON.stringify(activeProject.scenes || []));
 
+      // Tự động khôi phục ảnh slide từ IndexedDB nếu đang thiếu ảnh
+      if (activeProject && activeProject.detailedContent && Array.isArray(activeProject.detailedContent)) {
+        if (typeof SlideDB !== 'undefined' && SlideDB.loadSlideImages) {
+          SlideDB.loadSlideImages(projId).then(imgMap => {
+            if (imgMap && activeProject && activeProject.id === projId) {
+              let restored = 0;
+              activeProject.detailedContent.forEach((p, idx) => {
+                const key = p.pageNumber || (idx + 1);
+                if (imgMap[key] && !p.image_url) {
+                  p.image_url = imgMap[key];
+                  restored++;
+                }
+              });
+              if (restored > 0) {
+                if (typeof renderDetailedContentGrid === 'function') renderDetailedContentGrid();
+                if (typeof renderDetailedContentUI === 'function') renderDetailedContentUI();
+                if (typeof renderMindmap === 'function') renderMindmap();
+              }
+            }
+          });
+        }
+      }
+
       // Xoá trắng lịch sử Chat AI khi chuyển Project để tránh rò rỉ context
       if (typeof clsgChatSessionHistory !== 'undefined') {
         clsgChatSessionHistory.length = 0;
@@ -19083,6 +19232,11 @@ Yêu cầu trình bày:
                 if (activeTab === 'content') {
                   renderDetailedContentUI();
                 }
+
+                // Tự động lưu tiến độ định kỳ cứ mỗi 2 trang phân tích xong (không lo mất dữ liệu nếu F5)
+                if (completedCount % 2 === 0 && typeof CloudDB !== 'undefined' && CloudDB.save) {
+                  CloudDB.save(project);
+                }
               }
             }
           } catch(e) {
@@ -19107,13 +19261,8 @@ Yêu cầu trình bày:
 
       // Lưu lại vào Neon Cloud & LocalStorage
       if (typeof CloudDB !== 'undefined' && CloudDB.save) {
-        CloudDB.save(project.id, project);
+        CloudDB.save(project);
       }
-      try {
-        const userProjects = JSON.parse(localStorage.getItem('clsg_user_projects') || '{}');
-        userProjects[project.id] = project;
-        localStorage.setItem('clsg_user_projects', JSON.stringify(userProjects));
-      } catch(e) {}
 
       // Tự động đồng bộ vào Vector Database (RAG)
       if (typeof triggerRagIngestion === 'function') {
