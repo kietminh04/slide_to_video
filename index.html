@@ -5711,6 +5711,24 @@
               list.forEach(row => {
                 if (row.id && _cloudDeleted.includes(row.id)) return; // Không nạp lại dự án đã bị xóa
                 if (row.id && row.data) {
+                  const localProj = defaultProjects[row.id];
+                  if (localProj && localProj.detailedContent && Array.isArray(localProj.detailedContent) && row.data.detailedContent && Array.isArray(row.data.detailedContent)) {
+                    row.data.detailedContent.forEach((cloudP, pIdx) => {
+                      const localP = localProj.detailedContent[pIdx];
+                      if (localP) {
+                        if (localP.isVisionEnriched && (!cloudP.isVisionEnriched || !cloudP.explanation || cloudP.explanation.includes('(Đang hoàn thiện'))) {
+                          cloudP.explanation = localP.explanation;
+                          cloudP.isVisionEnriched = true;
+                        }
+                        if (localP.thumbnail && !cloudP.thumbnail) {
+                          cloudP.thumbnail = localP.thumbnail;
+                        }
+                        if (localP.image_url && !cloudP.image_url) {
+                          cloudP.image_url = localP.image_url;
+                        }
+                      }
+                    });
+                  }
                   defaultProjects[row.id] = row.data;
                   if (typeof currentProjectId !== 'undefined' && row.id === currentProjectId && typeof activeProject !== 'undefined' && activeProject) {
                     // ĐỒNG BỘ DỮ LIỆU TỪ CLOUD VÀO WORKSPACE ĐANG MỞ
@@ -5741,6 +5759,16 @@
                 const uProjs = JSON.parse(localStorage.getItem('clsg_user_projects') || '{}');
                 list.forEach(row => {
                   if (row.id && row.data) {
+                    const existingU = uProjs[row.id];
+                    if (existingU && existingU.detailedContent && Array.isArray(existingU.detailedContent) && row.data.detailedContent && Array.isArray(row.data.detailedContent)) {
+                      row.data.detailedContent.forEach((cloudP, pIdx) => {
+                        const localP = existingU.detailedContent[pIdx];
+                        if (localP && localP.isVisionEnriched && (!cloudP.isVisionEnriched || !cloudP.explanation || cloudP.explanation.includes('(Đang hoàn thiện'))) {
+                          cloudP.explanation = localP.explanation;
+                          cloudP.isVisionEnriched = true;
+                        }
+                      });
+                    }
                     uProjs[row.id] = sanitizeProjectForStorage(row.data);
                   }
                 });
