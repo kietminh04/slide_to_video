@@ -32,10 +32,8 @@ module.exports = async (req, res) => {
       const reqHeaders = {
         'Content-Type': 'application/json'
       };
-      if (isOpenAI || (body.baseUrl && !body.baseUrl.includes('googleapis'))) {
-        reqHeaders['Authorization'] = `Bearer ${customKey}`;
-      } else {
-        reqHeaders['x-goog-api-key'] = customKey;
+      reqHeaders['Authorization'] = `Bearer ${customKey}`;
+      if (!isOpenAI && !body.baseUrl) {
         targetUrl += `?key=${encodeURIComponent(customKey)}`;
       }
       if (body.baseUrl && body.baseUrl.includes('openrouter')) {
@@ -102,11 +100,9 @@ module.exports = async (req, res) => {
         const headers = {
           'Content-Type': 'application/json'
         };
+        headers['Authorization'] = `Bearer ${cand.apiKey}`;
         if (cand.provider === 'Gemini' || cand.apiKey.startsWith('AIzaSy')) {
           candUrl += `?key=${encodeURIComponent(cand.apiKey)}`;
-          headers['x-goog-api-key'] = cand.apiKey;
-        } else {
-          headers['Authorization'] = `Bearer ${cand.apiKey}`;
         }
 
         const upstreamRes = await fetch(candUrl, {
