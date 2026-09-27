@@ -80,8 +80,8 @@ module.exports = async (req, res) => {
     }
 
     // TRƯỜNG HỢP 2: DÙNG KEY HỆ THỐNG MẶC ĐỊNH
-    const envGemini = process.env.GEMINI_API_KEY || '';
-    const envOpenai = process.env.OPENAI_API_KEY || process.env.CLSG_OPENAI_API_KEY || '';
+    const envGemini = (process.env.GEMINI_API_KEY || '').trim();
+    const envOpenai = (process.env.OPENAI_API_KEY || process.env.CLSG_OPENAI_API_KEY || '').trim();
 
     const candidates = [];
     if (body.provider === 'openai' || requestedModel?.includes('gpt')) {
@@ -102,7 +102,8 @@ module.exports = async (req, res) => {
           'Content-Type': 'application/json'
         };
         if (cand.provider === 'Gemini' || cand.apiKey.startsWith('AIzaSy')) {
-          headers['x-goog-api-key'] = cand.apiKey;
+          candUrl += `?key=${encodeURIComponent(cand.apiKey)}`;
+          headers['Authorization'] = `Bearer ${cand.apiKey}`;
         } else {
           headers['Authorization'] = `Bearer ${cand.apiKey}`;
         }
