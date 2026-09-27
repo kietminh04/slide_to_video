@@ -13446,9 +13446,9 @@ QUY TẮC BẮT BUỘC:
       // TỰ ĐỘNG CHẠY NGẦM VISION AI NẾU DỰ ÁN CÒN TRANG CHƯA ĐƯỢC PHÂN TÍCH (Không cần người dùng bấm)
       setTimeout(() => {
         if (activeProject && Array.isArray(activeProject.detailedContent) && activeProject.detailedContent.length > 0) {
-          const unEnriched = activeProject.detailedContent.filter(p => !p.isVisionEnriched && (p.thumbnail || p.image_url));
+          const unEnriched = activeProject.detailedContent.filter(p => (!p.isVisionEnriched || (p.explanation && p.explanation.includes('(Đang hoàn thiện'))) && (p.thumbnail || p.image_url));
           if (unEnriched.length > 0 && typeof startBackgroundVisionEnrichment === 'function') {
-            console.log(`[Auto Vision AI] Phát hiện ${unEnriched.length} slide chưa phân tích. Tự động chạy ngầm từng slide...`);
+            console.log(`[Auto Vision AI] Phát hiện ${unEnriched.length} slide cần phân tích Vision AI. Tự động chạy ngầm từng slide...`);
             startBackgroundVisionEnrichment(activeProject);
           }
         }
@@ -15382,17 +15382,17 @@ QUY TẮC BẮT BUỘC:
           await page.render({ canvasContext: ctx, viewport: viewport }).promise;
           const base64Img = canvas.toDataURL('image/jpeg', 0.82);
 
-          // 3. Tự động sinh nội dung sư phạm 2 phần chuẩn mực (0s latency, không lag)
+          // 3. Khởi tạo nội dung văn bản trích xuất gốc từ PDF (chờ AI Vision chạy ngầm làm giàu)
           const hasText = (pageText && pageText.length >= 10);
-          const explanation = synthesizeSlidePedagogicalContent(pageText, p, totalPages);
+          const initialExplanation = pageText.trim() || 'Slide hình ảnh bài giảng (Đồ họa / sơ đồ minh họa)';
 
           detailed.push({
             pageNumber: p,
             image_url: base64Img,
             thumbnail: base64Img,
-            explanation: explanation,
+            explanation: initialExplanation,
             hasText: hasText,
-            isVisionEnriched: true
+            isVisionEnriched: false
           });
         } catch (pageErr) {
           console.warn(`[AutoIngest] Lỗi xử lý trang ${p}:`, pageErr);
@@ -20346,7 +20346,7 @@ QUY TẮC BẮT BUỘC:
               <div style="flex: 0 0 350px; display: flex; flex-direction: column; gap: 12px;">
                 <div style="display: flex; justify-content: space-between; align-items: center;">
                   <div style="font-weight: 700; color: var(--cyan); font-size: 16px;">Trang ${page.pageNumber}</div>
-                  ${page.isVisionEnriched ? '<span style="font-size: 11px; padding: 3px 8px; border-radius: 4px; background: rgba(16, 185, 129, 0.2); color: #34d399; font-weight: 600; border: 1px solid rgba(16, 185, 129, 0.4);">✨ Sư phạm AI</span>' : '<span style="font-size: 11px; padding: 3px 8px; border-radius: 4px; background: rgba(56, 189, 248, 0.1); color: var(--text-dim); font-weight: 500; border: 1px solid rgba(56, 189, 248, 0.2);">⏳ Đang chờ phân tích ngầm</span>'}
+                  ${(page.isVisionEnriched && (!page.explanation || !page.explanation.includes('(Đang hoàn thiện'))) ? '<span style="font-size: 11px; padding: 3px 8px; border-radius: 4px; background: rgba(16, 185, 129, 0.2); color: #34d399; font-weight: 600; border: 1px solid rgba(16, 185, 129, 0.4);">✨ Vision AI</span>' : '<span style="font-size: 11px; padding: 3px 8px; border-radius: 4px; background: rgba(56, 189, 248, 0.1); color: var(--text-dim); font-weight: 500; border: 1px solid rgba(56, 189, 248, 0.2);">⏳ Đang chờ phân tích ngầm</span>'}
                 </div>
                 ${(() => {
                   const slideImg = page.thumbnail || page.image_url || page.image || '';
@@ -20509,7 +20509,7 @@ Quy tắc bắt buộc:
       const pPercent = document.getElementById('content-progress-percent');
       const pBar = document.getElementById('content-progress-bar');
 
-      const pagesToEnrich = project.detailedContent.filter(p => !p.isVisionEnriched);
+      const pagesToEnrich = project.detailedContent.filter(p => !p.isVisionEnriched || (p.explanation && p.explanation.includes('(Đang hoàn thiện')));
       if (pagesToEnrich.length === 0) {
         _isVisionEnriching = false;
         return;
@@ -20542,8 +20542,8 @@ Quy tắc bắt buộc:
       let completedCount = 0;
       const total = pagesToEnrich.length;
 
-      // Xử lý tuần tự ngầm từng slide một (Concurrency 1) để đảm bảo ổn định, không lag và tránh rate limit API
-      const CONCURRENCY = 1;
+      // Xử lý song song nhẹ nhàng (Concurrency 2) để cập nhật liên tục và nhanh gấp đôi
+      const CONCURRENCY = 2;
       let currentIndex = 0;
 
       async function worker() {
@@ -20554,7 +20554,7 @@ Quy tắc bắt buộc:
           const imgUrl = (pageItem && (pageItem.image_url || pageItem.thumbnail)) || '';
           if (!pageItem || !imgUrl) continue;
 
-          if (pText) pText.textContent = `✨ AI Vision đang phân tích sâu trang ${pageItem.pageNumber} / ${project.detailedContent.length}...`;
+          if (pText) pText.textContent = `✨ AI Vision đang phân tích sâu trang ${pageItem.pageNumber} (${completedCount + 1}/${total})...`;
 
           const payload = {
             model: cfg.model || (cfg.provider === 'openai' ? 'gpt-4o-mini' : 'gemini-1.5-flash'),
@@ -20599,9 +20599,8 @@ Quy tắc bắt buộc:
                   pageItem.isVisionEnriched = true;
                   success = true;
 
-                  // Tự động cập nhật giao diện nếu đang mở Tab Nội Dung
-                  const activeTab = document.querySelector('.center-tab-btn.active')?.dataset.tab;
-                  if (activeTab === 'content') {
+                  // Tự động cập nhật giao diện thời gian thực (thay thế nội dung gốc ngay khi xong trang)
+                  if (typeof renderDetailedContentUI === 'function') {
                     renderDetailedContentUI();
                   }
 

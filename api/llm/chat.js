@@ -30,10 +30,13 @@ module.exports = async (req, res) => {
       const targetModel = requestedModel || (isOpenAI ? 'gpt-4o-mini' : 'gemini-1.5-flash');
 
       const reqHeaders = {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${customKey}`,
-        'x-goog-api-key': customKey
+        'Content-Type': 'application/json'
       };
+      if (isOpenAI || (body.baseUrl && !body.baseUrl.includes('googleapis'))) {
+        reqHeaders['Authorization'] = `Bearer ${customKey}`;
+      } else {
+        reqHeaders['x-goog-api-key'] = customKey;
+      }
       if (body.baseUrl && body.baseUrl.includes('openrouter')) {
         reqHeaders['HTTP-Referer'] = 'https://slide-to-video-sigma.vercel.app/';
         reqHeaders['X-Title'] = 'Slide to Video';
@@ -96,10 +99,13 @@ module.exports = async (req, res) => {
         const timeoutId = setTimeout(() => controller.abort(), 35000);
         let candUrl = `${cand.baseUrl.replace(/\/+$/, '')}/chat/completions`;
         const headers = {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${cand.apiKey}`,
-          'x-goog-api-key': cand.apiKey
+          'Content-Type': 'application/json'
         };
+        if (cand.provider === 'Gemini' || cand.apiKey.startsWith('AIzaSy')) {
+          headers['x-goog-api-key'] = cand.apiKey;
+        } else {
+          headers['Authorization'] = `Bearer ${cand.apiKey}`;
+        }
 
         const upstreamRes = await fetch(candUrl, {
           method: 'POST',
