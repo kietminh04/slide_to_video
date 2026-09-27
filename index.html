@@ -13443,6 +13443,17 @@ QUY TẮC BẮT BUỘC:
         chatContainer.innerHTML = '';
       }
 
+      // TỰ ĐỘNG CHẠY NGẦM VISION AI NẾU DỰ ÁN CÒN TRANG CHƯA ĐƯỢC PHÂN TÍCH (Không cần người dùng bấm)
+      setTimeout(() => {
+        if (activeProject && Array.isArray(activeProject.detailedContent) && activeProject.detailedContent.length > 0) {
+          const unEnriched = activeProject.detailedContent.filter(p => !p.isVisionEnriched && (p.thumbnail || p.image_url));
+          if (unEnriched.length > 0 && typeof startBackgroundVisionEnrichment === 'function') {
+            console.log(`[Auto Vision AI] Phát hiện ${unEnriched.length} slide chưa phân tích. Tự động chạy ngầm từng slide...`);
+            startBackgroundVisionEnrichment(activeProject);
+          }
+        }
+      }, 1500);
+
       // Khôi phục toàn bộ kịch bản, tóm tắt và thông số nhánh (nodeCustomParams) từ localStorage hoặc Cloud Database
       try {
         let savedParams = JSON.parse(localStorage.getItem(`clsg_node_params_${projId}`) || '{}');
@@ -20329,29 +20340,13 @@ QUY TẮC BẮT BUỘC:
           `;
         }
 
-        html += `
-          <div style="margin-bottom: 20px; padding: 14px 20px; background: rgba(15,23,42,0.7); border: 1px solid rgba(56,189,248,0.25); border-radius: 12px; display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap;">
-            <div>
-              <div style="font-weight: 700; color: #fff; font-size: 14.5px; margin-bottom: 4px; display: flex; align-items: center; gap: 8px;">
-                <span>📑</span><span>Tổng Quan Nội Dung Bài Giảng (${activeProject.detailedContent.length} trang)</span>
-              </div>
-              <div style="font-size: 12.5px; color: var(--text-muted);">Tự động trích xuất nội dung văn bản, sơ đồ và kiến thức sư phạm cho từng trang slide.</div>
-            </div>
-            <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-              <span style="font-size: 12px; padding: 6px 14px; border-radius: 8px; background: rgba(16, 185, 129, 0.15); color: #34d399; font-weight: 600; border: 1px solid rgba(16, 185, 129, 0.3); display: inline-flex; align-items: center; gap: 6px;">
-                <span>✨</span><span>Vision AI Tự Động Phân Tích (${activeProject.detailedContent.filter(p => p.isVisionEnriched).length}/${activeProject.detailedContent.length})</span>
-              </span>
-            </div>
-          </div>
-        `;
-
         activeProject.detailedContent.forEach((page, idx) => {
           html += `
             <div style="display: flex; gap: 24px; background: rgba(30,41,59,0.5); border: 1px solid var(--border-color); border-radius: 12px; padding: 20px; margin-bottom: 16px;">
               <div style="flex: 0 0 350px; display: flex; flex-direction: column; gap: 12px;">
                 <div style="display: flex; justify-content: space-between; align-items: center;">
                   <div style="font-weight: 700; color: var(--cyan); font-size: 16px;">Trang ${page.pageNumber}</div>
-                  ${page.isVisionEnriched ? '<span style="font-size: 11px; padding: 3px 8px; border-radius: 4px; background: rgba(16, 185, 129, 0.2); color: #34d399; font-weight: 600; border: 1px solid rgba(16, 185, 129, 0.4);">✨ Sư phạm AI</span>' : '<span style="font-size: 11px; padding: 3px 8px; border-radius: 4px; background: rgba(56, 189, 248, 0.1); color: var(--text-dim); font-weight: 500; border: 1px solid rgba(56, 189, 248, 0.2);">⏳ Text gốc</span>'}
+                  ${page.isVisionEnriched ? '<span style="font-size: 11px; padding: 3px 8px; border-radius: 4px; background: rgba(16, 185, 129, 0.2); color: #34d399; font-weight: 600; border: 1px solid rgba(16, 185, 129, 0.4);">✨ Sư phạm AI</span>' : '<span style="font-size: 11px; padding: 3px 8px; border-radius: 4px; background: rgba(56, 189, 248, 0.1); color: var(--text-dim); font-weight: 500; border: 1px solid rgba(56, 189, 248, 0.2);">⏳ Đang chờ phân tích ngầm</span>'}
                 </div>
                 ${(() => {
                   const slideImg = page.thumbnail || page.image_url || page.image || '';
@@ -20370,11 +20365,6 @@ QUY TẮC BẮT BUỘC:
               <div style="flex: 1; display: flex; flex-direction: column;">
                 <div style="font-size: 13px; color: #94a3b8; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 4px;">Nội dung chi tiết & Giải thích</div>
                 <div style="font-size: 15px; color: var(--text-main); line-height: 1.6; white-space: pre-wrap; font-family: 'Inter', sans-serif;">${formatDetailedExplanation(page.explanation)}</div>
-                <div style="margin-top: 14px; padding-top: 10px; border-top: 1px dashed rgba(255,255,255,0.08); display: flex; justify-content: flex-end; gap: 10px;">
-                  <button onclick="enrichSingleSlideWithAI(${idx})" class="clsg-btn" style="cursor: pointer; padding: 5px 12px; background: rgba(56,189,248,0.1); border: 1px solid rgba(56,189,248,0.3); color: var(--cyan); border-radius: 6px; font-size: 12px; display: inline-flex; align-items: center; gap: 5px;">
-                    <span>✨ Phân Tích Lại Trang Này (AI)</span>
-                  </button>
-                </div>
               </div>
             </div>
           `;
