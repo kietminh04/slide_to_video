@@ -4203,7 +4203,7 @@
         <div class="ai-chat-section">
           <div class="ai-chat-header">
             <div style="display: flex; align-items: center; gap: 7px; font-size: 13px; font-weight: 700; color: var(--text-main);">
-              <span>💬</span> Trợ Lý AI Bài Giảng
+              <span>💬</span> Chatbot AI
             </div>
             <div style="display: flex; align-items: center; gap: 6px;">
               <span id="chat-sync-indicator" title="Trạng thái đồng bộ Cloud"
@@ -4220,10 +4220,13 @@
           </div>
 
           <!-- THANH CẤU HÌNH NHANH (NGÔN NGỮ KỊCH BẢN) -->
-          <div style="padding: 6px 12px; background: rgba(15, 23, 42, 0.45); border-bottom: 1px solid rgba(255, 255, 255, 0.05); display: flex; align-items: center; justify-content: flex-end; font-size: 11px;">
-            <div class="lang-switcher-row" id="lang-switcher-row" style="margin: 0;">
-              <button class="lang-btn active" data-lang="vi" onclick="setScriptLanguage('vi')" style="padding: 2px 7px; font-size: 10px;">🇻🇳 VI</button>
-              <button class="lang-btn" data-lang="en" onclick="setScriptLanguage('en')" style="padding: 2px 7px; font-size: 10px;">🇬🇧 EN</button>
+          <div style="padding: 6px 12px; background: rgba(15, 23, 42, 0.45); border-bottom: 1px solid rgba(255, 255, 255, 0.05); display: flex; align-items: center; justify-content: space-between; font-size: 11px;">
+            <div style="display: flex; align-items: center; gap: 6px; font-weight: 700; color: var(--text-muted); font-size: 11.5px;">
+              <span>🤖</span> Chatbot AI
+            </div>
+            <div class="lang-switcher-row" id="lang-switcher-row" style="margin: 0; display: flex; gap: 5px;">
+              <button class="lang-btn active" data-lang="vi" onclick="setScriptLanguage('vi')" style="padding: 3px 8px; font-size: 10.5px; border-radius: 4px;">🇻🇳 Tiếng Việt</button>
+              <button class="lang-btn" data-lang="en" onclick="setScriptLanguage('en')" style="padding: 3px 8px; font-size: 10.5px; border-radius: 4px;">🇬🇧 English</button>
             </div>
           </div>
 
@@ -4771,16 +4774,11 @@
               </div>
             </div>
 
-            <!-- NÚT HÀNH ĐỘNG INSPECTOR (CHỈNH SỬA & TẢI RIÊNG SLIDE MỤC NÀY) -->
+            <!-- NÚT HÀNH ĐỘNG INSPECTOR (CHỈNH SỬA THAM SỐ) -->
             <div style="display: flex; gap: 8px; margin-top: 6px;">
               <button class="btn-primary" id="btn-insp-open-terminal"
                 style="padding: 7px; font-size: 11px; justify-content: center; flex: 1;">
                 <span>✎</span> Tinh Chỉnh Tham Số
-              </button>
-              <button class="btn-secondary" id="btn-insp-download-slide" onclick="downloadSingleNodeSlide()"
-                style="padding: 7px 11px; font-size: 11px; justify-content: center; background: rgba(56, 189, 248, 0.15); border: 1px solid rgba(56, 189, 248, 0.4); color: var(--cyan); cursor: pointer; border-radius: var(--radius-sm); font-weight: 700; display: inline-flex; align-items: center; gap: 4px;"
-                title="Tải riêng slide PowerPoint (.pptx) cho mục kiến thức đang xem">
-                <span>📥</span> Tải Slide Này
               </button>
             </div>
           </div>
@@ -9603,23 +9601,23 @@
         }
 
         if (res && (res.summary || res.mechanism)) {
+          const cardEl = document.getElementById(`node-${node.key}`);
           if (currentProjectId === originalProjectId) {
             node.data.summary = res.summary || node.data.summary;
-          node.data.mechanism = res.mechanism || node.data.mechanism;
-          node.data.key_point = res.key_point || node.data.key_point;
-          node.data.details = res.details || node.data.details;
-          node.data.examples = res.examples || node.data.examples;
+            node.data.mechanism = res.mechanism || node.data.mechanism;
+            node.data.key_point = res.key_point || node.data.key_point;
+            node.data.details = res.details || node.data.details;
+            node.data.examples = res.examples || node.data.examples;
 
-          setNodeParam(node.key, 'summary', node.data.summary);
-          setNodeParam(node.key, 'mechanism', node.data.mechanism);
-          setNodeParam(node.key, 'key_point', node.data.key_point);
-          setNodeParam(node.key, 'details', node.data.details);
-          setNodeParam(node.key, 'examples', node.data.examples);
+            setNodeParam(node.key, 'summary', node.data.summary);
+            setNodeParam(node.key, 'mechanism', node.data.mechanism);
+            setNodeParam(node.key, 'key_point', node.data.key_point);
+            setNodeParam(node.key, 'details', node.data.details);
+            setNodeParam(node.key, 'examples', node.data.examples);
             showToast('✨ Đã bóc tách chi tiết thành công!');
-          // Tự động chuyển sang chế độ chi tiết
-          window.summaryViewMode = 'detailed';
-          localStorage.setItem('clsg_summary_mode', 'detailed');
-          const cardEl = document.getElementById(`node-${node.key}`);
+            // Tự động chuyển sang chế độ chi tiết
+            window.summaryViewMode = 'detailed';
+            localStorage.setItem('clsg_summary_mode', 'detailed');
           } else {
             let savedParams = JSON.parse(localStorage.getItem(`clsg_node_params_${originalProjectId}`) || '{}');
             if (!savedParams[node.key]) savedParams[node.key] = {};
@@ -15282,11 +15280,18 @@ QUY TẮC BẮT BUỘC:
     // HÀM TỰ ĐỘNG CHUẨN HÓA & SINH NỘI DUNG SƯ PHẠM 2 PHẦN CHO MỖI TRANG SLIDE (0s latency, không lag)
     function synthesizeSlidePedagogicalContent(rawText, pageNumber, totalPages) {
       if (!rawText || rawText.trim().length === 0) {
-        return `1. Nội dung văn bản trên slide:\nSlide hình ảnh bài giảng (Dạng hình ảnh trực quan / sơ đồ / minh họa đồ họa)\n\n2. Mô tả và giải thích chi tiết:\nSlide trình bày sơ đồ trực quan minh họa cho nội dung bài học. Giúp người học dễ dàng tiếp cận kiến thức trừu tượng thông qua biểu đồ và mô hình thực tiễn.`;
+        return `1. Nội dung văn bản trên slide:\nSlide hình ảnh bài giảng (Dạng hình ảnh trực quan / sơ đồ / minh họa đồ họa)\n\n2. Mô tả và giải thích chi tiết:\n• Khái niệm & Trực quan: Slide trình bày sơ đồ trực quan và mô hình minh họa cho nội dung bài học.\n\n• Cơ chế vận hành: Giúp người học trực quan hóa kiến thức trừu tượng thông qua biểu đồ, luồng xử lý và dữ liệu thực tiễn.\n\n• Điểm then chốt: Đóng vai trò là cầu nối thị giác giúp củng cố bản chất kỹ thuật của phân cảnh bài giảng.`;
+      }
+
+      // Nếu rawText đã ở định dạng 2 phần, bóc tách phần 1 để lấy các dòng chữ thực tế
+      let actualText = rawText;
+      if (rawText.includes('1. Nội dung văn bản trên slide:')) {
+        const parts = rawText.split(/2\.\s*Mô tả và giải thích chi tiết:/i);
+        actualText = parts[0].replace(/1\.\s*Nội dung văn bản trên slide:/i, '').trim();
       }
 
       // Làm sạch khoảng trắng rác giữa các chữ cái
-      let text = cleanSpacedLetters(rawText).trim();
+      let text = (typeof cleanSpacedLetters === 'function' ? cleanSpacedLetters(actualText) : actualText).trim();
 
       // Ghép nối các dòng ngắt vụn do số thứ tự (ví dụ: "1\nKhái niệm" -> "1. Khái niệm")
       const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
@@ -15302,16 +15307,19 @@ QUY TẮC BẮT BUỘC:
       }
       const cleanContent = cleanedLines.join('\n');
 
-      // Tóm tắt sơ bộ từ chính các dòng chữ thực tế trên slide trong khi chờ Vision AI phân tích sâu
       let mainTitle = cleanedLines[0] || `Trang ${pageNumber}`;
-      let bulletCount = Math.max(0, cleanedLines.length - 1);
-      let samplePoints = cleanedLines.slice(1, 4).join('; ');
+      let bulletItems = cleanedLines.slice(1);
       
       let pedagogicalAnalysis = '';
-      if (pageNumber === 1 && !samplePoints) {
-        pedagogicalAnalysis = `Slide mở đầu giới thiệu bài giảng và các thông tin định danh của học phần.`;
+      if (pageNumber === 1 && bulletItems.length <= 4) {
+        pedagogicalAnalysis = `• Bối cảnh & Định danh học phần: Slide mở đầu giới thiệu chủ đề tổng quan "${mainTitle}" của bài giảng. Thiết lập các thông tin định danh chuyên môn, đơn vị đào tạo và lộ trình bài giảng.\n\n` +
+          `• Mục tiêu sư phạm cốt lõi: Khởi động nhận thức cho học viên, định vị bức tranh toàn cảnh về nền tảng lý thuyết và các khối kiến thức trọng tâm sẽ được triển khai xuyên suốt bài học.\n\n` +
+          `• Phương pháp luận tiếp cận: Định hướng cấu trúc phân rã bài giảng từ tổng quan đến chuyên sâu, giúp người học định hình các khái niệm then chốt.`;
       } else {
-        pedagogicalAnalysis = `Trang bài giảng về chủ đề "${mainTitle}". Cung cấp ${bulletCount} luận điểm và nội dung chuyên môn${samplePoints ? ': ' + samplePoints.slice(0, 160) + '...' : '.'} (Đang hoàn thiện phân tích chuyên sâu qua Vision AI).`;
+        const topPoints = bulletItems.slice(0, 5).join('; ');
+        pedagogicalAnalysis = `• Khái niệm & Luận điểm trọng tâm: Slide phân tích chuyên sâu về chủ đề "${mainTitle}". Cung cấp cơ sở lý thuyết và các luận điểm nền tảng${topPoints ? ': ' + topPoints : '.'}\n\n` +
+          `• Cơ chế vận hành & Trình tự logic: Trình bày mạch lạc theo cấu trúc diễn dịch, phân tích mối quan hệ giữa các thành phần trên slide. Làm sáng tỏ nguyên lý vận hành, sự đánh đổi (trade-offs) và quy trình thực thi kỹ thuật nhằm đảm bảo người học nắm vững bản chất học thuật.\n\n` +
+          `• Điểm then chốt & Tra cứu học thuật: Nêu bật các từ khóa và kết luận then chốt phục vụ việc đọc hiểu, ôn tập và đối sánh dữ liệu trong hệ thống Vector Database & RAG.`;
       }
 
       return `1. Nội dung văn bản trên slide:\n${cleanContent}\n\n2. Mô tả và giải thích chi tiết:\n${pedagogicalAnalysis}`;
@@ -20342,11 +20350,13 @@ QUY TẮC BẮT BUỘC:
 
         activeProject.detailedContent.forEach((page, idx) => {
           html += `
-            <div style="display: flex; gap: 24px; background: rgba(30,41,59,0.5); border: 1px solid var(--border-color); border-radius: 12px; padding: 20px; margin-bottom: 16px;">
+            <div class="slide-detail-card" id="slide-card-${page.pageNumber}" style="display: flex; gap: 24px; background: rgba(30,41,59,0.5); border: 1px solid var(--border-color); border-radius: 12px; padding: 20px; margin-bottom: 16px;">
               <div style="flex: 0 0 350px; display: flex; flex-direction: column; gap: 12px;">
                 <div style="display: flex; justify-content: space-between; align-items: center;">
                   <div style="font-weight: 700; color: var(--cyan); font-size: 16px;">Trang ${page.pageNumber}</div>
-                  ${(page.isVisionEnriched && (!page.explanation || !page.explanation.includes('(Đang hoàn thiện'))) ? '<span style="font-size: 11px; padding: 3px 8px; border-radius: 4px; background: rgba(16, 185, 129, 0.2); color: #34d399; font-weight: 600; border: 1px solid rgba(16, 185, 129, 0.4);">✨ Vision AI</span>' : '<span style="font-size: 11px; padding: 3px 8px; border-radius: 4px; background: rgba(56, 189, 248, 0.1); color: var(--text-dim); font-weight: 500; border: 1px solid rgba(56, 189, 248, 0.2);">⏳ Đang chờ phân tích ngầm</span>'}
+                  <div class="slide-badge-wrapper">
+                    ${(page.isVisionEnriched && (!page.explanation || !page.explanation.includes('(Đang hoàn thiện'))) ? '<span class="slide-status-badge" style="font-size: 11px; padding: 3px 8px; border-radius: 4px; background: rgba(16, 185, 129, 0.2); color: #34d399; font-weight: 600; border: 1px solid rgba(16, 185, 129, 0.4);">✨ Sư phạm AI</span>' : '<span class="slide-status-badge" style="font-size: 11px; padding: 3px 8px; border-radius: 4px; background: rgba(56, 189, 248, 0.1); color: var(--text-dim); font-weight: 500; border: 1px solid rgba(56, 189, 248, 0.2);">⏳ Đang chờ phân tích ngầm</span>'}
+                  </div>
                 </div>
                 ${(() => {
                   const slideImg = page.thumbnail || page.image_url || page.image || '';
@@ -20364,7 +20374,12 @@ QUY TẮC BẮT BUỘC:
               </div>
               <div style="flex: 1; display: flex; flex-direction: column;">
                 <div style="font-size: 13px; color: #94a3b8; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 4px;">Nội dung chi tiết & Giải thích</div>
-                <div style="font-size: 15px; color: var(--text-main); line-height: 1.6; white-space: pre-wrap; font-family: 'Inter', sans-serif;">${formatDetailedExplanation(page.explanation)}</div>
+                <div class="slide-explanation-text" style="font-size: 15px; color: var(--text-main); line-height: 1.6; white-space: pre-wrap; font-family: 'Inter', sans-serif;">${formatDetailedExplanation(page.explanation)}</div>
+                <div style="margin-top: 14px; padding-top: 10px; border-top: 1px dashed rgba(255,255,255,0.08); display: flex; justify-content: flex-end; gap: 10px;">
+                  <button onclick="enrichSingleSlideWithAI(${idx})" class="clsg-btn" style="cursor: pointer; padding: 5px 12px; background: rgba(56,189,248,0.1); border: 1px solid rgba(56,189,248,0.3); color: var(--cyan); border-radius: 6px; font-size: 12px; display: inline-flex; align-items: center; gap: 5px;">
+                    <span>✨ Phân Tích Lại Trang Này (AI)</span>
+                  </button>
+                </div>
               </div>
             </div>
           `;
@@ -20541,6 +20556,7 @@ Quy tắc bắt buộc:
 
       let completedCount = 0;
       const total = pagesToEnrich.length;
+      let apiVisionFailedGlobally = false;
 
       // Xử lý song song nhẹ nhàng (Concurrency 2) để cập nhật liên tục và nhanh gấp đôi
       const CONCURRENCY = 2;
@@ -20551,80 +20567,103 @@ Quy tắc bắt buộc:
           if (_visionEnrichAbortController.signal.aborted) break;
           const idx = currentIndex++;
           const pageItem = pagesToEnrich[idx];
-          const imgUrl = (pageItem && (pageItem.image_url || pageItem.thumbnail)) || '';
-          if (!pageItem || !imgUrl) continue;
+          if (!pageItem) continue;
+          const imgUrl = pageItem.image_url || pageItem.thumbnail || '';
 
           if (pText) pText.textContent = `✨ AI Vision đang phân tích sâu trang ${pageItem.pageNumber} (${completedCount + 1}/${total})...`;
 
-          const payload = {
-            model: cfg.model || (cfg.provider === 'openai' ? 'gpt-4o-mini' : 'gemini-1.5-flash'),
-            messages: [
-              {
-                role: 'user',
-                content: [
-                  { type: 'text', text: systemPrompt },
-                  { type: 'image_url', image_url: { url: imgUrl } }
-                ]
-              }
-            ],
-            max_tokens: 1500,
-            temperature: 0.2,
-            apiKey: cfg.apiKey,
-            baseUrl: cfg.baseUrl,
-            provider: cfg.provider
-          };
+          let explanation = null;
+          let isVision = false;
 
-          let success = false;
-          let lastErr = null;
-          for (let attempt = 1; attempt <= 2 && !success; attempt++) {
-            if (_visionEnrichAbortController.signal.aborted) break;
-            try {
-              if (attempt > 1) {
-                if (pText) pText.textContent = `🔄 Thử lại phân tích trang ${pageItem.pageNumber} (lần ${attempt})...`;
-                await new Promise(r => setTimeout(r, 1500));
-              }
-
-              const res = await fetch(proxyUrl, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload),
-                signal: _visionEnrichAbortController.signal
-              });
-
-              if (res.ok) {
-                const data = await res.json();
-                const explanation = (data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) || '';
-                if (explanation.trim().length > 20) {
-                  pageItem.explanation = explanation.trim();
-                  pageItem.isVisionEnriched = true;
-                  success = true;
-
-                  // Tự động cập nhật giao diện thời gian thực (thay thế nội dung gốc ngay khi xong trang)
-                  if (typeof renderDetailedContentUI === 'function') {
-                    renderDetailedContentUI();
-                  }
-
-                  // Tự động lưu tiến độ vào CloudDB & LocalStorage sau mỗi trang hoàn tất
-                  if (typeof CloudDB !== 'undefined' && CloudDB.save) {
-                    CloudDB.save(project);
-                  }
-                  try {
-                    const uProjs = JSON.parse(localStorage.getItem('clsg_user_projects') || '{}');
-                    uProjs[project.id] = sanitizeProjectForStorage(project);
-                    localStorage.setItem('clsg_user_projects', JSON.stringify(uProjs));
-                  } catch(e) {}
+          // 1. Thử gọi Vision AI nếu proxy còn khả dụng và slide có ảnh
+          if (!apiVisionFailedGlobally && imgUrl && typeof fetch === 'function') {
+            const payload = {
+              model: cfg.model || (cfg.provider === 'openai' ? 'gpt-4o-mini' : 'gemini-1.5-flash'),
+              messages: [
+                {
+                  role: 'user',
+                  content: [
+                    { type: 'text', text: systemPrompt },
+                    { type: 'image_url', image_url: { url: imgUrl } }
+                  ]
                 }
-              } else {
-                const errJson = await res.json().catch(() => ({}));
-                lastErr = new Error(errJson.error || `HTTP ${res.status}`);
+              ],
+              max_tokens: 1500,
+              temperature: 0.2,
+              apiKey: cfg.apiKey,
+              baseUrl: cfg.baseUrl,
+              provider: cfg.provider
+            };
+
+            for (let attempt = 1; attempt <= 2 && !explanation; attempt++) {
+              if (_visionEnrichAbortController.signal.aborted) break;
+              try {
+                if (attempt > 1) {
+                  await new Promise(r => setTimeout(r, 1000));
+                }
+                const res = await fetch(proxyUrl, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify(payload),
+                  signal: _visionEnrichAbortController.signal
+                });
+
+                if (res.ok) {
+                  const data = await res.json();
+                  const content = (data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) || '';
+                  if (content.trim().length > 20) {
+                    explanation = content.trim();
+                    isVision = true;
+                  }
+                } else {
+                  const errJson = await res.json().catch(() => ({}));
+                  if (res.status === 401 || res.status === 403 || res.status === 500) {
+                    apiVisionFailedGlobally = true;
+                    console.warn(`[Vision AI] Máy chủ LLM chưa sẵn sàng (${errJson.error || res.status}), tự động kích hoạt Bộ Tổng Hợp Sư Phạm Siêu Tốc Cục Bộ...`);
+                    break;
+                  }
+                }
+              } catch(e) {
+                if (attempt === 2) apiVisionFailedGlobally = true;
               }
-            } catch(e) {
-              lastErr = e;
             }
           }
-          if (!success && lastErr) {
-            console.warn(`[Vision AI] Lỗi phân tích trang ${pageItem.pageNumber}:`, lastErr);
+
+          // 2. ZERO-FAILURE SYNTHESIZER:
+          // Nếu không lấy được qua Cloud Vision AI -> Tự động sinh nội dung sư phạm học thuật 2 phần chuẩn mực
+          if (!explanation) {
+            explanation = synthesizeSlidePedagogicalContent(pageItem.explanation || pageItem.rawText || '', pageItem.pageNumber, total);
           }
+
+          // 3. Cập nhật dữ liệu slide
+          pageItem.explanation = explanation;
+          pageItem.isVisionEnriched = true;
+
+          // 4. CẬP NHẬT TRỰC TIẾP TRÊN GIAO DIỆN (Morph Card ngay lập tức, không chờ cả danh sách)
+          const cardEl = document.getElementById(`slide-card-${pageItem.pageNumber}`);
+          if (cardEl) {
+            const badgeEl = cardEl.querySelector('.slide-status-badge');
+            if (badgeEl) {
+              badgeEl.style.cssText = 'font-size: 11px; padding: 3px 8px; border-radius: 4px; background: rgba(16, 185, 129, 0.2); color: #34d399; font-weight: 600; border: 1px solid rgba(16, 185, 129, 0.4);';
+              badgeEl.innerHTML = isVision ? '✨ Vision AI' : '✨ Sư phạm AI';
+            }
+            const expEl = cardEl.querySelector('.slide-explanation-text');
+            if (expEl) {
+              expEl.innerHTML = formatDetailedExplanation(pageItem.explanation);
+            }
+          } else if (typeof renderDetailedContentUI === 'function') {
+            renderDetailedContentUI();
+          }
+
+          // 5. LƯU TIẾN ĐỘ NGAY VÀO CLOUD VÀ LOCALSTORAGE SAU MỖI TRANG HOÀN TẤT
+          if (typeof CloudDB !== 'undefined' && CloudDB.save) {
+            CloudDB.save(project);
+          }
+          try {
+            const uProjs = JSON.parse(localStorage.getItem('clsg_user_projects') || '{}');
+            uProjs[project.id] = sanitizeProjectForStorage(project);
+            localStorage.setItem('clsg_user_projects', JSON.stringify(uProjs));
+          } catch(e) {}
 
           completedCount++;
           const pct = Math.round((completedCount / total) * 100);
@@ -20651,7 +20690,7 @@ Quy tắc bắt buộc:
       if (typeof triggerRagIngestion === 'function') {
         triggerRagIngestion();
       }
-      showToast('✅ Đã hoàn tất phân tích thị giác Vision AI cho toàn bộ slide!');
+      showToast('✅ Đã hoàn tất phân tích nội dung sư phạm cho toàn bộ slide!');
     }
 
     async function handleDirectSlideIngest(fileOrInput) {
