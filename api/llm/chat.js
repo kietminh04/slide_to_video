@@ -208,7 +208,7 @@ module.exports = async (req, res) => {
           lastError = `[${cand.provider}] HTTP ${upstreamRes.status}: ${errText.slice(0, 150)}`;
         }
       } catch (e) {
-        lastError = `[${cand.provider}] ${e.message}`;
+        lastError = `[${cand.provider}] (Key: ${cand.apiKey ? cand.apiKey.slice(0, 6) + '...' + cand.apiKey.slice(-4) + ' len=' + cand.apiKey.length : 'none'}) ${e.message}`;
       }
     }
 
