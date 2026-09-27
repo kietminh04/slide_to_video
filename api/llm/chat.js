@@ -36,6 +36,7 @@ module.exports = async (req, res) => {
         reqHeaders['Authorization'] = `Bearer ${customKey}`;
       } else {
         reqHeaders['x-goog-api-key'] = customKey;
+        targetUrl += `?key=${encodeURIComponent(customKey)}`;
       }
       if (body.baseUrl && body.baseUrl.includes('openrouter')) {
         reqHeaders['HTTP-Referer'] = 'https://slide-to-video-sigma.vercel.app/';
@@ -103,7 +104,7 @@ module.exports = async (req, res) => {
         };
         if (cand.provider === 'Gemini' || cand.apiKey.startsWith('AIzaSy')) {
           candUrl += `?key=${encodeURIComponent(cand.apiKey)}`;
-          headers['Authorization'] = `Bearer ${cand.apiKey}`;
+          headers['x-goog-api-key'] = cand.apiKey;
         } else {
           headers['Authorization'] = `Bearer ${cand.apiKey}`;
         }
