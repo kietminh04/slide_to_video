@@ -150,6 +150,57 @@ module.exports = async (req, res) => {
         return res.status(200).json({ status: 'ok', id, message: 'Đã lưu tóm tắt & tham số lên Cloud Database' });
       }
 
+      // Xử lý lưu ngay lập tức khi một trang slide hoàn thành (Lưu trực tiếp vào Neon Cloud)
+      if (body.action === 'save_slide_page') {
+        const pageNumber = Number(body.pageNumber);
+        const explanation = body.explanation || '';
+        const isVisionEnriched = Boolean(body.isVisionEnriched);
+
+        // Lấy dữ liệu dự án hiện tại
+        const rows = await sql`SELECT data, title FROM clsg_projects WHERE id = ${id};`;
+        if (rows.length > 0) {
+          const currentData = rows[0].data || {};
+          let detailed = currentData.detailedContent || [];
+          let found = false;
+          for (let i = 0; i < detailed.length; i++) {
+            if (Number(detailed[i].pageNumber) === pageNumber) {
+              detailed[i].explanation = explanation;
+              detailed[i].isVisionEnriched = isVisionEnriched;
+              found = true;
+              break;
+            }
+          }
+          if (!found) {
+            detailed.push({
+              pageNumber,
+              explanation,
+              isVisionEnriched
+            });
+            detailed.sort((a, b) => Number(a.pageNumber) - Number(b.pageNumber));
+          }
+          currentData.detailedContent = detailed;
+
+          await sql`
+            UPDATE clsg_projects
+            SET data = ${JSON.stringify(currentData)}::jsonb,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE id = ${id};
+          `;
+          return res.status(200).json({ status: 'ok', id, pageNumber, message: `Đã lưu trang ${pageNumber} vào Neon Cloud` });
+        } else {
+          const initialData = {
+            id,
+            title: title || 'Dự Án Bài Giảng',
+            detailedContent: [{ pageNumber, explanation, isVisionEnriched }]
+          };
+          await sql`
+            INSERT INTO clsg_projects (id, title, description, data, updated_at)
+            VALUES (${id}, ${initialData.title}, ${description}, ${JSON.stringify(initialData)}::jsonb, CURRENT_TIMESTAMP);
+          `;
+          return res.status(200).json({ status: 'ok', id, pageNumber, message: `Đã khởi tạo và lưu trang ${pageNumber} vào Neon Cloud` });
+        }
+      }
+
       // Xử lý lưu riêng Thông tin Video đã xuất theo Project & Loại (grid / tree)
       if (body.action === 'save_video_meta') {
         const videoType = body.videoType || 'grid';

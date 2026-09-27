@@ -5855,6 +5855,45 @@
         }, 400);
       },
 
+      // Lưu NGAY LẬP TỨC một trang slide hoàn thành vào Neon Cloud & LocalStorage (Tức thời, không nghẽn mạng)
+      async saveSlideProgress(project, pageItem) {
+        if (!project || !project.id || !pageItem) return;
+        
+        // 1. Cập nhật LocalStorage tức thời (0s latency)
+        const cleanProject = sanitizeProjectForStorage(project);
+        try {
+          const userProjects = JSON.parse(localStorage.getItem('clsg_user_projects') || '{}');
+          userProjects[project.id] = cleanProject;
+          localStorage.setItem('clsg_user_projects', JSON.stringify(userProjects));
+          localStorage.setItem('clsg_active_project_id', project.id);
+        } catch (e) {}
+
+        // 2. Bắn ngay vào Neon Serverless Postgres
+        try {
+          const res = await fetch('/api/projects', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              id: project.id,
+              title: project.title,
+              action: 'save_slide_page',
+              pageNumber: pageItem.pageNumber,
+              explanation: pageItem.explanation,
+              isVisionEnriched: Boolean(pageItem.isVisionEnriched)
+            })
+          });
+          if (res.ok) {
+            this.isOnline = true;
+            this.updateBadge();
+            console.log(`[Neon Cloud] ✅ Đã lưu trang ${pageItem.pageNumber} trực tiếp vào cơ sở dữ liệu Cloud!`);
+            return true;
+          }
+        } catch (e) {
+          console.warn(`[CloudDB] Lưu trang ${pageItem.pageNumber} lên Neon thất bại:`, e.message);
+        }
+        return false;
+      },
+
       async save(project) {
         if (!project || !project.id) return;
         const chatContainer = document.getElementById('ai-chat-messages');
@@ -13469,16 +13508,33 @@ QUY TẮC BẮT BUỘC:
         chatContainer.innerHTML = '';
       }
 
-      // TỰ ĐỘNG CHẠY NGẦM VISION AI NẾU DỰ ÁN CÒN TRANG CHƯA ĐƯỢC PHÂN TÍCH (Không cần người dùng bấm)
+      // HÀM KIỂM TRA ĐỐI SOÁT & TIẾP TỤC GEN NỐI TIẾP NẾU BỊ F5 GIỮA CHỪNG (RESUMABLE CHECKPOINT)
       setTimeout(() => {
-        if (activeProject && Array.isArray(activeProject.detailedContent) && activeProject.detailedContent.length > 0) {
-          const unEnriched = activeProject.detailedContent.filter(p => (!p.isVisionEnriched || (p.explanation && p.explanation.includes('(Đang hoàn thiện'))) && (p.thumbnail || p.image_url));
-          if (unEnriched.length > 0 && typeof startBackgroundVisionEnrichment === 'function') {
-            console.log(`[Auto Vision AI] Phát hiện ${unEnriched.length} slide cần phân tích Vision AI. Tự động chạy ngầm từng slide...`);
-            startBackgroundVisionEnrichment(activeProject);
-          }
+        if (!activeProject || !Array.isArray(activeProject.detailedContent) || activeProject.detailedContent.length === 0) return;
+        
+        const isMarkedIncomplete = localStorage.getItem('clsg_enriching_' + activeProject.id) === 'true';
+        
+        // Kiểm tra xem có trang nào THỰC SỰ CHƯA GEN KHÔNG
+        const missingPages = activeProject.detailedContent.filter(p => 
+          !p.isVisionEnriched || 
+          !p.explanation || 
+          p.explanation.includes('(Đang hoàn thiện') || 
+          p.explanation.includes('Xin lỗi, nhưng tôi không thể')
+        );
+
+        if (missingPages.length === 0) {
+          // Tất cả các trang đều đã hoàn tất và lưu DB -> Xóa cờ, tuyệt đối KHÔNG gọi AI
+          localStorage.removeItem('clsg_enriching_' + activeProject.id);
+          return;
         }
-      }, 1500);
+
+        // Chỉ tiếp tục nếu trước đó đang gen dở mà bị F5
+        if (isMarkedIncomplete) {
+          console.log(`[Resume Checkpoint] Phát hiện đang gen dở: còn ${missingPages.length}/${activeProject.detailedContent.length} trang chưa xong. Tự động tiếp tục từ trang ${missingPages[0].pageNumber}...`);
+          showToast(`🔄 Tiếp tục phân tích nối tiếp ${missingPages.length} trang chưa xong...`);
+          startBackgroundVisionEnrichment(activeProject);
+        }
+      }, 1200);
 
       // Khôi phục toàn bộ kịch bản, tóm tắt và thông số nhánh (nodeCustomParams) từ localStorage hoặc Cloud Database
       try {
@@ -20505,12 +20561,11 @@ Quy tắc bắt buộc:
           if (content.trim().length > 20) {
             page.explanation = content.trim();
             page.isVisionEnriched = true;
-            if (typeof CloudDB !== 'undefined' && CloudDB.save) CloudDB.save(activeProject);
-            try {
-              const uProjs = JSON.parse(localStorage.getItem('clsg_user_projects') || '{}');
-              uProjs[activeProject.id] = sanitizeProjectForStorage(activeProject);
-              localStorage.setItem('clsg_user_projects', JSON.stringify(uProjs));
-            } catch(e) {}
+            if (typeof CloudDB !== 'undefined' && CloudDB.saveSlideProgress) {
+              await CloudDB.saveSlideProgress(activeProject, page);
+            } else if (typeof CloudDB !== 'undefined' && CloudDB.save) {
+              CloudDB.save(activeProject);
+            }
             renderDetailedContentUI();
             showToast(`✨ Đã phân tích Vision AI thành công Trang ${page.pageNumber}!`);
             return;
@@ -20552,13 +20607,34 @@ Quy tắc bắt buộc:
       const pPercent = document.getElementById('content-progress-percent');
       const pBar = document.getElementById('content-progress-bar');
 
-      const pagesToEnrich = project.detailedContent.filter(p => !p.isVisionEnriched || (p.explanation && p.explanation.includes('(Đang hoàn thiện')));
+      // 1. ĐẶT CỜ TRẠNG THÁI ĐANG PHÂN TÍCH (Checkpoint Flag)
+      localStorage.setItem('clsg_enriching_' + project.id, 'true');
+
+      // 2. CHỈ LỌC CÁC TRANG THỰC SỰ CHƯA ĐƯỢC GEN
+      const pagesToEnrich = project.detailedContent.filter(p => 
+        !p.isVisionEnriched || 
+        !p.explanation || 
+        p.explanation.includes('(Đang hoàn thiện') || 
+        p.explanation.includes('Xin lỗi, nhưng tôi không thể')
+      );
+
+      const totalSlides = project.detailedContent.length;
+      const alreadyDone = totalSlides - pagesToEnrich.length;
+
       if (pagesToEnrich.length === 0) {
+        // Đã đủ 100% các trang -> Xóa cờ ngay lập tức, không tốn AI
+        localStorage.removeItem('clsg_enriching_' + project.id);
         _isVisionEnriching = false;
+        if (progressBox) progressBox.style.display = 'none';
         return;
       }
 
       if (progressBox) progressBox.style.display = 'block';
+
+      let completedCount = alreadyDone;
+      const initialPct = Math.round((completedCount / totalSlides) * 100);
+      if (pPercent) pPercent.textContent = `${initialPct}%`;
+      if (pBar) pBar.style.width = `${initialPct}%`;
 
       const cfg = (typeof LLMClient !== 'undefined') ? LLMClient.getConfig() : {};
       const proxyUrl = (window.location.origin.startsWith('http') && !window.location.origin.includes('file:'))
@@ -20582,7 +20658,6 @@ Quy tắc bắt buộc:
 - Bám sát 100% nội dung thực tế trên ảnh slide, tuyệt đối không đưa ra lời nhận xét chung chung hoặc sáo rỗng.
 - Tuyệt đối không dùng các ký hiệu markdown như dấu sao kép ** để in đậm.`;
 
-      let completedCount = 0;
       const total = pagesToEnrich.length;
       let apiVisionFailedGlobally = false;
 
@@ -20598,7 +20673,7 @@ Quy tắc bắt buộc:
           if (!pageItem) continue;
           const imgUrl = pageItem.image_url || pageItem.thumbnail || '';
 
-          if (pText) pText.textContent = `✨ AI Vision đang phân tích sâu trang ${pageItem.pageNumber} (${completedCount + 1}/${total})...`;
+          if (pText) pText.textContent = `✨ AI Vision đang phân tích sâu trang ${pageItem.pageNumber} (${completedCount + 1}/${totalSlides})...`;
 
           let explanation = null;
           let isVision = false;
@@ -20639,7 +20714,8 @@ Quy tắc bắt buộc:
                 if (res.ok) {
                   const data = await res.json();
                   const content = (data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) || '';
-                  if (content.trim().length > 20) {
+                  const isRefusal = content.includes("Xin lỗi, nhưng tôi không thể") || content.toLowerCase().includes("cannot assist") || content.toLowerCase().includes("i apologize");
+                  if (content.trim().length > 20 && !isRefusal) {
                     explanation = content.trim();
                     isVision = true;
                   }
@@ -20683,18 +20759,19 @@ Quy tắc bắt buộc:
             renderDetailedContentUI();
           }
 
-          // 5. LƯU TIẾN ĐỘ NGAY VÀO CLOUD VÀ LOCALSTORAGE SAU MỖI TRANG HOÀN TẤT
-          if (typeof CloudDB !== 'undefined' && CloudDB.save) {
-            CloudDB.save(project);
+          // 5. LƯU TIẾN ĐỘ NGAY VÀO NEON CLOUD VÀ LOCALSTORAGE CHO TRANG NÀY
+          if (typeof CloudDB !== 'undefined' && CloudDB.saveSlideProgress) {
+            await CloudDB.saveSlideProgress(project, pageItem);
+          } else {
+            try {
+              const uProjs = JSON.parse(localStorage.getItem('clsg_user_projects') || '{}');
+              uProjs[project.id] = sanitizeProjectForStorage(project);
+              localStorage.setItem('clsg_user_projects', JSON.stringify(uProjs));
+            } catch(e) {}
           }
-          try {
-            const uProjs = JSON.parse(localStorage.getItem('clsg_user_projects') || '{}');
-            uProjs[project.id] = sanitizeProjectForStorage(project);
-            localStorage.setItem('clsg_user_projects', JSON.stringify(uProjs));
-          } catch(e) {}
 
           completedCount++;
-          const pct = Math.round((completedCount / total) * 100);
+          const pct = Math.round((completedCount / totalSlides) * 100);
           if (pPercent) pPercent.textContent = `${pct}%`;
           if (pBar) pBar.style.width = `${pct}%`;
         }
@@ -20708,6 +20785,19 @@ Quy tắc bắt buộc:
 
       if (progressBox) progressBox.style.display = 'none';
       _isVisionEnriching = false;
+
+      // KIỂM TRA ĐỐI SOÁT CUỐI: XÓA CỜ KHI ĐÃ ĐỦ 100%
+      const stillMissing = project.detailedContent.some(p => 
+        !p.isVisionEnriched || 
+        !p.explanation || 
+        p.explanation.includes('(Đang hoàn thiện') || 
+        p.explanation.includes('Xin lỗi, nhưng tôi không thể')
+      );
+
+      if (!stillMissing) {
+        localStorage.removeItem('clsg_enriching_' + project.id);
+        console.log(`[Vision Enrichment] ✅ Đã hoàn tất 100% bài giảng ${project.id}. Đã gỡ bỏ cờ trạng thái gen.`);
+      }
 
       // Lưu lại vào Neon Cloud & LocalStorage
       if (typeof CloudDB !== 'undefined' && CloudDB.save) {
