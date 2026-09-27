@@ -4219,12 +4219,8 @@
             </div>
           </div>
 
-          <!-- THANH CẤU HÌNH NHANH (VISION AI & NGÔN NGỮ KỊCH BẢN) -->
-          <div style="padding: 6px 12px; background: rgba(15, 23, 42, 0.45); border-bottom: 1px solid rgba(255, 255, 255, 0.05); display: flex; align-items: center; justify-content: space-between; font-size: 11px;">
-            <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;" title="Sử dụng Vision AI để quét và bóc tách slide ảnh chuyên sâu">
-              <input type="checkbox" id="use-visual-ocr" checked="checked" style="accent-color: var(--cyan); width: 13px; height: 13px;" />
-              <span style="font-size: 11px; font-weight: 600; color: var(--cyan);">👁️ Quét Ảnh (Vision AI)</span>
-            </label>
+          <!-- THANH CẤU HÌNH NHANH (NGÔN NGỮ KỊCH BẢN) -->
+          <div style="padding: 6px 12px; background: rgba(15, 23, 42, 0.45); border-bottom: 1px solid rgba(255, 255, 255, 0.05); display: flex; align-items: center; justify-content: flex-end; font-size: 11px;">
             <div class="lang-switcher-row" id="lang-switcher-row" style="margin: 0;">
               <button class="lang-btn active" data-lang="vi" onclick="setScriptLanguage('vi')" style="padding: 2px 7px; font-size: 10px;">🇻🇳 VI</button>
               <button class="lang-btn" data-lang="en" onclick="setScriptLanguage('en')" style="padding: 2px 7px; font-size: 10px;">🇬🇧 EN</button>
@@ -16806,8 +16802,7 @@ QUY TẮC BẮT BUỘC:
         // Chỉ kích hoạt Vision AI nếu người dùng chủ động bật tùy chọn Quét Ảnh (Vision AI)
         setTimeout(() => {
           if (typeof triggerRagIngestion === 'function') triggerRagIngestion();
-          const useVisualOcr = document.getElementById('use-visual-ocr')?.checked;
-          if (useVisualOcr && typeof startBackgroundVisionEnrichment === 'function' && projData && projData.detailedContent) {
+          if (typeof startBackgroundVisionEnrichment === 'function' && projData && projData.detailedContent) {
             startBackgroundVisionEnrichment(projData);
           }
         }, 1000);
@@ -20343,12 +20338,9 @@ QUY TẮC BẮT BUỘC:
               <div style="font-size: 12.5px; color: var(--text-muted);">Tự động trích xuất nội dung văn bản, sơ đồ và kiến thức sư phạm cho từng trang slide.</div>
             </div>
             <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-              <button onclick="synthesizeAllProjectPedagogicalContent()" class="clsg-btn" style="cursor: pointer; padding: 8px 16px; background: linear-gradient(135deg, #06b6d4, #3b82f6); color: #fff; font-weight: 600; border-radius: 8px; font-size: 13px; border: none; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 4px 12px rgba(6,182,212,0.3);">
-                <span>✨ Tự Động Sinh Nội Dung Sư Phạm</span>
-              </button>
-              <button onclick="startVisualOcrForProject()" class="clsg-btn" style="cursor: pointer; padding: 8px 14px; background: rgba(30,41,59,0.8); border: 1px solid rgba(255,255,255,0.15); color: #cbd5e1; font-weight: 500; border-radius: 8px; font-size: 13px; display: inline-flex; align-items: center; gap: 6px;">
-                <span>🔍 Quét Vision AI (Chuyên Sâu)</span>
-              </button>
+              <span style="font-size: 12px; padding: 6px 14px; border-radius: 8px; background: rgba(16, 185, 129, 0.15); color: #34d399; font-weight: 600; border: 1px solid rgba(16, 185, 129, 0.3); display: inline-flex; align-items: center; gap: 6px;">
+                <span>✨</span><span>Vision AI Tự Động Phân Tích (${activeProject.detailedContent.filter(p => p.isVisionEnriched).length}/${activeProject.detailedContent.length})</span>
+              </span>
             </div>
           </div>
         `;
@@ -20560,8 +20552,8 @@ Quy tắc bắt buộc:
       let completedCount = 0;
       const total = pagesToEnrich.length;
 
-      // Xử lý tuần tự nhẹ nhàng (Concurrency 2) để không quá tải trình duyệt và tránh rate limit API
-      const CONCURRENCY = 2;
+      // Xử lý tuần tự ngầm từng slide một (Concurrency 1) để đảm bảo ổn định, không lag và tránh rate limit API
+      const CONCURRENCY = 1;
       let currentIndex = 0;
 
       async function worker() {
@@ -20623,10 +20615,15 @@ Quy tắc bắt buộc:
                     renderDetailedContentUI();
                   }
 
-                  // Tự động lưu tiến độ định kỳ cứ mỗi 2 trang phân tích xong
-                  if (completedCount % 2 === 0 && typeof CloudDB !== 'undefined' && CloudDB.save) {
+                  // Tự động lưu tiến độ vào CloudDB & LocalStorage sau mỗi trang hoàn tất
+                  if (typeof CloudDB !== 'undefined' && CloudDB.save) {
                     CloudDB.save(project);
                   }
+                  try {
+                    const uProjs = JSON.parse(localStorage.getItem('clsg_user_projects') || '{}');
+                    uProjs[project.id] = sanitizeProjectForStorage(project);
+                    localStorage.setItem('clsg_user_projects', JSON.stringify(uProjs));
+                  } catch(e) {}
                 }
               } else {
                 const errJson = await res.json().catch(() => ({}));
@@ -20715,13 +20712,10 @@ Quy tắc bắt buộc:
         hideLoading();
         showToast(`✅ Đã nạp thành công toàn bộ ${detailed.length} trang slide! AI Vision đang bắt đầu phân tích sâu...`);
 
-        // Chỉ kích hoạt Vision AI nếu người dùng chủ động bật tùy chọn Quét Ảnh
-        const useVisualOcr = document.getElementById('use-visual-ocr')?.checked;
-        if (useVisualOcr) {
-          setTimeout(() => {
-            startBackgroundVisionEnrichment(activeProject);
-          }, 500);
-        }
+        // Tự động phân tích Vision AI từng trang slide chạy ngầm
+        setTimeout(() => {
+          startBackgroundVisionEnrichment(activeProject);
+        }, 500);
 
       } catch (err) {
         console.error("Lỗi nạp slide trực tiếp:", err);
