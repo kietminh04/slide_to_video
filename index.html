@@ -4105,7 +4105,7 @@
         title="Cấu hình mô hình AI & Dán API Key riêng (Chỉ lưu trên trình duyệt của riêng bạn)">
         <span id="top-ai-dot"
           style="display:inline-block; width:7px; height:7px; border-radius:50%; background:#10b981; box-shadow: 0 0 6px #10b981;"></span>
-        <span id="lbl-active-ai-badge">⚙️ AI: gemini-2.5-flash</span>
+        <span id="lbl-active-ai-badge">⚙️ AI: gemini-1.5-flash</span>
       </button>
     </div>
 
@@ -10570,7 +10570,7 @@
           let model = saved.model;
 
           if (provider === 'gemini_local') {
-            if (!model || model.startsWith('gpt') || model.includes('1.5') || model.includes('2.0')) model = 'gemini-2.5-flash';
+            if (!model || model.startsWith('gpt')) model = 'gemini-1.5-flash';
             if (!baseUrl || baseUrl.includes('openai.com')) {
               baseUrl = 'https://generativelanguage.googleapis.com/v1beta/openai';
             }
@@ -10592,7 +10592,7 @@
           return {
             provider: 'gemini_local',
             baseUrl: 'https://generativelanguage.googleapis.com/v1beta/openai',
-            model: 'gemini-2.5-flash',
+            model: 'gemini-1.5-flash',
             apiKey: '',
             openaiApiKey: '',
             geminiApiKey: '',
