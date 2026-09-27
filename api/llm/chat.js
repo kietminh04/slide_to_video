@@ -27,12 +27,18 @@ module.exports = async (req, res) => {
       if (body.baseUrl) {
         targetUrl = `${body.baseUrl.replace(/\/+$/, '')}/chat/completions`;
       }
-      const targetModel = requestedModel || (isOpenAI ? 'gpt-4o-mini' : 'gemini-2.5-flash');
+      const targetModel = requestedModel || (isOpenAI ? 'gpt-4o-mini' : 'gemini-1.5-flash');
 
       const reqHeaders = {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${customKey}`
       };
+      if (customKey.startsWith('AIzaSy') || targetUrl.includes('generativelanguage.googleapis.com')) {
+        reqHeaders['x-goog-api-key'] = customKey;
+        if (!targetUrl.includes('key=')) {
+          targetUrl += (targetUrl.includes('?') ? '&' : '?') + `key=${encodeURIComponent(customKey)}`;
+        }
+      }
       if (body.baseUrl && body.baseUrl.includes('openrouter')) {
         reqHeaders['HTTP-Referer'] = 'https://slide-to-video-sigma.vercel.app/';
         reqHeaders['X-Title'] = 'Slide to Video';
@@ -82,9 +88,9 @@ module.exports = async (req, res) => {
     const candidates = [];
     if (body.provider === 'openai' || requestedModel?.includes('gpt')) {
       if (envOpenai) candidates.push({ provider: 'OpenAI', apiKey: envOpenai, baseUrl: 'https://api.openai.com/v1', model: requestedModel || 'gpt-4o-mini' });
-      if (envGemini) candidates.push({ provider: 'Gemini', apiKey: envGemini, baseUrl: 'https://generativelanguage.googleapis.com/v1beta/openai', model: 'gemini-2.5-flash' });
+      if (envGemini) candidates.push({ provider: 'Gemini', apiKey: envGemini, baseUrl: 'https://generativelanguage.googleapis.com/v1beta/openai', model: 'gemini-1.5-flash' });
     } else {
-      if (envGemini) candidates.push({ provider: 'Gemini', apiKey: envGemini, baseUrl: 'https://generativelanguage.googleapis.com/v1beta/openai', model: requestedModel || 'gemini-2.5-flash' });
+      if (envGemini) candidates.push({ provider: 'Gemini', apiKey: envGemini, baseUrl: 'https://generativelanguage.googleapis.com/v1beta/openai', model: requestedModel || 'gemini-1.5-flash' });
       if (envOpenai) candidates.push({ provider: 'OpenAI', apiKey: envOpenai, baseUrl: 'https://api.openai.com/v1', model: 'gpt-4o-mini' });
     }
 
@@ -93,12 +99,21 @@ module.exports = async (req, res) => {
       try {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 35000);
-        const upstreamRes = await fetch(`${cand.baseUrl.replace(/\/+$/, '')}/chat/completions`, {
+        let candUrl = `${cand.baseUrl.replace(/\/+$/, '')}/chat/completions`;
+        const headers = {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${cand.apiKey}`
+        };
+        if (cand.provider === 'Gemini' || cand.apiKey.startsWith('AIzaSy') || candUrl.includes('generativelanguage.googleapis.com')) {
+          headers['x-goog-api-key'] = cand.apiKey;
+          if (!candUrl.includes('key=')) {
+            candUrl += (candUrl.includes('?') ? '&' : '?') + `key=${encodeURIComponent(cand.apiKey)}`;
+          }
+        }
+
+        const upstreamRes = await fetch(candUrl, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${cand.apiKey}`
-          },
+          headers: headers,
           body: JSON.stringify({
             model: cand.model,
             messages: messages,

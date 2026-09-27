@@ -4221,8 +4221,8 @@
 
           <!-- THANH CẤU HÌNH NHANH (VISION AI & NGÔN NGỮ KỊCH BẢN) -->
           <div style="padding: 6px 12px; background: rgba(15, 23, 42, 0.45); border-bottom: 1px solid rgba(255, 255, 255, 0.05); display: flex; align-items: center; justify-content: space-between; font-size: 11px;">
-            <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;" title="Sử dụng Vision AI để quét và bóc tách slide ảnh">
-              <input type="checkbox" id="use-visual-ocr" style="accent-color: var(--cyan); width: 13px; height: 13px;" />
+            <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;" title="Sử dụng Vision AI để quét và bóc tách slide ảnh chuyên sâu">
+              <input type="checkbox" id="use-visual-ocr" checked="checked" style="accent-color: var(--cyan); width: 13px; height: 13px;" />
               <span style="font-size: 11px; font-weight: 600; color: var(--cyan);">👁️ Quét Ảnh (Vision AI)</span>
             </label>
             <div class="lang-switcher-row" id="lang-switcher-row" style="margin: 0;">
@@ -15295,24 +15295,16 @@ QUY TẮC BẮT BUỘC:
       }
       const cleanContent = cleanedLines.join('\n');
 
-      // Tự động phân tích ngữ cảnh sư phạm
+      // Tóm tắt sơ bộ từ chính các dòng chữ thực tế trên slide trong khi chờ Vision AI phân tích sâu
+      let mainTitle = cleanedLines[0] || `Trang ${pageNumber}`;
+      let bulletCount = Math.max(0, cleanedLines.length - 1);
+      let samplePoints = cleanedLines.slice(1, 4).join('; ');
+      
       let pedagogicalAnalysis = '';
-      const lower = cleanContent.toLowerCase();
-
-      if (pageNumber === 1 || lower.includes('bài 4') || lower.includes('giảng viên') || lower.includes('chương')) {
-        pedagogicalAnalysis = `Slide mở đầu giới thiệu bài giảng và các thông tin định danh của học phần. Đóng vai trò thiết lập mục tiêu và định hướng lộ trình học tập cho người học.`;
-      } else if (lower.includes('mục tiêu') || pageNumber === 2) {
-        pedagogicalAnalysis = `Khung mục tiêu bài học làm rõ các chuẩn đầu ra kiến thức, kỹ năng và thái độ người học cần đạt được sau khi hoàn thành chương.`;
-      } else if (lower.includes('công thức') || lower.includes('dđk') || lower.includes('eoq') || lower.includes('poq') || lower.includes('qdm') || lower.includes('tồn kho') || lower.includes('chi phí')) {
-        pedagogicalAnalysis = `Phân tích chuyên sâu về mô hình định lượng và cấu trúc chi phí. Giúp người học nắm vững bản chất toán học, sự đánh đổi (trade-off) và phương pháp tối ưu hóa tổng chi phí trong chuỗi cung ứng.`;
-      } else if (lower.includes('khái niệm') || lower.includes('chức năng') || lower.includes('phân loại')) {
-        pedagogicalAnalysis = `Hệ thống hóa các khái niệm nền tảng và nguyên tắc phân loại theo chuẩn mực quốc tế, làm cơ sở để ứng dụng vào quản trị vận hành thực tế.`;
-      } else if (lower.includes('chính sách') || lower.includes('kéo') || lower.includes('đẩy') || lower.includes('tập trung') || lower.includes('phi tập trung')) {
-        pedagogicalAnalysis = `Định hướng chiến lược quản trị và ra quyết định. Giúp người học so sánh ưu - nhược điểm của từng phương án để thích ứng với biến động thị trường.`;
-      } else if (lower.includes('vòng quay') || lower.includes('fill rate') || lower.includes('chỉ tiêu') || lower.includes('hiệu quả')) {
-        pedagogicalAnalysis = `Hệ thống chỉ số KPI đo lường hiệu quả vận hành. Cung cấp thước đo định lượng giúp nhà quản lý đánh giá tốc độ luân chuyển tài sản và năng lực phục vụ khách hàng.`;
+      if (pageNumber === 1 && !samplePoints) {
+        pedagogicalAnalysis = `Slide mở đầu giới thiệu bài giảng và các thông tin định danh của học phần.`;
       } else {
-        pedagogicalAnalysis = `Nội dung bài giảng trọng tâm của Trang ${pageNumber}. Cung cấp kiến thức chuyên môn có tính ứng dụng cao, liên kết chặt chẽ với các mắt xích trong chuỗi cung ứng.`;
+        pedagogicalAnalysis = `Trang bài giảng về chủ đề "${mainTitle}". Cung cấp ${bulletCount} luận điểm và nội dung chuyên môn${samplePoints ? ': ' + samplePoints.slice(0, 160) + '...' : '.'} (Đang hoàn thiện phân tích chuyên sâu qua Vision AI).`;
       }
 
       return `1. Nội dung văn bản trên slide:\n${cleanContent}\n\n2. Mô tả và giải thích chi tiết:\n${pedagogicalAnalysis}`;
@@ -20413,50 +20405,30 @@ QUY TẮC BẮT BUỘC:
       }
     }
 
-    // TỰ ĐỘNG SINH NỘI DUNG SƯ PHẠM CHO TOÀN BỘ SLIDE
+    // TỰ ĐỘNG SINH NỘI DUNG SƯ PHẠM CHO TOÀN BỘ SLIDE BẰNG VISION AI
     function synthesizeAllProjectPedagogicalContent() {
       if (!activeProject || !activeProject.detailedContent || activeProject.detailedContent.length === 0) {
         showToast("⚠️ Vui lòng mở dự án có slide để sinh nội dung.");
         return;
       }
-      showLoading("Đang chuẩn hóa & sinh nội dung sư phạm...", "Vui lòng chờ trong giây lát...");
-      try {
-        let count = 0;
-        activeProject.detailedContent.forEach((page, idx) => {
-          const raw = page.explanation || '';
-          if (!raw.includes('1. Nội dung văn bản trên slide') || !raw.includes('2. Mô tả và giải thích chi tiết')) {
-            page.explanation = synthesizeSlidePedagogicalContent(raw, page.pageNumber || idx + 1, activeProject.detailedContent.length);
-          }
-          page.isVisionEnriched = true;
-          count++;
-        });
-
-        if (typeof CloudDB !== 'undefined' && CloudDB.save) {
-          CloudDB.save(activeProject);
+      showToast("🔍 Đang kích hoạt Vision AI phân tích chuyên sâu từng ảnh slide ngầm...");
+      // Đặt lại cờ isVisionEnriched = false cho các trang chưa có phân tích chuẩn
+      activeProject.detailedContent.forEach(page => {
+        if (!page.explanation || page.explanation.includes('Slide mở đầu giới thiệu bài giảng') || page.explanation.includes('Đang phân tích sâu bằng Vision AI')) {
+          page.isVisionEnriched = false;
         }
-        try {
-          const uProjs = JSON.parse(localStorage.getItem('clsg_user_projects') || '{}');
-          uProjs[activeProject.id] = sanitizeProjectForStorage(activeProject);
-          localStorage.setItem('clsg_user_projects', JSON.stringify(uProjs));
-        } catch(e) {}
-
-        hideLoading();
-        renderDetailedContentUI();
-        showToast(`✨ Đã tự động sinh nội dung sư phạm cho toàn bộ ${count} slide!`);
-      } catch(e) {
-        hideLoading();
-        showToast("❌ Lỗi sinh nội dung: " + e.message);
-      }
+      });
+      startBackgroundVisionEnrichment(activeProject);
     }
 
-    // PHÂN TÍCH LẠI CHI TIẾT 1 SLIDE BẰNG AI
+    // PHÂN TÍCH LẠI CHI TIẾT 1 SLIDE BẰNG VISION AI (GỬI KÈM HÌNH ẢNH)
     async function enrichSingleSlideWithAI(idx) {
       if (!activeProject || !activeProject.detailedContent || !activeProject.detailedContent[idx]) return;
       const page = activeProject.detailedContent[idx];
       const btn = event?.currentTarget;
       if (btn) {
         btn.disabled = true;
-        btn.innerHTML = '<span>⏳ Đang phân tích...</span>';
+        btn.innerHTML = '<span>⏳ Đang đọc hiểu ảnh...</span>';
       }
 
       try {
@@ -20465,27 +20437,37 @@ QUY TẮC BẮT BUỘC:
           ? `${window.location.origin}/api/llm/chat`
           : '/api/llm/chat';
 
-        const prompt = `Bạn là một giáo sư đại học sư phạm. Hãy phân tích trang slide số ${page.pageNumber} của bài giảng "${activeProject.title || 'Bài giảng'}".
-Nội dung hiện tại của trang:
-${page.explanation || 'Chưa có'}
+        const prompt = `Bạn là một giáo sư đại học và chuyên gia phân tích bài giảng đa phương thức.
+Hãy đọc kỹ bức ảnh slide số ${page.pageNumber} của bài giảng "${activeProject.title || 'Bài giảng'}" và thực hiện phân tích chuyên sâu cho hệ thống Vector Database & RAG.
 
 Yêu cầu xuất ra định dạng 2 phần chính xác:
 1. Nội dung văn bản trên slide:
-[Trích xuất và làm sạch toàn bộ chữ, công thức, đầu mục trên slide một cách chuẩn xác, không bị đứt gãy]
+[Trích xuất toàn bộ câu chữ, danh sách, công thức, số liệu, bảng biểu, ưu nhược điểm xuất hiện trên slide. Không bỏ sót bất kỳ chi tiết nào, giữ nguyên các thuật ngữ chuyên môn].
 
 2. Mô tả và giải thích chi tiết:
-[Giải thích chi tiết ý nghĩa sư phạm, bản chất kiến thức, các công thức toán/kinh tế nếu có, và liên hệ ứng dụng thực tế]
+[Giải thích chi tiết, chuyên sâu bản chất học thuật và kỹ thuật của nội dung trên slide:
+- Phân tích rõ các khái niệm, cơ chế hoạt động, sự đánh đổi (trade-offs), nguyên lý vận hành.
+- Nếu có sơ đồ, lưu đồ, hình vẽ kỹ thuật, đồ thị hoặc bảng so sánh: hãy mô tả chi tiết từng thành phần, các luồng mũi tên kết nối và ý nghĩa của từng bước.
+- Trình bày mạch lạc, phân tích sâu sắc, văn phong giảng viên đại học, nêu bật các từ khóa trọng tâm để phục vụ đọc hiểu và tra cứu vector RAG].
 
-Trình bày rõ ràng, văn phong giảng viên đại học, không dùng dấu sao **.`;
+Quy tắc bắt buộc:
+- Bám sát 100% nội dung thực tế trên ảnh slide, tuyệt đối không đưa ra lời nhận xét chung chung hoặc sáo rỗng.
+- Tuyệt đối không dùng các ký hiệu markdown như dấu sao kép ** để in đậm.`;
+
+        const slideImg = page.thumbnail || page.image_url || page.image || '';
+        const messageContent = slideImg ? [
+          { type: 'text', text: prompt },
+          { type: 'image_url', image_url: { url: slideImg } }
+        ] : prompt;
 
         const res = await fetch(proxyUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            model: cfg.model || 'gpt-4o-mini',
-            messages: [{ role: 'user', content: prompt }],
-            max_tokens: 1200,
-            temperature: 0.3,
+            model: cfg.model || (cfg.provider === 'openai' ? 'gpt-4o-mini' : 'gemini-1.5-flash'),
+            messages: [{ role: 'user', content: messageContent }],
+            max_tokens: 1500,
+            temperature: 0.2,
             apiKey: cfg.apiKey,
             baseUrl: cfg.baseUrl,
             provider: cfg.provider
@@ -20505,7 +20487,7 @@ Trình bày rõ ràng, văn phong giảng viên đại học, không dùng dấu
               localStorage.setItem('clsg_user_projects', JSON.stringify(uProjs));
             } catch(e) {}
             renderDetailedContentUI();
-            showToast(`✨ Đã phân tích chuyên sâu thành công Trang ${page.pageNumber}!`);
+            showToast(`✨ Đã phân tích Vision AI thành công Trang ${page.pageNumber}!`);
             return;
           }
         }
@@ -20558,15 +20540,22 @@ Trình bày rõ ràng, văn phong giảng viên đại học, không dùng dấu
         ? `${window.location.origin}/api/llm/chat`
         : '/api/llm/chat';
 
-      const systemPrompt = `Bạn là một giáo sư đại học đang giảng bài dựa trên slide. 
-Hãy đọc kỹ bức ảnh slide này và thực hiện 2 việc:
-1. Trích xuất CHÍNH XÁC toàn bộ nội dung văn bản (chữ) có trên slide.
-2. Nếu có hình ảnh, biểu đồ, phương trình, đoạn code... hãy mô tả và giải thích chi tiết ý nghĩa của chúng. 
-Mục tiêu là tạo ra một tài liệu văn bản đọc hiểu hoàn chỉnh thay thế cho việc nhìn hình slide.
+      const systemPrompt = `Bạn là một giáo sư đại học và chuyên gia phân tích bài giảng đa phương thức.
+Nhiệm vụ của bạn là đọc và phân tích kỹ lưỡng bức ảnh slide này để phục vụ hệ thống truy xuất kiến thức (Vector Database & RAG).
 
-Yêu cầu trình bày:
-- Trình bày rõ ràng, mạch lạc, dễ đọc.
-- Tuyệt đối không dùng các ký hiệu markdown như dấu sao kép ** để in đậm, không dùng các ký tự thừa gây rối mắt.`;
+Hãy trả về chính xác 2 phần theo định dạng sau:
+1. Nội dung văn bản trên slide:
+[Trích xuất toàn bộ câu chữ, danh sách, công thức, số liệu, bảng biểu, ưu nhược điểm xuất hiện trên slide. Không bỏ sót bất kỳ chi tiết nào, giữ nguyên các thuật ngữ chuyên môn].
+
+2. Mô tả và giải thích chi tiết:
+[Giải thích chi tiết, chuyên sâu bản chất học thuật và kỹ thuật của nội dung trên slide:
+- Phân tích rõ các khái niệm, cơ chế hoạt động, sự đánh đổi (trade-offs), nguyên lý vận hành.
+- Nếu có sơ đồ, lưu đồ, hình vẽ kỹ thuật, đồ thị hoặc bảng so sánh: hãy mô tả chi tiết từng thành phần, các luồng mũi tên kết nối và ý nghĩa của từng bước.
+- Trình bày mạch lạc, phân tích sâu sắc, văn phong giảng viên đại học, nêu bật các từ khóa trọng tâm để phục vụ đọc hiểu và tra cứu vector RAG].
+
+Quy tắc bắt buộc:
+- Bám sát 100% nội dung thực tế trên ảnh slide, tuyệt đối không đưa ra lời nhận xét chung chung hoặc sáo rỗng.
+- Tuyệt đối không dùng các ký hiệu markdown như dấu sao kép ** để in đậm.`;
 
       let completedCount = 0;
       const total = pagesToEnrich.length;
@@ -20586,7 +20575,7 @@ Yêu cầu trình bày:
           if (pText) pText.textContent = `✨ AI Vision đang phân tích sâu trang ${pageItem.pageNumber} / ${project.detailedContent.length}...`;
 
           const payload = {
-            model: cfg.model || 'gemini-1.5-flash',
+            model: cfg.model || (cfg.provider === 'openai' ? 'gpt-4o-mini' : 'gemini-1.5-flash'),
             messages: [
               {
                 role: 'user',
