@@ -5532,7 +5532,7 @@
       
       const gapX = 280;
       const gapY = 240;
-      const startX = 100;
+      const startX = 180;
       const startY = 100;
       
       for (let i = 0; i < N; i++) {
@@ -8841,20 +8841,18 @@
               d = `M ${startX} ${pMidY} L ${endX} ${cMidY}`;
             }
           } else {
-            // CHUYỂN HÀNG: Uốn cong chữ U mềm mại vòng ra mép ngoài thẻ, tuyệt đối không xuyên qua ảnh
+            // CHUYỂN HÀNG: Uốn cong chữ U mềm mại hình nửa hình tròn (Semicircle Arc), tuyệt đối không xuyên qua ảnh
+            const H = Math.abs(cMidY - pMidY);
+            const R = Math.max(80, Math.round(H / 2));
             if (cols === 1 || Math.abs(pEl.x - cEl.x) < 20) {
               if (pEl.x > 300) {
-                // Vòng chữ C mềm mại phía bên phải
-                const startX = pEl.x + pEl.width + 6;
-                const endX = cEl.x + cEl.width + 8;
-                const loopX = Math.max(pEl.x + pEl.width, cEl.x + cEl.width) + 48;
-                d = `M ${startX} ${pMidY} C ${loopX} ${pMidY}, ${loopX} ${cMidY}, ${endX} ${cMidY}`;
+                // Nửa hình tròn uốn cong mềm mại sang bên PHẢI (từ cuối hàng trên xuống đầu hàng dưới)
+                const x0 = Math.max(pEl.x + pEl.width, cEl.x + cEl.width) + 12;
+                d = `M ${x0} ${pMidY} A ${R} ${R} 0 0 1 ${x0} ${cMidY}`;
               } else if (cols > 1) {
-                // Vòng chữ C mềm mại phía bên trái
-                const startX = pEl.x - 6;
-                const endX = cEl.x - 8;
-                const loopX = Math.min(pEl.x, cEl.x) - 48;
-                d = `M ${startX} ${pMidY} C ${loopX} ${pMidY}, ${loopX} ${cMidY}, ${endX} ${cMidY}`;
+                // Nửa hình tròn uốn cong mềm mại sang bên TRÁI (từ cuối hàng trên xuống đầu hàng dưới)
+                const x0 = Math.min(pEl.x, cEl.x) - 12;
+                d = `M ${x0} ${pMidY} A ${R} ${R} 0 0 0 ${x0} ${cMidY}`;
               } else {
                 // Trường hợp 1 cột duy nhất: nối thẳng xuống
                 const startY = pEl.y + pEl.height + 6;
