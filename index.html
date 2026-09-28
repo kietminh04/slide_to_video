@@ -5896,14 +5896,19 @@
 
       async save(project) {
         if (!project || !project.id) return;
-        const chatContainer = document.getElementById('ai-chat-messages');
+        const isCurrentActive = (typeof currentProjectId !== 'undefined' && currentProjectId && currentProjectId === project.id);
+        const chatContainer = isCurrentActive ? document.getElementById('ai-chat-messages') : null;
         const fullProject = {
           ...project,
-          scenes: (typeof currentScenes !== 'undefined' && currentScenes) ? currentScenes : (project.scenes || []),
-          nodeCustomParams: (typeof nodeCustomParams !== 'undefined' && nodeCustomParams) ? nodeCustomParams : (project.nodeCustomParams || {}),
-          excludedNodes: (typeof excludedNodes !== 'undefined') ? Array.from(excludedNodes) : (project.excludedNodes || []),
-          chatHistory: (typeof clsgChatSessionHistory !== 'undefined') ? [...clsgChatSessionHistory] : (project.chatHistory ? [...project.chatHistory] : []),
-          chatHtml: (chatContainer ? chatContainer.innerHTML : (project.chatHtml || ''))
+          scenes: (isCurrentActive && typeof currentScenes !== 'undefined' && currentScenes) ? currentScenes : (project.scenes || []),
+          nodeCustomParams: (isCurrentActive && typeof nodeCustomParams !== 'undefined' && nodeCustomParams) ? nodeCustomParams : (project.nodeCustomParams || {}),
+          excludedNodes: (isCurrentActive && typeof excludedNodes !== 'undefined' && excludedNodes) ? Array.from(excludedNodes) : (project.excludedNodes || []),
+          chatHistory: isCurrentActive
+            ? ((typeof clsgChatSessionHistory !== 'undefined') ? [...clsgChatSessionHistory] : (project.chatHistory || []))
+            : (project.chatHistory || []),
+          chatHtml: isCurrentActive
+            ? (chatContainer ? chatContainer.innerHTML : (project.chatHtml || ''))
+            : (project.chatHtml || '')
         };
 
         // Giữ nguyên fullProject trong RAM bộ nhớ
@@ -6245,7 +6250,30 @@
         const userProjects = JSON.parse(localStorage.getItem('clsg_user_projects') || '{}');
         delete userProjects[projectId];
         localStorage.setItem('clsg_user_projects', JSON.stringify(userProjects));
+
+        // DỌN SẠCH TRIỆT ĐỂ BỘ NHỚ CHAT VÀ THAM SỐ CỦA DỰ ÁN BỊ XÓA
+        localStorage.removeItem('clsg_chat_history_' + projectId);
+        localStorage.removeItem('clsg_chat_html_' + projectId);
+        localStorage.removeItem('clsg_node_params_' + projectId);
+        localStorage.removeItem('clsg_excluded_nodes_' + projectId);
+        localStorage.removeItem('clsg_enriching_' + projectId);
+        localStorage.removeItem('clsg_active_leaf_key_' + projectId);
+        localStorage.removeItem('clsg_copilot_qa_cache_' + projectId);
+        if (typeof CopilotQACache !== 'undefined' && CopilotQACache.clear) {
+          CopilotQACache.clear(projectId);
+        }
       } catch (e) { }
+
+      // Dọn sạch chat container và session history nếu đang mở chính dự án này
+      if (currentProjectId === projectId || !currentProjectId) {
+        if (typeof clsgChatSessionHistory !== 'undefined') {
+          clsgChatSessionHistory.length = 0;
+        }
+        const chatContainer = document.getElementById('ai-chat-messages');
+        if (chatContainer) {
+          chatContainer.innerHTML = '';
+        }
+      }
 
       // Xóa đồng bộ trên Neon Cloud Database & IndexedDB ảnh slide
       CloudDB.delete(projectId);
@@ -16365,6 +16393,16 @@ QUY TẮC BẮT BUỘC:
       return { title: '', totalPages: 0, chapters, method: 'text-headings' };
     }
 
+    // HÀM SINH ID DỰ ÁN ĐỘC BẢN DUY NHẤT (11 KÝ TỰ NGẪU NHIÊN CẢ CHỮ VÀ SỐ)
+    function generateUniqueProjectId() {
+      const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+      let rand = '';
+      for (let i = 0; i < 11; i++) {
+        rand += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      return 'proj_' + rand;
+    }
+
     // CLIENT-SIDE PEDAGOGICAL GENERATOR (TỰ ĐỘNG CHẠY KHI MỞ TRỰC TIẾP TỆP FILE:///)
     async function clientSidePedagogicalGenerate(file, name, desc, duration = 300, wpm = 140) {
       updateLoading("Đang phân tích...", "Vui lòng chờ trong giây lát...");
@@ -16419,7 +16457,7 @@ QUY TẮC BẮT BUỘC:
             };
           });
           const title = name || file.name.replace(/\.[^/.]+$/, "");
-          const projId = 'proj_' + Date.now();
+          const projId = generateUniqueProjectId();
           const projData = {
             id: projId,
             title: title,
@@ -16431,6 +16469,8 @@ QUY TẮC BẮT BUỘC:
             critic_feedback: `Bóc tách thực [${structure.method}]: ${structure.chapters.length} chương, ${structure.totalPages || '?'} trang. Sơ đồ và tóm tắt sư phạm chuẩn xác 100%.`,
             tocText: structure.tocText || '',
             detailedContent: structure.detailedContent || [],
+            chatHistory: [],
+            chatHtml: '',
             sources: [{
               name: file.name,
               pages: structure.totalPages || Math.max(1, Math.round(file.size / 35000)),
@@ -16705,7 +16745,7 @@ QUY TẮC BẮT BUỘC:
         });
       }
 
-      const projId = 'proj_' + Date.now();
+      const projId = generateUniqueProjectId();
       const projData = {
         id: projId,
         title: title,
@@ -16713,6 +16753,8 @@ QUY TẮC BẮT BUỘC:
         badge: file.name.split('.').pop().toUpperCase(),
         duration_s: duration,
         wpm: wpm,
+        chatHistory: [],
+        chatHtml: '',
         score: 94.2,
         dar: 96.0,
         tcr: 92.5,
@@ -16885,7 +16927,19 @@ QUY TẮC BẮT BUỘC:
       closeCreateModal();
 
       try {
+        // DỌN SẠCH TUYỆT ĐỐI BỘ NHỚ CHAT CŨ TRƯỚC KHI TẠO DỰ ÁN MỚI
+        if (typeof clsgChatSessionHistory !== 'undefined') {
+          clsgChatSessionHistory.length = 0;
+        }
+        const chatContainer = document.getElementById('ai-chat-messages');
+        if (chatContainer) {
+          chatContainer.innerHTML = '';
+        }
+
         const projData = await callMultiAgentGenerate(file, name, desc, dur, wpm);
+        projData.chatHistory = [];
+        projData.chatHtml = '';
+
         defaultProjects[projData.id] = projData;
         if (typeof CloudDB !== 'undefined' && CloudDB.save) {
           CloudDB.save(projData);
@@ -16895,8 +16949,7 @@ QUY TẮC BẮT BUỘC:
           userProjects[projData.id] = sanitizeProjectForStorage(projData);
           localStorage.setItem('clsg_user_projects', JSON.stringify(userProjects));
         } catch (e) { }
-        // Tự động lưu lên Neon Cloud Database
-        CloudDB.save(projData);
+
         renderProjectsGrid();
         loadProjectIntoWorkspace(projData.id);
         switchView('workspace');

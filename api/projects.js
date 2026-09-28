@@ -261,6 +261,11 @@ module.exports = async (req, res) => {
       }
 
       await sql`DELETE FROM clsg_projects WHERE id = ${id};`;
+      try {
+        await sql`DELETE FROM document_chunks WHERE project_id = ${id};`;
+      } catch (chunkErr) {
+        console.warn('[Delete document_chunks]', chunkErr.message);
+      }
       return res.status(200).json({ status: 'ok', deleted: id });
     }
 
