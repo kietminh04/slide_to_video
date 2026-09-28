@@ -241,28 +241,62 @@ class HybridExtractor:
 
         for block in blocks:
             if block["type"] == 0:  # Text block
+                current_para_lines = []
+                current_font_size = 0.0
+                current_bold = False
+
+                def _flush_para():
+                    nonlocal current_para_lines, current_font_size, current_bold
+                    if current_para_lines:
+                        full_text = " ".join(current_para_lines).strip()
+                        if full_text:
+                            text_blocks_raw.append(TextBlock(
+                                text=full_text,
+                                kind="paragraph",
+                                font_size=current_font_size,
+                                is_bold=current_bold,
+                                bbox=tuple(block["bbox"]),
+                                page=page_idx
+                            ))
+                        current_para_lines = []
+                        current_font_size = 0.0
+                        current_bold = False
+
                 for line in block.get("lines", []):
                     line_text = ""
-                    max_font_size = 0.0
-                    is_bold = False
+                    line_font_size = 0.0
+                    line_bold = False
                     for span in line.get("spans", []):
                         line_text += span["text"]
-                        if span["size"] > max_font_size:
-                            max_font_size = span["size"]
-                        if "bold" in span.get("font", "").lower() or \
-                           "Bold" in span.get("font", ""):
-                            is_bold = True
+                        if span["size"] > line_font_size:
+                            line_font_size = span["size"]
+                        if "bold" in span.get("font", "").lower() or "Bold" in span.get("font", ""):
+                            line_bold = True
 
                     line_text = line_text.strip()
-                    if line_text:
+                    if not line_text:
+                        continue
+
+                    # Nếu là bullet hoặc tiêu đề độc lập -> flush paragraph trước đó
+                    is_bullet = bool(self.BULLET_PATTERNS.match(line_text))
+                    if is_bullet:
+                        _flush_para()
                         text_blocks_raw.append(TextBlock(
                             text=line_text,
-                            kind="paragraph",
-                            font_size=max_font_size,
-                            is_bold=is_bold,
+                            kind="bullet",
+                            font_size=line_font_size,
+                            is_bold=line_bold,
                             bbox=tuple(block["bbox"]),
                             page=page_idx
                         ))
+                    else:
+                        current_para_lines.append(line_text)
+                        if line_font_size > current_font_size:
+                            current_font_size = line_font_size
+                        if line_bold:
+                            current_bold = True
+
+                _flush_para()
             elif block["type"] == 1:  # Image block
                 parsed.has_images = True
 

@@ -14,24 +14,43 @@ Tiết kiệm token: ~90% so với VLM thuần
 from __future__ import annotations
 
 import json
+import os
 import sys
 from typing import Dict, List, Optional
 
-import google.generativeai as genai
-import os
-
 sys.stdout.reconfigure(encoding='utf-8')
+
+# Hỗ trợ cả SDK mới (google-genai) lẫn SDK cũ (google-generativeai)
+_GENAI_TYPE = None
+try:
+    from google import genai
+    _GENAI_TYPE = "new"
+except ImportError:
+    try:
+        import google.generativeai as legacy_genai
+        _GENAI_TYPE = "legacy"
+    except ImportError:
+        _GENAI_TYPE = None
 
 
 class HybridAnalyzer:
     """Phân tích ngữ cảnh sư phạm từ text đã parse (không dùng ảnh)."""
 
     def __init__(self, model_name: str = "gemini-2.5-flash"):
-        api_key = os.environ.get("GEMINI_API_KEY", "")
-        if api_key:
-            genai.configure(api_key=api_key)
+        self.model_name = model_name
+        self.api_key = os.environ.get("GEMINI_API_KEY", "").strip()
+        self.client = None
 
-        self.model = genai.GenerativeModel(model_name)
+        if _GENAI_TYPE and self.api_key:
+            try:
+                if _GENAI_TYPE == "new":
+                    self.client = genai.Client(api_key=self.api_key)
+                elif _GENAI_TYPE == "legacy":
+                    legacy_genai.configure(api_key=self.api_key)
+                    self.client = legacy_genai.GenerativeModel(model_name)
+            except Exception as e:
+                print(f"[HybridAnalyzer] Không thể khởi tạo Gemini client: {e}")
+                self.client = None
 
         self.system_prompt = """Bạn là chuyên gia phân tích bài giảng đại học. 
 Dựa vào nội dung TEXT đã được trích xuất từ slide bên dưới, hãy phân tích và trả về JSON:
@@ -53,6 +72,22 @@ QUY TẮC:
 5. Chỉ trả về JSON hợp lệ, KHÔNG markdown formatting.
 """
 
+    def _generate_text(self, prompt: str) -> str:
+        """Thực hiện gọi LLM hỗ trợ cả SDK mới và cũ."""
+        if not self.client:
+            raise RuntimeError("Gemini client chưa được khởi tạo hoặc thiếu API key")
+
+        if _GENAI_TYPE == "new":
+            resp = self.client.models.generate_content(
+                model=self.model_name,
+                contents=prompt
+            )
+            return resp.text or ""
+        elif _GENAI_TYPE == "legacy":
+            resp = self.client.generate_content(prompt)
+            return resp.text or ""
+        raise RuntimeError("Không có thư viện LLM nào sẵn sàng")
+
     def analyze_slide(self, structured_text: str, slide_number: int) -> Dict:
         """Phân tích một slide từ text đã parse — KHÔNG GỬI ẢNH.
 
@@ -71,8 +106,7 @@ QUY TẮC:
                 f"--- HẾT NỘI DUNG ---"
             )
 
-            response = self.model.generate_content(prompt)
-            text_resp = response.text.strip()
+            text_resp = self._generate_text(prompt).strip()
 
             # Loại bỏ markdown code blocks
             if text_resp.startswith("```json"):
@@ -130,8 +164,7 @@ QUY TẮC:
                     f"--- BẮT ĐẦU NỘI DUNG ---\n{combined}\n--- HẾT NỘI DUNG ---"
                 )
 
-                response = self.model.generate_content(prompt)
-                text_resp = response.text.strip()
+                text_resp = self._generate_text(prompt).strip()
 
                 # Clean markdown formatting
                 if text_resp.startswith("```json"):

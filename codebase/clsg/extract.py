@@ -39,8 +39,89 @@ def extract(path: Path) -> list[Chunk]:
     return chunks
 
 
+def _parsed_slides_to_chunks(slides) -> list[Chunk]:
+    """Chuyển đổi danh sách ParsedSlide từ HybridExtractor thành Chunk của pipeline."""
+    chunks: list[Chunk] = []
+    for slide in slides:
+        chapter_id = f"ch{slide.page_number}"
+        counter = 0
+
+        # Title chunk
+        if slide.title and slide.title.strip():
+            counter += 1
+            chunks.append(
+                Chunk(
+                    id=f"c_{chapter_id}_{counter:02d}",
+                    chapter=chapter_id,
+                    text=f"[TIÊU ĐỀ SLIDE {slide.page_number}]: {slide.title.strip()}",
+                    page=slide.page_number,
+                    kind="text",
+                    needs_human=False
+                )
+            )
+
+        for block in slide.blocks:
+            if block.kind == "title" and slide.title and block.text.strip().lower() == slide.title.strip().lower():
+                continue
+
+            txt = block.text.strip()
+            if not txt:
+                continue
+
+            counter += 1
+            if block.kind == "formula":
+                chunk_text = f"[CÔNG THỨC TOÁN]: $${txt}$$"
+                kind = "text"
+            elif block.kind == "table":
+                chunk_text = f"BẢNG DỮ LIỆU:\n{txt}"
+                kind = "table"
+            elif block.kind == "caption":
+                chunk_text = f"[CHÚ THÍCH HÌNH]: {txt}"
+                kind = "caption"
+            else:
+                chunk_text = txt
+                kind = "text"
+
+            chunks.append(
+                Chunk(
+                    id=f"c_{chapter_id}_{counter:02d}",
+                    chapter=chapter_id,
+                    text=chunk_text,
+                    page=slide.page_number,
+                    kind=kind,
+                    needs_human=False
+                )
+            )
+
+        if counter == 0:
+            chunks.append(
+                Chunk(
+                    id=f"c_{chapter_id}_01",
+                    chapter=chapter_id,
+                    text=f"[Slide {slide.page_number}: Nội dung trực quan / Hình ảnh minh họa]",
+                    page=slide.page_number,
+                    kind="caption",
+                    needs_human=True
+                )
+            )
+
+    return chunks
+
+
 def _extract_pptx(path: Path) -> list[Chunk]:
-    """Trích xuất slide PowerPoint sử dụng cấu trúc tọa độ 2D của python-pptx."""
+    """Trích xuất slide PowerPoint sử dụng HybridExtractor (hoặc fallback legacy)."""
+    try:
+        from backend.services.hybrid_extractor import HybridExtractor
+        extractor = HybridExtractor()
+        with open(path, "rb") as f:
+            slides = extractor.extract_from_pptx(f.read())
+        return _parsed_slides_to_chunks(slides)
+    except Exception:
+        return _legacy_extract_pptx(path)
+
+
+def _legacy_extract_pptx(path: Path) -> list[Chunk]:
+    """Trích xuất slide PowerPoint sử dụng cấu trúc tọa độ 2D của python-pptx (legacy)."""
     from pptx import Presentation
 
     prs = Presentation(str(path))
@@ -172,7 +253,19 @@ def _ocr_fitz_page(page) -> str:
     return asyncio.run(_run_ocr())
 
 def _extract_pdf(path: Path) -> list[Chunk]:
-    """Trích xuất tài liệu PDF theo từng trang sử dụng PyMuPDF / fitz, tự động OCR nếu trang scan/vector."""
+    """Trích xuất tài liệu PDF sử dụng HybridExtractor (vector text + layout phân loại + OCR fallback)."""
+    try:
+        from backend.services.hybrid_extractor import HybridExtractor
+        extractor = HybridExtractor()
+        with open(path, "rb") as f:
+            slides = extractor.extract_from_pdf(f.read())
+        return _parsed_slides_to_chunks(slides)
+    except Exception:
+        return _legacy_extract_pdf(path)
+
+
+def _legacy_extract_pdf(path: Path) -> list[Chunk]:
+    """Trích xuất tài liệu PDF theo từng trang sử dụng PyMuPDF / fitz (legacy)."""
     import fitz  # PyMuPDF
 
     doc = fitz.open(str(path))
@@ -212,7 +305,19 @@ def _extract_pdf(path: Path) -> list[Chunk]:
 
 
 def _extract_docx(path: Path) -> list[Chunk]:
-    """Trích xuất văn bản Word (.docx) theo từng mục Heading."""
+    """Trích xuất văn bản Word (.docx) bằng HybridExtractor (hoặc fallback legacy)."""
+    try:
+        from backend.services.hybrid_extractor import HybridExtractor
+        extractor = HybridExtractor()
+        with open(path, "rb") as f:
+            slides = extractor.extract_from_docx(f.read())
+        return _parsed_slides_to_chunks(slides)
+    except Exception:
+        return _legacy_extract_docx(path)
+
+
+def _legacy_extract_docx(path: Path) -> list[Chunk]:
+    """Trích xuất văn bản Word (.docx) theo từng mục Heading (legacy)."""
     from docx import Document
 
     doc = Document(str(path))
