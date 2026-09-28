@@ -15059,7 +15059,7 @@ QUY TẮC BẮT BUỘC:
           
           imageParts.push({
              type: "image_url",
-             image_url: { url: base64Img }
+             image_url: { url: base64Img, detail: "low" }
           });
         }
         
@@ -20591,7 +20591,7 @@ Quy tắc bắt buộc:
         const slideImg = page.thumbnail || page.image_url || page.image || '';
         const messageContent = slideImg ? [
           { type: 'text', text: prompt },
-          { type: 'image_url', image_url: { url: slideImg } }
+          { type: 'image_url', image_url: { url: slideImg, detail: 'low' } }
         ] : prompt;
 
         const res = await fetch(proxyUrl, {
@@ -20740,7 +20740,7 @@ Quy tắc bắt buộc:
                   role: 'user',
                   content: [
                     { type: 'text', text: systemPrompt },
-                    { type: 'image_url', image_url: { url: imgUrl } }
+                    { type: 'image_url', image_url: { url: imgUrl, detail: 'low' } }
                   ]
                 }
               ],
