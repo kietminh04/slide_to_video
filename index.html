@@ -26,6 +26,8 @@
   <!-- JSZip: Giải nén DOCX/PPTX (đều là ZIP chứa XML bên trong) -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
+  <!-- Tesseract.js v5: Client-Side WebAssembly OCR Engine (0đ API, chạy Web Worker trên CPU khách) -->
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
   <style>
     :root {
       --bg-base: #080c14;
@@ -15414,58 +15416,230 @@ QUY TẮC BẮT BUỘC:
       return `1. Nội dung văn bản trên slide:\n${cleanContent}\n\n2. Mô tả và giải thích chi tiết:\n${pedagogicalAnalysis}`;
     }
 
-    // HÀM TỰ ĐỘNG BÓC TÁCH TOÀN BỘ SLIDE (ẢNH CHỤP MÀN HÌNH + VĂN BẢN TỪNG TRANG)
+    // =========================================================================
+    // HỆ THỐNG PHÂN TÍCH BỐ CỤC KHÔNG GIAN CẤP CAO (RECURSIVE X-Y CUT++ & TABLE RECONSTRUCTION)
+    // =========================================================================
+    function parsePdfPageLayoutWithDeepHeuristics(items, viewport) {
+      if (!items || items.length === 0) return '';
+      const W = viewport ? viewport.width : 960;
+      const H = viewport ? viewport.height : 540;
+
+      const rawBlocks = [];
+      let totalFont = 0;
+      let fontCount = 0;
+
+      items.forEach(it => {
+        const str = (it.str || '').trim();
+        if (!str) return;
+        const tx = it.transform ? it.transform[4] : 0;
+        const ty = it.transform ? it.transform[5] : 0;
+        // Đảo trục Y chuẩn Web (0 ở đỉnh trang)
+        const webY = Math.max(0, H - ty);
+        const webX = Math.max(0, tx);
+        const w = it.width || 0;
+        const h = it.height || Math.abs(it.transform ? it.transform[0] : 12) || 12;
+        const fs = Math.round(Math.abs(it.transform ? it.transform[0] : h) || 12);
+
+        totalFont += fs;
+        fontCount++;
+
+        rawBlocks.push({
+          str: str,
+          x: webX,
+          y: webY,
+          w: w,
+          h: h,
+          fs: fs,
+          fontName: it.fontName || ''
+        });
+      });
+
+      if (rawBlocks.length === 0) return '';
+      const avgFont = fontCount > 0 ? (totalFont / fontCount) : 12;
+
+      // 1. NHẬN DIỆN & PHỤC HỒI BẢNG BIỂU (TABLE GRID RECONSTRUCTION)
+      const yLineGroups = [];
+      rawBlocks.sort((a, b) => a.y - b.y || a.x - b.x);
+
+      rawBlocks.forEach(blk => {
+        let foundLine = yLineGroups.find(g => Math.abs(g.y - blk.y) <= 4.0);
+        if (!foundLine) {
+          foundLine = { y: blk.y, items: [] };
+          yLineGroups.push(foundLine);
+        }
+        foundLine.items.push(blk);
+      });
+
+      yLineGroups.forEach(g => g.items.sort((a, b) => a.x - b.x));
+      yLineGroups.sort((a, b) => a.y - b.y);
+
+      const candidateTableLines = yLineGroups.filter(g => g.items.length >= 2);
+      let isTableCandidate = false;
+      if (candidateTableLines.length >= 2 && (candidateTableLines.length / yLineGroups.length) >= 0.4) {
+        isTableCandidate = true;
+      }
+
+      if (isTableCandidate && candidateTableLines.length >= 2) {
+        const mdTableLines = [];
+        let maxCols = 0;
+        candidateTableLines.forEach(g => {
+          maxCols = Math.max(maxCols, g.items.length);
+        });
+
+        candidateTableLines.forEach((g, idx) => {
+          const cells = g.items.map(it => it.str.replace(/\|/g, '\\|'));
+          while (cells.length < maxCols) cells.push('');
+          mdTableLines.push('| ' + cells.join(' | ') + ' |');
+          if (idx === 0) {
+            mdTableLines.push('| ' + Array(maxCols).fill('---').join(' | ') + ' |');
+          }
+        });
+
+        if (mdTableLines.length >= 3) {
+          return mdTableLines.join('\n');
+        }
+      }
+
+      // 2. THUẬT TOÁN QUÉT RÃNH TRẮNG & BỐ CỤC 2 CỘT (RECURSIVE X-Y CUT++)
+      const gutterStart = W * 0.42;
+      const gutterEnd = W * 0.58;
+
+      const leftColItems = [];
+      const rightColItems = [];
+      const headerItems = [];
+
+      rawBlocks.forEach(blk => {
+        if (blk.y < H * 0.20 && blk.w > W * 0.4) {
+          headerItems.push(blk);
+        } else if (blk.x + blk.w <= gutterEnd) {
+          leftColItems.push(blk);
+        } else if (blk.x >= gutterStart) {
+          rightColItems.push(blk);
+        } else {
+          if (blk.x + blk.w / 2 < W / 2) leftColItems.push(blk);
+          else rightColItems.push(blk);
+        }
+      });
+
+      const isTwoColumnLayout = leftColItems.length >= 3 && rightColItems.length >= 3;
+
+      function renderBlockListToMarkdown(blockList) {
+        if (!blockList || blockList.length === 0) return '';
+        const lines = [];
+        let curLine = '';
+        let lastY = null;
+        let lastX = null;
+        let lastW = null;
+
+        blockList.sort((a, b) => a.y - b.y || a.x - b.x);
+
+        blockList.forEach(blk => {
+          if (lastY !== null && Math.abs(blk.y - lastY) > 5) {
+            if (curLine.trim()) lines.push({ text: curLine.trim(), fs: blk.fs });
+            curLine = '';
+            lastX = null;
+            lastW = null;
+          }
+          if (curLine && !curLine.endsWith(' ') && !blk.str.startsWith(' ')) {
+            if (lastX !== null && lastW !== null && (blk.x - (lastX + lastW)) > 2.5) {
+              curLine += ' ';
+            }
+          }
+          curLine += blk.str;
+          lastY = blk.y;
+          lastX = blk.x;
+          lastW = blk.w;
+        });
+        if (curLine.trim()) lines.push({ text: curLine.trim(), fs: blockList[blockList.length - 1].fs });
+
+        return lines.map(ln => {
+          const t = ln.text;
+          if (/[∑∏∫∂∇∞±√≈≠≤≥∈∉⊂⊃∪∩∀∃]|\\(?:frac|sum|int|sqrt|alpha|beta|sigma|hat)/.test(t)) {
+            return `$$ ${t} $$`;
+          }
+          if (ln.fs >= avgFont * 1.28 && t.length < 90 && !t.endsWith('.')) {
+            return `### ${t}`;
+          }
+          if (/^[\s]*[•●○◆◇▪▸►▹→\-–—\*]\s+|\d+[\.\)]\s+/.test(t)) {
+            return t.replace(/^[\s]*[•●○◆◇▪▸►▹→\-–—\*]\s+/, '- ');
+          }
+          return t;
+        }).join('\n');
+      }
+
+      if (isTwoColumnLayout) {
+        const headerMd = renderBlockListToMarkdown(headerItems);
+        const leftMd = renderBlockListToMarkdown(leftColItems);
+        const rightMd = renderBlockListToMarkdown(rightColItems);
+        const parts = [];
+        if (headerMd) parts.push(headerMd);
+        parts.push(`[Cột Trái]\n${leftMd}`);
+        parts.push(`[Cột Phải]\n${rightMd}`);
+        return parts.join('\n\n');
+      }
+
+      return renderBlockListToMarkdown(rawBlocks);
+    }
+
+    // =========================================================================
+    // TRẠM 2: CLIENT-SIDE WASM OCR (TESSERACT.JS CHẠY NGẦM BẰNG WEB WORKER 0 ĐỒNG)
+    // =========================================================================
+    let _tesseractWorkerInstance = null;
+
+    async function getTesseractWorker() {
+      if (_tesseractWorkerInstance) return _tesseractWorkerInstance;
+      if (typeof Tesseract === 'undefined') {
+        await new Promise((resolve, reject) => {
+          const s = document.createElement('script');
+          s.src = 'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';
+          s.onload = resolve;
+          s.onerror = reject;
+          document.head.appendChild(s);
+        });
+      }
+      if (typeof Tesseract === 'undefined') return null;
+
+      try {
+        _tesseractWorkerInstance = await Tesseract.createWorker(['eng', 'vie'], 1, {
+          logger: m => {
+            if (m.status === 'recognizing text') {
+              console.log(`[Tesseract.js OCR] Tiến độ: ${Math.round((m.progress || 0) * 100)}%`);
+            }
+          }
+        });
+        return _tesseractWorkerInstance;
+      } catch (e) {
+        console.warn('[Client OCR Worker Init Error]', e);
+        return null;
+      }
+    }
+
+    async function runClientSideTesseractOCR(canvas) {
+      if (!canvas) return null;
+      try {
+        const worker = await getTesseractWorker();
+        if (!worker) return null;
+        const ret = await worker.recognize(canvas);
+        const text = (ret && ret.data && ret.data.text) ? ret.data.text.trim() : '';
+        const confidence = (ret && ret.data && ret.data.confidence) ? ret.data.confidence : 0;
+        return { text, confidence };
+      } catch (err) {
+        console.warn('[Client OCR] Tesseract.js gặp sự cố, tự động bỏ qua:', err);
+        return null;
+      }
+    }
+
+    // HÀM TỰ ĐỘNG BÓC TÁCH TOÀN BỘ SLIDE (ẢNH CHỤP MÀN HÌNH + BỐ CỤC KHÔNG GIAN + CLIENT OCR)
     async function ingestAllPdfSlides(pdf, totalPages) {
       const detailed = [];
       for (let p = 1; p <= totalPages; p++) {
         try {
           if (typeof updateLoading === 'function') {
-            updateLoading("Đang nạp toàn bộ slide...", `Đang trích xuất hình ảnh & nội dung trang ${p} / ${totalPages}`);
+            updateLoading("Đang nạp toàn bộ slide...", `Đang phân tích cấu trúc bố cục & chụp ảnh trang ${p} / ${totalPages}`);
           }
           const page = await pdf.getPage(p);
 
-          // 1. Trích xuất text bằng getTextContent
-          let pageText = '';
-          try {
-            const textContent = await page.getTextContent();
-            let lastY = null;
-            let lastX = null;
-            let lastWidth = null;
-            let curLine = '';
-            (textContent.items || []).forEach(it => {
-              const str = it.str || '';
-              if (!str) return;
-              const x = it.transform ? it.transform[4] : null;
-              const y = it.transform ? Math.round(it.transform[5]) : null;
-              if (lastY !== null && y !== null && Math.abs(y - lastY) > 4) {
-                if (curLine.trim()) pageText += (pageText ? '\n' : '') + curLine.trim();
-                curLine = '';
-                lastX = null;
-                lastWidth = null;
-              }
-              // Tính khoảng cách ký tự (kerning / word gap): chỉ thêm space nếu có khoảng cách từ thực tế
-              if (curLine && !curLine.endsWith(' ') && !str.startsWith(' ')) {
-                if (lastX !== null && lastWidth !== null && x !== null) {
-                  const gap = x - (lastX + lastWidth);
-                  if (gap > 2.5) {
-                    curLine += ' ';
-                  }
-                }
-              }
-              curLine += str;
-              lastY = y;
-              lastX = x;
-              lastWidth = it.width || 0;
-            });
-            if (curLine.trim()) pageText += (pageText ? '\n' : '') + curLine.trim();
-            // Khử triệt để lỗi ký tự bị tách rời
-            pageText = cleanSpacedLetters(pageText);
-          } catch (errText) {
-            console.warn(`[AutoIngest] Lỗi đọc text trang ${p}:`, errText);
-          }
-          pageText = pageText.trim();
-
-          // 2. Chụp màn hình trang bằng Canvas (tự động điều chỉnh kích thước chuẩn HD sắc nét ~960px)
+          // 1. Chụp màn hình trang bằng Canvas (tự động điều chỉnh kích thước chuẩn HD sắc nét ~960px)
           const vp1 = page.getViewport({ scale: 1.0 });
           const targetWidth = Math.min(1024, Math.max(640, vp1.width));
           const scale = targetWidth / vp1.width;
@@ -15479,8 +15653,40 @@ QUY TẮC BẮT BUỘC:
           await page.render({ canvasContext: ctx, viewport: viewport }).promise;
           const base64Img = canvas.toDataURL('image/jpeg', 0.82);
 
-          // 3. Khởi tạo nội dung văn bản sư phạm chuẩn mực 2 phần ngay lập tức từ text đã bóc tách (không tốn token Vision)
+          // 2. Trích xuất text bằng BỘ PHÂN TÍCH BỐ CỤC CẤP CAO (Recursive X-Y Cut++ & Table Grid)
+          let pageText = '';
+          try {
+            const textContent = await page.getTextContent();
+            if (textContent && textContent.items && textContent.items.length > 0) {
+              pageText = parsePdfPageLayoutWithDeepHeuristics(textContent.items, viewport);
+            }
+          } catch (errText) {
+            console.warn(`[AutoIngest] Lỗi phân tích bố cục trang ${p}:`, errText);
+          }
+
+          // 3. TRẠM 2: Nếu text vector quá ít (< 25 ký tự) -> Tự động kích hoạt Client OCR qua WebAssembly
+          if (!pageText || pageText.trim().length < 25) {
+            try {
+              if (typeof updateLoading === 'function') {
+                updateLoading("Đang nạp slide scan...", `Phát hiện ảnh scan trang ${p}, đang quét chữ bằng Client OCR...`);
+              }
+              const ocrRes = await runClientSideTesseractOCR(canvas);
+              if (ocrRes && ocrRes.text && ocrRes.text.length >= 20) {
+                console.log(`[AutoIngest] ✨ Trang ${p} scan đã được OCR thành công (${ocrRes.text.length} ký tự, độ tin cậy ${ocrRes.confidence}%)!`);
+                pageText = ocrRes.text;
+              }
+            } catch (ocrErr) {
+              console.warn(`[AutoIngest] Lỗi OCR trang ${p}:`, ocrErr);
+            }
+          }
+
+          if (typeof cleanSpacedLetters === 'function' && pageText) {
+            pageText = cleanSpacedLetters(pageText).trim();
+          }
+
+          // 4. TRẠM 3 & 4: Quality Gate & Khởi tạo nội dung văn bản sư phạm chuẩn mực 2 phần
           const hasText = (pageText && pageText.length >= 10);
+          const isDumbGraphic = (!hasText && !pageText);
           const initialExplanation = (typeof synthesizeSlidePedagogicalContent === 'function')
             ? synthesizeSlidePedagogicalContent(pageText, p, totalPages)
             : (pageText.trim() || 'Slide hình ảnh bài giảng (Đồ họa / sơ đồ minh họa)');
@@ -15491,7 +15697,8 @@ QUY TẮC BẮT BUỘC:
             thumbnail: base64Img,
             explanation: initialExplanation,
             hasText: hasText,
-            isVisionEnriched: true
+            isPureGraphic: isDumbGraphic,
+            isVisionEnriched: true // Luôn đánh dấu hoàn tất để không tự động gọi Vision AI ngốn token
           });
         } catch (pageErr) {
           console.warn(`[AutoIngest] Lỗi xử lý trang ${p}:`, pageErr);
