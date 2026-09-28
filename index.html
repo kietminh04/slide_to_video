@@ -13536,33 +13536,10 @@ QUY TẮC BẮT BUỘC:
         chatContainer.innerHTML = '';
       }
 
-      // HÀM KIỂM TRA ĐỐI SOÁT & TIẾP TỤC GEN NỐI TIẾP NẾU BỊ F5 GIỮA CHỪNG (RESUMABLE CHECKPOINT)
-      setTimeout(() => {
-        if (!activeProject || !Array.isArray(activeProject.detailedContent) || activeProject.detailedContent.length === 0) return;
-        
-        const isMarkedIncomplete = localStorage.getItem('clsg_enriching_' + activeProject.id) === 'true';
-        
-        // Kiểm tra xem có trang nào THỰC SỰ CHƯA GEN KHÔNG
-        const missingPages = activeProject.detailedContent.filter(p => 
-          !p.isVisionEnriched || 
-          !p.explanation || 
-          p.explanation.includes('(Đang hoàn thiện') || 
-          p.explanation.includes('Xin lỗi, nhưng tôi không thể')
-        );
-
-        if (missingPages.length === 0) {
-          // Tất cả các trang đều đã hoàn tất và lưu DB -> Xóa cờ, tuyệt đối KHÔNG gọi AI
-          localStorage.removeItem('clsg_enriching_' + activeProject.id);
-          return;
-        }
-
-        // Chỉ tiếp tục nếu trước đó đang gen dở mà bị F5
-        if (isMarkedIncomplete) {
-          console.log(`[Resume Checkpoint] Phát hiện đang gen dở: còn ${missingPages.length}/${activeProject.detailedContent.length} trang chưa xong. Tự động tiếp tục từ trang ${missingPages[0].pageNumber}...`);
-          showToast(`🔄 Tiếp tục phân tích nối tiếp ${missingPages.length} trang chưa xong...`);
-          startBackgroundVisionEnrichment(activeProject);
-        }
-      }, 1200);
+      // Luôn dọn dẹp cờ enriching khi mở dự án, tuyệt đối KHÔNG tự động gen lại khi F5 gây tốn token
+      if (activeProject && activeProject.id) {
+        localStorage.removeItem('clsg_enriching_' + activeProject.id);
+      }
 
       // Khôi phục toàn bộ kịch bản, tóm tắt và thông số nhánh (nodeCustomParams) từ localStorage hoặc Cloud Database
       try {
@@ -15502,9 +15479,11 @@ QUY TẮC BẮT BUỘC:
           await page.render({ canvasContext: ctx, viewport: viewport }).promise;
           const base64Img = canvas.toDataURL('image/jpeg', 0.82);
 
-          // 3. Khởi tạo nội dung văn bản trích xuất gốc từ PDF (chờ AI Vision chạy ngầm làm giàu)
+          // 3. Khởi tạo nội dung văn bản sư phạm chuẩn mực 2 phần ngay lập tức từ text đã bóc tách (không tốn token Vision)
           const hasText = (pageText && pageText.length >= 10);
-          const initialExplanation = pageText.trim() || 'Slide hình ảnh bài giảng (Đồ họa / sơ đồ minh họa)';
+          const initialExplanation = (typeof synthesizeSlidePedagogicalContent === 'function')
+            ? synthesizeSlidePedagogicalContent(pageText, p, totalPages)
+            : (pageText.trim() || 'Slide hình ảnh bài giảng (Đồ họa / sơ đồ minh họa)');
 
           detailed.push({
             pageNumber: p,
@@ -15512,7 +15491,7 @@ QUY TẮC BẮT BUỘC:
             thumbnail: base64Img,
             explanation: initialExplanation,
             hasText: hasText,
-            isVisionEnriched: false
+            isVisionEnriched: true
           });
         } catch (pageErr) {
           console.warn(`[AutoIngest] Lỗi xử lý trang ${p}:`, pageErr);
@@ -16955,12 +16934,8 @@ QUY TẮC BẮT BUỘC:
         switchView('workspace');
         showToast(`Đã sinh kịch bản bài giảng thành công từ ${file.name}!`);
         
-        // Chỉ kích hoạt Vision AI nếu người dùng chủ động bật tùy chọn Quét Ảnh (Vision AI)
         setTimeout(() => {
           if (typeof triggerRagIngestion === 'function') triggerRagIngestion();
-          if (typeof startBackgroundVisionEnrichment === 'function' && projData && projData.detailedContent) {
-            startBackgroundVisionEnrichment(projData);
-          }
         }, 1000);
       } catch (err) {
         console.error("[Create Project Error]", err);
@@ -18701,8 +18676,6 @@ QUY TẮC BẮT BUỘC:
       }
 
       try {
-        showToast('Đang nạp tri thức bài giảng vào Database...');
-        
         let chunks = [];
 
         // 1. Thu thập từ detailedContent (Nội dung chi tiết từng trang slide)
@@ -18753,7 +18726,6 @@ QUY TẮC BẮT BUỘC:
         }
 
         if (chunks.length === 0) {
-            showToast('⚠️ Sơ đồ trống, không có văn bản nào đủ dài để nạp.');
             if(btn) {
                 btn.innerHTML = originalHtml;
                 btn.disabled = false;
@@ -18776,14 +18748,13 @@ QUY TẮC BẮT BUỘC:
 
         const data = await response.json();
         if (data.success) {
-          showToast(`✅ Đã nạp thành công ${data.processed || chunks.length} Vector vào Neon DB! Chatbot đã thông minh hơn.`);
+          // Đã nạp vector ngầm thành công - Không hiện toast làm phiền người dùng
+          console.log(`[RAG Ingestion] Đã đồng bộ ${data.processed || chunks.length} Vector vào Neon DB.`);
         } else {
-          console.error(data.error);
-          showToast(`❌ Lỗi khi nạp: ${data.error}`);
+          console.warn("[RAG Ingestion] Lỗi:", data.error);
         }
       } catch (err) {
-        console.error("Lỗi Ingestion:", err);
-        showToast('❌ Lỗi kết nối đến Backend Ingestion.');
+        console.warn("[RAG Ingestion] Lỗi kết nối:", err);
       } finally {
         if (btn) {
           btn.innerHTML = originalHtml;
@@ -20909,12 +20880,7 @@ Quy tắc bắt buộc:
         } catch(e) {}
 
         hideLoading();
-        showToast(`✅ Đã nạp thành công toàn bộ ${detailed.length} trang slide! AI Vision đang bắt đầu phân tích sâu...`);
-
-        // Tự động phân tích Vision AI từng trang slide chạy ngầm
-        setTimeout(() => {
-          startBackgroundVisionEnrichment(activeProject);
-        }, 500);
+        showToast(`✅ Đã nạp thành công toàn bộ ${detailed.length} trang slide!`);
 
       } catch (err) {
         console.error("Lỗi nạp slide trực tiếp:", err);
