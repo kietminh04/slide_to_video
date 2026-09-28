@@ -15436,6 +15436,15 @@ QUY TẮC BẮT BUỘC:
         // Đảo trục Y chuẩn Web (0 ở đỉnh trang)
         const webY = Math.max(0, H - ty);
         const webX = Math.max(0, tx);
+
+        // BỘ LỌC KHỬ NHIỄU CHÂN TRANG (DOCLAYNET SOTA DE-NOISING)
+        // Loại bỏ số trang (ví dụ "19 / 37"), tên trường/môn học lặp ở đáy màn hình
+        const isFooterZone = (webY > H * 0.90);
+        const isNoiseText = /^(?:VINUNIVERSITY|Giång\s*vi[eé]n|AICB|Data\s*Track|\d+\s*\/\s*\d+)$/i.test(str);
+        if (isFooterZone && (isNoiseText || str.length <= 12)) {
+          return; // Bỏ qua rác chân trang
+        }
+
         const w = it.width || 0;
         const h = it.height || Math.abs(it.transform ? it.transform[0] : 12) || 12;
         const fs = Math.round(Math.abs(it.transform ? it.transform[0] : h) || 12);
