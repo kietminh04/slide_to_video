@@ -10553,18 +10553,45 @@
       if (!text || typeof text !== 'string') return text;
       let clean = text;
 
-      // 1. Chuyển đổi các điều kiện đặc thù trong Keypoint / Pose / AI
-      clean = clean.replace(/\$?\bv\s*=\s*0\b\$?/gi, 'biến v bằng không, tức bị che khuất');
-      clean = clean.replace(/\$?\bv\s*=\s*1\b\$?/gi, 'biến v bằng một, tức nhìn thấy rõ');
-      clean = clean.replace(/\$?\bv\s*=\s*2\b\$?/gi, 'biến v bằng hai, tức được gán nhãn');
+      // 1. Phép nhân kích thước hoặc ma trận: 3x3, 1920x1080, 512 x 512
+      clean = clean.replace(/(\d+)\s*[xX*×]\s*(\d+)/g, '$1 nhân $2');
 
-      // 2. Chuyển đổi biến tổng quát a=0, x=1, ...
-      clean = clean.replace(/\$?\b([a-zA-Z])\s*=\s*([0-9]+)\b\$?/g, 'biến $1 bằng $2');
+      // 2. Lũy thừa 10^-4, 10^-3, 10^5
+      clean = clean.replace(/10\^[-−](\d+)/g, 'mười mũ trừ $1');
+      clean = clean.replace(/10\^(\d+)/g, 'mười mũ $1');
 
-      // 3. Chuyển đổi biến đơn trong dấu $ ví dụ $v$, $x$, $y$ (tránh trùng từ 'biến')
+      // 3. Phần trăm và số đo kỹ thuật
+      clean = clean.replace(/(\d+(?:[.,]\d+)?)\s*%/g, '$1 phần trăm');
+      clean = clean.replace(/\b(\d+)\s*fps\b/gi, '$1 khung hình trên giây');
+      clean = clean.replace(/\b(\d+)\s*ms\b/gi, '$1 mili giây');
+
+      // 4. Chuyển đổi các điều kiện đặc thù trong Keypoint / Pose / AI
+      clean = clean.replace(/\$?\bv\s*=\s*0\b\$?/, 'biến v bằng không, tức bị che khuất');
+      clean = clean.replace(/\$?\bv\s*=\s*1\b\$?/, 'biến v bằng một, tức nhìn thấy rõ');
+      clean = clean.replace(/\$?\bv\s*=\s*2\b\$?/, 'biến v bằng hai, tức được gán nhãn');
+
+      // 5. Chuyển đổi biến tổng quát a=0, x=1, ...
+      clean = clean.replace(/\$?\b([a-zA-Z])\s*=\s*([0-9]+)\b\$?/, 'biến $1 bằng $2');
       clean = clean.replace(/\b(biến\s+)?\$([a-zA-Z])\$/gi, 'biến $2');
 
-      // 4. Toán tử LaTeX phổ biến sang ngôn ngữ đọc tự nhiên
+      // 6. Phiên âm thuật ngữ AI / Khoa học máy tính giúp TTS đọc mượt mà không ngọng
+      clean = clean.replace(/\bYOLO\b/g, 'Dô-lô');
+      clean = clean.replace(/\bResNet\b/g, 'Rét-nét');
+      clean = clean.replace(/\bCNN\b/g, 'Xi-en-en');
+      clean = clean.replace(/\bRNN\b/g, 'A-rờ-en-en');
+      clean = clean.replace(/\bLSTM\b/g, 'En-ét-ti-em');
+      clean = clean.replace(/\bIoU\b/g, 'Ai-ô-U');
+      clean = clean.replace(/\bBbox(es)?\b/gi, 'hộp bao');
+      clean = clean.replace(/\bPose\b/g, 'Pâu-dơ');
+      clean = clean.replace(/\bLoss\b/g, 'hàm mất mát');
+      clean = clean.replace(/\bEpoch(s)?\b/gi, 'vòng lặp');
+      clean = clean.replace(/\bDataset(s)?\b/gi, 'tập dữ liệu');
+      clean = clean.replace(/\bKeypoint(s)?\b/gi, 'điểm khớp');
+      clean = clean.replace(/\bSkeleton(s)?\b/gi, 'khung xương');
+      clean = clean.replace(/\bGround truth\b/gi, 'nhãn thực tế');
+      clean = clean.replace(/\bTrade-off\b/gi, 'sự đánh đổi');
+
+      // 7. Toán tử LaTeX phổ biến sang ngôn ngữ đọc tự nhiên
       clean = clean.replace(/\\approx/g, 'xấp xỉ');
       clean = clean.replace(/\\neq/g, 'khác');
       clean = clean.replace(/\\le/g, 'nhỏ hơn hoặc bằng');
@@ -10576,14 +10603,21 @@
       clean = clean.replace(/\\prod/g, 'tích các giá trị');
       clean = clean.replace(/\\sqrt\{([^}]+)\}/g, 'căn bậc hai của $1');
 
-      // 5. Gỡ bỏ dấu đô la còn sót quanh biểu thức toán
+      // 8. Gỡ bỏ dấu đô la còn sót quanh biểu thức toán
       clean = clean.replace(/\$\$([^$]+)\$\$/g, '$1');
       clean = clean.replace(/\$([^$]+)\$/g, '$1');
 
-      // 6. Gỡ bỏ ký tự backslash thoát chữ
+      // 9. Gỡ bỏ ký tự backslash thoát chữ
       clean = clean.replace(/\\([a-zA-Z]+)/g, '$1');
 
-      // 7. Chuẩn hóa khoảng trắng
+      // 10. Dọn dẹp tag ngắt nghỉ trùng lặp [P1] [P2] -> [P2]
+      clean = clean.replace(/\[P([123])\]\s*\[P([123])\]/g, (m, p1, p2) => {
+        return '[P' + Math.max(parseInt(p1), parseInt(p2)) + ']';
+      });
+
+      // 11. Chuẩn hóa khoảng trắng & dấu câu
+      clean = clean.replace(/\s+([.,;:?!])/g, '$1');
+      clean = clean.replace(/\[P([123])\]\s*([.,;:?!])/g, '$2 [P$1]');
       clean = clean.replace(/\s+/g, ' ').trim();
       return clean;
     };
@@ -15478,72 +15512,7 @@ QUY TẮC BẮT BUỘC:
       if (rawBlocks.length === 0) return '';
       const avgFont = fontCount > 0 ? (totalFont / fontCount) : 12;
 
-      // 1. NHẬN DIỆN & PHỤC HỒI BẢNG BIỂU (TABLE GRID RECONSTRUCTION)
-      const yLineGroups = [];
-      rawBlocks.sort((a, b) => a.y - b.y || a.x - b.x);
-
-      rawBlocks.forEach(blk => {
-        let foundLine = yLineGroups.find(g => Math.abs(g.y - blk.y) <= 4.0);
-        if (!foundLine) {
-          foundLine = { y: blk.y, items: [] };
-          yLineGroups.push(foundLine);
-        }
-        foundLine.items.push(blk);
-      });
-
-      yLineGroups.forEach(g => g.items.sort((a, b) => a.x - b.x));
-      yLineGroups.sort((a, b) => a.y - b.y);
-
-      const candidateTableLines = yLineGroups.filter(g => g.items.length >= 2);
-      let isTableCandidate = false;
-      if (candidateTableLines.length >= 2 && (candidateTableLines.length / yLineGroups.length) >= 0.4) {
-        isTableCandidate = true;
-      }
-
-      if (isTableCandidate && candidateTableLines.length >= 2) {
-        const mdTableLines = [];
-        let maxCols = 0;
-        candidateTableLines.forEach(g => {
-          maxCols = Math.max(maxCols, g.items.length);
-        });
-
-        candidateTableLines.forEach((g, idx) => {
-          const cells = g.items.map(it => it.str.replace(/\|/g, '\\|'));
-          while (cells.length < maxCols) cells.push('');
-          mdTableLines.push('| ' + cells.join(' | ') + ' |');
-          if (idx === 0) {
-            mdTableLines.push('| ' + Array(maxCols).fill('---').join(' | ') + ' |');
-          }
-        });
-
-        if (mdTableLines.length >= 3) {
-          return mdTableLines.join('\n');
-        }
-      }
-
-      // 2. THUẬT TOÁN QUÉT RÃNH TRẮNG & BỐ CỤC 2 CỘT (RECURSIVE X-Y CUT++)
-      const gutterStart = W * 0.42;
-      const gutterEnd = W * 0.58;
-
-      const leftColItems = [];
-      const rightColItems = [];
-      const headerItems = [];
-
-      rawBlocks.forEach(blk => {
-        if (blk.y < H * 0.20 && blk.w > W * 0.4) {
-          headerItems.push(blk);
-        } else if (blk.x + blk.w <= gutterEnd) {
-          leftColItems.push(blk);
-        } else if (blk.x >= gutterStart) {
-          rightColItems.push(blk);
-        } else {
-          if (blk.x + blk.w / 2 < W / 2) leftColItems.push(blk);
-          else rightColItems.push(blk);
-        }
-      });
-
-      const isTwoColumnLayout = leftColItems.length >= 3 && rightColItems.length >= 3;
-
+      // HÀM HỖ TRỢ RENDER DANH SÁCH BLOCK RA MARKDOWN CHUẨN
       function renderBlockListToMarkdown(blockList) {
         if (!blockList || blockList.length === 0) return '';
         const lines = [];
@@ -15588,24 +15557,129 @@ QUY TẮC BẮT BUỘC:
         }).join('\n');
       }
 
-      if (isTwoColumnLayout) {
-        const headerMd = renderBlockListToMarkdown(headerItems);
-        const leftMd = renderBlockListToMarkdown(leftColItems);
-        const rightMd = renderBlockListToMarkdown(rightColItems);
+      // TÁCH PHẦN TIÊU ĐỀ SLIDE (HEADER ZONE: 20% ĐỈNH MÀN HÌNH)
+      const headerItems = [];
+      const bodyItems = [];
+
+      rawBlocks.forEach(blk => {
+        if (blk.y < H * 0.20 && (blk.fs >= avgFont * 1.15 || blk.w > W * 0.4)) {
+          headerItems.push(blk);
+        } else {
+          bodyItems.push(blk);
+        }
+      });
+
+      // 1. THUẬT TOÁN NHẬN DIỆN BỐ CỤC 3 CỘT (THREE-COLUMN / 3-STAGE PROGRESSION)
+      // Phổ biến ở các slide: Ngày 2 -> Ngày 3 -> Ngày 4, hoặc 3 giải pháp so sánh
+      const col1Items = [];
+      const col2Items = [];
+      const col3Items = [];
+
+      bodyItems.forEach(blk => {
+        const rightEdge = blk.x + blk.w;
+        if (rightEdge <= W * 0.38) {
+          col1Items.push(blk);
+        } else if (blk.x >= W * 0.29 && rightEdge <= W * 0.71) {
+          col2Items.push(blk);
+        } else if (blk.x >= W * 0.62) {
+          col3Items.push(blk);
+        } else {
+          const mid = blk.x + blk.w / 2;
+          if (mid < W * 0.35) col1Items.push(blk);
+          else if (mid > W * 0.65) col3Items.push(blk);
+          else col2Items.push(blk);
+        }
+      });
+
+      const isThreeColumnLayout = (col1Items.length >= 2 && col2Items.length >= 2 && col3Items.length >= 2);
+
+      if (isThreeColumnLayout) {
         const parts = [];
+        const headerMd = renderBlockListToMarkdown(headerItems);
         if (headerMd) parts.push(headerMd);
-        parts.push(`[Cột Trái]\n${leftMd}`);
-        parts.push(`[Cột Phải]\n${rightMd}`);
+        parts.push(`[Cột 1 / Giai đoạn 1]\n${renderBlockListToMarkdown(col1Items)}`);
+        parts.push(`[Cột 2 / Giai đoạn 2]\n${renderBlockListToMarkdown(col2Items)}`);
+        parts.push(`[Cột 3 / Giai đoạn 3]\n${renderBlockListToMarkdown(col3Items)}`);
         return parts.join('\n\n');
       }
 
+      // 2. THUẬT TOÁN NHẬN DIỆN BỐ CỤC 2 CỘT (TWO-COLUMN / SIDE-BY-SIDE)
+      const leftColItems = [];
+      const rightColItems = [];
+
+      bodyItems.forEach(blk => {
+        const mid = blk.x + blk.w / 2;
+        if (mid < W * 0.50) leftColItems.push(blk);
+        else rightColItems.push(blk);
+      });
+
+      const isTwoColumnLayout = (leftColItems.length >= 3 && rightColItems.length >= 3);
+
+      if (isTwoColumnLayout) {
+        const parts = [];
+        const headerMd = renderBlockListToMarkdown(headerItems);
+        if (headerMd) parts.push(headerMd);
+        parts.push(`[Cột Trái]\n${renderBlockListToMarkdown(leftColItems)}`);
+        parts.push(`[Cột Phải]\n${renderBlockListToMarkdown(rightColItems)}`);
+        return parts.join('\n\n');
+      }
+
+      // 3. THUẬT TOÁN NHẬN DIỆN BẢNG BIỂU THẬT SỰ (TABLE GRID RECONSTRUCTION)
+      // Chỉ nhận bảng khi ô ngắn gọn (trung bình <= 35 ký tự), tránh chém nhầm câu văn thành bảng
+      const yLineGroups = [];
+      rawBlocks.sort((a, b) => a.y - b.y || a.x - b.x);
+
+      rawBlocks.forEach(blk => {
+        let foundLine = yLineGroups.find(g => Math.abs(g.y - blk.y) <= 4.0);
+        if (!foundLine) {
+          foundLine = { y: blk.y, items: [] };
+          yLineGroups.push(foundLine);
+        }
+        foundLine.items.push(blk);
+      });
+
+      yLineGroups.forEach(g => g.items.sort((a, b) => a.x - b.x));
+      yLineGroups.sort((a, b) => a.y - b.y);
+
+      const candidateTableLines = yLineGroups.filter(g => g.items.length >= 2);
+      let isTableCandidate = false;
+      if (candidateTableLines.length >= 3 && (candidateTableLines.length / yLineGroups.length) >= 0.5) {
+        const avgCellLength = candidateTableLines.reduce((acc, g) => {
+          return acc + g.items.reduce((s, it) => s + it.str.length, 0) / g.items.length;
+        }, 0) / candidateTableLines.length;
+
+        if (avgCellLength <= 35) {
+          isTableCandidate = true;
+        }
+      }
+
+      if (isTableCandidate && candidateTableLines.length >= 2) {
+        const mdTableLines = [];
+        let maxCols = 0;
+        candidateTableLines.forEach(g => {
+          maxCols = Math.max(maxCols, g.items.length);
+        });
+
+        candidateTableLines.forEach((g, idx) => {
+          const cells = g.items.map(it => it.str.replace(/\|/g, '\\|'));
+          while (cells.length < maxCols) cells.push('');
+          mdTableLines.push('| ' + cells.join(' | ') + ' |');
+          if (idx === 0) {
+            mdTableLines.push('| ' + Array(maxCols).fill('---').join(' | ') + ' |');
+          }
+        });
+
+        if (mdTableLines.length >= 3) {
+          return mdTableLines.join('\n');
+        }
+      }
+
+      // 4. MẶC ĐỊNH: RENDER TOÀN BỘ THEO DÒNG ĐỌC TỰ NHIÊN
       return renderBlockListToMarkdown(rawBlocks);
     }
 
     // =========================================================================
-    // TRẠM 2: CLIENT-SIDE WASM OCR (TESSERACT.JS CHẠY NGẦM BẰNG WEB WORKER 0 ĐỒNG)
-    // =========================================================================
-    let _tesseractWorkerInstance = null;
+    // let _tesseractWorkerInstance = null;
 
     async function getTesseractWorker() {
       if (_tesseractWorkerInstance) return _tesseractWorkerInstance;
