@@ -10553,21 +10553,6 @@
       if (!text || typeof text !== 'string') return text;
       let clean = text;
 
-      // 0. GỠ BỎ CÁC DẤU TÍCH MARKDOWN / TABLE / LAYOUT KHÔNG THUỘC VỀ LỜI NÓI
-      clean = clean.replace(/^#{1,4}\s+/gm, '');               // Headers: ### Title → Title
-      clean = clean.replace(/\*\*([^*]+)\*\*/g, '$1');          // Bold **text** → text
-      clean = clean.replace(/\*([^*]+)\*/g, '$1');              // Italic *text* → text
-      clean = clean.replace(/`([^`]+)`/g, '$1');                // Inline code `x` → x
-      clean = clean.replace(/^[-*]\s+/gm, '');                 // Bullet points: - text → text
-      clean = clean.replace(/^\d+\.\s+/gm, '');                // Numbered lists: 1. text → text
-      clean = clean.replace(/\[Cột (?:Trái|Phải)\]\s*/gi, ''); // Column labels from 2-col layout
-      clean = clean.replace(/\$\$\s*/g, '');                    // $$ math delimiters
-      // Gỡ bỏ ký tự pipe (|) từ table remnants, giữ nguyên pipe trong biểu thức chính đáng
-      clean = clean.replace(/^\|\s*/gm, '');                    // Leading pipe
-      clean = clean.replace(/\s*\|\s*$/gm, '');                // Trailing pipe
-      clean = clean.replace(/\s*\|\s+/g, ', ');                 // Mid-text pipe → comma separator
-      clean = clean.replace(/^\s*\|?\s*---[\s|---]*$/gm, '');   // Table separator lines |---|---|
-
       // 1. Chuyển đổi các điều kiện đặc thù trong Keypoint / Pose / AI
       clean = clean.replace(/\$?\bv\s*=\s*0\b\$?/gi, 'biến v bằng không, tức bị che khuất');
       clean = clean.replace(/\$?\bv\s*=\s*1\b\$?/gi, 'biến v bằng một, tức nhìn thấy rõ');
@@ -10598,8 +10583,7 @@
       // 6. Gỡ bỏ ký tự backslash thoát chữ
       clean = clean.replace(/\\([a-zA-Z]+)/g, '$1');
 
-      // 7. Chuẩn hóa khoảng trắng & dòng trống thừa
-      clean = clean.replace(/\n{3,}/g, '\n\n');
+      // 7. Chuẩn hóa khoảng trắng
       clean = clean.replace(/\s+/g, ' ').trim();
       return clean;
     };
@@ -11230,9 +11214,9 @@ Mô tả bài giảng: "${projectDesc || ''}"
 Chương: "${chapterTitle || ''}" • Phần: "${sectionTitle || ''}"
 Mục kiến thức: [${nodeCode}] "${nodeText}"
 Thời lượng: ${dur} giây (~${targetWords} từ)
-Bố cục slide: [${visualType || 'split_screen'}]
-${summary ? `NỘI DUNG VĂN BẢN TRÊN SLIDE (đây là nguồn kiến thức chính, hãy giảng giải sâu sắc dựa trên nội dung này):\n${summary}` : ''}
-${mechanism ? `MẠCH KIẾN THỨC LIỀN KỀ (chỉ tham khảo để nối ý, TUYỆT ĐỐI không giảng hộ nội dung trang khác):\n${mechanism}` : ''}
+Kiểu trực quan: [${visualType || 'split_screen'}]
+${summary ? `Khái niệm trọng tâm: ${summary}` : ''}
+${mechanism ? `Cơ chế/Công thức: ${mechanism}` : ''}
 ${keyPoint ? `Điểm then chốt: ${keyPoint}` : ''}
 ${notes ? `GHI CHÚ RIÊNG CỦA GIẢNG VIÊN (BẮT BUỘC LÀM THEO): "${notes}"` : ''}${bridgeNote}${ragNote}
 
@@ -13468,18 +13452,6 @@ QUY TẮC BẮT BUỘC:
         console.log('[loadProjectIntoWorkspace] Đang chờ CloudDB nạp dự án:', projId);
         return;
       }
-
-      // Tự động làm sạch các explanation cũ nếu còn chứa rác bảng | --- | hoặc | | |
-      if (activeProject && Array.isArray(activeProject.detailedContent)) {
-        activeProject.detailedContent.forEach(p => {
-          if (p && p.explanation && (p.explanation.includes('| --- |') || p.explanation.includes('| | |') || p.explanation.includes('| nhỏ |') || p.explanation.includes('| mắt'))) {
-            if (typeof cleanJunkTableMarkdown === 'function') {
-              p.explanation = cleanJunkTableMarkdown(p.explanation);
-            }
-          }
-        });
-      }
-
       currentScenes = JSON.parse(JSON.stringify(activeProject.scenes || []));
 
       // [TỰ ĐỘNG ĐỒNG BỘ DỮ LIỆU SLIDE TỪ NEON CLOUD VÀO WORKSPACE]
@@ -13496,15 +13468,6 @@ QUY TẮC BẮT BUỘC:
               if (cloudData.detailedContent.length > currentLen || !activeProject.detailedContent || activeProject.detailedContent.length === 0 || cloudEnrichedCount > localEnrichedCount) {
                 console.log(`[Cloud Sync] Đã cập nhật ${cloudData.detailedContent.length} slide từ Neon Cloud vào Workspace (Enriched: ${cloudEnrichedCount})!`);
                 activeProject.detailedContent = cloudData.detailedContent;
-                if (Array.isArray(activeProject.detailedContent)) {
-                  activeProject.detailedContent.forEach(p => {
-                    if (p && p.explanation && (p.explanation.includes('| --- |') || p.explanation.includes('| | |') || p.explanation.includes('| nhỏ |') || p.explanation.includes('| mắt'))) {
-                      if (typeof cleanJunkTableMarkdown === 'function') {
-                        p.explanation = cleanJunkTableMarkdown(p.explanation);
-                      }
-                    }
-                  });
-                }
                 needReRender = true;
               }
             }
@@ -14210,42 +14173,19 @@ QUY TẮC BẮT BUỘC:
           const prevDetail = pageIndex > 0 ? activeProject?.detailedContent?.[pageIndex - 1] : null;
           const nextDetail = pageIndex < totalPages - 1 ? activeProject?.detailedContent?.[pageIndex + 1] : null;
 
-          // Hàm trích xuất nội dung văn bản thực từ explanation 2 phần (bỏ boilerplate template)
-          // Giúp tiết kiệm token khi gửi cho LLM - chỉ giữ phần chữ thực trên slide
-          function extractSlideTextContent(explanation) {
-            if (!explanation || typeof explanation !== 'string') return '';
-            // Nếu có format 2 phần, chỉ lấy Phần 1 (nội dung văn bản thực tế)
-            if (explanation.includes('1. Nội dung văn bản trên slide:')) {
-              const parts = explanation.split(/2\.\s*Mô tả và giải thích chi tiết:/i);
-              const part1 = parts[0].replace(/1\.\s*Nội dung văn bản trên slide:\s*/i, '').trim();
-              // Nếu phần 1 quá ngắn (<15 ký tự), fallback lấy cả phần 2 vì có thể Vision AI đã enrich
-              if (part1.length >= 15) return part1;
-              // Trả cả explanation nhưng trim bớt header
-              return explanation.replace(/1\.\s*Nội dung văn bản trên slide:\s*/i, '').replace(/2\.\s*Mô tả và giải thích chi tiết:\s*/i, '\n').trim();
-            }
-            // Không có format 2 phần → trả nguyên (có thể là Vision AI enriched text)
-            return explanation.trim();
-          }
-
-          // Nội dung chính của trang hiện tại (extract text thực, bỏ boilerplate)
+          // Nội dung chính của trang hiện tại
           if (pageDetail && pageDetail.explanation) {
-            summary = extractSlideTextContent(pageDetail.explanation);
+            summary = pageDetail.explanation;
           }
 
           // Bổ sung context trang trước & sau để AI nắm dòng chảy tư duy
           const contextParts = [];
           if (prevDetail && prevDetail.explanation) {
-            const prevText = extractSlideTextContent(prevDetail.explanation);
-            if (prevText.length > 10) {
-              contextParts.push(`[MẠCH KIẾN THỨC VỪA THẢO LUẬN]:\n${prevText.slice(0, 300)}${prevText.length > 300 ? '...' : ''}`);
-            }
+            contextParts.push(`[MẠCH KIẾN THỨC VỪA THẢO LUẬN]:\n${prevDetail.explanation.slice(0, 250)}${prevDetail.explanation.length > 250 ? '...' : ''}`);
           }
           // Chỉ thêm nextDetail nếu KHÔNG phải trang bìa (tránh Trang 1 cướp nội dung câu hỏi cụ thể của Trang 2)
           if (pageIndex > 0 && nextDetail && nextDetail.explanation) {
-            const nextText = extractSlideTextContent(nextDetail.explanation);
-            if (nextText.length > 10) {
-              contextParts.push(`[MẠCH KIẾN THỨC TIẾP THEO (chỉ tham khảo định hướng, TUYỆT ĐỐI KHÔNG giảng hộ hay trích dẫn lại nội dung trang sau)]:\n${nextText.slice(0, 300)}${nextText.length > 300 ? '...' : ''}`);
-            }
+            contextParts.push(`[MẠCH KIẾN THỨC TIẾP THEO (chỉ tham khảo định hướng, TUYỆT ĐỐI KHÔNG giảng hộ hay trích dẫn lại nội dung trang sau)]:\n${nextDetail.explanation.slice(0, 250)}${nextDetail.explanation.length > 250 ? '...' : ''}`);
           }
           if (contextParts.length > 0) {
             mechanism = contextParts.join('\n\n');
@@ -15428,30 +15368,6 @@ QUY TẮC BẮT BUỘC:
       return cleaned.join('\n');
     }
 
-    // HÀM LÀM SẠCH KÝ TỰ BẢNG RÁC MARKDOWN (| --- |, | | | |, | chữ |)
-    function cleanJunkTableMarkdown(text) {
-      if (!text || typeof text !== 'string') return text || '';
-      let clean = text;
-      // 1. Gỡ bỏ dòng/chuỗi ngăn cách bảng markdown: | --- | --- |
-      clean = clean.replace(/\|\s*[-:\s|]{3,}\s*\|;?/g, '');
-      clean = clean.replace(/[-:\s]{2,}\|[-:\s|]+;?/g, '');
-      // 2. Gỡ bỏ chuỗi dấu gạch đứng trống rỗng liên tiếp: | | | | |
-      clean = clean.replace(/(\|\s*){2,}/g, ' ');
-      // 3. Gỡ bỏ dấu gạch đứng đơn lẻ giữa các từ: | mắt — dung sai | nhỏ | -> mắt — dung sai nhỏ
-      clean = clean.replace(/\s*\|\s*/g, ' ');
-      // 4. Làm sạch dấu ngoặc kép thừa ký tự: "| mắt — dung sai |" -> "mắt — dung sai"
-      clean = clean.replace(/"[\s—\-]*([^"]+?)[\s—\-]*"/g, '"$1"');
-      // 5. Chuẩn hóa khoảng trắng ngang và dấu câu
-      clean = clean.replace(/[^\S\r\n]{2,}/g, ' ');
-      clean = clean.replace(/;\s*;\s*/g, '; ');
-      clean = clean.replace(/\s*;\s*,\s*/g, ', ');
-      clean = clean.replace(/:\s*;\s*/g, ': ');
-      clean = clean.replace(/\s+([,.:;])/g, '$1');
-      clean = clean.replace(/([.!?])\s*;\s*/g, '$1 ');
-      return clean.trim();
-    }
-    window.cleanJunkTableMarkdown = cleanJunkTableMarkdown;
-
     // HÀM TỰ ĐỘNG CHUẨN HÓA & SINH NỘI DUNG SƯ PHẠM 2 PHẦN CHO MỖI TRANG SLIDE (0s latency, không lag)
     function synthesizeSlidePedagogicalContent(rawText, pageNumber, totalPages) {
       if (!rawText || rawText.trim().length === 0) {
@@ -15464,9 +15380,6 @@ QUY TẮC BẮT BUỘC:
         const parts = rawText.split(/2\.\s*Mô tả và giải thích chi tiết:/i);
         actualText = parts[0].replace(/1\.\s*Nội dung văn bản trên slide:/i, '').trim();
       }
-
-      // Làm sạch dấu tích bảng rác / markdown table rác khỏi actualText
-      actualText = cleanJunkTableMarkdown(actualText);
 
       // Làm sạch khoảng trắng rác giữa các chữ cái
       let text = (typeof cleanSpacedLetters === 'function' ? cleanSpacedLetters(actualText) : actualText).trim();
@@ -15485,8 +15398,8 @@ QUY TẮC BẮT BUỘC:
       }
       const cleanContent = cleanedLines.join('\n');
 
-      let mainTitle = (cleanedLines[0] || `Trang ${pageNumber}`).replace(/^#+\s*/, '').replace(/\|/g, '').trim();
-      let bulletItems = cleanedLines.slice(1).map(b => b.replace(/^#+\s*/, '').replace(/\|/g, '').trim()).filter(b => b.length > 0 && !/^[-:\s]+$/.test(b));
+      let mainTitle = cleanedLines[0] || `Trang ${pageNumber}`;
+      let bulletItems = cleanedLines.slice(1);
       
       let pedagogicalAnalysis = '';
       if (pageNumber === 1 && bulletItems.length <= 4) {
@@ -15553,101 +15466,29 @@ QUY TẮC BẮT BUỘC:
       if (rawBlocks.length === 0) return '';
       const avgFont = fontCount > 0 ? (totalFont / fontCount) : 12;
 
-      // 0. GOM TỪ GẦN NHAU TRÊN CÙNG DÒNG (WORD MERGING - CHỐNG FALSE-POSITIVE TABLE)
-      // pdf.js trả mỗi từ/fragment là 1 item riêng → phải merge trước khi detect bảng
+      // 1. NHẬN DIỆN & PHỤC HỒI BẢNG BIỂU (TABLE GRID RECONSTRUCTION)
+      const yLineGroups = [];
       rawBlocks.sort((a, b) => a.y - b.y || a.x - b.x);
 
-      const SAME_LINE_Y_TOLERANCE = 5.0;     // px: cùng dòng nếu chênh Y ≤ 5px
-      const WORD_MERGE_GAP_MAX = 55;          // px: gap < 55px → cùng 1 cụm từ, không phải cell bảng riêng
-
-      const yLineGroupsRaw = [];
       rawBlocks.forEach(blk => {
-        let foundLine = yLineGroupsRaw.find(g => Math.abs(g.y - blk.y) <= SAME_LINE_Y_TOLERANCE);
+        let foundLine = yLineGroups.find(g => Math.abs(g.y - blk.y) <= 4.0);
         if (!foundLine) {
           foundLine = { y: blk.y, items: [] };
-          yLineGroupsRaw.push(foundLine);
+          yLineGroups.push(foundLine);
         }
         foundLine.items.push(blk);
       });
-      yLineGroupsRaw.forEach(g => g.items.sort((a, b) => a.x - b.x));
-      yLineGroupsRaw.sort((a, b) => a.y - b.y);
 
-      // Merge các items gần nhau trên cùng dòng thành 1 block duy nhất
-      function mergeLineItems(items) {
-        if (!items || items.length <= 1) return items;
-        const merged = [{ ...items[0] }];
-        for (let i = 1; i < items.length; i++) {
-          const prev = merged[merged.length - 1];
-          const cur = items[i];
-          const gap = cur.x - (prev.x + prev.w);
-          if (gap < WORD_MERGE_GAP_MAX) {
-            // Merge: nối chuỗi, mở rộng bounding box
-            const separator = (gap > 2.5) ? ' ' : '';
-            prev.str = prev.str + separator + cur.str;
-            prev.w = (cur.x + cur.w) - prev.x;
-            prev.fs = Math.max(prev.fs, cur.fs);
-          } else {
-            merged.push({ ...cur });
-          }
-        }
-        return merged;
-      }
+      yLineGroups.forEach(g => g.items.sort((a, b) => a.x - b.x));
+      yLineGroups.sort((a, b) => a.y - b.y);
 
-      const yLineGroups = yLineGroupsRaw.map(g => ({
-        y: g.y,
-        items: mergeLineItems(g.items),
-        rawItemCount: g.items.length  // Số item gốc trước khi merge
-      }));
-
-      // 1. NHẬN DIỆN & PHỤC HỒI BẢNG BIỂU (TABLE GRID RECONSTRUCTION - SIẾT CHẶT)
-      // Điều kiện bảng thực sự: >= 3 merged cells/dòng, gap giữa các cell >= 80px,
-      // và ít nhất 60% dòng phải thỏa mãn, kèm kiểm tra cột thẳng hàng
-      const TABLE_MIN_CELLS = 3;              // Ít nhất 3 cột thực sự
-      const TABLE_MIN_GAP = 80;               // Gap tối thiểu giữa các cell (px)
-      const TABLE_LINE_RATIO_THRESHOLD = 0.55; // >= 55% dòng phải có >= 3 cell
-
-      function isRealTableLine(mergedItems) {
-        if (mergedItems.length < TABLE_MIN_CELLS) return false;
-        // Kiểm tra gap giữa các cell đều >= TABLE_MIN_GAP
-        let bigGapCount = 0;
-        for (let i = 1; i < mergedItems.length; i++) {
-          const gap = mergedItems[i].x - (mergedItems[i - 1].x + mergedItems[i - 1].w);
-          if (gap >= TABLE_MIN_GAP) bigGapCount++;
-        }
-        // Cần ít nhất (TABLE_MIN_CELLS - 1) khoảng cách lớn
-        return bigGapCount >= TABLE_MIN_CELLS - 1;
-      }
-
-      const candidateTableLines = yLineGroups.filter(g => isRealTableLine(g.items));
+      const candidateTableLines = yLineGroups.filter(g => g.items.length >= 2);
       let isTableCandidate = false;
-
-      if (candidateTableLines.length >= 3) {
-        const ratio = candidateTableLines.length / yLineGroups.length;
-        if (ratio >= TABLE_LINE_RATIO_THRESHOLD) {
-          // Kiểm tra thêm: các cột có thẳng hàng không (column alignment)
-          // Lấy X positions của dòng có nhiều cell nhất làm "template"
-          let templateLine = candidateTableLines[0];
-          candidateTableLines.forEach(g => {
-            if (g.items.length > templateLine.items.length) templateLine = g;
-          });
-          const templateXs = templateLine.items.map(it => it.x);
-
-          let alignedCount = 0;
-          candidateTableLines.forEach(g => {
-            let matched = 0;
-            g.items.forEach(it => {
-              if (templateXs.some(tx => Math.abs(tx - it.x) <= 30)) matched++;
-            });
-            if (matched >= Math.min(g.items.length, templateXs.length) * 0.6) alignedCount++;
-          });
-
-          if (alignedCount >= candidateTableLines.length * 0.5) {
-            isTableCandidate = true;
-          }
-        }
+      if (candidateTableLines.length >= 2 && (candidateTableLines.length / yLineGroups.length) >= 0.4) {
+        isTableCandidate = true;
       }
 
-      if (isTableCandidate && candidateTableLines.length >= 3) {
+      if (isTableCandidate && candidateTableLines.length >= 2) {
         const mdTableLines = [];
         let maxCols = 0;
         candidateTableLines.forEach(g => {
@@ -15663,7 +15504,7 @@ QUY TẮC BẮT BUỘC:
           }
         });
 
-        if (mdTableLines.length >= 4) {
+        if (mdTableLines.length >= 3) {
           return mdTableLines.join('\n');
         }
       }
@@ -19217,7 +19058,7 @@ QUY TẮC BẮT BUỘC:
     
     function formatDetailedExplanation(text) {
       if (!text) return '';
-      let str = typeof cleanJunkTableMarkdown === 'function' ? cleanJunkTableMarkdown(String(text)) : String(text);
+      let str = String(text);
       // Escape HTML cơ bản để bảo mật
       str = str.replace(/&/g, '&amp;')
                .replace(/</g, '&lt;')
