@@ -11036,7 +11036,13 @@ LƯU Ý QUAN TRỌNG:
         const cfg = this.getConfig();
         if (!items || items.length === 0) return null;
 
-        const itemsList = items.map((it, idx) => `Phân đoạn ${idx + 1} [${it.code}]: "${it.title}" - Trọng tâm: ${it.summary || it.title} ${it.mechanism ? '| Công thức: ' + it.mechanism : ''}`).join('\n');
+        const itemsList = items.map((it, idx) => {
+           let s = it.summary || it.title || '';
+           let m = it.mechanism || '';
+           s = s.replace(/\|/g, ' ').replace(/---/g, ' ').replace(/\s{2,}/g, ' ').slice(0, 1000);
+           m = m.replace(/\|/g, ' ').replace(/---/g, ' ').replace(/\s{2,}/g, ' ').slice(0, 500);
+           return `Phân đoạn ${idx + 1} [${it.code}]: "${it.title}" - Trọng tâm: ${s} ${m ? '| Công thức: ' + m : ''}`;
+        }).join('\n');
 
         const systemPrompt = `Bạn là Chuyên gia Xây dựng Dàn ý Kịch bản Sư phạm cấp cao.
 Nhiệm vụ: Lập các câu cầu nối chuyển ý (Bridge Transitions) kết nối các phân đoạn trong cùng một chương thuộc bài giảng "${projectTitle || 'Tổng hợp'}", tạo thành một mạch kể chuyện (Narrative Arc) liền mạch từ đầu đến cuối như một bài thuyết trình hoàn chỉnh.
@@ -14173,9 +14179,10 @@ QUY TẮC BẮT BUỘC:
           const prevDetail = pageIndex > 0 ? activeProject?.detailedContent?.[pageIndex - 1] : null;
           const nextDetail = pageIndex < totalPages - 1 ? activeProject?.detailedContent?.[pageIndex + 1] : null;
 
-          // Nội dung chính của trang hiện tại
+          // Nội dung chính của trang hiện tại (làm sạch rác bảng & giới hạn 3000 ký tự để chống tràn token)
           if (pageDetail && pageDetail.explanation) {
-            summary = pageDetail.explanation;
+            let safeText = pageDetail.explanation.replace(/\|/g, ' ').replace(/---/g, ' ').replace(/\s{2,}/g, ' ');
+            summary = safeText.slice(0, 3000);
           }
 
           // Bổ sung context trang trước & sau để AI nắm dòng chảy tư duy
@@ -14298,6 +14305,11 @@ QUY TẮC BẮT BUỘC:
             // RAG search failure is non-blocking
           }
         }
+
+        // KIỂM SOÁT ĐỘ DÀI TOKEN: Chống tràn token cho các biến đầu vào từ PDF hoặc nhập tay
+        if (summary) summary = summary.replace(/\|/g, ' ').replace(/---/g, ' ').replace(/\s{2,}/g, ' ').slice(0, 4000);
+        if (mechanism) mechanism = mechanism.replace(/\|/g, ' ').replace(/---/g, ' ').replace(/\s{2,}/g, ' ').slice(0, 4000);
+        if (ragContext) ragContext = ragContext.slice(0, 4000);
 
         let scriptText = await LLMClient.generateSegmentNarration({
           projectTitle: activeProject?.title || '',
