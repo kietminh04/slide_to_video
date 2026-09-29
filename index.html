@@ -19815,7 +19815,7 @@ QUY TẮC BẮT BUỘC:
     // =========================================================================
     // PROCEDURAL BGM ENGINE (NHẠC NỀN PIANO THƯ GIÃN & AMBIENT NHẸ QUA WEB AUDIO)
     // =========================================================================
-    const BgmEngine = {
+    var BgmEngine = {
       _ctx: null,
       _masterGain: null,
       _timer: null,
@@ -20846,7 +20846,7 @@ Quy tắc bắt buộc:
     // cả chữ lẫn cơ chế sơ đồ/hình ảnh chuyên sâu, cập nhật trực tiếp vào kho RAG
     // =========================================================================
     let _isVisionEnriching = false;
-    let _visionEnrichAbortController = null;
+    var _visionEnrichAbortController = null;
 
     async function startBackgroundVisionEnrichment(project) {
       if (!project || !project.detailedContent || project.detailedContent.length === 0) return;
