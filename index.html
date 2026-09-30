@@ -15417,7 +15417,7 @@ QUY TẮC BẮT BUỘC:
     // HÀM TỰ ĐỘNG CHUẨN HÓA & SINH NỘI DUNG SƯ PHẠM 2 PHẦN CHO MỖI TRANG SLIDE (0s latency, không lag)
     function synthesizeSlidePedagogicalContent(rawText, pageNumber, totalPages) {
       if (!rawText || rawText.trim().length === 0) {
-        return `1. Nội dung văn bản trên slide:\nSlide hình ảnh bài giảng (Dạng hình ảnh trực quan / sơ đồ / minh họa đồ họa)\n\n2. Mô tả và giải thích chi tiết:\n• Khái niệm & Trực quan: Slide trình bày sơ đồ trực quan và mô hình minh họa cho nội dung bài học.\n\n• Cơ chế vận hành: Giúp người học trực quan hóa kiến thức trừu tượng thông qua biểu đồ, luồng xử lý và dữ liệu thực tiễn.\n\n• Điểm then chốt: Đóng vai trò là cầu nối thị giác giúp củng cố bản chất kỹ thuật của phân cảnh bài giảng.`;
+        return `1. Nội dung văn bản trên slide:\nSlide hình ảnh bài giảng (Dạng hình ảnh trực quan / sơ đồ / minh họa đồ họa)\n\n2. Mô tả và giải thích chi tiết:\n• Minh họa trực quan: Slide trình bày sơ đồ trực quan và mô hình minh họa bổ trợ cho bài học.\n\n• Ý nghĩa sư phạm: Giúp người học trực quan hóa kiến thức trừu tượng thông qua hình ảnh và sơ đồ luồng dữ liệu.`;
       }
 
       // Nếu rawText đã ở định dạng 2 phần, bóc tách phần 1 để lấy các dòng chữ thực tế
@@ -15432,12 +15432,12 @@ QUY TẮC BẮT BUỘC:
       text = text.replace(/\|/g, ' ').replace(/-{3,}/g, ' ').replace(/\s{2,}/g, ' ');
 
       // Ghép nối các dòng ngắt vụn do số thứ tự (ví dụ: "1\nKhái niệm" -> "1. Khái niệm")
-      const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+      const rawLines = text.split('\n').map(l => l.trim()).filter(Boolean);
       const cleanedLines = [];
-      for (let i = 0; i < lines.length; i++) {
-        const cur = lines[i];
-        if (/^\d+$/.test(cur) && i + 1 < lines.length && !/^\d+$/.test(lines[i + 1])) {
-          cleanedLines.push(`${cur}. ${lines[i + 1]}`);
+      for (let i = 0; i < rawLines.length; i++) {
+        const cur = rawLines[i];
+        if (/^\d+$/.test(cur) && i + 1 < rawLines.length && !/^\d+$/.test(rawLines[i + 1])) {
+          cleanedLines.push(`${cur}. ${rawLines[i + 1]}`);
           i++;
         } else {
           cleanedLines.push(cur);
@@ -15445,20 +15445,64 @@ QUY TẮC BẮT BUỘC:
       }
       const cleanContent = cleanedLines.join('\n');
 
-      let mainTitle = cleanedLines[0] || `Trang ${pageNumber}`;
-      let bulletItems = cleanedLines.slice(1);
-      
+      // 1. TRÍCH XUẤT TIÊU ĐỀ THỰC SỰ (BỎ QUA CÁC THẺ LAYOUT [Cột Trái], [Cột Phải], [Phần 1], ###, ---)
+      let realTitle = "";
+      const candidateBullets = [];
+
+      cleanedLines.forEach(l => {
+        let cleanL = l.replace(/\|/g, '').replace(/-{2,}/g, '').replace(/\s{2,}/g, ' ').trim();
+        cleanL = cleanL.replace(/^#{1,6}\s*/, '').replace(/^[-•*]\s*/, '').trim();
+        // Bỏ qua các nhãn bố cục kỹ thuật và dòng phân cách
+        if (!cleanL || /^\[(?:Cột|Phần|Giai\s*đoạn).*?\]$/i.test(cleanL) || /^[-=~]{2,}$/.test(cleanL)) {
+          return;
+        }
+        if (!realTitle && cleanL.length >= 4) {
+          realTitle = cleanL;
+        } else if (cleanL.length >= 3 && cleanL !== realTitle) {
+          candidateBullets.push(cleanL);
+        }
+      });
+
+      if (!realTitle) realTitle = `Trang ${pageNumber}`;
+
+      // 2. LÀM SẠCH CÁC ĐIỂM NHẤN NỘI DUNG (LOẠI BỎ RÁC, TỪ CỤT, GHÉP CÂU)
+      const validPoints = candidateBullets
+        .map(b => b.replace(/^[-•*–—]\s*/, '').replace(/[;:]+$/, '').trim())
+        .filter(b => b.length >= 6 && !/^\d+$/.test(b) && !/^(trang|slide)\s*\d+$/i.test(b))
+        .slice(0, 4);
+
+      let keyPointsBlock = '';
+      if (validPoints.length > 0) {
+        keyPointsBlock = `\n\n• Các luận điểm & chi tiết then chốt:\n` + validPoints.map(p => `  - ${p}`).join('\n');
+      }
+
+      // 3. NHẬN DIỆN THỂ LOẠI NỘI DUNG ĐỂ SINH VĂN PHONG SƯ PHẠM ĐỘNG (DYNAMIC CONTEXT)
+      const combinedContext = (realTitle + " " + candidateBullets.join(" ")).toLowerCase();
+
+      const isTOC = /nội\s*dung\s*bài\s*học|mục\s*lục|lộ\s*trình|chương\s*trình/i.test(combinedContext)
+        || (pageNumber <= 3 && candidateBullets.length >= 3 && candidateBullets.some(b => /^\d+\./.test(b)));
+
+      const isComparison = /so\s*sánh|ngược\s*nhau|\bvs\b|top-down|bottom-up|khác\s*nhau|ngày\s*\d|giai\s*đoạn|ưu\s*nhược/i.test(combinedContext);
+
+      const isTechnicalDef = /visibility|ký\s*hiệu|trạng\s*thái|khái\s*niệm|định\s*nghĩa|\bflag\b|tham\s*số|\bloss\b|\biou\b|\bkeypoint\b|\bbox\b/i.test(combinedContext);
+
       let pedagogicalAnalysis = '';
-      if (pageNumber === 1 && bulletItems.length <= 4) {
-        pedagogicalAnalysis = `• Bối cảnh & Định danh học phần: Slide mở đầu giới thiệu chủ đề tổng quan "${mainTitle}" của bài giảng. Thiết lập các thông tin định danh chuyên môn, đơn vị đào tạo và lộ trình bài giảng.\n\n` +
-          `• Mục tiêu sư phạm cốt lõi: Khởi động nhận thức cho học viên, định vị bức tranh toàn cảnh về nền tảng lý thuyết và các khối kiến thức trọng tâm sẽ được triển khai xuyên suốt bài học.\n\n` +
-          `• Phương pháp luận tiếp cận: Định hướng cấu trúc phân rã bài giảng từ tổng quan đến chuyên sâu, giúp người học định hình các khái niệm then chốt.`;
+
+      if (pageNumber === 1 && candidateBullets.length <= 4) {
+        pedagogicalAnalysis = `• Bối cảnh & Khởi động học phần: Thiết lập chủ đề khởi đầu "${realTitle}". Giới thiệu tổng quan định danh chuyên môn, đơn vị đào tạo và phạm vi kiến thức.${keyPointsBlock}\n\n` +
+          `• Mục tiêu sư phạm cốt lõi: Khơi gợi tư duy cho học viên, định vị bức tranh toàn cảnh về lý thuyết và định hướng các kỹ năng thực hành then chốt sẽ được triển khai.`;
+      } else if (isTOC) {
+        pedagogicalAnalysis = `• Bức tranh tổng quan: Thiết lập lộ trình học tập xoay quanh chủ đề "${realTitle}".${keyPointsBlock}\n\n` +
+          `• Mục tiêu tiếp thu: Giúp người học định hình cấu trúc toàn bộ bài học, hiểu rõ trình tự phân rã kiến thức từ nguyên lý nền tảng đến quy trình ứng dụng thực tế.`;
+      } else if (isComparison) {
+        pedagogicalAnalysis = `• Bản chất đối sánh: Đặt các phương pháp và hướng tiếp cận kỹ thuật cạnh nhau nhằm làm nổi bật sự khác biệt cốt lõi trong chủ đề "${realTitle}".${keyPointsBlock}\n\n` +
+          `• Định hướng ứng dụng: Phân tích ưu nhược điểm về độ chính xác và tài nguyên tính toán giữa các luồng kiến trúc, giúp người học có cơ sở lựa chọn giải pháp tối ưu cho từng bài toán thực tiễn.`;
+      } else if (isTechnicalDef) {
+        pedagogicalAnalysis = `• Nội hàm kỹ thuật: Đi sâu vào bản chất và nguyên lý vận hành của "${realTitle}", làm rõ các quy chuẩn định dạng và trường hợp xử lý cụ thể.${keyPointsBlock}\n\n` +
+          `• Giá trị cốt lõi: Chuẩn hóa cách hiểu về cấu trúc dữ liệu và tham số, đảm bảo việc tiền xử lý, gán nhãn và huấn luyện mô hình đạt độ chính xác cao.`;
       } else {
-        const cleanTitle = mainTitle.replace(/\|/g, '').replace(/-{2,}/g, '').replace(/\s{2,}/g, ' ').trim();
-        const topPoints = bulletItems.slice(0, 5).map(b => b.replace(/\|/g, '').replace(/-{2,}/g, '').replace(/\s{2,}/g, ' ').trim()).filter(Boolean).join('; ');
-        pedagogicalAnalysis = `• Khái niệm & Luận điểm trọng tâm: Slide phân tích chuyên sâu về chủ đề "${cleanTitle}". Cung cấp cơ sở lý thuyết và các luận điểm nền tảng${topPoints ? ': ' + topPoints : '.'}\n\n` +
-          `• Cơ chế vận hành & Trình tự logic: Trình bày mạch lạc theo cấu trúc diễn dịch, phân tích mối quan hệ giữa các thành phần trên slide. Làm sáng tỏ nguyên lý vận hành, sự đánh đổi (trade-offs) và quy trình thực thi kỹ thuật nhằm đảm bảo người học nắm vững bản chất học thuật.\n\n` +
-          `• Điểm then chốt & Tra cứu học thuật: Nêu bật các từ khóa và kết luận then chốt phục vụ việc đọc hiểu, ôn tập và đối sánh dữ liệu trong hệ thống Vector Database & RAG.`;
+        pedagogicalAnalysis = `• Trọng tâm bài giảng: Phân tích sâu sắc các luận điểm chính về "${realTitle}".${keyPointsBlock}\n\n` +
+          `• Ý nghĩa học thuật: Kết nối các khái niệm thành một chuỗi logic chặt chẽ, hỗ trợ người học nắm vững kiến thức nền tảng và vận dụng hiệu quả vào bài toán.`;
       }
 
       return `1. Nội dung văn bản trên slide:\n${cleanContent}\n\n2. Mô tả và giải thích chi tiết:\n${pedagogicalAnalysis}`;
@@ -15559,12 +15603,12 @@ QUY TẮC BẮT BUỘC:
         }).join('\n');
       }
 
-      // TÁCH PHẦN TIÊU ĐỀ SLIDE (HEADER ZONE: 20% ĐỈNH MÀN HÌNH)
+      // TÁCH PHẦN TIÊU ĐỀ SLIDE (HEADER ZONE: 28% ĐỈNH MÀN HÌNH)
       const headerItems = [];
       const bodyItems = [];
 
       rawBlocks.forEach(blk => {
-        if (blk.y < H * 0.20 && (blk.fs >= avgFont * 1.15 || blk.w > W * 0.4)) {
+        if (blk.y < H * 0.28 && (blk.fs >= avgFont * 1.10 || blk.w > W * 0.35)) {
           headerItems.push(blk);
         } else {
           bodyItems.push(blk);
