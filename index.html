@@ -11214,7 +11214,11 @@ QUY TẮC CỐT LÕI BẮT BUỘC:
    - TUYỆT ĐỐI KHÔNG mô tả ảnh nền slide, phong cảnh, tòa nhà, trường học (như VinUni, Bách Khoa...), logo hay hình ảnh trang trí bên lề.
    - CHỈ ĐƯỢC NHẮC ĐẾN HÌNH ẢNH khi đó là SƠ ĐỒ KỸ THUẬT, KIẾN TRÚC MÔ HÌNH (Pipeline, Architecture), ĐỒ THỊ TOÁN HỌC hoặc BẢNG SỐ LIỆU trực tiếp chứa kiến thức bài giảng.
 
-5. Chèn các thẻ nhịp ngắt chuẩn sư phạm để giọng đọc AI truyền cảm:
+5. ⚠️ XỬ LÝ DỮ LIỆU ĐẦU VÀO ĐÚNG CẤU TRÚC (BẢNG/CỘT):
+   - Khi đầu vào có dạng Markdown [Cột Trái], [Cột Phải] hoặc bảng: Bạn phải đối chiếu cẩn thận hàng ngang (Ví dụ: "Box+ID" tương ứng với "5 con số", "17 điểm" tương ứng với "cúi xuống, giơ tay").
+   - Tuyệt đối không gán râu ông nọ cắm cằm bà kia do đọc lướt.
+   
+6. Chèn các thẻ nhịp ngắt chuẩn sư phạm để giọng đọc AI truyền cảm:
    - [P1] (ngắt ngắn 0.5s giữa các mệnh đề hoặc ý nhỏ)
    - [P2] (ngắt 1.0s khi chuyển ý quan trọng hoặc kết thúc luận điểm)
    - [P3] (ngắt 1.5s để người học ngẫm nghĩ sau khái niệm cốt lõi)
@@ -14215,7 +14219,7 @@ QUY TẮC BẮT BUỘC:
 
           // Nội dung chính của trang hiện tại (làm sạch rác bảng & giới hạn 3000 ký tự để chống tràn token)
           if (pageDetail && pageDetail.explanation) {
-            let safeText = pageDetail.explanation.replace(/\|/g, ' ').replace(/---/g, ' ').replace(/\s{2,}/g, ' ');
+            let safeText = pageDetail.explanation;
             summary = safeText.slice(0, 3000);
           }
 
@@ -14341,8 +14345,8 @@ QUY TẮC BẮT BUỘC:
         }
 
         // KIỂM SOÁT ĐỘ DÀI TOKEN: Chống tràn token cho các biến đầu vào từ PDF hoặc nhập tay
-        if (summary) summary = summary.replace(/\|/g, ' ').replace(/---/g, ' ').replace(/\s{2,}/g, ' ').slice(0, 4000);
-        if (mechanism) mechanism = mechanism.replace(/\|/g, ' ').replace(/---/g, ' ').replace(/\s{2,}/g, ' ').slice(0, 4000);
+        if (summary) summary = summary.slice(0, 4000);
+        if (mechanism) mechanism = mechanism.slice(0, 4000);
         if (ragContext) ragContext = ragContext.slice(0, 4000);
 
         let scriptText = await LLMClient.generateSegmentNarration({
@@ -15434,7 +15438,7 @@ QUY TẮC BẮT BUỘC:
       // Xử lý Section 2: Mô tả (Format HTML cho đẹp mắt để giải thích rõ cấu trúc)
       let formattedAnalysis = actualText
         .replace(/^###\s*(.*)$/gm, '🎯 **$1**')
-        .replace(/^[-*]\s+/gm, '&nbsp;&nbsp;• ')
+        .replace(/^[-*]\s+/gm, '    • ')
         .replace(/\[Cột\s*(Trái|Phải|Giữa)\]/gi, '\n👉 **$&**')
         .replace(/\|/g, ' ⏐ '); 
 
