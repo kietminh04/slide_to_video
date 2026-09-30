@@ -15897,80 +15897,94 @@ QUY TẮC BẮT BUỘC:
         if (totalPages <= 80) isSlideDeck = true;
       }
 
-      // 1. Tự động trích xuất toàn bộ ảnh thumbnail cho Sơ Đồ và Tab Nội Dung
+      // 1. Tự động trích xuất toàn bộ ảnh thumbnail cho Sơ Đồ và Tab Nội Dung (100% CỤC BỘ QUA PDF.JS - 0 TOKEN)
       updateLoading("Đang nạp toàn bộ slide...", "Chụp ảnh và trích xuất sơ bộ từng trang...");
       const detailedContent = await ingestAllPdfSlides(pdf, totalPages);
 
-      // ƯU TIÊN SỐ 1 CHO SÁCH / GIÁO TRÌNH DÀY: BÓC TÁCH HYBRID THEO MỤC LỤC (TIẾT KIỆM TOKEN, CHUẨN TỪNG TRANG)
-      try {
-        updateLoading("Đang phân tích...", "Vui lòng chờ trong giây lát...");
-        const tocResult = await extractPdfHybridTOC(pdf, totalPages, fileName);
-        if (tocResult && tocResult.chapters && tocResult.chapters.length > 0) {
-          console.log(`[PDF Extractor] 🌟 Bóc tách thành công qua Mục lục Hybrid TOC: ${tocResult.chapters.length} chương!`);
-          tocResult.detailedContent = detailedContent;
-          return tocResult;
-        }
-      } catch (tocErr) {
-        console.warn('[PDF Extractor] Lỗi bóc tách TOC, chuyển sang bước tiếp theo:', tocErr);
-      }
-
       const rawText = await extractAllPdfText(pdf, Math.min(totalPages, 50));
+      const cleanTitle = (fileName || '').replace(/\.[^/.]+$/, "");
 
-      // ƯU TIÊN SỐ 2: GỌI LLM CHO OUTLINE TỔNG THỂ NẾU KHÔNG CÓ MỤC LỤC
-      if (rawText && rawText.trim().length >= 50) {
+      // NẾU NGƯỜI DÙNG CHỦ ĐỘNG BẬT CỜ DÙNG AI (MẶC ĐỊNH LÀ FALSE ĐỂ 0 TOKEN / 0 API)
+      const useAiOutline = (typeof document !== 'undefined' && document.getElementById('use-ai-outline')?.checked) || false;
+      if (useAiOutline) {
         try {
           updateLoading("Đang phân tích...", "Vui lòng chờ trong giây lát...");
-          const aiResult = await LLMClient.extractDocumentOutlineWithAI(rawText, fileName);
-          if (aiResult && aiResult.chapters && aiResult.chapters.length > 0) {
-            console.log(`[PDF Extractor] ✨ LLM đã bóc tách thành công ${aiResult.chapters.length} chương chuẩn sư phạm cho ${fileName}`);
-            return {
-              title: (fileName || '').replace(/\.[^/.]+$/, ""),
-              totalPages,
-              chapters: aiResult.chapters,
-              detailedContent: detailedContent,
-              method: 'llm-openai'
-            };
+          const tocResult = await extractPdfHybridTOC(pdf, totalPages, fileName);
+          if (tocResult && tocResult.chapters && tocResult.chapters.length > 0) {
+            console.log(`[PDF Extractor] 🌟 Bóc tách thành công qua Mục lục Hybrid TOC: ${tocResult.chapters.length} chương!`);
+            tocResult.detailedContent = detailedContent;
+            return tocResult;
           }
-        } catch (aiErr) {
-          console.warn('[PDF Extractor] LLM không khả dụng hoặc lỗi mạng, tự động fallback sang bộ bóc tách tĩnh:', aiErr);
+        } catch (tocErr) {
+          console.warn('[PDF Extractor] Lỗi bóc tách TOC:', tocErr);
+        }
+
+        if (rawText && rawText.trim().length >= 50) {
+          try {
+            updateLoading("Đang phân tích...", "Vui lòng chờ trong giây lát...");
+            const aiResult = await LLMClient.extractDocumentOutlineWithAI(rawText, fileName);
+            if (aiResult && aiResult.chapters && aiResult.chapters.length > 0) {
+              return {
+                title: cleanTitle,
+                totalPages,
+                chapters: aiResult.chapters,
+                detailedContent: detailedContent,
+                method: 'llm-openai'
+              };
+            }
+          } catch (aiErr) {
+            console.warn('[PDF Extractor] LLM lỗi, fallback sang bộ bóc tách tĩnh:', aiErr);
+          }
         }
       }
 
-      // ƯU TIÊN 2: PDF Outline/Bookmarks (LaTeX hyperref, Word Export, v.v.)
+      // MẶC ĐỊNH TUYỆT ĐỐI: BÓC TÁCH CẤU TRÚC 100% CỤC BỘ (0 TOKEN, 0 API CALLS)
+      // 1. PDF Outline/Bookmarks (LaTeX hyperref, Word Export, v.v.)
       let outline = null;
       try { outline = await pdf.getOutline(); } catch (e) { }
 
       if (outline && outline.length > 0) {
         const chapters = await buildChaptersFromOutline(pdf, outline, totalPages);
         if (chapters.length > 0) {
-          return { title: '', totalPages, chapters, method: 'pdf-outline' };
+          return { title: cleanTitle, totalPages, chapters, detailedContent, method: 'pdf-outline' };
         }
       }
 
-      // ƯU TIÊN 3: Font-size hierarchy (quét toàn bộ trang)
-      const chapters = await buildChaptersFromFontSize(pdf, totalPages);
-      if (chapters.length > 0) {
-        return { title: '', totalPages, chapters, method: 'pdf-fontsize' };
-      }
+      // 2. Font-size hierarchy (quét toàn bộ trang)
+      try {
+        const chapters = await buildChaptersFromFontSize(pdf, totalPages);
+        if (chapters && chapters.length > 0) {
+          return { title: cleanTitle, totalPages, chapters, detailedContent, method: 'pdf-fontsize' };
+        }
+      } catch (e) { }
 
-      // ƯU TIÊN 4: Trích text thô + regex heading
-      const regexChapters = buildChaptersFromRegex(rawText);
-      if (regexChapters.length > 0) {
-        return { title: '', totalPages, chapters: regexChapters, method: 'pdf-regex' };
-      }
+      // 3. Trích text thô + regex heading
+      try {
+        const regexChapters = buildChaptersFromRegex(rawText);
+        if (regexChapters && regexChapters.length > 0) {
+          return { title: cleanTitle, totalPages, chapters: regexChapters, detailedContent, method: 'pdf-regex' };
+        }
+      } catch (e) { }
 
-      // ƯU TIÊN 5: BÓC TÁCH PHÂN ĐOẠN ĐA TRANG TOÀN NĂNG (Đảm bảo 100% PDF đều trích xuất thành công)
+      // 4. BÓC TÁCH PHÂN ĐOẠN ĐA TRANG THÍCH ỨNG (Adaptive Page Progression)
       const pageChapters = await buildChaptersFromPages(pdf, totalPages, fileName);
       if (pageChapters && pageChapters.length > 0) {
         return {
-          title: (fileName || '').replace(/\.[^/.]+$/, ""),
+          title: cleanTitle,
           totalPages,
           chapters: pageChapters,
+          detailedContent,
           method: 'pdf-page-adaptive'
         };
       }
 
-      return null;
+      return {
+        title: cleanTitle,
+        totalPages,
+        chapters: [{ chapter: "CHƯƠNG 1", title: cleanTitle, sections: [{ code: "1.1", title: cleanTitle, items: [{ code: "1.1.1", title: cleanTitle, pdfStart: 1, pdfEnd: totalPages, pageRange: `Slide 1 - ${totalPages}` }] }] }],
+        detailedContent,
+        method: 'fallback-single'
+      };
     }
 
     // Bộ bóc tách thích ứng đa trang (Universal Page-by-Page Smart Grouping)
@@ -16462,9 +16476,10 @@ QUY TẮC BẮT BUỘC:
         elements.push({ level: headingLevel, text });
       }
 
-      // ƯU TIÊN SỐ 1: GỌI LLM 1 LẦN MẶC ĐỊNH ĐỂ TRÍCH XUẤT TÓM TẮT & SƠ ĐỒ CHUẨN SƯ PHẠM
+      // NẾU NGƯỜI DÙNG BẬT CỜ DÙNG AI (MẶC ĐỊNH FALSE ĐỂ 0 TOKEN)
+      const useAiOutline = (typeof document !== 'undefined' && document.getElementById('use-ai-outline')?.checked) || false;
       const rawDocxText = elements.map(e => e.text).join('\n');
-      if (rawDocxText && rawDocxText.trim().length >= 50) {
+      if (useAiOutline && rawDocxText && rawDocxText.trim().length >= 50) {
         try {
           updateLoading("Đang Dùng AI Lập Sơ Đồ & Tóm Tắt...", `Đang phân tích cấu trúc bài giảng từ ${fileName || 'DOCX'} qua LLM...`);
           const aiResult = await LLMClient.extractDocumentOutlineWithAI(rawDocxText, fileName);
@@ -16609,9 +16624,10 @@ QUY TẮC BẮT BUỘC:
         });
       }
 
-      // ƯU TIÊN SỐ 1: GỌI LLM 1 LẦN MẶC ĐỊNH ĐỂ TRÍCH XUẤT TÓM TẮT & SƠ ĐỒ CHUẨN SƯ PHẠM
+      // NẾU NGƯỜI DÙNG BẬT CỜ DÙNG AI (MẶC ĐỊNH FALSE ĐỂ 0 TOKEN)
+      const useAiOutline = (typeof document !== 'undefined' && document.getElementById('use-ai-outline')?.checked) || false;
       const rawPptxText = chapters.map(ch => `[SLIDE ${ch.chapter.replace('SLIDE ', '')}] TIÊU ĐỀ: ${ch.title}\nNỘI DUNG:\n${ch.cleanLines.join('\n')}`).join('\n\n');
-      if (rawPptxText && rawPptxText.trim().length >= 50) {
+      if (useAiOutline && rawPptxText && rawPptxText.trim().length >= 50) {
         try {
           updateLoading("Đang Dùng AI Lập Sơ Đồ & Tóm Tắt...", `Đang phân tích cấu trúc bài giảng từ ${fileName || 'PPTX'} qua LLM...`);
           const aiResult = await LLMClient.extractDocumentOutlineWithAI(rawPptxText, fileName);
