@@ -15471,39 +15471,14 @@ QUY TẮC BẮT BUỘC:
         .filter(b => b.length >= 6 && !/^\d+$/.test(b) && !/^(trang|slide)\s*\d+$/i.test(b))
         .slice(0, 4);
 
-      let keyPointsBlock = '';
+      // 3. TẠO CẤU TRÚC GIẢI THÍCH (0-TOKEN FALLBACK) THẬT GỌN GÀNG VÀ CHÂN THỰC
+      let pedagogicalAnalysis = `• Tổng quan nội dung: Trang bài giảng tập trung trình bày về chủ đề "${realTitle}".\n\n`;
+      
       if (validPoints.length > 0) {
-        keyPointsBlock = `\n\n• Các luận điểm & chi tiết then chốt:\n` + validPoints.map(p => `  - ${p}`).join('\n');
+        pedagogicalAnalysis += `• Các nội dung / luận điểm chính được bóc tách:\n` + validPoints.map(p => `  - ${p}`).join('\n') + `\n\n`;
       }
-
-      // 3. NHẬN DIỆN THỂ LOẠI NỘI DUNG ĐỂ SINH VĂN PHONG SƯ PHẠM ĐỘNG (DYNAMIC CONTEXT)
-      const combinedContext = (realTitle + " " + candidateBullets.join(" ")).toLowerCase();
-
-      const isTOC = /nội\s*dung\s*bài\s*học|mục\s*lục|lộ\s*trình|chương\s*trình/i.test(combinedContext)
-        || (pageNumber <= 3 && candidateBullets.length >= 3 && candidateBullets.some(b => /^\d+\./.test(b)));
-
-      const isComparison = /so\s*sánh|ngược\s*nhau|\bvs\b|top-down|bottom-up|khác\s*nhau|ngày\s*\d|giai\s*đoạn|ưu\s*nhược/i.test(combinedContext);
-
-      const isTechnicalDef = /visibility|ký\s*hiệu|trạng\s*thái|khái\s*niệm|định\s*nghĩa|\bflag\b|tham\s*số|\bloss\b|\biou\b|\bkeypoint\b|\bbox\b/i.test(combinedContext);
-
-      let pedagogicalAnalysis = '';
-
-      if (pageNumber === 1 && candidateBullets.length <= 4) {
-        pedagogicalAnalysis = `• Bối cảnh & Khởi động học phần: Thiết lập chủ đề khởi đầu "${realTitle}". Giới thiệu tổng quan định danh chuyên môn, đơn vị đào tạo và phạm vi kiến thức.${keyPointsBlock}\n\n` +
-          `• Mục tiêu sư phạm cốt lõi: Khơi gợi tư duy cho học viên, định vị bức tranh toàn cảnh về lý thuyết và định hướng các kỹ năng thực hành then chốt sẽ được triển khai.`;
-      } else if (isTOC) {
-        pedagogicalAnalysis = `• Bức tranh tổng quan: Thiết lập lộ trình học tập xoay quanh chủ đề "${realTitle}".${keyPointsBlock}\n\n` +
-          `• Mục tiêu tiếp thu: Giúp người học định hình cấu trúc toàn bộ bài học, hiểu rõ trình tự phân rã kiến thức từ nguyên lý nền tảng đến quy trình ứng dụng thực tế.`;
-      } else if (isComparison) {
-        pedagogicalAnalysis = `• Bản chất đối sánh: Đặt các phương pháp và hướng tiếp cận kỹ thuật cạnh nhau nhằm làm nổi bật sự khác biệt cốt lõi trong chủ đề "${realTitle}".${keyPointsBlock}\n\n` +
-          `• Định hướng ứng dụng: Phân tích ưu nhược điểm về độ chính xác và tài nguyên tính toán giữa các luồng kiến trúc, giúp người học có cơ sở lựa chọn giải pháp tối ưu cho từng bài toán thực tiễn.`;
-      } else if (isTechnicalDef) {
-        pedagogicalAnalysis = `• Nội hàm kỹ thuật: Đi sâu vào bản chất và nguyên lý vận hành của "${realTitle}", làm rõ các quy chuẩn định dạng và trường hợp xử lý cụ thể.${keyPointsBlock}\n\n` +
-          `• Giá trị cốt lõi: Chuẩn hóa cách hiểu về cấu trúc dữ liệu và tham số, đảm bảo việc tiền xử lý, gán nhãn và huấn luyện mô hình đạt độ chính xác cao.`;
-      } else {
-        pedagogicalAnalysis = `• Trọng tâm bài giảng: Phân tích sâu sắc các luận điểm chính về "${realTitle}".${keyPointsBlock}\n\n` +
-          `• Ý nghĩa học thuật: Kết nối các khái niệm thành một chuỗi logic chặt chẽ, hỗ trợ người học nắm vững kiến thức nền tảng và vận dụng hiệu quả vào bài toán.`;
-      }
+      
+      pedagogicalAnalysis += `(Lưu ý: Đây là nội dung được trích xuất tự động qua bộ đọc chữ cục bộ. Để phân tích học thuật chuyên sâu, đánh giá cấu trúc và giải thích chi tiết ý nghĩa sư phạm, vui lòng bấm nút "✨ Phân Tích Lại Trang Này (AI)" bên dưới để kích hoạt AI đa phương thức).`;
 
       return `1. Nội dung văn bản trên slide:\n${cleanContent}\n\n2. Mô tả và giải thích chi tiết:\n${pedagogicalAnalysis}`;
     }
