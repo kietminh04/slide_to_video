@@ -17324,10 +17324,6 @@ QUY TẮC BẮT BUỘC:
         loadProjectIntoWorkspace(projData.id);
         switchView('workspace');
         showToast(`Đã sinh kịch bản bài giảng thành công từ ${file.name}!`);
-        
-        setTimeout(() => {
-          if (typeof triggerRagIngestion === 'function') triggerRagIngestion();
-        }, 1000);
       } catch (err) {
         console.error("[Create Project Error]", err);
         hideLoading();
@@ -19013,11 +19009,6 @@ QUY TẮC BẮT BUỘC:
           renderMindmap();
           renderScriptDocument();
           updateTuningPanel();
-          // TỰ ĐỘNG NẠP RAG NGAY KHI PHÂN TÍCH XONG
-          setTimeout(() => {
-            if (typeof triggerRagIngestion === 'function') triggerRagIngestion();
-          }, 1000);
-
 
           // Lưu vào local cache và Neon Cloud
           try {
@@ -21219,10 +21210,7 @@ Quy tắc bắt buộc:
         CloudDB.save(project);
       }
 
-      // Tự động đồng bộ vào Vector Database (RAG)
-      if (typeof triggerRagIngestion === 'function') {
-        triggerRagIngestion();
-      }
+
       showToast('✅ Đã hoàn tất phân tích nội dung sư phạm cho toàn bộ slide!');
     }
 
