@@ -15433,13 +15433,13 @@ QUY TẮC BẮT BUỘC:
 
       // Xử lý Section 2: Mô tả (Format HTML cho đẹp mắt để giải thích rõ cấu trúc)
       let formattedAnalysis = actualText
-        .replace(/^###\s*(.*)$/gm, '🎯 <b>$1</b>')
+        .replace(/^###\s*(.*)$/gm, '🎯 **$1**')
         .replace(/^[-*]\s+/gm, '&nbsp;&nbsp;• ')
-        .replace(/\[Cột\s*(Trái|Phải|Giữa)\]/gi, '\n👉 <b>$&</b>')
+        .replace(/\[Cột\s*(Trái|Phải|Giữa)\]/gi, '\n👉 **$&**')
         .replace(/\|/g, ' ⏐ '); 
 
-      let pedagogicalAnalysis = `💡 <b>CẤU TRÚC KHÔNG GIAN</b> (Bóc tách 0-Token bằng XY-Cut):\n\n${formattedAnalysis}\n\n`;
-      pedagogicalAnalysis += `<i>*(Lưu ý: Bố cục trên được nhận diện tự động bằng thuật toán hình học và kích thước Font chữ. Để giải thích sâu ý nghĩa sư phạm, vui lòng dùng nút "✨ Phân Tích Lại (AI)").*</i>`;
+      let pedagogicalAnalysis = `💡 **CẤU TRÚC KHÔNG GIAN** (Bóc tách 0-Token bằng XY-Cut):\n\n${formattedAnalysis}\n\n`;
+      pedagogicalAnalysis += `*(Lưu ý: Bố cục trên được nhận diện tự động bằng thuật toán hình học và kích thước Font chữ. Để giải thích sâu ý nghĩa sư phạm, vui lòng dùng nút "✨ Phân Tích Lại (AI)").*`;
 
       return `1. Nội dung văn bản trên slide:\n${cleanContent}\n\n2. Mô tả và giải thích chi tiết:\n${pedagogicalAnalysis}`;
     }
