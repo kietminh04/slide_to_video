@@ -15444,69 +15444,6 @@ QUY TẮC BẮT BUỘC:
       return `1. Nội dung văn bản trên slide:\n${cleanContent}\n\n2. Mô tả và giải thích chi tiết:\n${pedagogicalAnalysis}`;
     }
 
-      // Nếu rawText đã ở định dạng 2 phần, bóc tách phần 1 để lấy các dòng chữ thực tế
-      let actualText = rawText;
-      if (rawText.includes('1. Nội dung văn bản trên slide:')) {
-        const parts = rawText.split(/2\.\s*Mô tả và giải thích chi tiết:/i);
-        actualText = parts[0].replace(/1\.\s*Nội dung văn bản trên slide:/i, '').trim();
-      }
-
-      // Làm sạch khoảng trắng rác và gỡ bỏ hoàn toàn ký tự bảng | hoặc --- nếu có
-      let text = (typeof cleanSpacedLetters === 'function' ? cleanSpacedLetters(actualText) : actualText).trim();
-      text = text.replace(/\|/g, ' ').replace(/-{3,}/g, ' ').replace(/\s{2,}/g, ' ');
-
-      // Ghép nối các dòng ngắt vụn do số thứ tự (ví dụ: "1\nKhái niệm" -> "1. Khái niệm")
-      const rawLines = text.split('\n').map(l => l.trim()).filter(Boolean);
-      const cleanedLines = [];
-      for (let i = 0; i < rawLines.length; i++) {
-        const cur = rawLines[i];
-        if (/^\d+$/.test(cur) && i + 1 < rawLines.length && !/^\d+$/.test(rawLines[i + 1])) {
-          cleanedLines.push(`${cur}. ${rawLines[i + 1]}`);
-          i++;
-        } else {
-          cleanedLines.push(cur);
-        }
-      }
-      const cleanContent = cleanedLines.join('\n');
-
-      // 1. TRÍCH XUẤT TIÊU ĐỀ THỰC SỰ (BỎ QUA CÁC THẺ LAYOUT [Cột Trái], [Cột Phải], [Phần 1], ###, ---)
-      let realTitle = "";
-      const candidateBullets = [];
-
-      cleanedLines.forEach(l => {
-        let cleanL = l.replace(/\|/g, '').replace(/-{2,}/g, '').replace(/\s{2,}/g, ' ').trim();
-        cleanL = cleanL.replace(/^#{1,6}\s*/, '').replace(/^[-•*]\s*/, '').trim();
-        // Bỏ qua các nhãn bố cục kỹ thuật và dòng phân cách
-        if (!cleanL || /^\[(?:Cột|Phần|Giai\s*đoạn).*?\]$/i.test(cleanL) || /^[-=~]{2,}$/.test(cleanL)) {
-          return;
-        }
-        if (!realTitle && cleanL.length >= 4) {
-          realTitle = cleanL;
-        } else if (cleanL.length >= 3 && cleanL !== realTitle) {
-          candidateBullets.push(cleanL);
-        }
-      });
-
-      if (!realTitle) realTitle = `Trang ${pageNumber}`;
-
-      // 2. LÀM SẠCH CÁC ĐIỂM NHẤN NỘI DUNG (LOẠI BỎ RÁC, TỪ CỤT, GHÉP CÂU)
-      const validPoints = candidateBullets
-        .map(b => b.replace(/^[-•*–—]\s*/, '').replace(/[;:]+$/, '').trim())
-        .filter(b => b.length >= 6 && !/^\d+$/.test(b) && !/^(trang|slide)\s*\d+$/i.test(b))
-        .slice(0, 4);
-
-      // 3. TẠO CẤU TRÚC GIẢI THÍCH (0-TOKEN FALLBACK) THẬT GỌN GÀNG VÀ CHÂN THỰC
-      let pedagogicalAnalysis = `• Tổng quan nội dung: Trang bài giảng tập trung trình bày về chủ đề "${realTitle}".\n\n`;
-      
-      if (validPoints.length > 0) {
-        pedagogicalAnalysis += `• Các nội dung / luận điểm chính được bóc tách:\n` + validPoints.map(p => `  - ${p}`).join('\n') + `\n\n`;
-      }
-      
-      pedagogicalAnalysis += `(Lưu ý: Đây là nội dung được trích xuất tự động qua bộ đọc chữ cục bộ. Để phân tích học thuật chuyên sâu, đánh giá cấu trúc và giải thích chi tiết ý nghĩa sư phạm, vui lòng bấm nút "✨ Phân Tích Lại Trang Này (AI)" bên dưới để kích hoạt AI đa phương thức).`;
-
-      return `1. Nội dung văn bản trên slide:\n${cleanContent}\n\n2. Mô tả và giải thích chi tiết:\n${pedagogicalAnalysis}`;
-    }
-
     // =========================================================================
     // HỆ THỐNG PHÂN TÍCH BỐ CỤC KHÔNG GIAN CẤP CAO (RECURSIVE X-Y CUT++ & TABLE RECONSTRUCTION)
     // =========================================================================
