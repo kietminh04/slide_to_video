@@ -15417,8 +15417,32 @@ QUY TẮC BẮT BUỘC:
     // HÀM TỰ ĐỘNG CHUẨN HÓA & SINH NỘI DUNG SƯ PHẠM 2 PHẦN CHO MỖI TRANG SLIDE (0s latency, không lag)
     function synthesizeSlidePedagogicalContent(rawText, pageNumber, totalPages) {
       if (!rawText || rawText.trim().length === 0) {
-        return `1. Nội dung văn bản trên slide:\nSlide hình ảnh bài giảng (Dạng hình ảnh trực quan / sơ đồ / minh họa đồ họa)\n\n2. Mô tả và giải thích chi tiết:\n• Minh họa trực quan: Slide trình bày sơ đồ trực quan và mô hình minh họa bổ trợ cho bài học.\n\n• Ý nghĩa sư phạm: Giúp người học trực quan hóa kiến thức trừu tượng thông qua hình ảnh và sơ đồ luồng dữ liệu.`;
+        return `1. Nội dung văn bản trên slide:\nTrang nội dung trống hoặc chỉ chứa hình ảnh.\n\n2. Mô tả và giải thích chi tiết:\n*(Vui lòng bấm nút "✨ Phân Tích Lại Trang Này (AI)" bên dưới để mô hình Thị giác AI (VLM) đọc ảnh).*`;
       }
+
+      let actualText = rawText;
+      if (rawText.includes('1. Nội dung văn bản trên slide:')) {
+        const parts = rawText.split(/2\.\s*Mô tả và giải thích chi tiết:/i);
+        actualText = parts[0].replace(/1\.\s*Nội dung văn bản trên slide:/i, '').trim();
+      } else {
+        actualText = actualText.trim();
+      }
+
+      // Xử lý Section 1: Nội dung văn bản (Giữ nguyên cấu trúc Markdown của X-Y Cut)
+      let cleanContent = actualText;
+
+      // Xử lý Section 2: Mô tả (Format HTML cho đẹp mắt để giải thích rõ cấu trúc)
+      let formattedAnalysis = actualText
+        .replace(/^###\s*(.*)$/gm, '🎯 <b>$1</b>')
+        .replace(/^[-*]\s+/gm, '&nbsp;&nbsp;• ')
+        .replace(/\[Cột\s*(Trái|Phải|Giữa)\]/gi, '\n👉 <b>$&</b>')
+        .replace(/\|/g, ' ⏐ '); 
+
+      let pedagogicalAnalysis = `💡 <b>CẤU TRÚC KHÔNG GIAN</b> (Bóc tách 0-Token bằng XY-Cut):\n\n${formattedAnalysis}\n\n`;
+      pedagogicalAnalysis += `<i>*(Lưu ý: Bố cục trên được nhận diện tự động bằng thuật toán hình học và kích thước Font chữ. Để giải thích sâu ý nghĩa sư phạm, vui lòng dùng nút "✨ Phân Tích Lại (AI)").*</i>`;
+
+      return `1. Nội dung văn bản trên slide:\n${cleanContent}\n\n2. Mô tả và giải thích chi tiết:\n${pedagogicalAnalysis}`;
+    }
 
       // Nếu rawText đã ở định dạng 2 phần, bóc tách phần 1 để lấy các dòng chữ thực tế
       let actualText = rawText;
